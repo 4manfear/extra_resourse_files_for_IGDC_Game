@@ -1,0 +1,377 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    The QML used to display the toolclip is found in a path relative to this file. If not set. then the system default UI
+    is used. If present, the following variables will be interpolated into the string:
+    %(language)s      - the language i.e. en, ja, etc.
+    %(country)s       - the country code i.e. us, jp, etc.
+    %(localecode)s          - the locale code i.e. en-us, ja-jp, etc
+
+    If a qml file cannot be loaded from the given path, the built-in path is used instead.
+ 
+    The ui attribute may be specified in the toolclips or toolclip elements. If specified in both, the toolclip version is used.
+ -->
+<toolclips ui="ui/ToolClipUI.qml" simple="ui/SimpleTooltip.qml" locale="zh_CN">
+  <toolclip key="selectTool" title="选择工具">
+    <text>选择场景和编辑器窗口中的对象和组件。</text>
+    <expanded>
+      <resourcelist>
+        <image location="../Resources/SelectionModes.png">切换选择模式</image>
+        <link location="TC-Select-Tool">选择工具</link>
+        <link location="TC-Selection-Modes">选择模式</link>
+        <link location="TC-Select-object-or-components">选择对象或组件</link>
+        <link location="TC-Selection-hotkeys">选择热键</link>
+      </resourcelist>
+    </expanded>
+  </toolclip>
+
+  <toolclip key="lassoTool" title="套索工具">
+    <text>通过在场景中的对象和组件周围绘制自由形式的形状来选择这些对象和组件。</text>
+  </toolclip>
+  <toolclip key="paintSelectTool" title="绘制选择工具">
+    <text>通过绘制选择场景中的组件。</text>
+  </toolclip>
+
+  <toolclip key="moveTool" title="移动工具">
+    <text>通过拖动变换操纵器移动选定对象或组件。</text>
+    <expanded>
+      <resourcelist>
+        <video location="MoveTool.webm">移动对象</video>
+        <video location="MoveComponents.webm">移动组件</video>
+        <link location="TC-Move-Tool">移动工具</link>
+        <link location="TC-Move-rotate-or-scale-objects-and-components">移动、旋转或缩放对象和组件</link>
+        <link location="TC-Transformations">变换</link>
+      </resourcelist>
+    </expanded>
+  </toolclip>
+
+  <toolclip key="editPivotButton" title="编辑枢轴(Edit Pivot)">
+    <text>自定义对对象/组件进行旋转/缩放时所围绕的枢轴点。</text>
+    <expanded>
+      <resourcelist>
+        <video location="anim_pivot.webm">更改枢轴</video>
+        <video location="anim_pivot_hotkeys.webm">使用热键放置或对准枢轴</video>
+        <link location="files/GUID-150B390E-840B-4FE3-B8E9-8DEBCE7CEC97">更改枢轴点</link>
+      </resourcelist>
+    </expanded>
+  </toolclip>
+
+  <toolclip key="rotateTool" title="旋转工具">
+    <text>通过拖动旋转操纵器旋转选定对象或组件。</text>
+    <expanded>
+      <default-resource index="1"/>
+      <resourcelist>
+        <video location="RotateTool.webm">旋转对象</video>
+        <video location="RotateComponents.webm">旋转组件</video>
+        <link location="TC-Rotate-Tool">旋转工具</link>
+        <link location="TC-Move-rotate-or-scale-objects-and-components">移动、旋转或缩放对象和组件</link>
+        <link location="TC-The-pivot-point">枢轴点</link>
+      </resourcelist>
+    </expanded>
+  </toolclip>
+
+  <toolclip key="scaleTool" title="缩放工具">
+    <text>通过拖动缩放操纵器缩放选定对象或组件。</text>
+    <expanded>
+      <default-resource index="1"/>
+      <resourcelist>
+        <video location="ScaleTool.webm">缩放对象</video>
+        <video location="ScaleUniformly.webm">均匀缩放对象</video>
+        <video location="ScaleNonUniformly.webm">非均匀缩放对象</video>
+        <video location="ScaleComponents.webm">缩放组件</video>
+        <link location="TC-Scale-Tool">缩放工具</link>
+        <link location="TC-Move-rotate-or-scale-objects-and-components">移动、旋转或缩放对象和组件</link>
+        <link location="TC-The-pivot-point">枢轴点</link>
+      </resourcelist>
+    </expanded>
+  </toolclip>
+  <toolclip key="quickLayout" title="面板布局" help="TC-Panel-Layout">
+    <text>选择视图面板的不同布局。</text>
+  </toolclip>
+
+  <toolclip key="panelContentButton" title="面板布局"
+      help="TC-panelContentButton">
+    <text>通过下拉菜单创建自定义面板布局。 </text>
+  </toolclip>
+
+  <toolclip key="mayaWebButton" title="Maya 网站">
+    <text>链接到 Maya 网站。</text>
+  </toolclip>
+
+  <toolclip key="mayaLTWebButton" title="Maya LT 网站">
+    <text>链接到 Maya LT 网站。</text>
+  </toolclip>
+
+  <toolclip key="menuMode" title="“菜单集”菜单" help="TC-menuMode">
+    <text>切换菜单集。</text>
+  </toolclip>
+  <toolclip key="newSceneButton" title="新建场景" help="TC-newSceneButton">
+    <text>清除当前场景并创建新的场景。</text>
+  </toolclip>
+  <toolclip key="openSceneButton" title="打开场景..." help="TC-openSceneButton">
+    <text>打开保存的场景。</text>
+  </toolclip>
+  <toolclip key="saveSceneButton" title="保存场景" help="TC-saveSceneButton">
+    <text>使用当前名称保存场景。</text>
+  </toolclip>
+  <toolclip key="maskMenuIcon" title="“选择模式”菜单"
+          help="TC-maskMenuIcon">
+    <text>设置可以使用选择工具选择哪些组件类型。</text>
+  </toolclip>
+  <toolclip key="maskField" title="“选择模式”菜单"
+          help="TC-maskField">
+    <text>设置可以使用选择工具选择哪些组件类型。</text>
+  </toolclip>
+  <toolclip key="selectBtnHierComb" title="按层次和组合选择"
+          help="TC-selectBtnHierComb">
+    <text>更改选择模式以通过使用选择遮罩来选择节点层次顶层级的项目或某一其他组合。</text>
+  </toolclip>
+  <toolclip key="selectBtnObject" title="按对象类型选择" help="TC-selectBtnObject">
+    <text>更改选择模式以选择对象。</text>
+    <expanded>
+      <resourcelist>
+        <image location="../Resources/SelectionModes.png">切换选择模式</image>
+        <link location="TC-Select-Tool">选择工具</link>
+        <link location="TC-Selection-modes">选择模式</link>
+        <link location="TC-Masking-object-and-component-selections">遮罩对象和组件选择</link>
+        <link location="TC-Select-object-or-components">选择对象或组件</link>
+        <link location="TC-Selection-hotkeys">选择热键</link>
+      </resourcelist>
+    </expanded>
+  </toolclip>
+  <toolclip key="selectBtnComponent" title="按组件类型选择" help="TC-selectBtnComponent">
+    <text>更改选择模式以选择对象的组件。</text>
+    <expanded>
+      <resourcelist>
+        <image location="../Resources/SelectionModes.png">切换选择模式</image>
+        <link location="TC-Select-Tool">选择工具</link>
+        <link location="TC-Selection-modes">选择模式</link>
+        <link location="TC-Masking-object-and-component-selections">遮罩对象和组件选择</link>
+        <link location="TC-Select-object-or-components">选择对象或组件</link>
+        <link location="TC-Selection-hotkeys">选择热键</link>
+      </resourcelist>
+    </expanded>
+  </toolclip>
+  <!-- <toolclip key="hierRootButton" title="Hierarchy Root">
+        <text>Set the selection mask to only select top level (root) nodes.</text>
+    </toolclip>
+    <toolclip key="hierLeafButton" title="Hierarchy Leaf">
+        <text>Set the selection mask to only select nodes without children (leaves).</text>
+    </toolclip>
+    <toolclip key="hierTemplateButton" title="Hierarchy Template">
+        <text>Set the selection mask to only select templated objects</text>
+    </toolclip>
+    
+    <toolclip key="objSelHandleBtn" title="Select Handle Objects">
+        <text>Select Handle Objects (RMB for more options)</text>
+    </toolclip>
+    <toolclip key="objSelJointBtn" title="Select Joint Objects">
+        <text>Select Joint Objects (RMB for more options)</text>
+    </toolclip>
+    <toolclip key="objSelCurveBtn" title="Select Curve Objects">
+        <text>Select Curve Objects (RMB for more options)</text>
+    </toolclip>
+    <toolclip key="objSelSurfaceBtn" title="Select Surface Objects">
+        <text>Select Surface Objects (RMB for more options)</text>
+    </toolclip>
+    <toolclip key="objSelDeformBtn" title="Select Deformation Objects">
+        <text>Select Deformation Objects (RMB for more options)</text>
+    </toolclip>
+    <toolclip key="objSelDynamicBtn" title="Select Dynamics Objects">
+        <text>Select Dynamics Objects (RMB for more options)</text>
+    </toolclip>
+    <toolclip key="objSelRenderBtn" title="Select Rendering Objects">
+        <text>Select Rendering objects (RMB for more options)</text>
+    </toolclip>
+    
+    <toolclip key="objSelMiscBtn" title="Select Miscellaneous Objects">
+        <text>Select Miscellaneous Objects (RMB for more options)</text>
+    </toolclip>
+
+    <toolclip key="compSelPointBtn" title="Select Point Components">
+        <text>Select Point Components (RMB for more options)</text>
+    </toolclip>
+    <toolclip key="compSelParmPointBtn" title="Select Parametric Point Components">
+        <text>Select Parametric Point Components (RMB for more options)</text>
+    </toolclip>
+    <toolclip key="compSelLineBtn" title="Select Line Components">
+        <text>Select Line Components (RMB for more options)</text>
+    </toolclip>
+    <toolclip key="compSelFaceBtn" title="Select Face Components">
+        <text>Select Face Components (RMB for more options)</text>
+    </toolclip>
+    <toolclip key="compSelHullBtn" title="Select Hull Components">
+        <text>Select Hull Components (RMB for more options)</text>
+    </toolclip>
+    <toolclip key="compSelPivotBtn" title="Select Pivot Compontents">
+        <text>Select Pivot Components (RMB for more options)</text>
+    </toolclip>
+    <toolclip key="compSelHandleBtn" title="Select Handle Components">
+        <text>Select Handle Components (RMB for more options)</text>
+    </toolclip>
+    <toolclip key="compSelMiscBtn" title="Select Miscellaneous Components">
+        <text>Select Miscellaneous Components (RMB for more options)</text>
+    </toolclip> -->
+  <toolclip key="lockSelectionIcon" title="锁定/解除锁定当前选择" help="TC-lockSelectionIcon">
+    <text>将工具操纵器锁定到选定对象，以便通过单击鼠标左键操作操纵器，而不是进行选择。</text>
+  </toolclip>
+  <toolclip key="highlightSelectIcon" title="亮显当前选择模式" help="TC-highlightSelectIcon">
+    <text>锁定组件选择模式，从而防止切换到对象选择模式。</text>
+  </toolclip>
+  <toolclip key="snapGridButton" title="捕捉到栅格" help="TC-snapGridButton">
+    <text>将选定项移动到最近的栅格相交点。</text>
+  </toolclip>
+  <toolclip key="snapCurveButton" title="捕捉到曲线" help="TC-snapCurveButton">
+    <text>将选定项移动到最近的曲线。</text>
+  </toolclip>
+  <toolclip key="snapPointButton" title="捕捉到点" help="TC-snapPointButton">
+    <text>将选定项移动到最近的控制顶点或枢轴点。</text>
+  </toolclip>
+  <toolclip key="meshCenterSnapButton" title="捕捉到投影中心" help="TC-meshCenterSnapButton">
+    <text>捕捉到选定对象的中心。</text>
+  </toolclip>
+  <toolclip key="snapViewPlaneButton" title="捕捉到视图平面" help="TC-snapViewPlaneButton">
+    <text>将选定项移动到最近的视图平面。</text>
+  </toolclip>
+  <toolclip key="makeLiveButton" title="激活选定对象" help="TC-makeLiveButton">
+    <text>将选定的曲面转化为激活的曲面（单击鼠标右键选择之前的激活曲面）</text>
+    <expanded>
+      <resourcelist>
+        <video location="QuadDraw_MakeLive.webm">激活对象</video>
+        <link location="TC-Set-a-live-surface">设置激活的曲面</link>
+      </resourcelist>
+    </expanded>
+  </toolclip>
+  <toolclip key="historyIcon" title="选定对象的输入" help="TC-historyIcon">
+    <text>控制选定对象的上游节点连接。</text>
+  </toolclip>
+  <toolclip key="futureIcon" title="选定对象的输出" help="TC-futureIcon">
+    <text>控制选定对象的下游节点连接。</text>
+  </toolclip>
+  <toolclip key="constructionHistoryButton" title="构建历史开/关" help="TC-constructionHistoryButton">
+    <text>针对场景中的所有项目启用或禁用构建历史。</text>
+  </toolclip>
+  <toolclip key="statusFieldButton" title="输入行操作菜单" help="TC-statusFieldButton">
+    <text>指定输入行的输入类型。</text>
+  </toolclip>
+
+  <toolclip key="numericalInputXField" title="绝对变换" help="TC-numericalInputXField">
+    <text>使用对 X,Y,Z 原点的引用移动、旋转或缩放对象或组件。</text>
+  </toolclip>
+  <toolclip key="numericalInputYField" title="绝对变换" help="TC-numericalInputYField">
+    <text>使用对 X,Y,Z 原点的引用移动、旋转或缩放对象或组件。</text>
+  </toolclip>
+  <toolclip key="numericalInputZField" title="绝对变换" help="TC-numericalInputZField">
+    <text>使用对 X,Y,Z 原点的引用移动、旋转或缩放对象或组件。</text>
+  </toolclip>
+
+  <toolclip key="relativeNumericalInputXField" title="相对变换" help="TC-relativeNumericalInputXField">
+    <text>使用对对象或组件的当前位置的引用移动、旋转或缩放这些对象或组件。</text>
+  </toolclip>
+  <toolclip key="relativeNumericalInputYField" title="相对变换" help="TC-relativeNumericalInputYField">
+    <text>使用对对象或组件的当前位置的引用移动、旋转或缩放这些对象或组件。</text>
+  </toolclip>
+  <toolclip key="relativeNumericalInputZField" title="相对变换" help="TC-relativeNumericalInputZField">
+    <text>使用对对象或组件的当前位置的引用移动、旋转或缩放这些对象或组件。</text>
+  </toolclip>
+  <toolclip key="statusLineTextualInputField" title="重命名选定对象" help="TC-statusLineTextualInputField">
+    <text>编辑选定对象的名称。</text>
+  </toolclip>
+  <toolclip key="statusLineTextualInputFieldSelect" title="按名称(通配符)选择" help="TC-statusLineTextualInputFieldSelect">
+    <text>按名称选择对象并支持使用通配符选择多个对象。</text>
+  </toolclip>
+
+
+
+  <toolclip key="attributeEditorButton" title="显示/隐藏属性编辑器" help="TC-attributeEditorButton">
+    <text>显示或隐藏列出选定对象或节点的属性的属性编辑器。</text>
+  </toolclip>
+
+  <toolclip key="modelingToolkitButton" title="显示/隐藏建模工具包" help="TC-modelingToolkitButton">
+  <text>显示或隐藏建模工具包。</text>
+  </toolclip>
+
+  <toolclip key="channelLayerBoxButton" title="显示/隐藏通道盒" help="TC-channelLayerBoxButton">
+    <text>显示或隐藏通道盒和层编辑器。</text>
+  </toolclip>
+
+  <toolclip key="toolSettingsButton" title="显示/隐藏工具设置" help="TC-toolSettingsButton">
+    <text>显示或隐藏“工具设置”窗口中当前工具的选项。</text>
+  </toolclip>
+
+  <toolclip key="lastNonSacredTool" title="最后使用的工具 %(lastNonSacredTool)s" help="TC-Tool-Box">
+    <text>显示当前活动或以前选定的工具。</text>
+  </toolclip>
+  <toolclip key="CommonReflectionOptionsLabel" title="对称" help="TC-CommonReflectionOptionsLabel">
+    <text>激活对称。</text>
+    <expanded>
+      <resourcelist>
+        <video location="Symmetry_ActivateTopo.webm">激活拓扑对称</video>
+        <link location="TC-Symmetrical-editing">对称编辑</link>
+        <link location="TC-Activate-or-deactivate-symmetry">激活或取消激活对称</link>
+        <link location="TC-Edit-multiple-shells-with-topological-symmetry">使用拓扑对称编辑多个壳</link>
+        <link location="TC-Edit-a-mesh-with-topological-symmetry">使用拓扑对称编辑网格</link>
+      </resourcelist>
+    </expanded>
+  </toolclip>
+  <toolclip key="sculptMeshMirrorMode_OMG" title="对称" help="TC-CommonReflectionOptionsLabel">
+    <text>激活对称。</text>
+    <expanded>
+      <resourcelist>
+        <video location="Symmetry_ActivateTopo.webm">激活拓扑对称</video>
+        <link location="TC-Symmetrical-editing">对称编辑</link>
+        <link location="TC-Activate-or-deactivate-symmetry">激活或取消激活对称</link>
+        <link location="TC-Edit-multiple-shells-with-topological-symmetry">使用拓扑对称编辑多个壳</link>
+        <link location="TC-Edit-a-mesh-with-topological-symmetry">使用拓扑对称编辑网格</link>
+      </resourcelist>
+    </expanded>
+  </toolclip>
+  <toolclip key="CommonReflectionOptionsButton" title="对称" help="TC-CommonReflectionOptionsButton">
+    <text>激活对称。</text>
+    <expanded>
+      <resourcelist>
+        <video location="Symmetry_ActivateTopo.webm">激活拓扑对称</video>
+        <link location="TC-Symmetrical-editing">对称编辑</link>
+        <link location="TC-Activate-or-deactivate-symmetry">激活或取消激活对称</link>
+        <link location="TC-Edit-multiple-shells-with-topological-symmetry">使用拓扑对称编辑多个壳</link>
+        <link location="TC-Edit-a-mesh-with-topological-symmetry">使用拓扑对称编辑网格</link>
+      </resourcelist>
+    </expanded>
+  </toolclip>
+  <toolclip key="CommonReflectionOptionsText" title="对称" help="TC-CommonReflectionOptionsText">
+    <text>激活对称。</text>
+    <expanded>
+      <resourcelist>
+        <video location="Symmetry_ActivateTopo.webm">激活拓扑对称</video>
+        <link location="TC-Symmetrical-editing">对称编辑</link>
+        <link location="TC-Activate-or-deactivate-symmetry">激活或取消激活对称</link>
+        <link location="TC-Edit-multiple-shells-with-topological-symmetry">使用拓扑对称编辑多个壳</link>
+        <link location="TC-Edit-a-mesh-with-topological-symmetry">使用拓扑对称编辑网格</link>
+      </resourcelist>
+    </expanded>
+  </toolclip>
+  <toolclip key="symModelingText" title="对称" help="TC-symModelingText">
+    <text>激活对称。</text>
+    <expanded>
+      <resourcelist>
+        <video location="Symmetry_ActivateTopo.webm">激活拓扑对称</video>
+        <link location="TC-Symmetrical-editing">对称编辑</link>
+        <link location="TC-Activate-or-deactivate-symmetry">激活或取消激活对称</link>
+        <link location="TC-Edit-multiple-shells-with-topological-symmetry">使用拓扑对称编辑多个壳</link>
+        <link location="TC-Edit-a-mesh-with-topological-symmetry">使用拓扑对称编辑网格</link>
+      </resourcelist>
+    </expanded>
+  </toolclip>
+  <toolclip key="symModelingBtn" title="对称" help="TC-symModelingBtn">
+    <text>激活对称。</text>
+    <expanded>
+      <resourcelist>
+        <video location="Symmetry_ActivateTopo.webm">激活拓扑对称</video>
+        <link location="TC-Symmetrical-editing">对称编辑</link>
+        <link location="TC-Activate-or-deactivate-symmetry">激活或取消激活对称</link>
+        <link location="TC-Edit-multiple-shells-with-topological-symmetry">使用拓扑对称编辑多个壳</link>
+        <link location="TC-Edit-a-mesh-with-topological-symmetry">使用拓扑对称编辑网格</link>
+      </resourcelist>
+    </expanded>
+  </toolclip>
+</toolclips>
+

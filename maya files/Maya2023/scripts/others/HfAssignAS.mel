@@ -1,0 +1,33 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//<doc>
+//<name HfAssignAS>
+//
+//<synopsis>
+//	HfAssignAS(string $attractorSetName)
+//
+//<description>
+//	Attaching an attractor set to a surface associates the attractors in the set with the surface so that they affect the fur descriptions
+//	attached to them. If you have already created an attractor set, you can attach the set to any selected surface. You may have created
+//	the attractor set without attaching it to the surface, or attached it to other surfaces when you created it. 
+//
+//<flags>
+//      None.
+//
+//<returns>
+//		None.
+//
+//<examples>
+// // Step1. Select the surface you want to attach attractors to. You can attach more than one attractor set to a surface. 
+// // Step2. HfAssignAS $attractorSetName;
+// //        where $attractorSetName is the name of the attractor set you want to attach. 
+//
+//</doc>
+//
+

@@ -1,0 +1,51 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+
+//<doc>
+//<name makePassiveCollider>
+//<owner "Autodesk">
+//
+//<synopsis>
+//		makePassiveCollider
+//
+//<returns>
+//		None.	
+//
+//<description>
+//	This makes any selected mesh objects passive nDynamics colliders. It is
+//  equivalent to calling the menu item "create passive collider".
+//
+//<flags>
+//	None.
+//
+//<examples>
+//	polyPlane;
+//  makePassiveCollider;
+//</doc>
+
+
+
+global proc string[] makePassiveCollider()
+//
+//	Description:
+//
+//	Given a selected list of meshes, make them passive colliders.
+//	We'd like to find one or more nucleus nodes to collide them with.
+//	If there's one or more  nucleus nodes selected, they'll do.
+//	If there's no nucleus nodes at all, create one.
+//	If there's exactly one nucleus in existence, that's fine too.
+//	If none of the above is true, but there is an nBase selected
+//	use, its nucleus node.
+//	Perhaps, if you're selected a mesh connected to an active nCloth
+//	we'll find its nucleus and use that.
+//
+{
+	// wrapper on makeCollideNCloth, which is now poorly named for its behavior
+	return( makeCollideNCloth() );
+
+}

@@ -1,0 +1,22 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc polyBridgeEdgeValues ( string $toolName )
+{
+	string $name = "polyBridgeEdge";
+	string $parent = (`toolPropertyWindow -q -location` + "|" + $name);
+	setParent $parent;
+	
+	int $divs = `polyBridgeEdgeCtx -q -divisions $toolName`;
+
+	intSliderGrp -e
+		-v $divs
+		-cc ("polyBridgeEdgeCtx -e -divisions #1 " + $toolName)
+		polyBridgeEdgeToolDivisions;
+
+	toolPropertySelect $name;
+}

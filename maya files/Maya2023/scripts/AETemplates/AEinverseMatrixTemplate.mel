@@ -1,0 +1,20 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+// File:			AEinverseMatrixTemplate.mel
+//
+// Description:		Attribute Editor Template for inverseMatrix node
+//			
+//
+
+
+global proc AEinverseMatrixTemplate( string $nodeName )
+{
+	if( !`exists AEinputOutputMatrixTemplate`)
+		source "AEmatrixNodesCommonTemplate.mel";
+	AEinputOutputMatrixTemplate();
+}

@@ -1,0 +1,45 @@
+<!--
+===========================================================================
+Copyright 2015 Autodesk, Inc. All rights reserved.
+
+Use of this software is subject to the terms of the Autodesk license
+agreement provided at the time of installation or download, or which
+otherwise accompanies this software in either electronic or hard copy form.
+===========================================================================
+
+Top level fragment graph for color condition plugin
+-->
+
+<fragment_graph name="colorCondition" ref="colorCondition" class="FragmentGraph" version="1.0">
+	<fragments>
+        <fragment_ref name="mayaTextureOutput" ref="mayaTextureOutput" />
+		<fragment_ref name="combineMayaTextureOutput" ref="combineMayaTextureOutput" />
+		<fragment_ref name="colorConditionBase" ref="colorConditionBase" />
+		<fragment_ref name="floatCondition" ref="floatCondition" />
+		<fragment_ref name="boolPassThrough" ref="boolPassThrough" />
+	</fragments>
+	<connections>
+        <connect from="combineMayaTextureOutput.output" to="mayaTextureOutput.mayaTextureOutput" name="mayaTextureOutput" />
+        <connect from="colorConditionBase.outColor" to="combineMayaTextureOutput.base" name="base" />
+        <connect from="floatCondition.outFloat" to="combineMayaTextureOutput.alpha" name="alpha" />
+        <connect from="boolPassThrough.boolPassThrough" to="colorConditionBase.condition" name="colorCondition" />
+        <connect from="boolPassThrough.boolPassThrough" to="floatCondition.condition" name="floatCondition" />
+	</connections>
+	<properties>
+		<float3 name="colorA" ref="colorConditionBase.colorA" />
+		<float name="alphaA" ref="floatCondition.floatA" />
+		<float3 name="colorB" ref="colorConditionBase.colorB" />
+		<float name="alphaB" ref="floatCondition.floatB" />
+		<bool name="condition" ref="boolPassThrough.input" />
+	</properties>
+	<values>
+		<float3 name="colorA" value="1.0,0.0,0.0" />
+		<float name="alphaB" value="0.0" />
+		<float3 name="colorB" value="0.0,0.0,1.0" />
+		<float name="alphaA" value="0.0" />
+		<bool name="condition" value="false" />
+	</values>
+	<outputs>
+        <struct name="mayaTextureOutput" ref="mayaTextureOutput.mayaTextureOutput" />
+	</outputs>
+</fragment_graph>

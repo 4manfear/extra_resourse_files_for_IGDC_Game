@@ -1,0 +1,311 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//  Register MASH's runtime commands
+//  These are then refrenced from the menuitems.
+//
+
+global proc MASHruntimeCommands() {
+    if(`runTimeCommand -q -exists CreateMashNetwork`) return;
+
+    runTimeCommand -default true
+    -label      (getPluginResource("MASH", "kCreateMASHNetwork"))
+    -annotation (getPluginResource("MASH", "kCreateMASHNetworkAnnot"))
+    -longAnnotation (getPluginResource("MASH", "kCreateMASHNetworkLongAnnot"))
+    -image      "out_MASH_Waiter.png"
+    -category   ("Menu items.Animation.MASH;Menu items.FX.MASH")
+    -plugin     "MASH"
+    -command    ("python(\"import MASH.api;network = MASH.api.Network();network.createNetwork()\")")
+    CreateMashNetwork;
+
+    runTimeCommand -default true
+    -annotation (getPluginResource("MASH", "kCreateOptions"))
+    -category   ("Menu items.Animation.MASH;Menu items.FX.MASH")
+    -plugin     "MASH"
+    -command    ("MASHcreateOptions")
+    CreateMashNetworkOptions;
+
+    runTimeCommand -default true
+    -label      (getPluginResource("MASH", "kMASHOutliner"))
+    -annotation (getPluginResource("MASH", "kMASHOutlinerAnnot"))
+    -image      "ae_MASH_Editor.png"
+    -category   ("Menu items.Animation.MASH;Menu items.FX.MASH")
+    -plugin     "MASH"
+    -command    ("MASHOutliner")
+    OpenMashEditor;
+
+    runTimeCommand -default true
+    -label      (getPluginResource("MASH", "kCacheThisNetwork"))
+    -annotation (getPluginResource("MASH", "kCacheThisNetworkAnnot"))
+    -longAnnotation (getPluginResource("MASH", "kCacheThisNetworkLongAnnot"))
+    -image      "MASH_CacheNetwork.png"
+    -category   ("Menu items.Animation.MASH.utilities;Menu items.FX.MASH.utilities")
+    -plugin     "MASH"
+    -command    ("MASHcacheRedirection")
+    CacheMashNetwork;
+
+    runTimeCommand -default true
+    -label      (getPluginResource("MASH", "kCreateMASHDeformer"))
+    -annotation (getPluginResource("MASH", "kCreateMASHDeformerAnnot"))
+    -image      "out_MASH_Deformer.png"
+    -category   ("Menu items.Animation.MASH.utilities;Menu items.FX.MASH.utilities")
+    -plugin     "MASH"
+    -command    ("MASHaddDeformer")
+    AddMashDeformer;
+
+    runTimeCommand -default true
+    -label      (getPluginResource("MASH", "kCreateBlendDeformer"))
+    -annotation (getPluginResource("MASH", "kCreateBlendDeformerAnnot"))
+    -longAnnotation (getPluginResource("MASH", "kCreateBlendDeformerLongAnnot"))
+    -image      "MASH_CreateBlendDeformer.png"
+    -category   ("Menu items.Animation.MASH.utilities;Menu items.FX.MASH.utilities")
+    -plugin     "MASH"
+    -command    ("MASHaddBlendDeformer")
+    AddMashBlendDeformer;
+
+    runTimeCommand -default true
+    -label      (getPluginResource("MASH", "kCreateJiggleDeformer"))
+    -annotation (getPluginResource("MASH", "kCreateJiggleDeformerAnnot"))
+    -image      "MASH_CreateJiggleDeformer.png"
+    -category   ("Menu items.Animation.MASH.utilities;Menu items.FX.MASH.utilities")
+    -plugin     "MASH"
+    -command    ("MASHaddJiggleDeformer")
+    AddMashJiggleDeformer;
+
+    runTimeCommand -default true
+    -label      (getPluginResource("MASH", "kCreateMeshFromPoints"))
+    -annotation (getPluginResource("MASH", "kCreateMeshFromPointsAnnot"))
+    -longAnnotation (getPluginResource("MASH", "kCreateMeshFromPointsLongAnnot"))
+    -image      "MASH_CreateMeshFromPoints.png"
+    -category   ("Menu items.Animation.MASH.utilities;Menu items.FX.MASH.utilities")
+    -plugin     "MASH"
+    -command    ("MASHcreateMeshFromPointsEntry")
+    CreateMeshFromMashPoints;
+
+    runTimeCommand -default true
+    -label      (getPluginResource("MASH", "kConnectToType"))
+    -annotation (getPluginResource("MASH", "kConnectToTypeAnnot"))
+    -longAnnotation (getPluginResource("MASH", "kConnectToTypeLongAnnot"))
+     -image      "MASH_ConnectToType.png"
+    -category   ("Menu items.Animation.MASH.utilities;Menu items.FX.MASH.utilities")
+    -plugin     "MASH"
+    -command    ("MASHConnectToVector")
+    ConnectMashToVector;
+
+    runTimeCommand -default true
+    -label      (getPluginResource("MASH", "kConnectParticlesToMASH"))
+    -annotation (getPluginResource("MASH", "kConnectParticlesToMASHAnnot"))
+    -longAnnotation (getPluginResource("MASH", "kConnectParticlesToMASHLongAnnot"))
+    -category   ("Menu items.Animation.MASH.utilities;Menu items.FX.MASH.utilities")
+    -plugin     "MASH"
+    -command    ("MASHnNetworkConnect")
+    ConnectMashToParticles;
+
+    runTimeCommand -default true
+    -label      (getPluginResource("MASH", "kParticlesFromMASH"))
+    -annotation (getPluginResource("MASH", "kParticlesFromMASHAnnot"))
+    -longAnnotation (getPluginResource("MASH", "kParticlesFromMASHLongAnnot"))
+    -category   ("Menu items.Animation.MASH.utilities;Menu items.FX.MASH.utilities")
+    -plugin     "MASH"
+    -command    ("MASHbakeToParticles")
+    BakeMashToParticles;
+
+    runTimeCommand -default true
+    -label      (getPluginResource("MASH", "kConnectTrailsToParticles"))
+    -annotation (getPluginResource("MASH", "kConnectTrailsToParticles"))
+    -image      "MASH_AddTrailsToParticles.png"
+    -category   ("Menu items.Animation.MASH.utilities;Menu items.FX.MASH.utilities")
+    -plugin     "MASH"
+    -command    ("MASHaddTrailsToParticles")
+    AddTrailsToParticles;
+
+    runTimeCommand -default true
+    -label      (getPluginResource("MASH", "kSwitchGeometryType"))
+    -annotation (getPluginResource("MASH", "kSwitchGeometryTypeAnnot"))
+    -longAnnotation (getPluginResource("MASH", "kSwitchGeometryTypeLongAnnot"))
+    -image      "MASH_SwitchGeometryType.png"
+    -category   ("Menu items.Animation.MASH.utilities;Menu items.FX.MASH.utilities")
+    -plugin     "MASH"
+    -command    ("MASHswitchGeometryType")
+    SwitchMashGeometryType;
+
+    runTimeCommand -default true
+    -label      (getPluginResource("MASH", "kBakeInstancer"))
+    -annotation (getPluginResource("MASH", "kBakeInstancerAnnot"))
+    -longAnnotation (getPluginResource("MASH", "kBakeInstancerLongAnnot"))
+    -category   ("Menu items.Animation.MASH.utilities;Menu items.FX.MASH.utilities")
+    -plugin     "MASH"
+    -command    ("MASHBakeGUI")
+    BakeInstancerToGeometry;
+
+    runTimeCommand -default true
+    -label      (getPluginResource("MASH", "kCreateInstancerPivot"))
+    -annotation (getPluginResource("MASH", "kCreateInstancerPivot"))
+    -category   ("Menu items.Animation.MASH.utilities;Menu items.FX.MASH.utilities")
+    -plugin     "MASH"
+    -command    ("createInstancerPivot")
+    CreateInstancerPivot;
+
+    runTimeCommand -default true
+    -label      (getPluginResource("MASH", "kAddShellDynamics"))
+    -annotation (getPluginResource("MASH", "kAddShellDynamicsAnnot"))
+    -longAnnotation (getPluginResource("MASH", "kAddShellDynamicsLongAnnot"))
+    -image      "MASH_ShellDynamics.png"
+    -category   ("Menu items.Animation.MASH.utilities;Menu items.FX.MASH.utilities")
+    -plugin     "MASH"
+    -command    ("MASHAddShellDynamics")
+    AddShellDynamics;
+
+    runTimeCommand -default true
+    -label      (getPluginResource("MASH", "kAssignSolver"))
+    -annotation (getPluginResource("MASH", "kAssignSolverAnnot"))
+    -longAnnotation (getPluginResource("MASH", "kAssignSolverLongAnnot"))
+    -category   ("Menu items.Animation.MASH.utilities;Menu items.FX.MASH.utilities")
+    -plugin     "MASH"
+    -command    ("MASHAssignSolver")
+    AssignMashBulletSolver;
+
+    runTimeCommand -default true
+    -label      (getPluginResource("MASH", "kAddSolver"))
+    -annotation (getPluginResource("MASH", "kAddSolverAnnot"))
+    -longAnnotation (getPluginResource("MASH", "kAddSolverLongAnnot"))
+    -category   ("Menu items.Animation.MASH.utilities;Menu items.FX.MASH.utilities")
+    -plugin     "MASH"
+    -command    ("MASHAddSolver")
+    AddMashBulletSolver;
+
+    // TTF Keywords
+    string $kw_mograph = getPluginResource("MASH", "kKw_mograph");
+    string $kw_procedural = getPluginResource("MASH", "kKw_procedural");
+    string $kw_distribution = getPluginResource("MASH", "kKw_distribution");
+    string $kw_scatter = getPluginResource("MASH", "kKw_scatter");
+    string $kw_points = getPluginResource("MASH", "kKw_points");
+    string $kw_instance = getPluginResource("MASH", "kKw_instance");
+    string $kw_copy = getPluginResource("MASH", "kKw_copy");
+    string $kw_awesome = getPluginResource("MASH", "kKw_awesome");
+    string $kw_wobble = getPluginResource("MASH", "kKw_wobble");
+    string $kw_jelly = getPluginResource("MASH", "kKw_jelly");
+    string $kw_dynamics = getPluginResource("MASH", "kKw_dynamics");
+    string $kw_rigid_body = getPluginResource("MASH", "kKw_rigid_body");
+    string $kw_rbd = getPluginResource("MASH", "kKw_rbd");
+    string $kw_poly = getPluginResource("MASH", "kKw_poly");
+    string $kw_list = getPluginResource("MASH", "kKw_list");
+    string $kw_layer = getPluginResource("MASH", "kKw_layer");
+    string $kw_text = getPluginResource("MASH", "kKw_text");
+    string $kw_vector = getPluginResource("MASH", "kKw_vector");
+    string $kw_bake = getPluginResource("MASH", "kKw_bake");
+    string $kw_color = getPluginResource("MASH", "kKw_color");
+    string $kw_time = getPluginResource("MASH", "kKw_time");
+    string $kw_deform = getPluginResource("MASH", "kKw_deform");
+    string $kw_proxy = getPluginResource("MASH", "kKw_proxy");
+    string $kw_mesh = getPluginResource("MASH", "kKw_mesh");
+    string $kw_centre = getPluginResource("MASH", "kKw_centre");
+    string $kw_center = getPluginResource("MASH", "kKw_center");
+    string $kw_type = getPluginResource("MASH", "kKw_type");
+    // TTF Tags
+    string $tag_Effects = getPluginResource("MASH", "kTag_Effects");
+    string $tag_Bifrost = getPluginResource("MASH", "kTag_Bifrost");
+    string $tag_Hair = getPluginResource("MASH", "kTag_Hair");
+    string $tag_Fur = getPluginResource("MASH", "kTag_Fur");
+    string $tag_Fluids = getPluginResource("MASH", "kTag_Fluids");
+    string $tag_MASH = getPluginResource("MASH", "kTag_MASH");
+    string $tag_Deformers = getPluginResource("MASH", "kTag_Deformers");
+
+    catchQuiet(`
+        runTimeCommand -edit
+            -tags       ($tag_MASH + ";" + $tag_Effects)
+            -keywords   ($kw_mograph + ";" + $kw_procedural + ";" + $kw_distribution + ";" + $kw_scatter + ";" + $kw_points + ";" + $kw_instance + ";" + $kw_copy + ";" + $kw_awesome)
+            CreateMashNetwork
+    `);
+    catchQuiet(`
+        runTimeCommand -edit
+            -tags       ($tag_MASH + ";" + $tag_Effects + ";" + $tag_Deformers)
+            -keywords   ($kw_wobble + ";" + $kw_jelly)
+            AddMashJiggleDeformer
+    `);
+    catchQuiet(`
+        runTimeCommand -edit
+            -tags       ($tag_MASH + ";" + $tag_Effects)
+            -keywords   ($kw_dynamics + ";" + $kw_rigid_body + ";" + $kw_rbd)
+            AssignMashBulletSolver
+    `);
+    catchQuiet(`
+        runTimeCommand -edit
+            -tags       ($tag_MASH + ";" + $tag_Effects + ";" + $tag_Deformers)
+            AddMashDeformer
+    `);
+    catchQuiet(`
+        runTimeCommand -edit
+            -tags       ($tag_MASH + ";" + $tag_Effects)
+            ConnectMashToParticles
+    `);
+    catchQuiet(`
+        runTimeCommand -edit
+            -tags       ($tag_MASH + ";" + $tag_Effects)
+            -keywords   ($kw_poly)
+            CreateMeshFromMashPoints
+    `);
+    catchQuiet(`
+        runTimeCommand -edit
+            -tags       ($tag_MASH + ";" + $tag_Effects)
+            AddMashBlendDeformer
+    `);
+    catchQuiet(`
+        runTimeCommand -edit
+            -tags       ($tag_MASH + ";" + $tag_Effects)
+            -keywords   ($kw_dynamics + ";" + $kw_rigid_body + ";" + $kw_rbd)
+            AddMashBulletSolver
+    `);
+    catchQuiet(`
+        runTimeCommand -edit
+            -tags       ($tag_MASH + ";" + $tag_Effects)
+            BakeMashToParticles
+    `);
+    catchQuiet(`
+        runTimeCommand -edit
+            -tags       ($tag_MASH + ";" + $tag_Effects)
+            -keywords   ($kw_list + ";" + $kw_layer)
+            OpenMashEditor
+    `);
+    catchQuiet(`
+        runTimeCommand -edit
+            -tags       ($tag_MASH + ";" + $tag_Effects)
+            -keywords   ($kw_text + ";" + $kw_vector)
+            ConnectMashToVector
+    `);
+    catchQuiet(`
+        runTimeCommand -edit
+            -tags       ($tag_MASH + ";" + $tag_Effects)
+            -keywords   ($kw_bake)
+            CacheMashNetwork
+    `);
+    catchQuiet(`
+        runTimeCommand -edit
+            -tags       ($tag_MASH + ";" + $tag_Effects)
+            -keywords   ($kw_color + ";" + $kw_time + ";" + $kw_deform + ";" + $kw_procedural + ";" + $kw_proxy)
+            SwitchMashGeometryType
+    `);
+    catchQuiet(`
+        runTimeCommand -edit
+            -tags       ($tag_MASH + ";" + $tag_Effects)
+            -keywords   ($kw_mesh)
+            BakeInstancerToGeometry
+    `);
+    catchQuiet(`
+        runTimeCommand -edit
+            -tags       ($tag_MASH + ";" + $tag_Effects)
+            -keywords   ($kw_centre + ";" + $kw_center)
+            CreateInstancerPivot
+    `);
+    catchQuiet(`
+        runTimeCommand -edit
+            -tags       ($tag_MASH + ";" + $tag_Effects)
+            -keywords   ($kw_type + ";" + $kw_text + ";" + $kw_rigid_body + ";" + $kw_rbd)
+            AddShellDynamics
+    `);
+}

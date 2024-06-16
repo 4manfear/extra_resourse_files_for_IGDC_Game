@@ -1,0 +1,20 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc float convertPixelsToInches(
+	int $valueInPixels,
+	float  $dotsPerInch)
+//
+//	Description:
+//		Calculate the measurement value in inches
+//		corresponding to a given pixel size
+//		and pixel density (must be in DPI).
+//
+{
+	float $result = $valueInPixels / $dotsPerInch;
+	return $result;
+}

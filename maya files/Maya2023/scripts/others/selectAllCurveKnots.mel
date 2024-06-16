@@ -1,0 +1,95 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  April 3, 1997
+//
+//  Description:
+//      The selectAllCurveKnots() procedure takes a surface list,
+//		and adds all the visible knots as selection items to the pointList.
+//
+//  Input Arguments:
+//      curveList - the curves to do this to
+//      div - "draw precision"
+//      pointList - append to the list
+//      pointCount - start at this index into pointList
+//
+
+global proc selectActiveCurveKnots()
+//
+// Description:
+//     Select the knot points on all the active curves.
+{
+	global int $gSelectNurbsCurvesBit;
+
+	string $pointList[];
+	string $curveList[];
+	int $pointCount = 0;
+	int $div = 0;
+
+	$curveList = `filterExpand -ex true -sm $gSelectNurbsCurvesBit`;
+
+	selectAllCurveKnots( $curveList, $div, $pointList, $pointCount );
+	select -r $pointList;
+}
+
+global proc selectAllCurveKnots( string $curveList[], int $div,
+								 string $pointList[], int $pointCount )
+//
+// Description:
+//     Append the isoparm selection items to the point list.
+{
+	float $knots[];
+	float $val, $quot;
+	int $i, $n;
+	int $s, $ns, $d;
+
+	// To get the knots from the extracted isoparm:
+	string $infonode = `createNode curveInfo`;
+	string $infonodecurve = $infonode + ".ic";
+	string $infonodeknots = ($infonode + ".kn");
+
+	// We know these are curves.  Get the display values from them:
+	string $curve = $curveList[0];
+	$ns = size($curveList);
+	for( $s=0; $s<$ns; $s+=1 ) {
+		$curve = $curveList[$s];
+
+		// For the division values, 0 means "do it in a single step".
+		connectAttr ($curve + ".l") $infonodecurve;
+		int $deg = `getAttr ($curve + ".d")`;
+		$knots = `getAttr $infonodeknots`;
+
+		$n = size($knots);
+		for( $i=($deg-1); $i<($n-$deg); $i+=1 ) {
+			if( $knots[$i+1] == $knots[$i] ) continue;
+
+			$val = $knots[$i];
+			$pointList[$pointCount] = ($curve + ".u[" + $val + "]");
+			$pointCount += 1;
+
+			if( $div > 0 ) {
+				$quot = ($knots[$i+1] - $val) / ($div+1);
+				for( $d=0; $d<$div; $d+=1 ) {
+					$val += $quot;
+					$pointList[$pointCount] = ($curve +
+											   ".u[" + $val + "]");
+					$pointCount += 1;
+				}
+			}
+		}
+
+		$val = $knots[$n-$deg];
+		$pointList[$pointCount] = ($curve + ".u[" + $val + "]");
+		$pointCount += 1;
+		disconnectAttr ($curve + ".l") $infonodecurve;
+	}
+
+	// Don't need this anymore:
+	delete $infonode;
+}

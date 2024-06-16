@@ -1,0 +1,36 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  20 May 2003
+//
+//  Description:
+//      Return the name of the fluid playback cache, if
+//      there is one.
+//		
+//
+global proc string fluidPlaybackCacheName( string $fluid )
+{
+	string $result = "";
+
+	string $connections[] = `listConnections ($fluid + ".diskCache")`;
+	for( $c in $connections ) {
+		if(( nodeType( $c ) == "diskCache" )
+		&& ( `getAttr ( $c + ".cacheType" )` == "mcfp" ))
+		{
+			$result = $c;
+		}
+	}
+
+    // If no fluid cache has been found check to see if a Maya cache is being used.
+    if ($result == "")
+		$result = findFluidCache($fluid);	
+
+	return $result;
+}
+

@@ -1,0 +1,54 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  19 June 1997
+//
+//  Description:
+//      Show or hide all the main window UI components.
+//
+//  Input Arguments:
+//      visible - 0 hides all components, 
+//				  1 returns all components to pre-hidden state.
+//
+//  Return Value:
+//      None.
+//
+global proc setAllMainWindowComponentsVisible(int $visible)
+{
+	global int $gUIElementsRestored;
+	global int $gShowAllUIElements;
+	global int $gHideAllUIElements;
+	global string $gMainPane;
+	global string $gViewportWorkspaceControl;
+
+	paneLayout -edit -manage false $gMainPane;
+
+	//	Hide or show the components as specified.
+	//
+	setToolboxVisible         ($visible);
+	setStatusLineVisible      ($visible);
+	setShelfVisible           ($visible);
+	setTimeSliderVisible      ($visible);
+	setPlaybackRangeVisible   ($visible);
+	setCommandLineVisible     ($visible);
+	setHelpLineVisible        ($visible);
+
+	// Only restore the viewport to visible.  Don't allow it to be hidden by this.
+	if ($visible) {
+		setUIComponentVisibility($gViewportWorkspaceControl, $visible);
+	}
+
+	paneLayout -edit -manage true $gMainPane;
+
+	restoreLastPanelWithFocus();
+	updatePrefsMenu();
+	$gUIElementsRestored = false;
+	$gShowAllUIElements = $visible;
+	$gHideAllUIElements = !($visible);
+}

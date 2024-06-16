@@ -1,0 +1,67 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+// Resources for Plug-in: ATFPlugin
+// 
+// ----------------------------
+// Registered string resources:
+// ----------------------------
+setPluginResource( "ATFPlugin", "kATFTessellation", "ATF テッセレーション");
+setPluginResource( "ATFPlugin", "kAdaptive", "適応");
+setPluginResource( "ATFPlugin", "kAdaptiveAnnot", "適応");
+setPluginResource( "ATFPlugin", "kArubaTessellation", "Aruba テッセレーション");
+setPluginResource( "ATFPlugin", "kChordalDeviation", "コード偏差:");
+setPluginResource( "ATFPlugin", "kChordalDeviationAnnot", "メッシュの三角形とモデルのジオメトリ間の最大距離をセンチメートル単位で指定します。");
+setPluginResource( "ATFPlugin", "kEnableCustomization", "カスタマイズを有効化");
+setPluginResource( "ATFPlugin", "kEnableCustomizationAnnot", "このオプションをオンにすると、テッセレーション設定が変更されることがあります。");
+setPluginResource( "ATFPlugin", "kIsEnabledIndication", "有効");
+setPluginResource( "ATFPlugin", "kLegacyEnableCustomization", "旧式カスタマイズを有効化");
+setPluginResource( "ATFPlugin", "kLegacyEnableCustomizationAnnot", "このオプションをオンにすると、テッセレーション設定が変更されることがあります。");
+setPluginResource( "ATFPlugin", "kLegacyGridAspectRatio", "グリッドのアスペクト比:");
+setPluginResource( "ATFPlugin", "kLegacyGridAspectRatioAnnot", "フェース全体に配置されたグリッドで使用できる最大アスペクト比を指定します。");
+setPluginResource( "ATFPlugin", "kLegacyMaxEdgeLength", "最大エッジ長:");
+setPluginResource( "ATFPlugin", "kLegacyMaxEdgeLengthAnnot", "エッジの弦、または任意の 2 つの隣接するグリッド ライン間で許可される最大長をセンチメートル単位で指定します。");
+setPluginResource( "ATFPlugin", "kLegacyNormalTolerance", "法線許容値:");
+setPluginResource( "ATFPlugin", "kLegacyNormalToleranceAnnot", "メッシュ内の隣接するノード間のサーフェス法線における最大変化を角度で指定します。");
+setPluginResource( "ATFPlugin", "kLegacySurfaceTolerance", "サーフェスの許容値:");
+setPluginResource( "ATFPlugin", "kLegacySurfaceToleranceAnnot", "メッシュの三角形とモデルのジオメトリ間の最大距離をセンチメートル単位で指定します。");
+setPluginResource( "ATFPlugin", "kMaxChordLength", "最大弦の長さ:");
+setPluginResource( "ATFPlugin", "kMaxChordLengthAnnot", "エッジの弦、または任意の 2 つの隣接するグリッド ライン間で許可される最大長をセンチメートル単位で指定します。");
+setPluginResource( "ATFPlugin", "kMinChordLength", "最小弦の長さ:");
+setPluginResource( "ATFPlugin", "kMinChordLengthAnnot", "エッジの弦、または任意の 2 つの隣接するグリッド ライン間で許可される最小長をセンチメートル単位で指定します。");
+setPluginResource( "ATFPlugin", "kNoneTessellation", "なし");
+setPluginResource( "ATFPlugin", "kNormalTolerance", "法線許容値:");
+setPluginResource( "ATFPlugin", "kNormalToleranceAnnot", "メッシュ内の隣接するノード間のサーフェス法線における最大変化を角度で指定します。");
+setPluginResource( "ATFPlugin", "kSampleType", "サンプル タイプ");
+setPluginResource( "ATFPlugin", "kSampleType_Adaptively", "適応的");
+setPluginResource( "ATFPlugin", "kSampleType_EntireDomain", "ドメイン全体");
+setPluginResource( "ATFPlugin", "kSampleType_G1Segments", "G1 セグメント");
+setPluginResource( "ATFPlugin", "kSampleType_KnotValues", "ノット値");
+setPluginResource( "ATFPlugin", "kSampleType_PerSpan", "スパン単位");
+setPluginResource( "ATFPlugin", "kSamples", "サンプル");
+setPluginResource( "ATFPlugin", "kSamplesAnnot", "サンプル");
+setPluginResource( "ATFPlugin", "kStitchSepByLayer", "レイヤ");
+setPluginResource( "ATFPlugin", "kStitchSepByStyle", "スタイル");
+setPluginResource( "ATFPlugin", "kStitchSepSettings", "区切りの基準");
+setPluginResource( "ATFPlugin", "kStitchingSepAnot", "ステッチするサーフェスはこれらの異なるオプションによりグループ化されます。");
+setPluginResource( "ATFPlugin", "kStitchingServices", "ATF ステッチ サービス");
+setPluginResource( "ATFPlugin", "kStitchingServicesAnnot", "このオプションがオンの場合、指定したオプションでステッチが実行されます。");
+setPluginResource( "ATFPlugin", "kStitchingTolerance", "許容値");
+setPluginResource( "ATFPlugin", "kStitchingToleranceAnnot", "すべてのサーフェスは許容値を使用してステッチされます。サーフェス間のギャップが許容値より大きい場合は、一緒にステッチされません。");
+setPluginResource( "ATFPlugin", "kSymmetry", "対称レイヤを処理中");
+setPluginResource( "ATFPlugin", "kSymmetryAnnot", "このオプションがオンの場合、対称レイヤが処理されて表示されます。");
+setPluginResource( "ATFPlugin", "kTessellateObjects", "オブジェクトをテッセレーション");
+setPluginResource( "ATFPlugin", "kTessellateObjectsAnnot", "このオプションがオンの場合、読み込まれたオブジェクトはテッセレーションされます。");
+setPluginResource( "ATFPlugin", "kUseLegacyTessellation", "旧式テッセレーションを使用");
+setPluginResource( "ATFPlugin", "kUseLegacyTessellationAnnot", "このオプションがオンの場合は、旧式テッセレーションが実行されます。");
+// 
+// --------------------------
+// Registered node resources:
+// --------------------------
+// 
+//  (Plugin has no registered nodes)
+// 

@@ -1,0 +1,42 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+
+global proc int performPolyReorderVertex()
+{
+	if ( !`pluginInfo -q -loaded meshReorder` )
+	{
+		return 0;
+	}
+
+	if( `selectMode -q -object` )
+	{
+		selectType -ocm -alc false;
+		selectType -ocm -vertex true;
+	}
+	else
+	{
+		selectType -alc false;
+		selectType -vertex true;
+	}
+	
+	hilite;
+	select -cl;
+	
+	string $tool = "meshReorderCtx";
+	if( !`meshReorderContext -exists $tool` )
+	{
+		rememberCtxSettings `meshReorderContext $tool`;
+	}
+	
+	if( `meshReorderContext -exists $tool` )
+	{
+		setToolTo $tool;
+	}
+
+	return 1;
+}

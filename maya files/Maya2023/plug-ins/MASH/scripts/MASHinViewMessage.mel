@@ -1,0 +1,55 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//  Procedure Name:
+//  MASHinViewMessage
+//
+//  Description;
+//  Checks if IVM are turned on (if not it does a temp enable). Then displays the appropriate message. If MASH IVMs are off in the MASH options, we throw standard messages.
+//  @param: The message to be displayed.
+//  @param: The type of message, this effects the colour of the heading: "Info" and "Warning" are checked for, everything else is treated as an "Error".
+//
+
+global proc MASHinViewMessage (string $message, string $type) {
+
+    int $inViewOn = `optionVar -q inViewMessageEnable`;
+
+    if ($inViewOn == 0) {
+        optionVar -iv inViewMessageEnable true;
+    }
+
+    int $inViewOpVar = `optionVar -q "mIVM"`;
+
+    if ($type == "Info") {
+        if ($inViewOpVar == 0) {
+            print $message;
+        } else {
+            catchQuiet (`inViewMessage -amg (" <span style=\"color:#82C99A;\">MASH:</span> "+ $message) -fst 2000 -dragKill -pos topCenter -fade`);
+            print $message;
+        }
+    } else if ($type == "Warning") {
+        if ($inViewOpVar == 0) {
+            warning $message;
+        } else {
+            catchQuiet (`inViewMessage -amg ("<span style=\"color:#F4FA58;\">MASH:</span> "+ $message) -fst 2000 -dragKill -pos midCenterTop -fade`);
+            warning $message;
+
+        }
+    } else {
+        if ($inViewOpVar == 0) {
+            error $message;
+        } else {
+            catchQuiet (`inViewMessage -amg ("<span style=\"color:#F05A5A;\">MASH:</span> "+ $message) -fst 2000 -dragKill -pos midCenter -fade`);
+            error $message;
+        }
+    }
+
+    if ($inViewOn == 0) {
+        optionVar -iv inViewMessageEnable false;
+    }
+}

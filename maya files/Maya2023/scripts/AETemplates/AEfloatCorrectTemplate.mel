@@ -1,0 +1,36 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc AEfloatCorrectTemplate(string $node)
+{
+    AEswatchDisplay $node;
+    editorTemplate -beginScrollLayout;
+    editorTemplate -beginNoOptimize;
+
+    editorTemplate -beginLayout (uiRes("m_AEfloatCorrectTemplate.kInputs")) -collapse 0;
+    editorTemplate -label (uiRes("m_AEfloatCorrectTemplate.kFloat")) -addControl "inFloat";
+    editorTemplate -endLayout;
+
+    editorTemplate -beginLayout (uiRes("m_AEfloatCorrectTemplate.kFloatCorrect")) -collapse 0;
+    editorTemplate -label (uiRes("m_AEfloatCorrectTemplate.kGain")) -addControl "gain";
+    editorTemplate -label (uiRes("m_AEfloatCorrectTemplate.kOffset")) -addControl "offset";
+    editorTemplate -addSeparator;
+    editorTemplate -label (uiRes("m_AEfloatCorrectTemplate.kGamma")) -addControl "gammaScale";
+    editorTemplate -addSeparator;
+    editorTemplate -label (uiRes("m_AEfloatCorrectTemplate.kClampOutput")) -addControl "clampOutput";
+    editorTemplate -label (uiRes("m_AEfloatCorrectTemplate.kMin")) -addControl "clampMin";
+    editorTemplate -label (uiRes("m_AEfloatCorrectTemplate.kMax")) -addControl "clampMax";
+    editorTemplate -endLayout;
+
+    editorTemplate -addExtraControls;
+
+    editorTemplate -suppress "caching";
+    editorTemplate -suppress "nodeState";
+
+    editorTemplate -endNoOptimize;
+    editorTemplate -endScrollLayout;
+}

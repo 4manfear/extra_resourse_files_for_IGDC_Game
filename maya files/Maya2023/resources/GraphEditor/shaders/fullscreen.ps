@@ -1,0 +1,19 @@
+#version 330 core
+
+
+
+uniform sampler2D textTexture;
+
+
+in VS_OUT
+{
+    vec2 tex;
+}ps_input;
+
+out vec4 color;
+
+
+void main()
+{
+    color = texture(textTexture, ps_input.tex );
+}

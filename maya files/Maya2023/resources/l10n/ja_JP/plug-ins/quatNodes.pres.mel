@@ -1,0 +1,252 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+// Resources for Plug-in: quatNodes
+// 
+// ----------------------------
+// Registered string resources:
+// ----------------------------
+// 
+//  (Plugin has no registered string resources)
+// 
+// 
+// --------------------------
+// Registered node resources:
+// --------------------------
+// 
+// Node: quatToEuler
+// 
+setNodeNiceNameResource( "quatToEuler", "クォータニオンからオイラーに" );
+setAttrNiceNameResource( "quatToEuler", "fzn", "フリーズ" );
+setAttrNiceNameResource( "quatToEuler", "iq", "入力クォータニオン" );
+setAttrNiceNameResource( "quatToEuler", "iqx", "入力クォータニオン X" );
+setAttrNiceNameResource( "quatToEuler", "iqy", "入力クォータニオン Y" );
+setAttrNiceNameResource( "quatToEuler", "iqz", "入力クォータニオン Z" );
+setAttrNiceNameResource( "quatToEuler", "iqw", "入力クォータニオン W" );
+setAttrNiceNameResource( "quatToEuler", "iro", "入力回転順序" );
+setAttrNiceNameResource( "quatToEuler", "ort", "出力回転" );
+setAttrNiceNameResource( "quatToEuler", "orx", "出力回転 X" );
+setAttrNiceNameResource( "quatToEuler", "ory", "出力回転 Y" );
+setAttrNiceNameResource( "quatToEuler", "orz", "出力回転 Z" );
+setAttrNiceNameResource( "quatToEuler", "fza", "フリーズの影響を受ける" );
+setAttrEnumResource( "quatToEuler", "iro", 0, "xyz" );
+setAttrEnumResource( "quatToEuler", "iro", 1, "yzx" );
+setAttrEnumResource( "quatToEuler", "iro", 2, "zxy" );
+setAttrEnumResource( "quatToEuler", "iro", 3, "xzy" );
+setAttrEnumResource( "quatToEuler", "iro", 4, "yxz" );
+setAttrEnumResource( "quatToEuler", "iro", 5, "zyx" );
+// 
+// Node: eulerToQuat
+// 
+setNodeNiceNameResource( "eulerToQuat", "オイラーからクォータニオンに" );
+setAttrNiceNameResource( "eulerToQuat", "fzn", "フリーズ" );
+setAttrNiceNameResource( "eulerToQuat", "irt", "入力回転" );
+setAttrNiceNameResource( "eulerToQuat", "irx", "入力回転 X" );
+setAttrNiceNameResource( "eulerToQuat", "iry", "入力回転 Y" );
+setAttrNiceNameResource( "eulerToQuat", "irz", "入力回転 Z" );
+setAttrNiceNameResource( "eulerToQuat", "ro", "入力回転順序" );
+setAttrNiceNameResource( "eulerToQuat", "oq", "出力クォータニオン" );
+setAttrNiceNameResource( "eulerToQuat", "oqx", "出力クォータニオン X" );
+setAttrNiceNameResource( "eulerToQuat", "oqy", "出力クォータニオン Y" );
+setAttrNiceNameResource( "eulerToQuat", "oqz", "出力クォータニオン Z" );
+setAttrNiceNameResource( "eulerToQuat", "oqw", "出力クォータニオン W" );
+setAttrNiceNameResource( "eulerToQuat", "fza", "フリーズの影響を受ける" );
+setAttrEnumResource( "eulerToQuat", "ro", 0, "xyz" );
+setAttrEnumResource( "eulerToQuat", "ro", 1, "yzx" );
+setAttrEnumResource( "eulerToQuat", "ro", 2, "zxy" );
+setAttrEnumResource( "eulerToQuat", "ro", 3, "xzy" );
+setAttrEnumResource( "eulerToQuat", "ro", 4, "yxz" );
+setAttrEnumResource( "eulerToQuat", "ro", 5, "zyx" );
+// 
+// Node: quatToAxisAngle
+// 
+setNodeNiceNameResource( "quatToAxisAngle", "クォータニオンから軸角度に" );
+setAttrNiceNameResource( "quatToAxisAngle", "fzn", "フリーズ" );
+setAttrNiceNameResource( "quatToAxisAngle", "iq", "入力クォータニオン" );
+setAttrNiceNameResource( "quatToAxisAngle", "iqx", "入力クォータニオン X" );
+setAttrNiceNameResource( "quatToAxisAngle", "iqy", "入力クォータニオン Y" );
+setAttrNiceNameResource( "quatToAxisAngle", "iqz", "入力クォータニオン Z" );
+setAttrNiceNameResource( "quatToAxisAngle", "iqw", "入力クォータニオン W" );
+setAttrNiceNameResource( "quatToAxisAngle", "oa", "出力軸" );
+setAttrNiceNameResource( "quatToAxisAngle", "oax", "出力軸 X" );
+setAttrNiceNameResource( "quatToAxisAngle", "oay", "出力軸 Y" );
+setAttrNiceNameResource( "quatToAxisAngle", "oaz", "出力軸 Z" );
+setAttrNiceNameResource( "quatToAxisAngle", "oang", "出力角度" );
+setAttrNiceNameResource( "quatToAxisAngle", "fza", "フリーズの影響を受ける" );
+// 
+// Node: axisAngleToQuat
+// 
+setNodeNiceNameResource( "axisAngleToQuat", "軸角度からクォータニオンに" );
+setAttrNiceNameResource( "axisAngleToQuat", "fzn", "フリーズ" );
+setAttrNiceNameResource( "axisAngleToQuat", "ia", "入力軸" );
+setAttrNiceNameResource( "axisAngleToQuat", "iax", "入力軸 X" );
+setAttrNiceNameResource( "axisAngleToQuat", "iay", "入力軸 Y" );
+setAttrNiceNameResource( "axisAngleToQuat", "iaz", "入力軸 Z" );
+setAttrNiceNameResource( "axisAngleToQuat", "iang", "入力角度" );
+setAttrNiceNameResource( "axisAngleToQuat", "oq", "出力クォータニオン" );
+setAttrNiceNameResource( "axisAngleToQuat", "oqx", "出力クォータニオン X" );
+setAttrNiceNameResource( "axisAngleToQuat", "oqy", "出力クォータニオン Y" );
+setAttrNiceNameResource( "axisAngleToQuat", "oqz", "出力クォータニオン Z" );
+setAttrNiceNameResource( "axisAngleToQuat", "oqw", "出力クォータニオン W" );
+setAttrNiceNameResource( "axisAngleToQuat", "fza", "フリーズの影響を受ける" );
+// 
+// Node: quatInvert
+// 
+setNodeNiceNameResource( "quatInvert", "クォータニオン反転" );
+setAttrNiceNameResource( "quatInvert", "fzn", "フリーズ" );
+setAttrNiceNameResource( "quatInvert", "iq", "入力クォータニオン" );
+setAttrNiceNameResource( "quatInvert", "iqx", "入力クォータニオン X" );
+setAttrNiceNameResource( "quatInvert", "iqy", "入力クォータニオン Y" );
+setAttrNiceNameResource( "quatInvert", "iqz", "入力クォータニオン Z" );
+setAttrNiceNameResource( "quatInvert", "iqw", "入力クォータニオン W" );
+setAttrNiceNameResource( "quatInvert", "oq", "出力クォータニオン" );
+setAttrNiceNameResource( "quatInvert", "oqx", "出力クォータニオン X" );
+setAttrNiceNameResource( "quatInvert", "oqy", "出力クォータニオン Y" );
+setAttrNiceNameResource( "quatInvert", "oqz", "出力クォータニオン Z" );
+setAttrNiceNameResource( "quatInvert", "oqw", "出力クォータニオン W" );
+setAttrNiceNameResource( "quatInvert", "fza", "フリーズの影響を受ける" );
+// 
+// Node: quatConjugate
+// 
+setNodeNiceNameResource( "quatConjugate", "クォータニオン共役" );
+setAttrNiceNameResource( "quatConjugate", "fzn", "フリーズ" );
+setAttrNiceNameResource( "quatConjugate", "iq", "入力クォータニオン" );
+setAttrNiceNameResource( "quatConjugate", "iqx", "入力クォータニオン X" );
+setAttrNiceNameResource( "quatConjugate", "iqy", "入力クォータニオン Y" );
+setAttrNiceNameResource( "quatConjugate", "iqz", "入力クォータニオン Z" );
+setAttrNiceNameResource( "quatConjugate", "iqw", "入力クォータニオン W" );
+setAttrNiceNameResource( "quatConjugate", "oq", "出力クォータニオン" );
+setAttrNiceNameResource( "quatConjugate", "oqx", "出力クォータニオン X" );
+setAttrNiceNameResource( "quatConjugate", "oqy", "出力クォータニオン Y" );
+setAttrNiceNameResource( "quatConjugate", "oqz", "出力クォータニオン Z" );
+setAttrNiceNameResource( "quatConjugate", "oqw", "出力クォータニオン W" );
+setAttrNiceNameResource( "quatConjugate", "fza", "フリーズの影響を受ける" );
+// 
+// Node: quatNegate
+// 
+setNodeNiceNameResource( "quatNegate", "クォータニオン符号反転" );
+setAttrNiceNameResource( "quatNegate", "fzn", "フリーズ" );
+setAttrNiceNameResource( "quatNegate", "iq", "入力クォータニオン" );
+setAttrNiceNameResource( "quatNegate", "iqx", "入力クォータニオン X" );
+setAttrNiceNameResource( "quatNegate", "iqy", "入力クォータニオン Y" );
+setAttrNiceNameResource( "quatNegate", "iqz", "入力クォータニオン Z" );
+setAttrNiceNameResource( "quatNegate", "iqw", "入力クォータニオン W" );
+setAttrNiceNameResource( "quatNegate", "oq", "出力クォータニオン" );
+setAttrNiceNameResource( "quatNegate", "oqx", "出力クォータニオン X" );
+setAttrNiceNameResource( "quatNegate", "oqy", "出力クォータニオン Y" );
+setAttrNiceNameResource( "quatNegate", "oqz", "出力クォータニオン Z" );
+setAttrNiceNameResource( "quatNegate", "oqw", "出力クォータニオン W" );
+setAttrNiceNameResource( "quatNegate", "fza", "フリーズの影響を受ける" );
+// 
+// Node: quatNormalize
+// 
+setNodeNiceNameResource( "quatNormalize", "クォータニオン正規化" );
+setAttrNiceNameResource( "quatNormalize", "fzn", "フリーズ" );
+setAttrNiceNameResource( "quatNormalize", "iq", "入力クォータニオン" );
+setAttrNiceNameResource( "quatNormalize", "iqx", "入力クォータニオン X" );
+setAttrNiceNameResource( "quatNormalize", "iqy", "入力クォータニオン Y" );
+setAttrNiceNameResource( "quatNormalize", "iqz", "入力クォータニオン Z" );
+setAttrNiceNameResource( "quatNormalize", "iqw", "入力クォータニオン W" );
+setAttrNiceNameResource( "quatNormalize", "oq", "出力クォータニオン" );
+setAttrNiceNameResource( "quatNormalize", "oqx", "出力クォータニオン X" );
+setAttrNiceNameResource( "quatNormalize", "oqy", "出力クォータニオン Y" );
+setAttrNiceNameResource( "quatNormalize", "oqz", "出力クォータニオン Z" );
+setAttrNiceNameResource( "quatNormalize", "oqw", "出力クォータニオン W" );
+setAttrNiceNameResource( "quatNormalize", "fza", "フリーズの影響を受ける" );
+// 
+// Node: quatAdd
+// 
+setNodeNiceNameResource( "quatAdd", "クォータニオンの追加" );
+setAttrNiceNameResource( "quatAdd", "fzn", "フリーズ" );
+setAttrNiceNameResource( "quatAdd", "iq1", "入力 1 クォータニオン" );
+setAttrNiceNameResource( "quatAdd", "i1x", "入力 1 クォータニオン X" );
+setAttrNiceNameResource( "quatAdd", "i1y", "入力 1 クォータニオン Y" );
+setAttrNiceNameResource( "quatAdd", "i1z", "入力 1 クォータニオン Z" );
+setAttrNiceNameResource( "quatAdd", "i1w", "入力 1 クォータニオン W" );
+setAttrNiceNameResource( "quatAdd", "iq2", "入力 2 クォータニオン" );
+setAttrNiceNameResource( "quatAdd", "i2x", "入力 2 クォータニオン X" );
+setAttrNiceNameResource( "quatAdd", "i2y", "入力 2 クォータニオン Y" );
+setAttrNiceNameResource( "quatAdd", "i2z", "入力 2 クォータニオン Z" );
+setAttrNiceNameResource( "quatAdd", "i2w", "入力 2 クォータニオン W" );
+setAttrNiceNameResource( "quatAdd", "oq", "出力クォータニオン" );
+setAttrNiceNameResource( "quatAdd", "oqx", "出力クォータニオン X" );
+setAttrNiceNameResource( "quatAdd", "oqy", "出力クォータニオン Y" );
+setAttrNiceNameResource( "quatAdd", "oqz", "出力クォータニオン Z" );
+setAttrNiceNameResource( "quatAdd", "oqw", "出力クォータニオン W" );
+setAttrNiceNameResource( "quatAdd", "11w", "入力 1 クォータニオン WDEPRECATED" );
+setAttrNiceNameResource( "quatAdd", "fza", "フリーズの影響を受ける" );
+// 
+// Node: quatSub
+// 
+setNodeNiceNameResource( "quatSub", "クォータニオン サブ" );
+setAttrNiceNameResource( "quatSub", "fzn", "フリーズ" );
+setAttrNiceNameResource( "quatSub", "iq1", "入力 1 クォータニオン" );
+setAttrNiceNameResource( "quatSub", "i1x", "入力 1 クォータニオン X" );
+setAttrNiceNameResource( "quatSub", "i1y", "入力 1 クォータニオン Y" );
+setAttrNiceNameResource( "quatSub", "i1z", "入力 1 クォータニオン Z" );
+setAttrNiceNameResource( "quatSub", "i1w", "入力 1 クォータニオン W" );
+setAttrNiceNameResource( "quatSub", "iq2", "入力 2 クォータニオン" );
+setAttrNiceNameResource( "quatSub", "i2x", "入力 2 クォータニオン X" );
+setAttrNiceNameResource( "quatSub", "i2y", "入力 2 クォータニオン Y" );
+setAttrNiceNameResource( "quatSub", "i2z", "入力 2 クォータニオン Z" );
+setAttrNiceNameResource( "quatSub", "i2w", "入力 2 クォータニオン W" );
+setAttrNiceNameResource( "quatSub", "oq", "出力クォータニオン" );
+setAttrNiceNameResource( "quatSub", "oqx", "出力クォータニオン X" );
+setAttrNiceNameResource( "quatSub", "oqy", "出力クォータニオン Y" );
+setAttrNiceNameResource( "quatSub", "oqz", "出力クォータニオン Z" );
+setAttrNiceNameResource( "quatSub", "oqw", "出力クォータニオン W" );
+setAttrNiceNameResource( "quatSub", "11w", "入力 1 クォータニオン WDEPRECATED" );
+setAttrNiceNameResource( "quatSub", "fza", "フリーズの影響を受ける" );
+// 
+// Node: quatProd
+// 
+setNodeNiceNameResource( "quatProd", "クォータニオン プロダクション" );
+setAttrNiceNameResource( "quatProd", "fzn", "フリーズ" );
+setAttrNiceNameResource( "quatProd", "iq1", "入力 1 クォータニオン" );
+setAttrNiceNameResource( "quatProd", "i1x", "入力 1 クォータニオン X" );
+setAttrNiceNameResource( "quatProd", "i1y", "入力 1 クォータニオン Y" );
+setAttrNiceNameResource( "quatProd", "i1z", "入力 1 クォータニオン Z" );
+setAttrNiceNameResource( "quatProd", "i1w", "入力 1 クォータニオン W" );
+setAttrNiceNameResource( "quatProd", "iq2", "入力 2 クォータニオン" );
+setAttrNiceNameResource( "quatProd", "i2x", "入力 2 クォータニオン X" );
+setAttrNiceNameResource( "quatProd", "i2y", "入力 2 クォータニオン Y" );
+setAttrNiceNameResource( "quatProd", "i2z", "入力 2 クォータニオン Z" );
+setAttrNiceNameResource( "quatProd", "i2w", "入力 2 クォータニオン W" );
+setAttrNiceNameResource( "quatProd", "oq", "出力クォータニオン" );
+setAttrNiceNameResource( "quatProd", "oqx", "出力クォータニオン X" );
+setAttrNiceNameResource( "quatProd", "oqy", "出力クォータニオン Y" );
+setAttrNiceNameResource( "quatProd", "oqz", "出力クォータニオン Z" );
+setAttrNiceNameResource( "quatProd", "oqw", "出力クォータニオン W" );
+setAttrNiceNameResource( "quatProd", "11w", "入力 1 クォータニオン WDEPRECATED" );
+setAttrNiceNameResource( "quatProd", "fza", "フリーズの影響を受ける" );
+// 
+// Node: quatSlerp
+// 
+setNodeNiceNameResource( "quatSlerp", "クォータニオン球面リニア補間" );
+setAttrNiceNameResource( "quatSlerp", "fzn", "フリーズ" );
+setAttrNiceNameResource( "quatSlerp", "idir", "角度の補間" );
+setAttrNiceNameResource( "quatSlerp", "t", "入力 T" );
+setAttrNiceNameResource( "quatSlerp", "iq1", "入力 1 クォータニオン" );
+setAttrNiceNameResource( "quatSlerp", "i1x", "入力 1 クォータニオン X" );
+setAttrNiceNameResource( "quatSlerp", "i1y", "入力 1 クォータニオン Y" );
+setAttrNiceNameResource( "quatSlerp", "i1z", "入力 1 クォータニオン Z" );
+setAttrNiceNameResource( "quatSlerp", "i1w", "入力 1 クォータニオン W" );
+setAttrNiceNameResource( "quatSlerp", "iq2", "入力 2 クォータニオン" );
+setAttrNiceNameResource( "quatSlerp", "i2x", "入力 2 クォータニオン X" );
+setAttrNiceNameResource( "quatSlerp", "i2y", "入力 2 クォータニオン Y" );
+setAttrNiceNameResource( "quatSlerp", "i2z", "入力 2 クォータニオン Z" );
+setAttrNiceNameResource( "quatSlerp", "i2w", "入力 2 クォータニオン W" );
+setAttrNiceNameResource( "quatSlerp", "oq", "出力クォータニオン" );
+setAttrNiceNameResource( "quatSlerp", "oqx", "出力クォータニオン X" );
+setAttrNiceNameResource( "quatSlerp", "oqy", "出力クォータニオン Y" );
+setAttrNiceNameResource( "quatSlerp", "oqz", "出力クォータニオン Z" );
+setAttrNiceNameResource( "quatSlerp", "oqw", "出力クォータニオン W" );
+setAttrNiceNameResource( "quatSlerp", "11w", "入力 1 クォータニオン WDEPRECATED" );
+setAttrNiceNameResource( "quatSlerp", "fza", "フリーズの影響を受ける" );
+setAttrEnumResource( "quatSlerp", "idir", 0, "最短" );
+setAttrEnumResource( "quatSlerp", "idir", 1, "ポジティブ" );
+setAttrEnumResource( "quatSlerp", "idir", 2, "ネガティブ" );

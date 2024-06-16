@@ -1,0 +1,40 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  November 25, 1996
+//
+//  Description:
+//      This script configures the tool settings window for the softSelect tool.
+//
+
+global proc commonSelectValues( string $parent)
+{
+	setParent $parent;
+
+	int $autoUseDepth = `selectPref -q -autoUseDepth`;
+
+	if(`checkBoxGrp -q -ex AutoCameraBasedSelectionChkBox`)
+		checkBoxGrp -edit -value1 $autoUseDepth AutoCameraBasedSelectionChkBox;
+	if(`checkBoxGrp -q -ex CameraBasedSelectionChkBox`)
+		checkBoxGrp -edit -value1 (`selectPref -q -useDepth`) -enable1 (!$autoUseDepth) CameraBasedSelectionChkBox;
+	if(`checkBoxGrp -q -ex CameraBasedPaintSelectionChkBox`)
+		checkBoxGrp -edit -value1 (`selectPref -q -paintSelectWithDepth`) -enable1 (!$autoUseDepth) CameraBasedPaintSelectionChkBox;
+	checkBoxGrp -edit -value1 (`selectPref -q -preSelectBackfacing`) PreSelectBackfacesChkBox;
+	checkBoxGrp -edit -value1 (`selectPref -q -preSelectClosest`) PreSelectClosestChkBox;
+	checkBoxGrp -edit -value1 (`displayPref -q -displayAffected`) HighlightAffectedChkBox;
+
+	int $ps = `selectPref -q -paintSelect`;
+	if ($ps == false)
+		radioButtonGrp -edit -select 1 SelectionStyleRB1;
+	else
+		radioButtonGrp -edit -select 1 SelectionStyleRB2;
+		
+	texSelConstUpdate("texSelConstTextField");
+	updateSelConstField();
+}

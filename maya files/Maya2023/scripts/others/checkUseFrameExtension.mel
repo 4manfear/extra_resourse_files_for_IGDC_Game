@@ -1,0 +1,49 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//  Procedure Name:
+//	checkUseFrameExtension
+//
+
+global proc checkUseFrameExtension ( string $nodeName ) 
+{
+	string $nodeAttr = $nodeName + ".useFrameExtension";
+	int $value = `getAttr $nodeAttr`;
+	
+	if ( $value == 1 ) {
+		editorTemplate -dimControl $nodeName "frameExtension" false;
+		editorTemplate -dimControl $nodeName "frameCache" false; 
+		editorTemplate -dimControl $nodeName "frameOffset" false;
+		
+		$nodeAttr = $nodeName + ".frameExtension";
+		string $frameExt = `getAttr $nodeAttr`;
+		
+		if( $frameExt == "1" )
+		{
+			if( `connectionInfo -isDestination $nodeAttr` == false )
+			{
+				expression -s ($nodeAttr + "=frame" )  ;
+			}
+		}
+		
+	} else {
+		editorTemplate -dimControl $nodeName "frameExtension" true;
+		editorTemplate -dimControl $nodeName "frameCache" true;
+		editorTemplate -dimControl $nodeName "frameOffset" true;	 
+		
+		$nodeAttr = $nodeName + ".frameExtension";
+		string $frameExt = `getAttr $nodeAttr`;
+		
+		string $frameExtensionSource = `connectionInfo -sourceFromDestination $nodeAttr`;
+		if ($frameExtensionSource != "") {
+			string $sourceNode = plugNode( $frameExtensionSource );
+			delete $sourceNode;
+			setAttr $nodeAttr 1;
+		}
+	}
+	
+}

@@ -1,0 +1,30 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+// Selects the appropriate pickWalk command,
+//   depending on the current selection.
+//
+
+global proc pickWalkOut(){
+	
+	string $cmd = "pickWalk -d out";
+	
+	string $type = "";
+	
+	// if any lattice points are selected, do a lattice pickwalk
+	string $latticeSel[] = `filterExpand -sm 46`;
+	if ( size( $latticeSel ) != 0 ) {
+		$type = "latticePoints";
+	}
+	
+	// append the type, if any
+	if ( size( $type ) != 0 ) {
+		$cmd += " -type " + $type;
+	}
+	
+	evalEcho($cmd);
+}

@@ -1,0 +1,60 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+
+proc enableDisable(int $isOn)
+{
+	int $isOff = ! $isOn;
+	string $name;
+	string $names[] = { "constraint", 
+						"expression", 
+						"fluid",
+						"globalstitch", 
+						"nCloth",
+						"nParticle",
+						"nRigid",
+						"dynamicConstraint",
+						"nucleus",
+						"iksolver", 
+						"particle", 
+						"rigidbody", 
+						"snapshot" };
+	for( $name in $names )
+	{
+		if( `menuItem -exists ($name + "OnOff")` ) {
+			menuItem -e -cb $isOn ($name + "OnOff");
+		}
+	}
+}
+
+global proc doEnableNodeItems(int $state, string $name)
+//
+//  Description:
+//      Change the checked state of the enable/disable node menu items.
+//
+//  Input Arguments:
+//      $state  - true for enable all, false for disable all
+//                ignored for individual items (we toggle them)
+//		$name    - the type of node being disabled
+//
+//  Return Value:
+//      None.
+//
+
+{
+	if( $name == "all" ) {
+		setState $name $state;
+		enableDisable( $state );
+	} else {
+		string $whichItem = $name + "OnOff";
+		if( `menuItem -exists $whichItem` ) {
+			int $newState = `menuItem -q -cb $whichItem`;
+			setState $name $newState;
+		}
+
+	}
+}

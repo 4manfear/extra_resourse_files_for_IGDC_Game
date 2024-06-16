@@ -1,0 +1,17 @@
+
+<?xml version='1.0' encoding='UTF-8'?>
+<templates>
+	<using package='maya'/>
+	<template name='NEaimMatrix'>
+		<attribute name='inputMatrix' type='maya.matrix'>
+			<label>Input Matrix</label>
+		</attribute>
+		<attribute name='outputMatrix' type='maya.matrix'>
+			<label>Output Matrix</label>
+		</attribute>
+	</template>
+	<view name='NEDefault' template='NEaimMatrix'>
+		<property name='outputMatrix'/>
+		<property name='inputMatrix'/>
+	</view>
+</templates>

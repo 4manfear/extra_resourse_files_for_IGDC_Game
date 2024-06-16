@@ -1,0 +1,62 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+// Resources for Plug-in: sceneAssembly
+// 
+// ----------------------------
+// Registered string resources:
+// ----------------------------
+setPluginResource( "sceneAssembly", "rAssemblyDefnImportError", "アセンブリ定義ファイル ^1s をアセンブリ リファレンス ^2s に読み込むことができませんでした。");
+setPluginResource( "sceneAssembly", "rAssemblyDefnNotFoundError", "アセンブリ リファレンス ^2s 用のファイル ^1s にアセンブリ定義ノードが見つかりません。");
+setPluginResource( "sceneAssembly", "rCreateGPUCacheNodeError", "gpuCache ノードを作成できませんでした。gpuCache プラグインがロードされていません。");
+setPluginResource( "sceneAssembly", "rDeregisterNodeError", "^1s ノードを登録解除できませんでした: ^2s。");
+setPluginResource( "sceneAssembly", "rDeregisterRepFactoryError", "リプリゼンテーション タイプ ^1s のファクトリを登録解除できませんでした。");
+setPluginResource( "sceneAssembly", "rEditQueryError", "-edit フラグと -query フラグを同時に指定することはできません。");
+setPluginResource( "sceneAssembly", "rListRepTypesFlagError", "フラグ -listRepTypes は、照会モードでのみ使用できます。");
+setPluginResource( "sceneAssembly", "rMultAssemblyDefnFoundError", "アセンブリ リファレンス ^2s 用のファイル ^1s に複数のアセンブリ定義ノードが見つかりました。");
+setPluginResource( "sceneAssembly", "rRegisterAssembliesError", "アセンブリを登録できませんでした: ^1s。");
+setPluginResource( "sceneAssembly", "rRegisterCmdError", "^1s コマンドを登録できませんでした: ^2s。");
+setPluginResource( "sceneAssembly", "rRegisterNodeError", "^1s ノードを登録できませんでした: ^2s。");
+setPluginResource( "sceneAssembly", "rRegisterRepFactoryError", "リプリゼンテーション タイプ ^1s にファクトリを登録できませんでした。");
+setPluginResource( "sceneAssembly", "rRegisterRepresentationsError", "リプリゼンテーションを登録できませんでした: ^1s。");
+setPluginResource( "sceneAssembly", "rRegisterUIStringError", "^1s を登録できませんでした。");
+setPluginResource( "sceneAssembly", "rRepTypeObjArgError", "リプリゼンテーション タイプとしてのオブジェクト文字列がありません。");
+// 
+// --------------------------
+// Registered node resources:
+// --------------------------
+// 
+// Node: assemblyDefinition
+// 
+setNodeNiceNameResource( "assemblyDefinition", "アセンブリ定義" );
+setAttrNiceNameResource( "assemblyDefinition", "rep", "リプリゼンテーション" );
+setAttrNiceNameResource( "assemblyDefinition", "rna", "リプリゼンテーション名" );
+setAttrNiceNameResource( "assemblyDefinition", "rla", "ﾘﾌﾟﾘｾﾝﾃｰｼｮﾝ ﾗﾍﾞﾙ" );
+setAttrNiceNameResource( "assemblyDefinition", "rty", "ﾘﾌﾟﾘｾﾝﾃｰｼｮﾝ ﾀｲﾌﾟ" );
+setAttrNiceNameResource( "assemblyDefinition", "rda", "リプリゼンテーション データ" );
+// 
+// Node: assemblyReference
+// 
+setNodeNiceNameResource( "assemblyReference", "アセンブリ リファレンス" );
+setAttrNiceNameResource( "assemblyReference", "rep", "リプリゼンテーション" );
+setAttrNiceNameResource( "assemblyReference", "rna", "リプリゼンテーション名" );
+setAttrNiceNameResource( "assemblyReference", "rla", "リプリゼンテーション ラベル" );
+setAttrNiceNameResource( "assemblyReference", "rty", "リプリゼンテーション タイプ" );
+setAttrNiceNameResource( "assemblyReference", "rda", "リプリゼンテーション データ" );
+setAttrNiceNameResource( "assemblyReference", "def", "定義" );
+setAttrNiceNameResource( "assemblyReference", "rns", "リプリゼンテーション ネームスペース" );
+setAttrNiceNameResource( "assemblyReference", "irp", "初期リプリゼンテーション" );
+// 
+// Node: adskPrepareRenderGlobals
+// 
+setNodeNiceNameResource( "adskPrepareRenderGlobals", "Adsk 準備レンダー グローバル" );
+setAttrNiceNameResource( "adskPrepareRenderGlobals", "fzn", "フリーズ" );
+setAttrNiceNameResource( "adskPrepareRenderGlobals", "rna", "リプリゼンテーション名" );
+setAttrNiceNameResource( "adskPrepareRenderGlobals", "rla", "ﾘﾌﾟﾘｾﾝﾃｰｼｮﾝ ﾗﾍﾞﾙ" );
+setAttrNiceNameResource( "adskPrepareRenderGlobals", "rty", "ﾘﾌﾟﾘｾﾝﾃｰｼｮﾝ ﾀｲﾌﾟ" );
+setAttrNiceNameResource( "adskPrepareRenderGlobals", "urx", "標準エクスプレッションを使用" );
+setAttrNiceNameResource( "adskPrepareRenderGlobals", "fza", "フリーズの影響を受ける" );

@@ -1,0 +1,33 @@
+
+<?xml version='1.0' encoding='UTF-8'?>
+<templates>
+	<using package='maya'/>
+	<template name='NEfalloffEval'>
+		<attribute name='inputWeight' type='maya.weightFunctionData'>
+			<label>Input Weight</label>
+		</attribute>
+		<attribute name='currentGeometry' type='maya.geometry'>
+			<label>Current Geometry</label>
+		</attribute>
+		<attribute name='originalGeometry' type='maya.geometry'>
+			<label>Original Geometry</label>
+		</attribute>
+		<attribute name='perFunctionWeights' type='maya.TdataCompound'>
+			<label>Per Function Weights</label>
+		</attribute>
+		<attribute name='perVertexWeights' type='maya.TdataCompound'>
+			<label>Per Vertext Weights</label>
+		</attribute>
+	</template>
+	<view name='NEDefault' template='NEfalloffEval'>
+		<property name='inputWeight'/>
+		<property name='currentGeometry'/>
+		<property name='originalGeometry'/>
+		<property name='perFunctionWeights'/>
+		<property name='perVertexWeights'/>
+	</view>
+	<view name='NEDefaultSoloOutput' template='NEcloud'>
+		<property name='perFunctionWeights'/>
+		<property name='perVertexWeights'/>
+	</view>
+</templates>

@@ -1,0 +1,23 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<templates>
+	<using package='maya'/>
+	<template name='NEfloatCondition'>
+		<attribute name='outFloat' type='maya.float'>
+			<label>Out Alpha</label>
+		</attribute>
+		<attribute name='floatA' type='maya.float'>
+			<label>Float A</label>
+		</attribute>
+		<attribute name='floatB' type='maya.float'>
+			<label>Float B</label>
+		</attribute>
+	</template>
+	<view name='NEDefault' template='NEfloatCondition'>
+		<property name='outFloat'/>
+		<property name='floatA'/>
+		<property name='floatB'/>
+	</view>
+	<view name='NEDefaultSoloOutput' template='NEfloatCondition'>
+		<property name='outFloat'/>
+	</view>
+</templates>

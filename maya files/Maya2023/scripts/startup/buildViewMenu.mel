@@ -1,0 +1,285 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//
+//  Procedure Name:
+//      buildViewMenu
+//
+//  Description:
+//		Builds all the items in the View menu when
+//		the user clicks on the menu.  Checks to see if
+//		there are any children in the menu already, and
+//		if so, doesn't rebuild the menu.
+//
+//  Input Arguments:
+//      Name of the parent menu.
+//
+//  Return Value:
+//      None.
+//
+
+
+// Storing factory workspaces in a global array to preserve the order of workspaces in menus..
+global string $gFactoryWorkspaces[] = { "General"
+									  ,"Modeling - Standard" 
+									  ,"Modeling - Expert"
+									  ,"Sculpting"
+									  ,"Pose Sculpting"
+									  ,"UV Editing"
+									  ,"XGen"
+									  ,"XGen - Interactive Groom"
+									  ,"Rigging"
+									  ,"Animation"
+									  ,"Rendering - Standard"
+									  ,"Rendering - Expert" 
+									  ,"MASH"
+									  ,"Motion Graphics"
+									} ;
+global int $gWorkspaceActionId = 1;
+
+
+global proc buildViewMenu( string $parent )
+{
+    string $menu;
+	setParent -menu $parent;
+
+	if( `menu -q -ni $parent` != 0 ) {
+		//
+		//	Menu is already built - just return
+		//
+		return;
+	}
+
+	menuItem -version 2022 -rtc "AppHome";
+	menuItem -divider true;
+
+    // workspace implementation
+    string $workspaceMenu = `menuItem 
+           -label (uiRes("m_buildViewMenu.kWorkspacesSubMenuLabel"))
+		   -version "2017"
+		   -sm true `;
+
+	menu -e -pmc ( "rebuildWorkspaceListMenu " + $workspaceMenu ) $workspaceMenu;
+	setParent -menu ..;
+
+	WindowMenu $parent;
+
+	windowOutputWindowCommandsMenu();
+    windowZorderCommandsMenu();
+}
+
+global proc rebuildWorkspaceListMenu(string $parent)
+{
+	rebuildWorkspaceList($parent, true, true);
+	rebuildWorkspaceActionsList($parent, true, false);
+}
+
+global proc rebuildWorkspaceList(string $parent, int $addCheckBoxesAndRadioButtons, int $displayDividerLabel)
+{
+	setParent -menu $parent;
+	menu -edit -deleteAllItems $parent;
+	
+   global string $gFactoryWorkspaces[];
+   int $index = 0;
+    
+    // get the layout names
+    string $currentLayout;
+    string $userLayouts[];
+	string $moduleLayouts[];
+	$moduleLayouts = `workspaceLayoutManager -lml`;
+	$userLayouts = `workspaceLayoutManager -lul`;
+    $currentLayout = `workspaceLayoutManager -q -current`;
+   
+   if($addCheckBoxesAndRadioButtons) {
+		if ( `radioMenuItemCollection -exists WorkspaceNameRadioCollection` ) {
+			deleteUI -radioMenuItemCollection WorkspaceNameRadioCollection;
+		}
+		radioMenuItemCollection WorkspaceNameRadioCollection;
+   }
+	
+	if(`size($userLayouts)`) 
+	{
+		if($displayDividerLabel)
+			menuItem -divider true -dividerLabel (uiRes("m_buildViewMenu.kCustomWorkspaces"));
+	}
+	$index = buildWorkspaceMenuItems2($userLayouts, $currentLayout, $index, $addCheckBoxesAndRadioButtons);
+
+	
+	if(`size($gFactoryWorkspaces)`)
+	{
+		if($displayDividerLabel)
+			menuItem -divider true -dividerLabel (uiRes("m_buildViewMenu.kFactoryWorkspaces"));
+		else if(`size($userLayouts)`)
+			menuItem -divider true;
+	}
+	$index = buildWorkspaceMenuItems2($gFactoryWorkspaces, $currentLayout, $index, $addCheckBoxesAndRadioButtons);	
+
+	if(`size($moduleLayouts)`)
+	{
+		if($displayDividerLabel)
+			menuItem -divider true -dividerLabel (uiRes("m_buildViewMenu.kModuleWorkspaces"));
+	}
+	$index = buildWorkspaceMenuItems2($moduleLayouts, $currentLayout, $index, $addCheckBoxesAndRadioButtons);
+}
+
+global proc rebuildWorkspaceActionsList(string $parent, int $addLockItem, int $shorterWidth) 
+{
+	global int $gWorkspaceActionId;
+	
+	setParent -menu $parent;
+	menuItem -divider true -ld false;
+		
+	menuItem
+		-data $gWorkspaceActionId
+		-rtc "ResetCurrentWorkspace" workspaceResetMenu;
+
+	menuItem 
+		-data $gWorkspaceActionId
+		-rtc "SaveCurrentWorkspace" workspaceSaveMenu;
+
+	menuItem
+		-data $gWorkspaceActionId
+		-rtc "ImportWorkspaceFiles" workspaceImportMenu;
+
+	menuItem 
+		-data $gWorkspaceActionId
+		-rtc "DeleteCurrentWorkspace" workspaceDeleteMenu;
+	
+	if($addLockItem){
+		menuItem -label (uiRes("m_buildViewMenu.kLockWorkspaces"))
+			-checkBox (`optionVar -query workspacesLockDocking`)
+			-annotation (uiRes("m_buildViewMenu.kLockWorkspacesAnnot"))
+			-data $gWorkspaceActionId
+			-command ("if(!`exists updateWorkspaceDocking`) {\n\teval(\"source workspaceHelperProcs.mel\");\n}\nupdateWorkspaceDocking #1")
+			workspacesLockMenu;  
+	}
+	
+	updateWorkspaceResetMenu($shorterWidth);
+	updateWorkspaceDeleteMenu();
+	
+}
+
+global proc int buildWorkspaceMenuItems(string $layouts[], string $currentLayout, int $index)
+{
+	return buildWorkspaceMenuItems2($layouts, $currentLayout, $index, true);
+}
+
+global proc int buildWorkspaceMenuItems2(string $layouts[], string $currentLayout, int $index, int $addCheckBoxesAndRadioButtons)
+{
+	string $prefix = "WorkspaceMenuID_";
+	string $layout;
+	$menuName = $prefix  + $index;
+	
+	for  ($layout in $layouts)
+    {
+		string $localizedLayout = localizedFactoryWorkspaceLabel($layout);
+		int $isCurrent =  ($layout == $currentLayout);
+		int $needDividerAfterThisMenuItem = ( ($layout =="General")
+											|| ($layout == "XGen - Interactive Groom")
+											|| ($layout == "Rendering - Expert")
+											|| ($layout == "Animation")
+		);
+
+        string $workspaceLabel = $localizedLayout;
+
+        if (`workspaceLayoutManager -modified $layout`) {
+        	$workspaceLabel += "*";
+        }
+
+        // The following command evaluates to evalDeferred("workspaceLayoutManager -setCurrent <layout name>");
+		string $commandString = "evalDeferred(\"workspaceLayoutManager -setCurrent " + "\\\"" + $layout + "\\\"\");";
+
+		if($addCheckBoxesAndRadioButtons)
+			menuItem  -label $workspaceLabel -radioButton $isCurrent -command $commandString $menuName;
+		else
+			menuItem -label $workspaceLabel -command $commandString $menuName;
+						
+		string $optionsCommandString = "if(!`exists workspaceLayoutOptions`) {\n\teval(\"source workspaceHelperProcs.mel\");\n}\nworkspaceLayoutOptions(\"" + $layout + "\",\"" + $menuName +"\");";
+
+		if($addCheckBoxesAndRadioButtons) {
+			menuItem -optionBox true
+				-annotation (uiRes("m_buildViewMenu.kWorkspaceLayoutOptionsAnnot"))
+				-c $optionsCommandString;
+		}
+
+        $index++; 
+        $menuName = $prefix  + $index;
+        		
+		if($needDividerAfterThisMenuItem) {
+			menuItem -divider true -ld false;
+		}
+			
+    }
+	return $index;
+}
+
+global proc updateWorkspaceDeleteMenu()
+{
+	if ( (`menuItem -exists "workspaceDeleteMenu"`) && (`workspaceLayoutManager -q -current` != "") ) {
+		string $currentWorkspace = `workspaceLayoutManager -q -current`;
+		string $layoutType = `workspaceLayoutManager -type $currentWorkspace`;
+		int $layoutIsUser = ($layoutType == "USER");
+
+		menuItem -e -enable $layoutIsUser "workspaceDeleteMenu";
+	}
+}
+
+global proc updateWorkspaceResetMenu(int $shorterWidth)
+{
+	string $currentWorkspace = `workspaceLayoutManager -q -current`;
+	if ( (`menuItem -exists "workspaceResetMenu"`) &&  ($currentWorkspace != "") ) {		
+		string $localizedWorkspace = localizedFactoryWorkspaceLabel($currentWorkspace);
+		string $layoutType = `workspaceLayoutManager -type $currentWorkspace`;
+		int $layoutIsUser = ($layoutType == "USER");
+		int $layoutIsModuleOverride = ($layoutType == "MODULE_OVERRIDE");
+
+		string $resetString = "";
+
+		if($shorterWidth) {
+			$resetString = (uiRes("m_buildViewMenu.kUserResetShort"));
+		}
+		else {
+			if ($layoutIsUser) {
+				$resetString = (uiRes("m_buildViewMenu.kUserReset"));
+			} else if($layoutIsModuleOverride) {
+				$resetString = (uiRes("m_buildViewMenu.kModuleReset"));
+			} else {
+				$resetString = (uiRes("m_buildViewMenu.kFactoryReset"));
+			}
+		}
+
+		string $resetLabel = `format -s $localizedWorkspace $resetString`;
+
+		menuItem -e -label $resetLabel "workspaceResetMenu";
+
+		int $layoutIsModified = `workspaceLayoutManager -modified $currentWorkspace`;
+		int $resetEnabled = ($layoutIsModified || $layoutType == "FACTORY_OVERRIDE" || $layoutType == "MODULE_OVERRIDE");
+		menuItem -e -enable $resetEnabled "workspaceResetMenu";
+	}
+}
+
+global proc windowOutputWindowCommandsMenu()
+{
+	if (`about -nt`) {
+		menuItem -divider true;
+		menuItem -version 2022 -rtc "OutputWindow";
+	}
+}
+
+global proc windowZorderCommandsMenu()
+{
+    menuItem -divider true;
+
+	if (!`about -mac`) {
+		menuItem -rtc "MinimizeApplication";
+	}
+
+	menuItem -rtc "RaiseMainWindow";
+	menuItem -rtc "RaiseApplicationWindows";
+}

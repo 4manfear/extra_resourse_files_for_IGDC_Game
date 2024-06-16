@@ -1,0 +1,33 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc selectUnmappedFaces()
+//
+//  Description:
+//		Select all unmapped faces in UV editor
+//		
+//  Input Arguments:
+//      None
+//
+//  Return Value:
+//      None
+//
+{
+    if(size(`ls -sl`) == 0 && size(`ls -hl`) == 0)
+	    return;
+    changeSelectMode -component;
+    setComponentMask("facet");
+    select -cl;
+    $hilite = `ls -hl`;
+	catchQuiet ( `polyCleanupArgList 3 {"0","2","0","0","0","0","0","0","0","1e-005","0","1e-005","1","1e-006","0","-1","0"} `);
+	hilite $hilite;
+	$sel = `ls -sl`;
+	if(size($sel) == 0)
+		warning (uiRes("m_selectUnmappedFaces.kNoUnmappedFaces"));
+	else
+	    select -r $sel;
+}

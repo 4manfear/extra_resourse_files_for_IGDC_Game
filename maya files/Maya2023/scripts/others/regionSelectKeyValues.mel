@@ -1,0 +1,38 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+// regionSelectKey : has no values
+//
+
+global proc regionSelectKeyValues ( string $toolName ) {
+
+	string $parent = `toolPropertyWindow -q -location`;
+	setParent $parent;
+
+	// Get the current tool
+	//
+	string $currentTool = `currentCtx`;
+
+	// If we can't find the icon then use the null string to 
+	// blank the picture altogether.
+	//
+	string $xpmName = "";
+
+	//
+	// If it's a simple tool then just ask it what its icon is.
+	//
+	if ( `contextInfo -q -exists $currentTool` )
+		$xpmName =`contextInfo -q -i1 $currentTool`;
+
+	string $helpTag = "";
+	toolPropertySetCommon $toolName $xpmName $helpTag;
+
+	toolPropertySelect "regionSelectKey";
+}
+
+

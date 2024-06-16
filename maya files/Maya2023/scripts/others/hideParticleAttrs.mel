@@ -1,0 +1,61 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//	hideParticleAttrs.mel
+//
+//	Description:
+//		Hides (as in, makes unkeyable, and hidden in the channel box), all the
+//	particle attributes of the given nBase node.
+//
+//		Arguments:	nBase node
+//
+
+global proc hideParticleAttrs( string $node )
+//
+//	Description:
+//		Hides the particle attributes for the given nCloth/nRigid, so they
+//	won't show up in the channel box.
+//
+{
+	setAttr -keyable false -channelBox false ($node + ".dieOnEmissionVolumeExit");
+	setAttr -keyable false -channelBox false ($node + ".lifespanMode");
+	setAttr -keyable false -channelBox false ($node + ".lifespanRandom");
+	setAttr -keyable false -channelBox false ($node + ".expressionsAfterDynamics");
+	setAttr -keyable false -channelBox false ($node + ".dynamicsWeight");
+	setAttr -keyable false -channelBox false ($node + ".forcesInWorld");
+	setAttr -keyable false -channelBox false ($node + ".conserve");
+	setAttr -keyable false -channelBox false ($node + ".emissionInWorld");
+	setAttr -keyable false -channelBox false ($node + ".maxCount");
+	setAttr -keyable false -channelBox false ($node + ".levelOfDetail");
+	setAttr -keyable false -channelBox false ($node + ".inheritFactor");
+	setAttr -keyable false -channelBox false ($node + ".currentTime");
+	setAttr -keyable false -channelBox false ($node + ".startFrame");
+	setAttr -keyable false -channelBox false ($node + ".inputGeometrySpace");
+	setAttr -keyable false -channelBox false ($node + ".enforceCountFromHistory");
+	setAttr -keyable false -channelBox false ($node + ".targetGeometrySpace");
+	setAttr -keyable false -channelBox false ($node + ".goalSmoothness");
+	setAttr -keyable false -channelBox false ($node + ".cacheData");
+	setAttr -keyable false -channelBox false ($node + ".traceDepth");
+	setAttr -keyable false -channelBox false ($node + ".particleRenderType");
+}
+
+global proc hideAllParticleAttrs()
+//
+//	Description:
+//		Hide the particle attrs for all the nBase nodes in the scene.
+//
+{
+	string $shapes[] = `ls -type nBase`;
+	int $numShapes = size( $shapes );
+	int $index = 0;
+	while( $index < $numShapes ){
+		string $node = $shapes[$index];
+		hideParticleAttrs( $node );
+		$index++;
+	}
+}

@@ -1,0 +1,41 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:	May 16, 1997
+//
+//  Procedure Name:
+//	AEreflectCommon
+//
+//  Description Name;
+//	Creates attribute editor controls in separate files 
+//	for the reflect Node
+//
+//  Input Value:
+//	nodeName 
+//
+//  Output Value:
+//	None
+// 
+
+
+global proc AEreflectCommon ( string $nodeName )
+{
+	// include/call base class/node attributes
+	AElambertCommon2 $nodeName;
+	editorTemplate -beginLayout (uiRes("m_AEreflectCommon.kRaytraceOptions"));
+
+		// include/call base class/node attributes
+		AElambertCommonRaytraceOptions $nodeName;
+		editorTemplate -addSeparator;
+		editorTemplate -addControl "reflectionLimit";
+		editorTemplate -addControl "reflectionSpecularity";
+	editorTemplate -endLayout;
+	// include/call base class/node attributes
+	AElambertCommonInclude $nodeName;
+}

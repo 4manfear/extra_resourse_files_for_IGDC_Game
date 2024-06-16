@@ -1,0 +1,1194 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+// Creation Date:  13 April 1997
+//
+//  Procedure Name:
+//      ModObjectsMenu
+//
+//  Description:
+//		Create the MODELLING->Objects menu
+//
+//  Input Arguments:
+//      parent to parent the menu to.
+//
+//  Return Value:
+//      None.
+//
+
+global proc updateModObjectsMenu ( string $parent )
+{
+	setParent -menu $parent;
+
+	string $lsObjs[] = `ls -geometry`;
+	string $lslive[] = `ls -live`;
+	
+	if (size($lsObjs) == 0 || size($lslive) == 0) {
+		menuItem -edit -label (uiRes("m_ModObjectsMenu.kMakeLive1")) 
+			-annotation (uiRes("m_ModObjectsMenu.kMakeLive1Annot"))  liveItem;
+	} else {
+  		string $lsSel[] = `ls -sl`; 
+		if (size($lsSel) == 0) {
+			menuItem -edit -label (uiRes("m_ModObjectsMenu.kMakeNotLive"))  
+			-annotation (uiRes("m_ModObjectsMenu.kMakeNotLiveAnnot"))  liveItem;
+		} else {
+			menuItem -edit -label (uiRes("m_ModObjectsMenu.kMakeLive2"))  
+				-annotation (uiRes("m_ModObjectsMenu.kMakeLive2Annot"))  liveItem;
+		}
+	}
+	menuItem -edit -checkBox `ikSystem -query -solve` iksolverOnOff;
+
+	int $loaded = `pluginInfo -q -loaded "Type"`;
+	menuItem -edit -enable $loaded TypeManipulatorMenuItem;
+
+}
+
+global proc ModObjectsMenu( string $parent )
+{
+	string $cmd;
+    int $dimWhenNoSelect = 0;
+	setParent -menu $parent;
+
+	if( `menu -query -numberOfItems $parent` != 0 ) {
+		//
+		//	Menu is built already
+		//
+  		updateModObjectsMenu ($parent);
+		return;
+	}
+
+	menuItem -divider true -dividerLabel (uiRes("m_ModObjectsMenu.kModifyTrans"));
+	//	Transforms
+	//
+	menuItem -label (uiRes("m_ModObjectsMenu.kTransformationTools"))  -subMenu true -tearOff true -allowOptionBoxes true transHierItem;
+
+		$cmd = "MoveTool";
+		menuItem 
+			-label 		`runTimeCommand -q -l $cmd`
+			-annotation `runTimeCommand -q -ann $cmd`
+			-image		`runTimeCommand -q -i $cmd`
+			-command 	($cmd)
+			-dragDoubleClickCommand "MoveToolOptions"
+			;
+
+			menuItem -optionBox true
+				-annotation (getRunTimeCommandAnnotation("MoveToolOptions"))
+				-image "move_M.png" 
+				-command "MoveToolOptions"
+				;
+
+		$cmd = "RotateTool";
+		menuItem 
+			-label 		`runTimeCommand -q -l $cmd`
+			-annotation `runTimeCommand -q -ann $cmd`
+			-image		`runTimeCommand -q -i $cmd`
+			-command 	($cmd)
+			-dragDoubleClickCommand "RotateToolOptions"
+			;
+
+			menuItem -optionBox true
+				-annotation (getRunTimeCommandAnnotation("RotateToolOptions"))
+				-image "rotate_M.png" 
+				-command "RotateToolOptions"
+				;
+
+		$cmd = "ScaleTool";
+		menuItem 
+			-label 		`runTimeCommand -q -l $cmd`
+			-annotation `runTimeCommand -q -ann $cmd`
+			-image		`runTimeCommand -q -i $cmd`
+			-command 	($cmd)
+			-dragDoubleClickCommand "ScaleToolOptions"
+			;
+
+			menuItem -optionBox true
+				-annotation (getRunTimeCommandAnnotation("ScaleToolOptions"))
+				-image "scale_M.png" 
+				-command "ScaleToolOptions"
+				;
+
+		int $loaded = `pluginInfo -q -loaded "Type"`;
+
+		$cmd = "EditPolygonType";
+		menuItem -version "2017"
+				-enable $loaded
+				-label 		`runTimeCommand -q -l $cmd`
+				-annotation `runTimeCommand -q -ann $cmd`
+				-image		`runTimeCommand -q -i $cmd`
+				-command 	($cmd)
+				TypeManipulatorMenuItem;
+
+		$cmd = "UniversalManip";
+		menuItem 
+			-label 		`runTimeCommand -q -l $cmd`
+			-annotation `runTimeCommand -q -ann $cmd`
+			-image		`runTimeCommand -q -i $cmd`
+			-command 	($cmd)
+			-dragDoubleClickCommand "UniversalManipOptions"
+			;
+
+			menuItem -optionBox true
+				-annotation (getRunTimeCommandAnnotation("UniversalManipOptions"))
+				-image "globalManip.png" 
+				-command "UniversalManipOptions"
+				;
+
+		$cmd = "MoveNormalTool";
+		menuItem 
+			-label 		`runTimeCommand -q -l $cmd`
+			-annotation `runTimeCommand -q -ann $cmd`
+			-image		`runTimeCommand -q -i $cmd`
+			-command 	($cmd)
+			-dragDoubleClickCommand "MoveNormalToolOptions"
+			;
+
+			menuItem -optionBox true
+				-annotation (getRunTimeCommandAnnotation("MoveNormalToolOptions"))
+				-image "moveNormal.png" 
+				-command "MoveNormalToolOptions"
+				;
+
+		menuItem -divider true;
+
+		$cmd = "MoveRotateScaleTool";
+		menuItem 
+			-label 		`runTimeCommand -q -l $cmd`
+			-annotation `runTimeCommand -q -ann $cmd`
+			-image		`runTimeCommand -q -i $cmd`
+			-command 	($cmd)
+			;
+
+		$cmd = "ShowManipulatorTool";
+		menuItem 
+			-label 		`runTimeCommand -q -l $cmd`
+			-annotation `runTimeCommand -q -ann $cmd`
+			-image		`runTimeCommand -q -i $cmd`
+			-command 	($cmd)
+			;
+
+		// Default Manipulators
+		//
+		menuItem -label (uiRes("m_ModObjectsMenu.kDefaultObjectManipulator"))  -subMenu true -tearOff true defManipItem;
+			
+			$cmd = "SetDefaultManipNone";
+			menuItem 
+				-label 		`runTimeCommand -q -l $cmd`
+				-annotation `runTimeCommand -q -ann $cmd`
+				-command 	($cmd)
+				noneManipItem;
+
+			menuItem -divider true;
+
+			$cmd = "SetDefaultManipMove";
+			menuItem 
+				-label 		`runTimeCommand -q -l $cmd`
+				-annotation `runTimeCommand -q -ann $cmd`
+				-command 	($cmd)
+				transManipItem;
+
+			$cmd = "SetDefaultManipRotate";
+			menuItem 
+				-label 		`runTimeCommand -q -l $cmd`
+				-annotation `runTimeCommand -q -ann $cmd`
+				-command 	($cmd)
+				rotateManipItem;
+
+			$cmd = "SetDefaultManipScale";
+			menuItem 
+				-label 		`runTimeCommand -q -l $cmd`
+				-annotation `runTimeCommand -q -ann $cmd`
+				-command 	($cmd)
+				scaleManipItem;
+
+			$cmd = "SetDefaultManipTransform";
+			menuItem 
+				-label 		`runTimeCommand -q -l $cmd`
+				-annotation `runTimeCommand -q -ann $cmd`
+				-command 	($cmd)
+				transformManipItem;
+
+		setParent -menu ..;
+    	if( $dimWhenNoSelect )
+			dimWhen -false "SomethingSelected" ($parent+"|transHierItem|defManipItem");
+
+		menuItem -divider true;
+
+		$cmd = "ProportionalModificationTool";
+		menuItem 
+			-label 		`runTimeCommand -q -l $cmd`
+			-annotation `runTimeCommand -q -ann $cmd`
+			-image		`runTimeCommand -q -i $cmd`
+			-command 	($cmd)
+			propModItem;
+
+       		menuItem -optionBox true -image "propMod.png"
+				-annotation (uiRes("m_ModObjectsMenu.kProportionalModificationToolOptionsAnnot")) 
+				-command "setToolTo $gPropMod; toolPropertyWindow" 
+				propModDialogItem;
+
+		$cmd = "SoftModTool";
+		menuItem 
+			-label 		`runTimeCommand -q -l $cmd`
+			-annotation `runTimeCommand -q -ann $cmd`
+			-image		`runTimeCommand -q -i $cmd`
+			-command 	($cmd)
+			softModItem;
+
+			$cmd = "SoftModToolOptions";
+       		menuItem -optionBox true -image "softMod.png"
+				-annotation (getRunTimeCommandAnnotation($cmd))
+				-command $cmd 
+				softModDialogItem;
+
+	setParent -menu ..;
+
+	// Limits
+	//
+	setParent -menu ..;
+
+	$cmd = "ResetTransformations";
+	menuItem 
+		-label 		`runTimeCommand -q -l $cmd`
+		-annotation `runTimeCommand -q -ann $cmd`
+		-command $cmd 
+		identityResetItem;
+
+    if( $dimWhenNoSelect )	
+		dimWhen -false "SomethingSelected" ($parent+"|identityResetItem");
+
+		$cmd = "ResetTransformationsOptions";
+		menuItem -optionBox true
+			-annotation (getRunTimeCommandAnnotation($cmd))
+			-command $cmd
+			identityResetItemOption;
+
+	$cmd = "FreezeTransformations";
+	menuItem 
+		-label 		`runTimeCommand -q -l $cmd`
+		-annotation `runTimeCommand -q -ann $cmd`
+		-command $cmd 
+		identityApplyItem;
+    if( $dimWhenNoSelect )
+		dimWhen -false "SomethingSelected" ($parent+"|identityApplyItem");
+
+		$cmd = "FreezeTransformationsOptions";
+		menuItem -optionBox true
+			-annotation (getRunTimeCommandAnnotation($cmd))
+			-command $cmd
+			identityApplyItemOption;
+
+
+	menuItem -label (uiRes("m_ModObjectsMenu.kMatchTransformations"))
+		-subMenu true -allowOptionBoxes true -tearOff true -version 2022
+		matchTransformsItem;
+
+		$cmd = "MatchTransform";
+		$label = `runTimeCommand -q -l $cmd`;
+		$annotation = `runTimeCommand -q -ann $cmd`;
+		string $matchTransform = `menuItem
+			-label ($label) -annotation ($annotation) -command ($cmd)`;
+   		if ($dimWhenNoSelect)
+			dimWhen -false "SomethingSelected" $matchTransform;
+
+		$cmd = "MatchTransformOptions";
+		$annotation = `runTimeCommand -q -ann $cmd`;
+		menuItem -optionBox true -ann ($annotation) -c ($cmd);
+
+		menuItem -divider true;
+
+		$cmd = "MatchTranslation";
+		$label = `runTimeCommand -q -l $cmd`;
+		$annotation = `runTimeCommand -q -ann $cmd`;
+		string $matchTranslation = `menuItem
+			-label ($label) -annotation ($annotation) -command ($cmd)`;
+   		if ($dimWhenNoSelect)
+			dimWhen -false "SomethingSelected" $matchTranslation;
+
+		$cmd = "MatchTranslationOptions";
+		$annotation = `runTimeCommand -q -ann $cmd`;
+		menuItem -optionBox true -ann ($annotation) -c ($cmd);
+
+		$cmd = "MatchRotation";
+		$label = `runTimeCommand -q -l $cmd`;
+		$annotation = `runTimeCommand -q -ann $cmd`;
+		string $matchRotation = `menuItem
+			-label ($label) -annotation ($annotation) -command ($cmd)`;
+   		if ($dimWhenNoSelect)
+			dimWhen -false "SomethingSelected" $matchRotation;
+
+		$cmd = "MatchRotationOptions";
+		$annotation = `runTimeCommand -q -ann $cmd`;
+		menuItem -optionBox true -ann ($annotation) -c ($cmd);
+
+		$cmd = "MatchScaling";
+		$label = `runTimeCommand -q -l $cmd`;
+		$annotation = `runTimeCommand -q -ann $cmd`;
+		string $matchScaling = `menuItem
+			-label ($label) -annotation ($annotation) -command ($cmd)`;
+   		if ($dimWhenNoSelect)
+			dimWhen -false "SomethingSelected" $matchScaling;
+
+		$cmd = "MatchScalingOptions";
+		$annotation = `runTimeCommand -q -ann $cmd`;
+		menuItem -optionBox true -ann ($annotation) -c ($cmd);
+
+		menuItem -divider true;
+
+		$cmd = "MatchPivots";
+		$label = `runTimeCommand -q -l $cmd`;
+		$annotation = `runTimeCommand -q -ann $cmd`;
+		string $matchPivots = `menuItem
+			-label ($label) -annotation ($annotation) -command ($cmd)`;
+   		if ($dimWhenNoSelect)
+			dimWhen -false "SomethingSelected" $matchPivots;
+
+		$cmd = "MatchPivotsOptions";
+		$annotation = `runTimeCommand -q -ann $cmd`;
+		menuItem -optionBox true -ann ($annotation) -c ($cmd);
+
+	setParent -menu ..;
+
+	menuItem -divider true -dividerLabel (uiRes("m_ModObjectsMenu.kModifyPivot"));
+
+	$cmd = "CenterPivot";
+	$label = `runTimeCommand -q -l $cmd`;
+	$annotation = `runTimeCommand -q -ann $cmd`;
+	string $cpItem = `menuItem  
+		-label ($label) -annotation ($annotation) -command ($cmd) centrePivotItem`;
+   	if( $dimWhenNoSelect )
+		dimWhen -false "SomethingSelected" $cpItem;
+
+	$cmd = "BakeCustomPivot";
+	$label = `runTimeCommand -q -l $cmd`;
+	$annotation = `runTimeCommand -q -ann $cmd`;
+	string $bpItem = `menuItem 
+		-version "2016"
+		-label ($label) -annotation ($annotation) -command ($cmd) bakePivotItem`;
+   	if( $dimWhenNoSelect )
+		dimWhen -false "SomethingSelected" $bpItem;
+
+		$cmd = "BakeCustomPivotOptions";
+		menuItem -optionBox true
+			-annotation (getRunTimeCommandAnnotation($cmd))
+			-command $cmd
+			bakePivotItemOption;
+		
+	menuItem -divider true -dividerLabel (uiRes("m_ModObjectsMenu.kModifyAlign"));
+
+	menuItem -label (uiRes("m_ModObjectsMenu.kSnapAlignObjects"))  -subMenu true -allowOptionBoxes true -tearOff true 
+		graspItem;
+
+		$cmd = "SnapPointToPoint";
+		$label = `runTimeCommand -q -l $cmd`;
+		$annotation = `runTimeCommand -q -ann $cmd`;
+		$image = `runTimeCommand -q -i $cmd`;
+		string $g1Item = `menuItem -label ($label)  
+			-annotation ($annotation)
+			-image ($image)
+			-command $cmd snap1PointItem`;
+   		if( $dimWhenNoSelect )
+			dimWhen -false "SomethingSelected" $g1Item;
+
+			$cmd = "SnapPointToPointOptions";
+			menuItem -optionBox true
+				-annotation (getRunTimeCommandAnnotation($cmd))
+				-image "pointToPoint.png"
+				-command $cmd
+				snapPointItemOption;
+
+		$cmd = "Snap2PointsTo2Points";
+		$label = `runTimeCommand -q -l $cmd`;
+		$annotation = `runTimeCommand -q -ann $cmd`;
+		$image = `runTimeCommand -q -i $cmd`;
+		string $g2Item = `menuItem -label ($label)
+			-annotation ($annotation)
+			-image ($image)
+			-command $cmd snap2PointsItem`;
+   		if( $dimWhenNoSelect )
+			dimWhen -false "SomethingSelected" $g2Item;
+
+			$cmd = "Snap2PointsTo2PointsOptions";
+			menuItem -optionBox true
+				-annotation (getRunTimeCommandAnnotation($cmd))
+				-image "twoPointToPoint.png"
+				-command $cmd
+				snap2PointsItemOption;
+
+		$cmd = "Snap3PointsTo3Points";
+		$label = `runTimeCommand -q -l $cmd`;
+		$annotation = `runTimeCommand -q -ann $cmd`;
+		$image = `runTimeCommand -q -i $cmd`;
+		string $g3Item = `menuItem -label ($label)
+			-annotation ($annotation)
+			-image ($image)
+			-dragMenuCommand "performSnap3PtTo3Pt 2"
+			-command $cmd snap3PointsItem`;
+   		if( $dimWhenNoSelect )
+			dimWhen -false "SomethingSelected" $g3Item;
+
+			$cmd = "Snap3PointsTo3PointsOptions";
+			menuItem -optionBox true
+				-annotation (getRunTimeCommandAnnotation($cmd))
+				-image "threePointToPoint.png"
+				-command $cmd
+				snap3PointsItemOption;
+
+		$cmd = "AlignObjects";
+		$label = `runTimeCommand -q -l $cmd`;
+		$annotation = `runTimeCommand -q -ann $cmd`;
+		$image = `runTimeCommand -q -i $cmd`;
+		menuItem 
+			-label ($label)
+			-annotation ($annotation)
+			-command ($cmd)
+			-image ($image);
+
+			menuItem -optionBox true  
+				-annotation (uiRes("m_ModObjectsMenu.kAlignObjectsOptionsAnnot")) 
+				-command "performAlignObjects 1" -enableCommandRepeat false -image "alignObjects.png" ;
+			
+		$cmd = "PositionAlongCurve";
+		menuItem 
+			-label 		`runTimeCommand -q -l $cmd`
+			-annotation `runTimeCommand -q -ann $cmd`
+			-image 		`runTimeCommand -q -i $cmd`
+			-command 	($cmd)
+			;
+
+		setParent -menu ..;
+
+	$cmd = "SetAlignTool";
+	menuItem 
+		-label 		`runTimeCommand -q -l $cmd`
+		-annotation `runTimeCommand -q -ann $cmd`
+		-image 		`runTimeCommand -q -i $cmd`
+		-command 	($cmd)
+		alignToolItem;
+
+	$cmd = "SetSnapTogetherTool";
+	menuItem 
+		-label 		`runTimeCommand -q -l $cmd`
+		-annotation `runTimeCommand -q -ann $cmd`
+		-image 		`runTimeCommand -q -i $cmd`
+		-command 	($cmd)
+		snapTogetherToolItem;
+
+		$cmd = "SetSnapTogetherToolOptions";
+		menuItem -optionBox true
+			-annotation `runTimeCommand -q -ann $cmd`
+			-command 	($cmd)
+			snapTogetherToolDialogItem;
+
+	menuItem -divider true -dividerLabel (uiRes("m_ModObjectsMenu.kModifyNodes"));
+
+	menuItem -label (uiRes("m_ModObjectsMenu.kEvaluateNodes"))  -subMenu true -tearOff true;
+
+		$cmd = "EnableAll";
+		menuItem 
+			-label 		`runTimeCommand -q -l $cmd`
+			-annotation `runTimeCommand -q -ann $cmd`
+			-command $cmd;
+
+		$cmd = "DisableAll";
+		menuItem 
+			-label 		`runTimeCommand -q -l $cmd`
+			-annotation `runTimeCommand -q -ann $cmd`
+			-command $cmd;
+
+		menuItem -divider true;
+
+		$cmd = "EnableIKSolvers";
+		menuItem 
+			-label 		`runTimeCommand -q -l $cmd`
+			-annotation `runTimeCommand -q -ann $cmd`
+			-checkBox on
+			-command $cmd
+			iksolverOnOff;
+
+
+		$cmd = "EnableConstraints";
+		menuItem 
+			-label 		`runTimeCommand -q -l $cmd`
+			-annotation `runTimeCommand -q -ann $cmd`
+			-checkBox on
+			-command $cmd
+			constraintOnOff;
+
+
+		$cmd = "EnableExpressions";
+		menuItem 
+			-label 		`runTimeCommand -q -l $cmd`
+			-annotation `runTimeCommand -q -ann $cmd`
+			-checkBox on
+			-command $cmd
+			expressionOnOff;
+
+
+
+		$cmd = "EnableFluids";
+		menuItem 
+			-label 		`runTimeCommand -q -l $cmd`
+			-annotation `runTimeCommand -q -ann $cmd`
+			-checkBox on
+			-command ($cmd)
+			fluidOnOff;
+
+
+		$cmd = "EnableGlobalStitch";
+		menuItem 
+			-label 		`runTimeCommand -q -l $cmd`
+			-annotation `runTimeCommand -q -ann $cmd`
+			-checkBox on
+			-command $cmd
+			globalstitchOnOff;
+
+
+		$cmd = "EnableNCloths";
+		menuItem 
+			-label 		`runTimeCommand -q -l $cmd`
+			-annotation `runTimeCommand -q -ann $cmd`
+			-checkBox on
+			-command "EnableNCloths"
+			nClothOnOff;
+
+		$cmd = "EnableNParticles";
+		menuItem 
+			-label 		`runTimeCommand -q -l $cmd`
+			-annotation `runTimeCommand -q -ann $cmd`
+			-checkBox on
+			-command "EnableNParticles"
+			nParticleOnOff;
+
+		$cmd = "EnableNRigids";
+		menuItem 
+			-label 		`runTimeCommand -q -l $cmd`
+			-annotation `runTimeCommand -q -ann $cmd`
+			-checkBox on
+			-command "EnableNRigids"
+			nRigidOnOff;
+
+		$cmd = "EnableDynamicConstraints";
+		menuItem 
+			-label 		`runTimeCommand -q -l $cmd`
+			-annotation `runTimeCommand -q -ann $cmd`
+			-checkBox on
+			-command "EnableDynamicConstraints"
+			dynamicConstraintOnOff;
+
+		$cmd = "EnableNucleuses";
+		menuItem 
+			-label 		`runTimeCommand -q -l $cmd`
+			-annotation `runTimeCommand -q -ann $cmd`
+			-checkBox on
+			-command "EnableNucleuses"
+			nucleusOnOff;
+
+		$cmd = "EnableParticles";
+		menuItem 
+			-label 		`runTimeCommand -q -l $cmd`
+			-annotation `runTimeCommand -q -ann $cmd`
+			-checkBox on
+			-command $cmd
+			particleOnOff;
+
+		$cmd = "EnableRigidBodies";
+		menuItem 
+			-label 		`runTimeCommand -q -l $cmd`
+			-annotation `runTimeCommand -q -ann $cmd`
+			-checkBox on
+			-command $cmd
+			rigidbodyOnOff;
+
+
+		$cmd = "EnableSnapshots";
+		menuItem 
+			-label 		`runTimeCommand -q -l $cmd`
+			-annotation `runTimeCommand -q -ann $cmd`
+			-checkBox on
+			-command $cmd
+			snapshotOnOff;
+
+	setParent -menu ..;
+
+	menuItem -divider true -dividerLabel (uiRes("m_ModObjectsMenu.kModifyNaming"));
+
+	$cmd = "PrefixHierarchyNames";
+	$label = `runTimeCommand -q -l $cmd`;
+	$annotation = `runTimeCommand -q -ann $cmd`;
+	string $prefItem = `menuItem -label ($label)
+		-annotation ($annotation)
+		-command $cmd prefixHierarchyItem`;
+   	if( $dimWhenNoSelect )
+		dimWhen -false "SomethingSelected" $prefItem;
+
+	$cmd = "SearchAndReplaceNames";
+	$label = `runTimeCommand -q -l $cmd`;
+	$annotation = `runTimeCommand -q -ann $cmd`;
+	string $searchItem = `menuItem -label ($label) -annotation ($annotation)
+		-command $cmd searchRepItem`;
+	
+	menuItem -divider true -dividerLabel (uiRes("m_ModObjectsMenu.kModifyAttributes"));
+
+	$cmd = "AddAttribute";
+	$label = `runTimeCommand -q -l $cmd`;
+	$annotation = `runTimeCommand -q -ann $cmd`;
+	string $addItem = `menuItem -label ($label)
+		-annotation ($annotation)
+		-command $cmd addAttrItem`;
+   	if( $dimWhenNoSelect )
+		dimWhen -false "SomethingSelected" $addItem;
+
+	$cmd = "RenameAttribute";
+	$label = `runTimeCommand -q -l $cmd`;
+	$annotation = `runTimeCommand -q -ann $cmd`;
+	string $renameItem = `menuItem -label ($label)
+		-annotation ($annotation)
+		-command $cmd renameAttrItem`;
+   	if( $dimWhenNoSelect )
+		dimWhen -false "SomethingSelected" $renameItem;
+
+	$cmd = "DeleteAttribute";
+	$label = `runTimeCommand -q -l $cmd`;
+	$annotation = `runTimeCommand -q -ann $cmd`;
+	string $deleteItem = `menuItem -label ($label)
+		-annotation ($annotation)
+		-command $cmd deleteAttrItem`;
+   	if( $dimWhenNoSelect )
+		dimWhen -false "SomethingSelected" $deleteItem;
+
+	menuItem -divider true -dividerLabel (uiRes("m_ModObjectsMenu.kModifyObjects"));
+
+	$cmd = "MakeLive";
+	menuItem 
+		-label 		`runTimeCommand -q -l $cmd`
+		-annotation `runTimeCommand -q -ann $cmd`
+		-image 		`runTimeCommand -q -i $cmd`
+		-command 	($cmd)
+		-version "2014"
+		-ec true
+		liveItem;
+
+	// Replace Object
+	$cmd = "ReplaceObjects";
+	menuItem 
+		-label 		`runTimeCommand -q -l $cmd`
+		-annotation `runTimeCommand -q -ann $cmd`
+		-command 	($cmd)
+		replaceObjectsItem; 
+
+		menuItem -optionBox true 
+			-annotation (getRunTimeCommandAnnotation("ReplaceObjectsOptions"))  
+			-command "ReplaceObjectsOptions"
+			replaceObjectsOptionsItem;
+		
+	menuItem -divider true -ld false;
+
+	// conversion operations
+	menuItem -label (uiRes("m_ModObjectsMenu.kConvert"))  -subMenu true -tearOff true -allowOptionBoxes true surfConvItem;
+
+		// NURBS to Polygons
+		if( `isTrue SurfaceUIExists` ) {
+
+			$cmd = "NURBSToPolygons";
+			menuItem 
+				-label 		`runTimeCommand -q -l $cmd`
+				-annotation `runTimeCommand -q -ann $cmd`
+				-image 		`runTimeCommand -q -i $cmd`
+				-command $cmd
+				-dragMenuCommand "performnurbsToPoly 2"
+				nurbsToPolyItem;
+
+				$cmd = "NURBSToPolygonsOptions";
+				menuItem -optionBox true 
+					-annotation (getRunTimeCommandAnnotation($cmd))
+					-image "nurbsToPolygons.png" 
+					-command $cmd
+					nurbsToPolyDialogItem;
+		}
+		// NURBS to Subdivs.
+		if( `isTrue SubdivExists` ) {
+
+			$cmd = "CreateSubdivSurface";
+			menuItem -enableCommandRepeat true 
+				-label 		`runTimeCommand -q -l $cmd`
+				-annotation `runTimeCommand -q -ann $cmd`
+				-image 		`runTimeCommand -q -i $cmd`
+				-command $cmd
+				-dragMenuCommand "performSubdivCreate 2"
+				subdivCreateItem;
+
+				$cmd = "CreateSubdivSurfaceOptions";
+				menuItem -optionBox true 
+					-command $cmd
+					-annotation (getRunTimeCommandAnnotation($cmd))
+					-image "nurbsToSubdivs.png" 
+					-enableCommandRepeat false 
+					subdivCreateOptionItem;
+		}
+
+		// Poly to Subdivs (same as NURBS to Subdiv)
+		if( `isTrue SubdivExists` ) {
+			$cmd = "CreateSubdivSurfacePoly";
+			menuItem  -enableCommandRepeat true 
+				-label 		`runTimeCommand -q -l $cmd`
+				-annotation `runTimeCommand -q -ann $cmd`
+				-image 		`runTimeCommand -q -i $cmd`
+				-command $cmd
+				-dragMenuCommand "performSubdivCreate 2"
+				subdivCreateItem2;
+
+				$cmd = "CreateSubdivSurfacePolyOptions";
+				menuItem -optionBox true 
+					-command $cmd
+					-annotation (getRunTimeCommandAnnotation($cmd))
+					-image subdivCreate.png
+					-enableCommandRepeat false 
+					subdivCreateOptionItem2;
+
+			$cmd = "CreatePolyFromPreview";
+			menuItem -enableCommandRepeat true 
+				-label 		`runTimeCommand -q -l $cmd`
+				-annotation `runTimeCommand -q -ann $cmd`
+				-image 		`runTimeCommand -q -i $cmd`
+				-command $cmd
+				;
+
+
+			// Poly Edges to Curve
+			$cmd = "CreateCurveFromPoly";
+			menuItem -enableCommandRepeat true 
+				-label 		`runTimeCommand -q -l $cmd`
+				-annotation `runTimeCommand -q -ann $cmd`
+				-image 		`runTimeCommand -q -i $cmd`
+				-command $cmd
+				polyToCurveItem;
+
+				menuItem -optionBox true 
+					-command "CreateCurveFromPolyOptions"
+					-annotation (getRunTimeCommandAnnotation("CreateCurveFromPolyOptions"))
+					-enableCommandRepeat false 
+					polyToCurveItem2;
+
+		}
+		
+
+		$cmd = "ConvertTypeCapsToCurves";
+		menuItem -version "2017"
+			-label 		`runTimeCommand -q -l $cmd`
+			-annotation `runTimeCommand -q -ann $cmd`
+			-command ($cmd)
+			typeToCurvesItem;
+
+
+		// Subdivs to Poly
+		if( `isTrue SubdivExists` ) {
+			$cmd = "TesselateSubdivSurface";
+			menuItem -enableCommandRepeat true 
+				-label 		`runTimeCommand -q -l $cmd`
+				-annotation `runTimeCommand -q -ann $cmd`
+				-image 		`runTimeCommand -q -i $cmd`
+				-command $cmd 	
+				subdivTessellateItem;
+
+				$cmd = "TesselateSubdivSurfaceOptions";
+				menuItem -optionBox true 
+					// need to add -image option
+					-annotation (getRunTimeCommandAnnotation($cmd))
+					-image subdivTessellate.png
+					-enableCommandRepeat false 
+					-command $cmd 
+					subdivTessellateOptionItem;
+		}
+
+		// Subdivs to NURBS
+		if( `isTrue SubdivExists` ) {
+			$cmd = "SubdivToNURBS";
+			menuItem -enableCommandRepeat true 
+				-label 		`runTimeCommand -q -l $cmd`
+				-annotation `runTimeCommand -q -ann $cmd`
+				-image 		`runTimeCommand -q -i $cmd`
+				-command $cmd
+				-dragMenuCommand "performSubdToNurbs 2"
+				subdivCreateItem3;
+
+				$cmd = "SubdivToNURBSOptions";
+				menuItem -optionBox true 
+					// need to add -image option
+					-annotation (getRunTimeCommandAnnotation($cmd))
+					-image subdivToNurbs.png
+					-enableCommandRepeat false 
+					-command $cmd 
+					subdivToNurbsOptionItem;
+		}
+		if( `isTrue SurfaceUIExists` )
+		{
+			$cmd = "NurbsCurveToBezier";
+			menuItem 
+				-label 		`runTimeCommand -q -l $cmd`
+				-annotation `runTimeCommand -q -ann $cmd`
+				-command $cmd
+				-enableCommandRepeat 1
+				nurbsCurveToBezierItem;
+
+			$cmd = "BezierCurveToNurbs";
+			menuItem 
+				-label 		`runTimeCommand -q -l $cmd`
+				-annotation `runTimeCommand -q -ann $cmd`
+				-command $cmd
+				-enableCommandRepeat 1
+				bezierCurveToNurbsItem;
+		}
+
+		// Paint Effects to Poly
+		if( `isTrue "MayaCreatorExists"` ) {
+
+			$cmd = "PaintEffectsToPoly";
+			menuItem -enableCommandRepeat true 
+				-label 		`runTimeCommand -q -l $cmd`
+				-annotation `runTimeCommand -q -ann $cmd`
+				-image 		`runTimeCommand -q -i $cmd`
+				-command $cmd
+				paintEffectsToPolyItem;
+
+				$cmd = "PaintEffectsToPolyOptions";
+				menuItem -optionBox true 
+					-annotation (getRunTimeCommandAnnotation($cmd))
+					-image paintFXtoPoly.png
+					-enableCommandRepeat false 
+					-command $cmd 
+					paintEffectsToPolyOptionItem;
+
+			$cmd = "PaintEffectsToNurbs";
+			menuItem -enableCommandRepeat true 
+				-label 		`runTimeCommand -q -l $cmd`
+				-annotation `runTimeCommand -q -ann $cmd`
+				-image 		`runTimeCommand -q -i $cmd`
+				-command $cmd	
+				paintEffectsToNurbsItem;
+
+				$cmd = "PaintEffectsToNurbsOptions";
+				menuItem -optionBox true 
+					-annotation (getRunTimeCommandAnnotation($cmd))
+					-image paintFXtoNurbs.png
+					-enableCommandRepeat false 
+					-command $cmd 
+					paintEffectsToNurbsOptionItem;
+
+			$cmd = "PaintEffectsToCurve";
+			menuItem  -enableCommandRepeat true 
+				-label 		`runTimeCommand -q -l $cmd`
+				-annotation `runTimeCommand -q -ann $cmd`
+				-image 		`runTimeCommand -q -i $cmd`
+				-command $cmd 	
+				paintEffectsToCurveItem;
+
+				$cmd = "PaintEffectsToCurveOptions";
+				menuItem -optionBox true 
+					-annotation (getRunTimeCommandAnnotation($cmd))
+					-image paintFXtoCurve.png
+					-enableCommandRepeat false 
+					-command $cmd 
+					paintEffectsToCurveOptionItem;
+		}
+
+		$cmd = "TextureToGeometry";
+		menuItem 
+			-label 		`runTimeCommand -q -l $cmd`
+			-annotation `runTimeCommand -q -ann $cmd`
+			-image 		`runTimeCommand -q -i $cmd`
+			-command $cmd;
+
+			$cmd = "TextureToGeometryOptions";
+			menuItem -optionBox true 
+				-annotation `runTimeCommand -q -ann $cmd`
+				-image textureToGeom.png
+				-command $cmd; 		
+
+		// Displacement to Poly
+		$cmd = "DisplacementToPolygon";
+		menuItem 
+			-label 		`runTimeCommand -q -l $cmd`
+			-annotation `runTimeCommand -q -ann $cmd`
+			-image 		`runTimeCommand -q -i $cmd`
+			-command $cmd
+			dispPolyItem;
+
+		$cmd = "SetupAnimatedDisplacement";
+		menuItem 
+			-label 		`runTimeCommand -q -l $cmd`
+			-annotation `runTimeCommand -q -ann $cmd`
+			-image 		`runTimeCommand -q -i $cmd`
+			-command $cmd
+			dispPolyHistItem;
+
+
+		$cmd = "FluidsToPolygons";
+		menuItem 
+			-label 		`runTimeCommand -q -l $cmd`
+			-annotation `runTimeCommand -q -ann $cmd`
+			-image 		`runTimeCommand -q -i $cmd`
+			-command $cmd
+			fluidToPolygonsItem;
+			
+		$cmd = "NParticleToPolygons";
+		menuItem 
+			-label 		`runTimeCommand -q -l $cmd`
+			-annotation `runTimeCommand -q -ann $cmd`
+			-image 		`runTimeCommand -q -i $cmd`
+			-command $cmd
+			nParticleToPolygonsItem;		
+
+		// Instance to Object
+		$cmd = "ConvertInstanceToObject";
+		menuItem
+			-label 		`runTimeCommand -q -l $cmd`
+			-annotation `runTimeCommand -q -ann $cmd`
+			-image 		`runTimeCommand -q -i $cmd`
+			-command 	$cmd
+			instanceToObjectItem;
+		
+		// Geometry to Bounding Box
+		$cmd = "GeometryToBoundingBox";
+		menuItem
+			-label 		`runTimeCommand -q -l $cmd`
+			-annotation `runTimeCommand -q -ann $cmd`
+			-image 		`runTimeCommand -q -i $cmd`
+			-command 	$cmd
+			geometryToBoundingBoxItem;
+
+			$cmd = "GeometryToBoundingBoxOptions";
+			menuItem -optionBox true 
+				-annotation `runTimeCommand -q -ann $cmd`
+				-image "geometryToBoundingBox.png"   
+				-command $cmd
+				geometryToBoundingBoxOptionsItem;
+		
+		setParent -menu ..;
+	
+	menuItem -divider true -dividerLabel (uiRes("m_ModObjectsMenu.kModifyPaint"));
+
+	$cmd = "ScriptPaintTool";
+ 	menuItem 
+ 		-label 		`runTimeCommand -q -l $cmd`
+		-annotation `runTimeCommand -q -ann $cmd`
+		-image 		`runTimeCommand -q -i $cmd`
+ 		-command $cmd 
+ 		userPaintItem;
+
+		$cmd = "ScriptPaintToolOptions";
+ 		menuItem -optionBox true -image "userPaint.png" 
+ 			-annotation (getRunTimeCommandAnnotation($cmd))
+ 			-command $cmd 
+ 			userPaintDialogItem;
+		
+	// Attribute Paint Tool
+	$cmd = "ArtPaintAttrTool";
+	menuItem 
+		-label 		`runTimeCommand -q -l $cmd`
+		-annotation `runTimeCommand -q -ann $cmd`
+		-image 		`runTimeCommand -q -i $cmd`
+        -command $cmd 
+        artisanPaintAttrItem;
+
+		$cmd = "ArtPaintAttrToolOptions";
+        menuItem -optionBox true -image "artAttr.png"
+            -annotation (getRunTimeCommandAnnotation($cmd))
+            -command $cmd
+            artisanPaintAttrDialogItem;
+	
+	menuItem -divider true -dividerLabel (uiRes("m_ModObjectsMenu.kModifyAsset"));
+
+	// Assets
+	menuItem -label (uiRes("m_ModObjectsMenu.kModifyAssets")) -sm true -tearOff true;
+
+		$cmd = "AddToContainer";
+		menuItem 
+			-label 		`runTimeCommand -q -l $cmd`
+			-annotation `runTimeCommand -q -ann $cmd`
+        	-command $cmd 
+			-allowOptionBoxes true
+			-dmc "performAddToContainer 2";
+
+			menuItem -optionBox true
+				-annotation (getRunTimeCommandAnnotation("AddToContainerOptions"))
+				-c ("AddToContainerOptions");
+
+		$cmd = "RemoveFromContainer";
+		menuItem 
+			-label 		`runTimeCommand -q -l $cmd`
+			-annotation `runTimeCommand -q -ann $cmd`
+        	-command $cmd 
+			-allowOptionBoxes true
+			-dmc "performRemoveFromContainer 2";
+
+			menuItem -optionBox true
+				-annotation (getRunTimeCommandAnnotation("RemoveFromContainerOptions"))
+				-c ("RemoveFromContainerOptions");
+
+		menuItem -divider true;	
+	
+		$cmd = "ExportProxyContainer";
+		menuItem 
+			-label 		`runTimeCommand -q -l $cmd`
+			-annotation `runTimeCommand -q -ann $cmd`
+        	-command $cmd 
+			;
+
+			$cmd = "ExportProxyContainerOptions";
+			menuItem -optionBox true 
+				-annotation (getRunTimeCommandAnnotation($cmd))
+				-command ($cmd) 
+				exportProxyContainerOptions;
+	
+		$cmd = "PublishAttributes";
+		menuItem 
+			-label 		`runTimeCommand -q -l $cmd`
+			-annotation `runTimeCommand -q -ann $cmd`
+			-dmc "performPublishAttribute 2"
+			-allowOptionBoxes true
+			-command ($cmd);
+	
+			menuItem -optionBox true
+				-annotation (getRunTimeCommandAnnotation("PublishAttributesOptions"))
+				-c ("PublishAttributesOptions");
+
+		$cmd = "UnpublishAttributes";
+		menuItem 
+			-label 		`runTimeCommand -q -l $cmd`
+			-annotation `runTimeCommand -q -ann $cmd`
+			-command ($cmd);
+	
+		$cmd = "PublishConnections";
+		menuItem 
+			-label 		`runTimeCommand -q -l $cmd`
+			-annotation `runTimeCommand -q -ann $cmd`
+			-command ($cmd);
+
+			menuItem -optionBox true
+				-annotation (getRunTimeCommandAnnotation("PublishConnectionsOptions"))
+				-c ("PublishConnectionsOptions");
+
+		$cmd = "LockContainer";
+		menuItem 
+			-label 		`runTimeCommand -q -l $cmd`
+			-annotation `runTimeCommand -q -ann $cmd`
+			-command ($cmd);
+
+		$cmd = "UnlockContainer";
+		menuItem 
+			-label 		`runTimeCommand -q -l $cmd`
+			-annotation `runTimeCommand -q -ann $cmd`
+			-command ($cmd);
+
+		$cmd = "PublishNode";
+		menuItem 
+			-label 		`runTimeCommand -q -l $cmd`
+			-annotation `runTimeCommand -q -ann $cmd`
+			-command ($cmd)
+			-allowOptionBoxes false;
+
+		$cmd = "UnpublishNode";
+		menuItem 
+			-label 		`runTimeCommand -q -l $cmd`
+			-annotation `runTimeCommand -q -ann $cmd`
+			-command ($cmd)
+			-allowOptionBoxes false;
+
+		menuItem -divider true;
+
+		$cmd = "AssignTemplate";
+		menuItem 
+			-label 		`runTimeCommand -q -l $cmd`
+			-annotation `runTimeCommand -q -ann $cmd`
+			-command ($cmd);
+
+			menuItem -optionBox true 
+				-annotation (getRunTimeCommandAnnotation("AssignTemplateOptions"))
+				-command "AssignTemplateOptions" ;
+	
+		$cmd = "SelectContainerContents";
+		menuItem
+			-label 		`runTimeCommand -q -l $cmd`
+			-annotation `runTimeCommand -q -ann $cmd`
+			-command ($cmd);
+
+		menuItem -divider true;
+
+		menuItem -label (uiRes("m_ModObjectsMenu.kAdvancedAssets")) -subMenu true -tearOff true;
+	
+			menuItem -label (uiRes("m_ModObjectsMenu.kContainerPublishing")) -subMenu true -tearOff true -allowOptionBoxes true;
+
+				$cmd = "PublishRootTransform";
+				menuItem 
+					-label 		`runTimeCommand -q -l $cmd`
+					-annotation `runTimeCommand -q -ann $cmd`
+					-command ($cmd)
+					-allowOptionBoxes true;
+
+					menuItem -optionBox true
+						-annotation (getRunTimeCommandAnnotation("PublishRootTransformOptions"))
+						-c ("PublishRootTransformOptions");
+
+				$cmd = "PublishParentAnchor";
+				menuItem 
+					-label 		`runTimeCommand -q -l $cmd`
+					-annotation `runTimeCommand -q -ann $cmd`
+					-command ($cmd)
+					-allowOptionBoxes false;
+		
+					menuItem -optionBox true
+						-annotation (getRunTimeCommandAnnotation("PublishParentAnchorOptions"))
+						-c ("PublishParentAnchorOptions");
+
+				$cmd = "PublishChildAnchor";
+				menuItem 
+					-label 		`runTimeCommand -q -l $cmd`
+					-annotation `runTimeCommand -q -ann $cmd`
+					-command ($cmd)
+					-allowOptionBoxes false;
+
+					menuItem -optionBox true
+						-annotation (getRunTimeCommandAnnotation("PublishChildAnchorOptions"))
+						-c ("PublishChildAnchorOptions");
+
+				setParent -menu ..;
+			
+			menuItem -label (uiRes("m_ModObjectsMenu.kContainerUnpublishing")) -subMenu true -tearOff true -allowOptionBoxes true;
+	
+				$cmd = "UnpublishRootTransform";
+				menuItem 
+					-label 		`runTimeCommand -q -l $cmd`
+					-annotation `runTimeCommand -q -ann $cmd`
+					-command ($cmd)
+					-allowOptionBoxes false;
+
+				$cmd = "UnpublishParentAnchor";
+				menuItem 
+					-label 		`runTimeCommand -q -l $cmd`
+					-annotation `runTimeCommand -q -ann $cmd`
+					-command ($cmd)
+					-allowOptionBoxes false;
+
+				$cmd = "UnpublishChildAnchor";
+				menuItem 
+					-label 		`runTimeCommand -q -l $cmd`
+					-annotation `runTimeCommand -q -ann $cmd`
+					-command ($cmd)
+					-allowOptionBoxes false;
+			
+				setParent -menu ..;
+	
+			string $sccSubmenu = `menuItem
+				-label (uiRes("m_ModObjectsMenu.kSetCurrentAsset"))
+				-annotation (uiRes("m_ModObjectsMenu.kSetCurrentAssetAnnot"))
+				-sm true setCurrentContainerItem`;
+			menu -e -pmc ("buildSetContainerMenu \"" + $sccSubmenu + "\"") setCurrentContainerItem;
+
+	updateModObjectsMenu ($parent);
+}

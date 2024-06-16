@@ -1,0 +1,61 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc commonTexSoftSelectOptionsPopup()
+{
+	int $softSelectOn = `softSelect -q -softSelectEnabled`;
+	int $fallofMode = `softSelect -q -softSelectFalloff`;
+	int $softSelectColourOn = `softSelect -q -enableFalseColor`;
+
+	menuItem 
+		-label (uiRes("m_commonTexSoftSelectOptionsPopup.kSoftSelectLabel"))
+		-subMenu 1
+		-radialPosition	"S"
+		;
+
+		menuItem
+			-label (uiRes("m_commonTexSoftSelectOptionsPopup.kObjectLabel"))	
+			-radialPosition "N" 
+			-checkBox (3 == $fallofMode)
+			-command "softSelect -e -softSelectFalloff 3"
+			;
+
+		menuItem 
+			-label (uiRes("m_commonTexSoftSelectOptionsPopup.kSoftSelectColourLabel"))
+			-radialPosition	"E"
+			-checkBox $softSelectColourOn
+			-c ("softSelect -e -enableFalseColor #1");
+
+		menuItem 
+			-label (uiRes("m_commonTexSoftSelectOptionsPopup.kSoftSelectLabel"))
+			-radialPosition	"S"
+			-checkBox $softSelectOn
+			-command ("softSelect -e -softSelectEnabled #1")
+			;
+
+		menuItem 
+			-label (uiRes("m_commonTexSoftSelectOptionsPopup.kVolumeLabel"))
+			-radialPosition	"SW"
+			-command ("softSelect -e -softSelectFalloff 0")
+			-checkBox (0 == $fallofMode)
+			;
+
+		menuItem 
+			-label (uiRes("m_commonTexSoftSelectOptionsPopup.kSurfaceLabel"))
+			-radialPosition	"W"
+			-checkBox (1 == $fallofMode)
+			-command ("softSelect -e -softSelectFalloff 1")
+			;
+
+		menuItem
+			-label (uiRes("m_commonTexSoftSelectOptionsPopup.kGlobalLabel"))
+			-radialPosition "NW" 
+			-checkBox (2 == $fallofMode)
+			-command "softSelect -e -softSelectFalloff 2"
+			;
+	setParent -m ..;
+}

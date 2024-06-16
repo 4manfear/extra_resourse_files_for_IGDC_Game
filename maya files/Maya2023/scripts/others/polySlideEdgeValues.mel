@@ -1,0 +1,60 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//  Description:
+//
+//	Orignal Author: Stephen Edwards, Jan. 2007
+//
+//
+//  Input Arguments:
+//      None.
+//
+//  Return Value:
+//      None.
+//
+
+global proc polySlideEdgeValues(string $toolName)
+{
+	string $icon = "polyMoveEdge.png";
+	string $helpTag = "polySlideEdgeTool";
+	toolPropertySetCommon $toolName $icon $helpTag;
+
+	string $parent = (`toolPropertyWindow -q -location` + "|polySlideEdge");
+	setParent $parent;
+
+	int $relativeMode = `polySlideEdgeCtx -q -absolute $toolName`;
+	int $useSnapping = `polySlideEdgeCtx -q -useSnapping $toolName`;
+	int $snappingPoints = `polySlideEdgeCtx -q -snappingPoints $toolName`;
+	float $snappingTolerance = `polySlideEdgeCtx -q -snappingTolerance $toolName`;
+	
+	radioButtonGrp -e
+		-on1 ("polySlideEdgeCtx -e -absolute 0 " + $toolName)
+		-on2 ("polySlideEdgeCtx -e -absolute 1 " + $toolName)
+		-select ($relativeMode + 1)
+		polySlideEdgeModeGrp;
+
+	checkBoxGrp -e
+		-cc1 ("polySlideEdgeCtx -e -useSnapping #1 " + $toolName)
+		-v1 $useSnapping
+		polySlideEdgeSnappingGrp;
+			
+	intSliderGrp -e
+		-v $snappingPoints
+		-en `checkBoxGrp -q -v1 polySlideEdgeSnappingGrp`
+		-cc	("polySlideEdgeCtx -e -snappingPoints #1 " + $toolName)
+		polySlideEdgeSnappingPointsSlider;
+					
+	floatSliderGrp -e
+		-v	$snappingTolerance
+		-en `checkBoxGrp -q -v1 polySlideEdgeSnappingGrp`
+		-cc	("polySlideEdgeCtx -e -snappingTolerance #1 " + $toolName)
+		polySlideEdgeSnappingToleranceSlider;
+
+	toolPropertySelect polySlideEdge;
+}
+

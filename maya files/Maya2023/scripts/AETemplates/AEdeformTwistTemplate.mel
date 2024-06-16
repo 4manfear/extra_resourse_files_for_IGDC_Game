@@ -1,0 +1,39 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:	July 16, 1998
+//
+//  Procedure Name:
+//	AEdeformTwistTemplate
+//
+//  Description:
+//	Creates  attribute editor controls the deformTwist node
+//
+//  Input Value:
+//	nodeName
+//
+//  Output Value:
+//	None
+//
+
+
+global proc AEdeformTwistTemplate ( string $nodeName )
+{
+	editorTemplate -beginScrollLayout;
+
+		editorTemplate -suppress "lowBound";
+		editorTemplate -suppress "highBound";
+		editorTemplate -suppress "startAngle";
+		editorTemplate -suppress "endAngle";
+
+	AEdeformFuncCommon $nodeName;
+
+	editorTemplate -addExtraControls;
+	editorTemplate -endScrollLayout;
+}

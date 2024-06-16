@@ -1,0 +1,37 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//  Procedure Name:
+//  MASHplacePoints
+//
+//  Description;
+//  Switches tool to the MASH placer tool, allowing the user to paint MASH points on surfaces and manupulate them.
+//
+global proc MASHplacePoints() {
+
+    string $sel[] = `ls -sl`;
+    int $sucsess = 0;
+
+    //go through the selected objects
+    for ($obj in $sel) {
+        string $idPaint = `nodeType $obj`;
+        if ($idPaint == "MASH_Placer") {
+            if (`contextInfo -exists "paintPointsContext1"`) {
+                deleteUI("paintPointsContext1");
+            }
+            paintPointsContext paintPointsContext1;
+            setToolTo paintPointsContext1;
+
+            $sucsess = 1;
+        }
+    }
+    if (!$sucsess) {
+        MASHinViewMessage((getPluginResource("MASH", "kPleaseSelectAWaiter")), "Warning");
+    }
+
+}

@@ -1,0 +1,47 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc AEcMuscleShaderTemplate( string $nodeName )
+{
+	AEswatchDisplay $nodeName ;
+	
+	editorTemplate -beginScrollLayout;
+		editorTemplate -beginLayout (uiRes("m_AEcMuscleShaderTemplate.kMuscleShaderAttributes")) -collapse 0;
+			editorTemplate -addControl "image";
+			editorTemplate -addControl "inDisplacement";
+		    editorTemplate -addSeparator ;
+			editorTemplate -addControl "mode";
+			editorTemplate -addControl "length";
+			editorTemplate -addControl "sizeRadius";
+			editorTemplate -addControl "amplitude";
+			editorTemplate -addControl "falloff";
+			editorTemplate -addControl "pushMode";
+			editorTemplate -addControl "combineMode";
+		editorTemplate -endLayout;
+
+		// include/call base class/node attributes
+		AEdependNodeTemplate $nodeName;
+
+	// Suppress these since the user will never want to see them...
+    editorTemplate -suppress "pointWorld";
+    editorTemplate -suppress "uCoord";
+    editorTemplate -suppress "vCoord";
+    editorTemplate -suppress "vertexUvOne";
+    editorTemplate -suppress "vertexUvTwo";
+    editorTemplate -suppress "vertexUvThree";
+    editorTemplate -suppress "muscleMatrix";
+    editorTemplate -suppress "dispData";
+    editorTemplate -suppress "displacement";
+    editorTemplate -suppress "displacementLocal";
+    editorTemplate -suppress "shader";		// don't need this for shader only geo def
+	
+
+	editorTemplate -addExtraControls;
+	editorTemplate -endScrollLayout;
+}
+
+

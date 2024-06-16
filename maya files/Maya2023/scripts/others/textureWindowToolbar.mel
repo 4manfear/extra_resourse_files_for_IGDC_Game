@@ -1,0 +1,635 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+// Script:    textureWindowToolbar.mel
+//
+//*AUTOMATIC: yes
+//
+//
+// SYNOPSIS
+//		Creates a toolbar for the panel that contains the texture window
+//
+
+source rearrangeSelection;
+
+proc attachGroup(string $form, string $groups[])
+{
+	int $i;
+	int $previousGroup;
+	int $numGroups = `size($groups)`;
+
+	if ($numGroups > 0)
+	{
+		formLayout -edit
+			-attachForm $groups[0] "top" 0
+			-attachNone $groups[0] "bottom"
+			-attachForm $groups[0] "left" 1
+			-attachNone $groups[0] "right"
+			$form;
+		$previousGroup = 0;
+	}
+
+	for ($i=1; $i<$numGroups; $i++)
+	{
+		if ($groups[$i] != "")
+		{
+			formLayout -edit
+					-attachForm		$groups[$i] "top" 0
+					-attachNone		$groups[$i] "bottom"
+					-attachControl	$groups[$i] "left" 1 $groups[$previousGroup]
+					-attachNone		$groups[$i] "right"
+				$form;
+			$previousGroup = $i;
+		}
+	}
+}
+
+global proc uvTbUpdateTextureItems(string $editor) 
+{
+	if(!`textField -ex uvTbTextureField`)
+		return;
+	global string $gTexturesItems[];
+	$gTexturesItems = {};
+	
+	int $numImages = `textureWindow -query -numberOfTextures $editor`; 
+	int $selectedImg = `textureWindow -query -textureNumber $editor`; 
+	string $menuNames[] = `textureWindow -query -textureNames $editor`; 
+	if ($numImages == 0)
+	{
+		textField -e -tx "" -ann "" uvTbTextureField;
+		return;
+	}
+	if($selectedImg < 0)
+		$selectedImg = 0;
+	for ($i = 0; $i<$numImages; $i++)
+	{
+		$gTexturesItems[$i] = $menuNames[$i];
+		if($i == $selectedImg)
+		{
+		    textField -e -tx $menuNames[$i] -ann $menuNames[$i] uvTbTextureField;
+			textField -e -ip 1 uvTbTextureField;
+		}
+	}
+}
+
+global proc uvTbBuildTextureMenu(string $menu, string $editor)
+{
+    global string $gTexturesItems[];
+	menu -e -dai $menu;
+	for($i = 0; $i < size($gTexturesItems); $i++)
+	     menuItem -p $menu -label $gTexturesItems[$i] -c ("textureWindowSelectTexture " + $i + " " + $editor + ";uvTbUpdateTextureItems " + $editor);
+}
+
+global proc uvTbImageDimmingCallback() 
+// 
+//  Procedure Name: 
+//      tvImageDimmingCallback 
+// 
+//  Description: 
+//		Update the option values with the current state of the option box UI. 
+// 
+//  Input Arguments: 
+//	    None.
+// 
+//  Return Value: 
+//      None. 
+// 
+{ 
+	optionVar -fv tvImageDimming `floatSliderGrp -q -value uvTbImageDimmingSlider`;  
+	performTextureViewDimImageOptions 0;  
+	addToRecentCommandQueue "performTextureViewDimImageOptions 0" "TextureViewDimImage"; 
+}
+
+global proc switchColorChannel(string $editor)
+{
+	string $channel = textureWindowColorChannel(0,"");
+	if($channel == "color")
+	{
+		textureWindowColorChannel(1,"colorWithMask");
+	}
+	else if($channel == "colorWithMask")
+	{
+		textureWindowColorChannel(1,"mask");
+	}
+	else
+	{
+		textureWindowColorChannel(1,"color");
+	}
+	setChannelButtonImage($editor);
+}
+
+global proc setChannelButtonImage(string $editor)
+{
+	string $channel = textureWindowColorChannel(0,"");
+	if($channel == "color")
+	{
+		iconTextButton -e -image "UVEditorRGB.png" imageChannelButton;
+	}
+	else if($channel == "colorWithMask")
+	{
+		iconTextButton -e -image "UVEditorRGBA.png" imageChannelButton;
+	}
+	else
+	{
+		iconTextButton -e -image "UVEditorAlpha.png" imageChannelButton;
+	}
+}
+
+global proc textureWindowCreateToolbar_toggleIcons ( int $arg, 
+													 string $iconLayout, 
+													 string $collapsedLayout,
+													 string $statusVariable )
+{	
+	int $state = $arg;
+	if ($state < 0) $state = (!`optionVar -q $statusVariable`);
+
+	if ($state) {
+		// Show $iconLayout
+		//
+		layout -edit -manage true $iconLayout;
+		iconTextButton -edit -i1 openBar.png $collapsedLayout;
+	} else {
+		// Hide $iconLayout
+		//
+		layout -edit -manage false $iconLayout;
+		iconTextButton -edit -i1 closeBar.png $collapsedLayout;
+	}
+	optionVar -intValue $statusVariable $state;
+}
+
+global proc uvTbImageDimmingChangedCallback()
+{
+	if(!`floatSliderGrp -q -ex uvTbImageDimmingSlider`)
+		return;
+	string $texWinName[] = `getPanel -sty polyTexturePlacementPanel`;
+	float $color[] = eval ( "textureWindow -q -imageBaseColor "+ $texWinName[0] ) ;
+	float $brightness = $color[0];
+	float $dimValue = 1.0 - $brightness;
+	floatSliderGrp -edit -value $dimValue uvTbImageDimmingSlider;
+	optionVar -fv tvImageDimming $dimValue;
+}
+
+global proc textureWindowToolbar(string $toolBar,
+                                 string $editor,
+                                 string $editorCmd)
+//
+// Description:
+//    Add the texture window toolbar
+//
+{
+    global float $gActiveControlColor[];
+    int $btnSize = 22;
+	
+    // callback for updating the state of all editor controls
+    //
+    string $updateEditor = ("txtWndUpdateEditor(\"" + $editor + "\", \"" +
+                                                    $editorCmd + "\", \"null\", 101);");
+    
+	string $shiftLMBTip = (uiRes("m_textureWindowToolbar.kShiftLMBOptions"));
+	formLayout uvTbLayout; 
+	$rightLayout = `formLayout`;
+    $imageLayout = `formLayout`;
+
+	int $textureImageCurrentstate = textureWindowTextureImage(0,0);
+	iconTextCheckBox
+	    -h $btnSize -w $btnSize
+        -image1 "UVEditorImage.png"
+        -annotation (uiRes("m_textureWindowToolbar.kImageDisplayBtnAnnot"))
+		-value $textureImageCurrentstate
+        -changeCommand("ToggleUVTextureImage")
+        imageDisplayButton;
+
+    iconTextCheckBox
+	    -h $btnSize -w $btnSize
+        -image1 "UVEditorCheckered.png"
+        -annotation ((uiRes("m_textureWindowToolbar.kCheckerdBtnAnnot")) + $shiftLMBTip)
+        -onCommand("if(`getModifiers`%2) performTextureViewCheckerMapOptions 1; else{ textureWindowDisplayCheckered(1,1); textureWindow -edit -checkerColorMode 0 "
+			+ $editor + "; performTextureViewCheckerMapOptions 0;}" + $updateEditor)
+        -offCommand("if(`getModifiers`%2) performTextureViewCheckerMapOptions 1; else{ textureWindowDisplayCheckered(1,0);} " + $updateEditor)
+        checkeredButton;
+    popupMenu -button 3
+        -parent checkeredButton
+        -postMenuCommand("textureWindowDisplayCheckered(1,1); textureWindow -edit -checkerColorMode 1 " + $editor + ";" + $updateEditor)
+        checkeredButtonPopup;
+
+	iconTextButton -dcc "" -w 17 -h $btnSize -image ("popupMenuIcon.png") -annotation (uiRes("m_textureWindowToolbar.kTextures")) uvTbTextureFieldBtn;
+	textField -h $btnSize -ed false -pht (uiRes("m_textureWindowToolbar.kImageNoObjectSelected")) -ebg 0 -w 120 uvTbTextureField;
+	uvTbUpdateTextureItems($editor);
+	string $textureBtnMenu = `popupMenu -b 1 -p uvTbTextureFieldBtn`; 
+	menu -e -pmc("uvTbBuildTextureMenu " + $textureBtnMenu + " " + $editor) $textureBtnMenu; 
+	scriptJob -parent $editor -event "SelectionChanged" ("uvTbUpdateTextureItems " + $editor);
+
+    iconTextButton
+	    -h $btnSize -w $btnSize
+        -st "iconOnly" 
+        -c("switchColorChannel " + $editor)
+        -annotation (uiRes("m_textureWindowToolbar.kDisplayRGBChannelsAnnot"))
+        imageChannelButton;
+    setChannelButtonImage($editor);
+
+    iconTextCheckBox
+	    -h $btnSize -w $btnSize
+        -image1 "UVEditorDimTexture.png"
+		-onCommand ("if(`getModifiers`%2) performTextureViewDimImageOptions 1; else{textureWindowImageDimming(1,1); performTextureViewDimImageOptions 0;} " + $updateEditor)
+		-offCommand ("if(`getModifiers`%2) performTextureViewDimImageOptions 1; else{textureWindowImageDimming(1,0);} " + $updateEditor)
+        -annotation ((uiRes("m_textureWindowToolbar.kDimmerBtnAnnot")) + $shiftLMBTip)
+        dimmerButton;
+    floatSliderGrp
+        -minValue 0.0 -maxValue 1.0 
+        -fieldMinValue 0.0 -fieldMaxValue 1.0 
+        -pre 2 
+        -value 0.5 
+        -width 60
+        -cw1 60
+        -cc("uvTbImageDimmingCallback") 
+        -dragCommand("uvTbImageDimmingCallback") 
+		-annotation (uiRes("m_textureWindowToolbar.kDimmerControlAnnot"))
+        uvTbImageDimmingSlider;
+		
+    scriptJob -parent uvTbImageDimmingSlider 
+        -event "texWindowEditorImageBaseColorChanged" ("uvTbImageDimmingChangedCallback");
+    
+    setParent ..; // $imageLayout
+	formLayout -e    
+    -af imageDisplayButton top  0
+    -af imageDisplayButton left 5
+    
+    -af checkeredButton top  0
+    -ac checkeredButton left 1 imageDisplayButton
+	    
+	-af uvTbTextureFieldBtn top  0
+	-ac uvTbTextureFieldBtn left 1 checkeredButton
+	
+	-af uvTbTextureField top  0
+	-ac uvTbTextureField left 1 uvTbTextureFieldBtn
+	
+    -af imageChannelButton top  0
+    -ac imageChannelButton left 1 uvTbTextureField
+	
+    -af dimmerButton top  0
+    -ac dimmerButton left 1 imageChannelButton
+    
+    -af uvTbImageDimmingSlider top  2
+    -ac uvTbImageDimmingSlider left 1 dimmerButton
+    $imageLayout;
+    
+    //
+    // Init hidden/shown option var
+    //
+    optionVar -init false -category "UV Editor" -iv "uvTbShowStatusOthers" 0;
+
+    string $toggleOthersLayoutCmd = "\"uvTbOthersLayout\", " + 
+                                    "\"othersLayoutCollapse\", " + 
+                                    "\"uvTbShowStatusOthers\")";
+                                   
+    iconTextButton -vis true
+        -i1 "closeBar.png"
+        -c("textureWindowCreateToolbar_toggleIcons(-1," + $toggleOthersLayoutCmd)
+        othersLayoutCollapse;
+
+    formLayout -manage false  uvTbOthersLayout;
+    
+    iconTextCheckBox
+	    -h $btnSize -w $btnSize
+        -image1 "UVEditorFilterMode.png"
+        -onCommand("textureWindowImageUnfiltered(1,1); " +
+            $updateEditor)
+        -offCommand("textureWindowImageUnfiltered(1,0); " +
+            $updateEditor)
+        -annotation (uiRes("m_textureWindowToolbar.kFilteredBtnAnnot"))
+        filteredButton;
+
+    iconTextCheckBox
+	    -h $btnSize -w $btnSize
+        -image1 "UVEditorImageRatio.png"
+        -onCommand("textureWindowImageRatio(1,1); " +
+            $updateEditor)
+        -offCommand("textureWindowImageRatio(1,0); " +
+            $updateEditor)
+        -annotation (uiRes("m_textureWindowToolbar.kRatioBtnAnnot"))
+        ratioButton;
+
+    iconTextCheckBox
+	    -h $btnSize -w $btnSize
+        -image1 "UVEditorPixelSnap.png"
+        -onCommand("if(`getModifiers`%2) performPixelSnapOptions true; else snapModePixelSnap(1,1); " + $updateEditor)
+        -offCommand("if(`getModifiers`%2) performPixelSnapOptions true; else snapModePixelSnap(1,0); " + $updateEditor)
+        -annotation ((uiRes("m_textureWindowToolbar.kPixelSnapBtnAnnot"))+$shiftLMBTip)
+        pixelSnapButton;
+
+    iconTextCheckBox
+	    -h $btnSize -w $btnSize
+        -image1 "UVEditorBakeTexture.png"
+		-changeCommand("if(`getModifiers`%2) performTextureViewBakeTextureOptions true;else{ textureWindowToggleEditorImage( \"" + $editor + "\" );}" +
+            $updateEditor)
+        -annotation ((uiRes("m_textureWindowToolbar.kBakeTextureBtnAnnot"))+$shiftLMBTip)
+        editorImageDisplayButton;
+    popupMenu -button 3
+        -parent editorImageDisplayButton
+        -postMenuCommand("textureWindowBakeEditorImage")
+        editorImageDisplayButtonPopup;
+
+    iconTextButton
+	    -h $btnSize -w $btnSize
+        -image1 "UVEditorUpdatePsdTexture.png"
+        -annotation (uiRes("m_textureWindowToolbar.kUpdatePSDBtnAnnot"))
+        -command ("psdUpdateTextures")
+        updatePsdNetworksButton;
+
+
+    setParent ..; // uvTbOthersLayout
+    formLayout -e
+    -af filteredButton top  0
+    -af filteredButton left 1
+    
+    -af ratioButton top  0
+    -ac ratioButton left 1 filteredButton
+    
+    -af pixelSnapButton top  0
+    -ac pixelSnapButton left 1 ratioButton
+    
+    -af editorImageDisplayButton top  0
+    -ac editorImageDisplayButton left 1 pixelSnapButton
+    -af updatePsdNetworksButton top  0
+    -ac updatePsdNetworksButton left 1 editorImageDisplayButton
+    uvTbOthersLayout;
+    
+    if(`optionVar -q "uvTbShowStatusOthers"`)
+        eval("textureWindowCreateToolbar_toggleIcons(1," + $toggleOthersLayoutCmd);
+
+    //
+    // Init hidden/shown option var
+    //
+    optionVar -init false -category "UV Editor" -iv "uvTbShowStatusColors" 0;
+
+    $toggleColorsLayoutCmd = "\"uvTbColorsLayout\", " + 
+                             "\"colorLayoutCollapse\", " + 
+                             "\"uvTbShowStatusColors\")";
+    iconTextButton -vis true
+        -i1 "closeBar.png"
+        -c("textureWindowCreateToolbar_toggleIcons(-1," + $toggleColorsLayoutCmd)
+        colorLayoutCollapse;
+
+    formLayout -manage false uvTbColorsLayout;
+
+    string $subgroupExposure[2];
+    string $subgroupGamma[2];
+    string $subgroupCM[2];
+
+    string $renderingEngine = getPreferredRenderingEngine();
+    int $defaultVisibilityStateOfCMControls = ($renderingEngine != "");
+
+    float $exposure = `textureWindow -q -exposure $editor`;
+    float $gamma = `textureWindow -q -gamma $editor`;
+    int $enabled = `textureWindow -q -cmEnabled $editor`;
+
+    formLayout uvEditorExposureGroup; //The name of the layout is used to render tooltip. Do NOT change it.
+    $subgroupExposure[0] = `iconTextButton -h $btnSize -w $btnSize -version "2016" -visible $defaultVisibilityStateOfCMControls -i1 "rvExposureControlIcon.png" -annotation (uiRes("m_textureWindowToolbar.kExposureIconAnnotation")) ("uvEditorExposureIcon")`;
+    $subgroupExposure[1] = `floatField -h $btnSize -visible $defaultVisibilityStateOfCMControls -width 60 -value $exposure -precision 2 -step 0.1 ("uvEditorExposureField")`;
+	setParent ..; //uvEditorExposureGroup
+	formLayout -e
+    -af $subgroupExposure[0] top  0
+    -af $subgroupExposure[0] left 0
+    -af $subgroupExposure[1] top  0
+    -ac $subgroupExposure[1] left 0 $subgroupExposure[0]
+	uvEditorExposureGroup;
+
+    string $exposureUpdateCommand = "callPython(\"maya.colorManagementUtilities\", \"updateExposure\",{\"" + $editor + "\" , \"" + $subgroupExposure[1] + "\" , \"cmds.textureWindow\"})";
+    string $exposureToggleCommand = "callPython(\"maya.colorManagementUtilities\", \"syncExposureField\",{\"" + $editor + "\" , \"" + $subgroupExposure[1] + "\" , \"cmds.textureWindow\"})";
+
+    iconTextButton -h $btnSize -w $btnSize -e -command $exposureToggleCommand $subgroupExposure[0];
+    floatField -e -changeCommand $exposureUpdateCommand $subgroupExposure[1];
+    floatField -e -dragCommand $exposureUpdateCommand $subgroupExposure[1];
+
+	formLayout uvEditorGammaGroup; //The name of the layout is used to render tooltip. Do NOT change it.
+    $subgroupGamma[0] = `iconTextButton -h $btnSize -w $btnSize -version "2016" -visible $defaultVisibilityStateOfCMControls -i1 "rvGammaControlIcon.png" -annotation (uiRes("m_textureWindowToolbar.kGammaIconAnnotation")) ("uvEditorGammaIcon")`;
+    $subgroupGamma[1] = `floatField -h $btnSize -visible $defaultVisibilityStateOfCMControls -width 60 -value $gamma -min 0.0 -precision 2 -step 0.1 ("uvEditorGammaField")`;
+    setParent ..; //uvEditorGammaGroup
+	formLayout -e
+    -af $subgroupGamma[0] top  0
+    -af $subgroupGamma[0] left 0
+    -af $subgroupGamma[1] top  0
+    -ac $subgroupGamma[1] left 0 $subgroupGamma[0]
+	uvEditorGammaGroup;
+	
+    string $gammaUpdateCommand = "callPython(\"maya.colorManagementUtilities\", \"updateGamma\",{\"" + $editor + "\" , \"" + $subgroupGamma[1] + "\" , \"cmds.textureWindow\"})";
+    string $gammaToggleCommand = "callPython(\"maya.colorManagementUtilities\", \"syncGammaField\",{\"" + $editor + "\" , \"" + $subgroupGamma[1] + "\" , \"cmds.textureWindow\"})";
+
+    iconTextButton -h $btnSize -w $btnSize -e -command $gammaToggleCommand $subgroupGamma[0];
+    floatField -e -changeCommand $gammaUpdateCommand $subgroupGamma[1];
+    floatField -e -dragCommand $gammaUpdateCommand $subgroupGamma[1];
+
+    formLayout uvEditorViewTransformGroup; //The name of the layout is used to render tooltip. Do NOT change it.
+    $subgroupCM[0] = `symbolCheckBox -h $btnSize -w $btnSize-visible $defaultVisibilityStateOfCMControls -onImage "rvViewingPipelineOn.png" -offImage "rvViewingPipelineOff.png" -value $enabled("uvEditorEnableButton")`;
+    $subgroupCM[1] = `optionMenu -h $btnSize -visible $defaultVisibilityStateOfCMControls ("uvEditorViewTransformSelOptionMenu")`;
+    setParent ..; //uvEditorViewTransformGroup
+	formLayout -e
+    -af $subgroupCM[0] top  0
+    -af $subgroupCM[0] left 0
+    -af $subgroupCM[1] top  0
+    -ac $subgroupCM[1] left 0 $subgroupCM[0]
+	uvEditorViewTransformGroup;
+	
+    string $viewTransformNames[] = `colorManagementPrefs -q -viewTransformNames`;
+    int $numNames = size($viewTransformNames);
+    for ($i = 0; $i < $numNames; $i++)
+        menuItem -label $viewTransformNames[$i];
+
+    string $vtName = `textureWindow -q -viewTransformName $editor`;
+    optionMenu -e -v $vtName("uvEditorViewTransformSelOptionMenu");
+
+    string $enableCMCommand = "callPython(\"maya.colorManagementUtilities\", \"toggleCM\",{\"" + $editor + "\" , \"" + $subgroupCM[0] + "\", \"cmds.textureWindow\"})";
+    string $selectViewTransformCommand = "callPython(\"maya.colorManagementUtilities\", \"setViewTransform\",{\"" + $editor + "\" , \"" + $subgroupCM[1] + "\" , \"cmds.textureWindow\"})";
+    symbolCheckBox -e -changeCommand $enableCMCommand $subgroupCM[0];
+    optionMenu -e -changeCommand $selectViewTransformCommand $subgroupCM[1];
+
+    formLayout -e -enable `colorManagementPrefs -q -cmEnabled` uvEditorViewTransformGroup;
+    scriptJob -parent uvEditorViewTransformGroup -event "colorMgtEnabledChanged" ("formLayout -e -enable `colorManagementPrefs -q -cmEnabled` uvEditorViewTransformGroup");
+
+    setParent ..; //$colorLayout
+    
+    formLayout -e
+    -af uvEditorExposureGroup top  0
+    -af uvEditorExposureGroup left 0
+    
+    -af uvEditorGammaGroup top  0
+    -ac uvEditorGammaGroup left 1 uvEditorExposureGroup
+    
+    -af uvEditorViewTransformGroup top  0
+    -ac uvEditorViewTransformGroup left 5 uvEditorGammaGroup
+    uvTbColorsLayout;
+    
+    if(`optionVar -q "uvTbShowStatusColors"`)
+        eval("textureWindowCreateToolbar_toggleIcons(1," + $toggleColorsLayoutCmd);
+	
+	setParent ..; //$rightLayout
+	formLayout -e
+	-af uvTbColorsLayout top  0
+    -af uvTbColorsLayout right 5
+	
+	-af colorLayoutCollapse top  0
+    -ac colorLayoutCollapse right 0 uvTbColorsLayout
+
+    -af uvTbOthersLayout top  0
+    -ac uvTbOthersLayout right 0 colorLayoutCollapse
+    
+    -af othersLayoutCollapse top  0
+    -ac othersLayoutCollapse right 0 uvTbOthersLayout
+	
+    -af $imageLayout top  0
+    -ac $imageLayout right 0 othersLayoutCollapse
+
+    $rightLayout;
+    
+	$leftLayout = `formLayout -bgc 0.267 0.267 0.267`;
+
+    iconTextCheckBox
+	    -h $btnSize -w $btnSize
+        -image1 "UVEditorWireFrame.png"
+        -changeCommand("if(`getModifiers`%2) performUVWireframeOptions true; else DisplayUVWireframe; " + $updateEditor)
+        -annotation ((uiRes("m_textureWindowToolbar.kWireFrameBtnAnnot"))+$shiftLMBTip)
+        -hlc $gActiveControlColor[0] $gActiveControlColor[1] $gActiveControlColor[2]
+        viewUVWireframeButton;
+
+    iconTextCheckBox
+	    -h $btnSize -w $btnSize
+        -image1 "UVEditorShadeUVs.png"
+        -changeCommand("if(`getModifiers`%2) performOverlayUVOptions true; else { textureWindow -edit -solidMapPerShell 0 " + $editor + ";" +" DisplayUVShaded; }"+ $updateEditor)
+        -annotation ((uiRes("m_textureWindowToolbar.kShadeUVBtnAnnot"))+$shiftLMBTip)
+        -hlc $gActiveControlColor[0] $gActiveControlColor[1] $gActiveControlColor[2]
+        viewShadeUVButton;
+    popupMenu -button 3
+        -parent viewShadeUVButton
+        -postMenuCommand("textureWindow -edit -solidMapPerShell 1 " + $editor + ";textureWindowSolidMap(1,1);" + $updateEditor)
+        viewShadeUVButtonPopup;
+
+    iconTextCheckBox
+	    -h $btnSize -w $btnSize
+        -image1 "UVEditorDistortion.png"
+        -onCommand("if(`getModifiers`%2) performUVDistortionOptions true; else {textureWindow -e -distortionPerObject 0 " + $editor + "; textureWindowDistortion(1,1);}" + $updateEditor)
+        -offCommand("if(`getModifiers`%2) performUVDistortionOptions true; else textureWindowDistortion(1,0);" + $updateEditor)
+        -annotation ((uiRes("m_textureWindowToolbar.kDistortionBtnAnnot"))+$shiftLMBTip)
+        distortionButton;
+    popupMenu -button 3
+        -parent distortionButton
+        -postMenuCommand("textureWindow -e -distortionPerObject 1 " + $editor + "; textureWindowDistortion(1,1);" + $updateEditor)
+        viewDistortionButtonPopup;
+
+	string $divider1 = `formLayout -bgc 0.3 0.3 0.3 -height $btnSize -width 2`;
+	setParent ..;
+
+    iconTextCheckBox
+	    -h $btnSize -w $btnSize
+        -image1 "UVEditorTextureBorder.png"
+        -changeCommand("if(`getModifiers`%2) performTextureViewTextureBordersOptions 1; else UVEditorToggleTextureBorderDisplay; " + $updateEditor)
+        -annotation ((uiRes("m_textureWindowToolbar.kTextureBorderBtnAnnot"))+$shiftLMBTip)
+        -hlc $gActiveControlColor[0] $gActiveControlColor[1] $gActiveControlColor[2]
+        toggleTextureBorderButton;
+
+    iconTextCheckBox
+	    -h $btnSize -w $btnSize
+        -image1 "UVEditorShellBorder.png"
+        -changeCommand("ToggleUVShellBorder; " + $updateEditor)
+        -annotation (uiRes("m_textureWindowToolbar.kShellBorderBtnAnnot"))
+		-hlc $gActiveControlColor[0] $gActiveControlColor[1] $gActiveControlColor[2]
+        toggleShellBorderButton;
+
+	string $divider2 = `formLayout -bgc 0.3 0.3 0.3 -height $btnSize -width 2`;
+	setParent ..;
+	
+    iconTextCheckBox
+	    -h $btnSize -w $btnSize
+        -image1 "UVEditorGridDisplay.png"
+        -onCommand("if(`getModifiers`%2) performTextureViewGridOptions 1; else textureWindowDisplayGrid(1,1); " + $updateEditor)
+        -offCommand("if(`getModifiers`%2)performTextureViewGridOptions 1; else textureWindowDisplayGrid(1,0); " + $updateEditor)
+        -annotation ((uiRes("m_textureWindowToolbar.kGridBtnAnnot"))+$shiftLMBTip)
+        gridDisplayButton;
+
+    iconTextCheckBox
+	    -h $btnSize -w $btnSize
+		-image1 "UVEditorIsolate.png"
+        -st "iconOnly"
+		-hlc 0.812 0.208 0.224
+        -onCommand("ToggleUVIsolateViewSelected") 
+        -offCommand("ToggleUVIsolateViewSelected") 
+        -annotation (uiRes("m_textureWindowToolbar.kIsolateSelectBtnAnnot"))
+        isolateViewSelectButton;
+
+    popupMenu -button 3 -parent isolateViewSelectButton isolateRMB;
+        menuItem -label (uiRes("m_textureWindowToolbar.kLoadSet")) 
+                 -annotation ( getRunTimeCommandAnnotation("UVIsolateLoadSet") ) 
+                 -command ( "UVIsolateLoadSet" );
+        menuItem -label (uiRes("m_textureWindowToolbar.kAddSelected"))  
+                 -command ( "textureEditorIsolateSelect 1; ") 
+                 -annotation (uiRes("m_textureWindowToolbar.kAddSelectedAnnot"));
+        menuItem -label (uiRes("m_textureWindowToolbar.kRemoveSelected"))  
+                 -command ( "textureEditorIsolateSelect 2; ") 
+                 -annotation (uiRes("m_textureWindowToolbar.kRemoveSelectedAnnot")); 
+        menuItem -label (uiRes("m_textureWindowToolbar.kRemoveAll"))  
+                 -command ( "textureEditorIsolateSelect 0;" ) 
+                 -annotation (uiRes("m_textureWindowToolbar.kRemoveAllannot"));
+				 
+    string $divider3 = `formLayout -bgc 0.3 0.3 0.3 -height $btnSize -width 2`;
+	setParent ..;
+	
+    iconTextButton
+	    -h $btnSize -w $btnSize
+        -image1 "UVEditorSnapshot.png"
+        -command("performUVSnapshot")
+        -annotation (uiRes("m_textureWindowToolbar.kUVSnapshotAnnot"))
+        snapShotButton;
+		
+    setParent ..;//$leftLayout
+	
+	formLayout -e
+	
+    -af viewUVWireframeButton top  0
+    -af viewUVWireframeButton left 5
+    
+    -af viewShadeUVButton top  0
+    -ac viewShadeUVButton left 1 viewUVWireframeButton
+    
+    -af distortionButton top  0
+    -ac distortionButton left 1 viewShadeUVButton
+    
+	-af $divider1 top  0
+    -ac $divider1 left 2 distortionButton
+	
+    -af toggleTextureBorderButton top  0
+    -ac toggleTextureBorderButton left 2 $divider1
+    
+    -af toggleShellBorderButton top  0
+    -ac toggleShellBorderButton left 1 toggleTextureBorderButton
+	
+	-af $divider2 top  0
+    -ac $divider2 left 2 toggleShellBorderButton
+    
+    -af gridDisplayButton top  0
+    -ac gridDisplayButton left 2 $divider2
+    
+    -af isolateViewSelectButton top  0
+    -ac isolateViewSelectButton left 1 gridDisplayButton
+	
+	-af $divider3 top  0
+    -ac $divider3 left 2 isolateViewSelectButton
+    
+    -af snapShotButton top  0
+    -ac snapShotButton left 2 $divider3
+    $leftLayout;
+	
+    setParent ..; //uvTbLayout
+    formLayout -e 
+    -af $rightLayout top    5
+    -af $rightLayout right  0
+    -af $rightLayout bottom 1
+	-af $rightLayout left  -1000
+	-af $leftLayout top    5
+    -af $leftLayout left   0
+    -af $leftLayout bottom 1
+    uvTbLayout;
+}

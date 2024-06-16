@@ -1,0 +1,157 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+// 
+//  Creation Date: October 29, 2016 
+// 
+//  Procedure Name: 
+//      texStraightenShell 
+// 
+//  Description: 
+//      Straighten a UV shell by straightening a selected edge loop and then 
+//      unfolding the the surrounding UVs. 
+// 
+//  Input Arguments 
+//      None. 
+// 
+//  Return Value: 
+//      None. 
+// 
+//  Notes: 
+//  This script is part of the implementation of Nightshade UV Editor into 
+//  Autodesk Maya. 
+// 
+// =========================================================================== 
+ 
+global proc texStraightenShell() 
+{ 
+    // Validate selection 
+    texCheckSelection("edgeUV"); 
+ 
+    // Store the selection in various forms 
+    string $selection[] = `ls -selection`; 
+    string $temp[] = `polyListComponentConversion -toUV`; 
+    string $selectionUVs[] = `ls -flatten $temp`; 
+    if (size($selectionUVs) < 2) {
+        error((uiRes("m_texStraightenShell.kNotEnoughUV")));
+        return;
+    }
+
+    // Check if selection spans over multiple shells 
+    texCheckSelection("multi"); 
+ 
+    // Get border UVs 
+    polySelectBorderShell 1; 
+ 
+    // Find out how many border UVs the original selection covers 
+    string $sharedUVs[] = `ls -selection -flatten $selectionUVs`; 
+ 
+    // Selection contains only border UVs 
+    if (`size($selectionUVs)` == `size($sharedUVs)`) 
+    { 
+        // Straighten map border 
+        polyStraightenUVBorder 
+            -blendOriginal 0.0 
+            -curvature 0.0 
+            -gapTolerance 2 
+            -preserveLength 1.0 
+            $selectionUVs 
+        ; 
+ 
+        // Unfold unselected UVs 
+        polyOptUvs 
+            -globalBlend 0.0 
+            -globalMethodBlend 1.0 
+            -iterations 25 
+            -optimizeAxis 0 
+            -pinSelected true 
+            -stoppingThreshold 0.001 
+            -useScale false 
+            $selectionUVs 
+        ; 
+ 
+    // Selection contains two border UVs 
+    } else if (`size($sharedUVs)` == 2){ 
+ 
+        // Convert to contained edges and cut the loop 
+        string $edgeLoop[] = `polyListComponentConversion -toEdge -internal $selectionUVs`; 
+        polyMapCut $edgeLoop; 
+ 
+        // Convert back to UVs and straighten the UV border - then sew it back together 
+        string $edgeLoopUVs[] = `polyListComponentConversion -toUV $edgeLoop`; 
+        polyStraightenUVBorder 
+            -blendOriginal 0.0 
+            -curvature 0.0 
+            -gapTolerance 2 
+            -preserveLength 1.0 
+            $edgeLoopUVs 
+        ; 
+        polyMapSewMove 
+            -constructionHistory true 
+            -limitPieceSize false 
+            -numberFaces 10 
+            $edgeLoop; 
+        ; 
+ 
+        // Unfold unselected UVs 
+        polyOptUvs 
+            -globalBlend 0.0 
+            -globalMethodBlend 1.0 
+            -iterations 25 
+            -optimizeAxis 0 
+            -pinSelected true 
+            -stoppingThreshold 0.001 
+            -useScale false 
+            $selectionUVs 
+        ; 
+ 
+    // Faulty UV selection. This one should never execute actually 
+    } else { 
+        //errorCode(7); 
+    } 
+ 
+    // Time to straighten the shell! 
+    // Select two random UVs. Since they are all on a line now it doesn't matter which ones 
+    select $selectionUVs[0]; 
+    select -add $selectionUVs[1]; 
+ 
+    // Orient shell to the U or V axis 
+    texOrientEdge(); 
+ 
+    // Find shell direction by calculating arctangent. It's either 0 or 90 degrees. 
+    float $arctangent = texCalculateAngle($selectionUVs[0], $selectionUVs[1]); 
+    float $angleValue = int( texRoundOff($arctangent, 4) ); 
+ 
+    // Unfold 
+    if ($angleValue == 0){ // Along U 
+        polyOptUvs 
+            -globalBlend 0.0 
+            -globalMethodBlend 0.5 
+            -iterations 5000 
+            -optimizeAxis 2 
+            -pinSelected true 
+            -pinUvBorder false 
+            -stoppingThreshold 0.0010 
+            -useScale false 
+            $selectionUVs 
+        ; 
+    } else { // Along V 
+        polyOptUvs 
+            -globalBlend 0.0 
+            -globalMethodBlend 0.5 
+            -iterations 5000 
+            -optimizeAxis 1 
+            -pinSelected true 
+            -pinUvBorder false 
+            -stoppingThreshold 0.0010 
+            -useScale false 
+            $selectionUVs 
+        ; 
+    } 
+    // Reselect the original selection 
+    select $selection; 
+}

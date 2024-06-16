@@ -1,0 +1,41 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc cameraSetExtraProperties( int $version, string $values[])
+{
+	if (1 == $version)
+	{
+		string $initialSelection[] = `ls -sl`;
+
+		string $shape;
+		if ($values[0] == "") {
+			string $selected[] = `ls -sl -dagObjects`;
+			$shape = $selected[1];	
+		} else {
+			string $selected[] = `ls -dagObjects $values[0]`;
+			$shape = $selected[1];
+		}
+
+		int $frustum = $values[1];
+		int $clipPlanes = $values[2];
+		int $adjClipPlanes = $values[3];
+		int $createImagePlane = $values[4];
+
+		setAttr ($shape+".displayCameraFrustum") $frustum;
+		setAttr ($shape+".displayCameraNearClip") $clipPlanes; 
+		setAttr ($shape+".displayCameraFarClip") $clipPlanes;
+		setAttr ($shape+".bestFitClippingPlanes") $adjClipPlanes;
+
+		if (0 != $createImagePlane)	{
+			createImagePlane( $shape );
+		}
+
+		if ( 0 < size($initialSelection) ) {
+			select $initialSelection;
+		}
+	}
+}

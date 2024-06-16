@@ -1,0 +1,25 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  Oct 22, 1998
+//
+//  Description:
+//      Opens the layer editor to the given tab
+//
+//  Input Arguments:
+//      $tab - "layers" open the layers tab
+//             "characters" open the characters tab
+//
+//  Return Value:
+//      None.
+//
+
+global proc showLayerEditor( string $tab ) {
+	obsoleteProc( "showLayerEditor", "showLayerEditor.mel" );
+}

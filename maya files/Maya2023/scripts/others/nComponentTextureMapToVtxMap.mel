@@ -1,0 +1,27 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  2005
+//
+//  Description:
+//      Convert the specified attribute's texture map to a vertex map.
+//		
+//
+global proc nComponentTextureMapToVtxMap(string $attr)
+{
+	// The 0 to getNComponentToEdit means we do not accept component
+	// selections, the user must select an nCloth
+	//
+	string $nComponent = getNComponentToEdit(0);
+	if ( $nComponent == "") {
+		error( (uiRes("m_nComponentTextureMapToVtxMap.kMustSelectNcloth")));
+	}
+
+	nBase -e -ttv $attr $nComponent;
+}

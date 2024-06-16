@@ -1,0 +1,111 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  June 2000
+//
+//  Description:
+//      Option tool callbacks for Artisan Select Paint tool.
+//
+//
+//  Procedure Name:
+//     	artSelectCallback 
+//
+//  Description:
+//      Initialize the option values.
+//
+//  Input Arguments:
+//
+//  Return Value:
+//      None.
+//
+// 
+
+global proc artSelectPaintOperation(
+	string $artCommand,
+	string $operation
+)
+{
+	string $cmd;
+	if ( $operation == "Select" ) {
+		$cmd = ($artCommand + " -e -selectop  \"select\"   `currentCtx`");
+	} else if ( $operation == "Unselect" ) {
+		$cmd = ($artCommand + " -e -selectop  \"unselect\" `currentCtx`");
+	} else if ( $operation == "Toggle" ) {
+		$cmd = ($artCommand + " -e -selectop  \"toggle\"   `currentCtx`");
+	}
+	eval( $cmd );
+}
+
+// =======================================================
+// Main callback procedure for Paint Selecion tool.
+// =======================================================
+proc artSelectOperCallback(
+	string  $artCommand,
+	string	$currTool
+)
+{
+	// Selection Type frameLayout.
+	radioButtonGrp -e
+		-on1 ( "artSelectPaintOperation " + $artCommand + " Select" ) 
+		-on2 ( "artSelectPaintOperation " + $artCommand + " Unselect" ) 
+	artSelectOperRadioButton0;
+
+	radioButtonGrp -e
+		-on1 ( "artSelectPaintOperation " + $artCommand + " Toggle" ) 
+	artSelectOperRadioButton1;
+
+	checkBoxGrp -e
+		-cc1 ($artCommand + " -e -addselection #1 `currentCtx`")
+	artSelectAddToCurrentChk;
+
+	// Global Selection frameLayout
+	button -e
+		-c  ($artCommand + " -e -selectall `currentCtx`")
+	artSelectAllButton;
+
+	button -e
+		-c  ($artCommand + " -e -unselectall `currentCtx`")
+	artUnSelectAllButton;
+
+	button -e
+		-c  ($artCommand + " -e -toggleall `currentCtx`")
+	artToggleAllButton;
+
+}
+
+// =======================================================
+// Main callback procedure for Paint Selecion tool.
+// =======================================================
+global proc artSelectCallback(
+	string 	$artCommand
+)
+{
+	source "artisanCallback.mel";
+
+	string $currContext = `currentCtx`;	
+	string $currTool	= `contextInfo -c $currContext`;
+
+	// Basic Brush frameLayout.
+	artisanBrushCallback( $artCommand, $currTool );
+
+	// Paint Select Operation frameLayout.
+	artSelectOperCallback( $artCommand, $currTool );
+
+	// Stroke frameLayout.
+	artisanStrokeCallback( $artCommand, $currTool );
+
+	// Stylus Pressure frameLayout.
+	artisanPressureCallback( $artCommand, $currTool );
+
+	// Attribute Maps frameLayout.
+	artisanAttrMapCallback( $artCommand, $currTool );
+
+	// Display frameLayout.
+	artisanDisplayCallback( $artCommand, $currTool );
+}

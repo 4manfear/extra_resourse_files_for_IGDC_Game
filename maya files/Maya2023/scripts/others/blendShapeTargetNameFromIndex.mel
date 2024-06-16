@@ -1,0 +1,29 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+ 
+
+// Find the target name (weight name) from the 0-based index on the blendShape.
+// Returns "" if it cannot find.
+//
+global proc string blendShapeTargetNameFromIndex(string $blendShape, int $weightIndex)
+{    
+	string $attr = $blendShape + ".w";
+	int $validWeightIndices[] = `getAttr -multiIndices $attr`;
+	
+	int $found = 0;
+	for ($item in $validWeightIndices)
+	{
+		if ($item == $weightIndex)
+			$found = 1;
+	}
+	if ($found == 0)
+		return "";
+	
+	$attr = $attr + "[" + $weightIndex + "]";
+	return `aliasAttr -q $attr`;
+}

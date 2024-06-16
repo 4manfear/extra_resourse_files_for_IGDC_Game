@@ -1,0 +1,27 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+
+global proc invokeDynGlobalsEditor()
+//
+// Invoke the attribute editor for the current dynGlobals.  If there isn't
+// one, then first create it, then bring it up in the editor.
+{
+
+	string $theGlobal;
+	
+	if (catch ($theGlobal = `dynGlobals -q -active`))
+	{
+		warning (uiRes("m_invokeDynGlobalsEditor.kUnableToCreateWarn"));
+		return;
+	}
+
+	string $cmd = "showEditor " + $theGlobal;
+	evalEcho $cmd;
+}

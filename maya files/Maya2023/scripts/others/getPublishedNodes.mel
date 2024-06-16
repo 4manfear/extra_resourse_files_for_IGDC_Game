@@ -1,0 +1,32 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+// Return a list of published nodes enclosed in container
+
+global proc string[] getPublishedNodes( string $container )
+//
+//	Description:
+//		Returns the list of published nodes for the container.
+//
+//	Inputs:
+//		$container	: container node
+//
+//	Return Value:
+//		Array of related nodes, possibly empty.
+//
+{
+	string $rootNode = `container -q -publishAsRoot $container`;
+	string $anchorNodes[] = stringArrayCatenate(
+						`container -q -pap -ba $container`,
+						`container -q -pac -ba $container`);
+	if( $rootNode != "" ) {
+		return( stringArrayCatenate( {$rootNode}, $anchorNodes ) );
+	} else {
+		return( $anchorNodes );
+	}
+}
+

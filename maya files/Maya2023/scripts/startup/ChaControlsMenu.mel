@@ -1,0 +1,222 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+// Creation Date:  12 June 2014
+//
+//
+//  Procedure Name:
+//      ChaControlsMenu
+//
+//  Description:
+//		Create the Rigging->Control menu
+//
+//  Input Arguments:
+//      parent to parent the menu to.
+//
+//  Return Value:
+//      None.
+//
+
+global proc ChaControlsMenu( string $parent )
+{
+	int $dimWhenNoSelect = 0;
+
+	setParent -menu $parent;
+	if( `menu -q -ni $parent` != 0 ) {
+		//
+		//	Menu is built already - just return
+		//
+		return;
+	}
+
+	//createControllersMenu $parent;
+	
+	menuItem -divider true -dividerLabel  (uiRes("m_ChaControlsMenu.kController"));
+		menuItem
+			-version "2017"
+			-rtc "TagAsController"
+			createController;
+
+		menuItem 
+			-version "2017"
+			-rtc "TagAsControllerParent"
+			createControllerParent;
+
+	menuItem -divider true -dividerLabel  (uiRes("m_ChaControlsMenu.kRigCtlHIK"));
+
+		menuItem 
+			-rtc "CreateControlRig"
+			createControlRig;
+
+	// ----- Character Set -----
+	// Important:
+	//		These character set menu items are replicated in the animation menuset inside AniKeyMenu.mel
+	//		If you are making changes to these items, please confirm update the corresponding item in AniKeyMenu.mel.
+	//
+	//		Also, if you update createSelectCharNodesMenu() and createSelectCharMenu() proc, please also remember to update
+	//		the corresponding duplicate in AniKeyMenu.mel.
+	menuItem -divider true -dividerLabel  (uiRes("m_ChaControlsMenu.kRigCtlCharacterSet"));
+
+		$cmd = "CreateCharacter";
+		menuItem
+			-rtc $cmd
+			-dragMenuCommand "performCreateCharacter 2" 
+			createCharacterItem;
+			$cmd = "CreateCharacterOptions";
+			menuItem -optionBox true
+				-annotation (getRunTimeCommandAnnotation($cmd))
+				-c $cmd
+				createCharacterDialogItem; 
+
+		$cmd = "CreateSubCharacter";
+		menuItem
+			-rtc $cmd
+			-dragMenuCommand "performCreateSubcharacter 2"
+			createSubCharacterItem;
+			$cmd = "CreateSubCharacterOptions";
+			menuItem -optionBox true
+				-annotation (getRunTimeCommandAnnotation($cmd))
+				-c $cmd
+				createSubCharacterDialogItem; 
+
+		$cmd = "CharacterMapper";
+		menuItem
+			-rtc $cmd;
+
+		$cmd = "EditCharacterAttributes";
+		menuItem
+			-rtc $cmd 
+			editCharacterAttributesItem;
+
+		menuItem -divider true -longDivider false;
+
+		$cmd = "AddToCharacterSet";
+		menuItem
+			-rtc $cmd
+			addCharacterItem;
+
+		$cmd = "RemoveFromCharacterSet";
+		menuItem
+			-rtc $cmd
+			removeCharacterItem;
+
+		$cmd = "MergeCharacterSet";
+		menuItem
+			-rtc $cmd
+			mergeCharacterItem;
+
+		menuItem -divider true -longDivider false;
+
+		menuItem -label (uiRes("m_ChaControlsMenu.kSelectCharacterNode"))  -sm true -aob true
+			selectCharSMItem;
+			menu -e -pmc "createSelectCharMenu selectCharSMItem" 
+				selectCharSMItem;
+			setParent -menu ..;
+
+		menuItem -label (uiRes("m_ChaControlsMenu.kSelectCharacterMembers"))  -sm true -aob true
+			selectCharNodesSMItem;
+			menu -e -pmc "createSelectCharNodesMenu selectCharNodesSMItem" 
+				selectCharNodesSMItem;
+			setParent -menu ..;
+
+		menuItem -label (uiRes("m_ChaControlsMenu.kSetCurrentChar"))  -sm true setCharSMItem;
+			menu -e -pmc "buildSetCharacterMenu setCharSMItem" setCharSMItem;
+			setParent -menu ..;
+
+		$cmd = "AddAnimationOffset";
+		menuItem
+			-rtc $cmd 
+			-dragMenuCommand "addAnimationOffset" 
+			addAnimationOffset;
+			$cmd = "AddAnimationOffsetOptions";
+			menuItem -optionBox true
+				-annotation (getRunTimeCommandAnnotation($cmd))
+				-c $cmd
+				addAnimationOffsetDialogItem; 
+
+		setParent -menu ..;
+
+	setParent -m ..;
+}
+
+//
+//  Procedure Name:
+//      createSelectCharNodesMenu
+//
+//  Description:
+//		Create the menu for selecting all of the nodes in
+//      a particular character.
+//
+//  Input Arguments:
+//      $parent - parent menu
+//
+//  Return Value:
+//      None
+//
+global proc createSelectCharNodesMenu( string $parent )
+{
+	string $cmd;
+	string $annotation;
+	string $format;
+
+	setParent -menu $parent;
+	menu -e -dai $parent;
+
+	//	Get characters in system
+	//
+	string $characters[] = `ls -type character`;
+
+	if( `size $characters` == 0 ) {
+		menuItem -label (uiRes("m_ChaControlsMenu.kNoCharacterSets"))  -enable false;
+	} else {
+		for( $character in $characters ) {
+			$cmd = ( "select -cl;selectNodesInCharacter( \"" + $character + "\" )" );
+			$format = (uiRes("m_ChaControlsMenu.kSelectNodesInCharacter"));
+			$annotation = `format -stringArg $character $format`;
+			menuItem -label $character -c $cmd -annotation $annotation;
+		}
+	}
+}
+
+//
+//  Procedure Name:
+//      createSelectCharMenu
+//
+//  Description:
+//		Create the menu for selecting characters quickly
+//
+//  Input Arguments:
+//      $parent - parent menu
+//
+//  Return Value:
+//      None
+//
+global proc createSelectCharMenu( string $parent ) {
+	string $cmd;
+	string $annotation;
+	string $format;
+
+	setParent -menu $parent;
+	menu -e -dai $parent;
+
+	//	Get characters in system
+	//
+	string $characters[] = `ls -type character`;
+
+	if( `size $characters` == 0 ) {
+		menuItem -label (uiRes("m_ChaControlsMenu.kNoCharacterSets2"))  -enable false;
+	} else {
+		for( $character in $characters ) {
+			$cmd = ( "select -r \"" + $character + "\"" );
+			$format = (uiRes("m_ChaControlsMenu.kSelect"));
+			$annotation = `format -stringArg $character $format`;
+			menuItem -label $character -c $cmd -annotation $annotation;
+		}
+	}
+}

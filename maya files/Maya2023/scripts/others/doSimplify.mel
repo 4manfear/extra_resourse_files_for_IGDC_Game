@@ -1,0 +1,36 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  Oct. 31/97
+//
+//  Description:
+//		doSimplify is the actual proc that is executed from the
+//	Edit->Curves->Simplify option box or menu
+//
+//  Input Arguments:
+//
+//  Return Value:
+//      The number of curves simplified.
+//
+global proc int doSimplify( string $timeRange,
+							float  $timeTolerance,
+							float  $valueTolerance,
+							string $selectionConnection,
+							string $options )
+{
+	string $args[] = {(string)
+		$timeRange,
+		$timeTolerance,
+		$valueTolerance,
+		$selectionConnection,
+		$options
+	};
+
+	return (doSimplifyArgList ("1", $args));
+}

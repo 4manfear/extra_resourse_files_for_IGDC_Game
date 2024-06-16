@@ -1,0 +1,166 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+  
+//
+// Create popup menu for draw tool options
+//
+
+global proc bpDrawOptionsPopup()
+{
+	// North Marking Menu - Switch to Transform Context
+	menuItem -radialPosition "N"
+		-label (uiRes("m_bpDrawOptionsPopup.kBluePencilTransform"))
+		-c ("bluePencilUtil -transform;");
+
+	// East Marking Menu - Draw Tools
+	menuItem -radialPosition "E"
+		-label (uiRes("m_bpDrawOptionsPopup.kBluePencilDraw"))
+		-subMenu 1;
+
+		menuItem 
+			-label (uiRes("m_bpDrawOptionsPopup.kBluePencilDrawPencil"))
+			-radialPosition	"N"
+			-checkBox `bluePencilUtil -q -pencilTool`
+			-c	("bluePencilUtil -pencilTool;");
+
+		menuItem 
+			-label (uiRes("m_bpDrawOptionsPopup.kBluePencilDrawBrush"))
+			-radialPosition	"NE"
+			-checkBox `bluePencilUtil -q -brushTool`
+			-c	("bluePencilUtil -brushTool;");
+
+		menuItem 
+			-label (uiRes("m_bpDrawOptionsPopup.kBluePencilDrawEraser"))
+			-radialPosition	"E"
+			-checkBox `bluePencilUtil -q -eraserTool`
+			-c	("bluePencilUtil -eraserTool;");
+
+		menuItem 
+			-label (uiRes("m_bpDrawOptionsPopup.kBluePencilDrawText"))
+			-radialPosition	"SE"
+			-checkBox `bluePencilUtil -q -textTool`
+			-c	("bluePencilUtil -textTool;");
+
+		menuItem 
+			-label (uiRes("m_bpDrawOptionsPopup.kBluePencilDrawLine"))
+			-radialPosition	"S"
+			-checkBox `bluePencilUtil -q -lineTool`
+			-c	("bluePencilUtil -lineTool;");
+
+		menuItem 
+			-label (uiRes("m_bpDrawOptionsPopup.kBluePencilDrawArrow"))
+			-radialPosition	"SW"
+			-checkBox `bluePencilUtil -q -arrowTool`
+			-c	("bluePencilUtil -arrowTool;");
+
+		menuItem 
+			-label (uiRes("m_bpDrawOptionsPopup.kBluePencilDrawEllipse"))
+			-radialPosition	"W"
+			-checkBox `bluePencilUtil -q -ellipseTool`
+			-c	("bluePencilUtil -ellipseTool;");
+
+		menuItem 
+			-label (uiRes("m_bpDrawOptionsPopup.kBluePencilDrawRectangle"))
+			-radialPosition	"NW"
+			-checkBox `bluePencilUtil -q -rectangleTool`
+			-c	("bluePencilUtil -rectangleTool;");
+
+		setParent -menu ..;
+
+	// SouthEast Marking Menu - Frame Editing Options
+	menuItem -radialPosition "SE"
+		-label (uiRes("m_bpDrawOptionsPopup.kBluePencilFrame"))
+		-subMenu 1;
+
+		menuItem 
+			-label (uiRes("m_bpDrawOptionsPopup.kBluePencilFrameInsert"))
+			-radialPosition	"N"
+			-c	("bluePencilFrame -insert;");
+
+		menuItem 
+			-label (uiRes("m_bpDrawOptionsPopup.kBluePencilFrameDuplicate"))
+			-radialPosition	"NE"
+			-c	("bluePencilFrame -duplicate;");
+
+		menuItem 
+			-label (uiRes("m_bpDrawOptionsPopup.kBluePencilFrameStepForward"))
+			-radialPosition	"E"
+			-c	("bluePencilFrame -stepForward;");
+
+		menuItem 
+			-label (uiRes("m_bpDrawOptionsPopup.kBluePencilFramePaste"))
+			-radialPosition	"SE"
+			-c	("bluePencilFrame -paste;");
+
+		menuItem 
+			-label (uiRes("m_bpDrawOptionsPopup.kBluePencilFrameDelete"))
+			-radialPosition	"S"
+			-c	("bluePencilFrame -delete;");
+
+		menuItem 
+			-label (uiRes("m_bpDrawOptionsPopup.kBluePencilFrameClear"))
+			-c	("bluePencilFrame -clear;");
+
+		menuItem 
+			-label (uiRes("m_bpDrawOptionsPopup.kBluePencilFrameCopy"))
+			-radialPosition	"SW"
+			-c	("bluePencilFrame -copy;");
+
+		menuItem 
+			-label (uiRes("m_bpDrawOptionsPopup.kBluePencilFrameStepBackward"))
+			-radialPosition	"W"
+			-c	("bluePencilFrame -stepBack;");
+
+		menuItem 
+			-label (uiRes("m_bpDrawOptionsPopup.kBluePencilFrameCut"))
+			-radialPosition	"NW"
+			-c	("bluePencilFrame -cut;");
+
+		setParent -menu ..;
+
+	// South Marking Menu - Ghosting Options
+	menuItem -radialPosition "S"
+		-label (uiRes("m_bpDrawOptionsPopup.kBluePencilGhosting"))
+		-subMenu 1;
+
+		menuItem 
+			-label (uiRes("m_bpDrawOptionsPopup.kBluePencilGhostingNext"))
+			-radialPosition	"S"
+			-checkBox `bluePencilUtil -q -ghostNext`
+			-c	("bluePencilUtil -e -ghostNext -1");
+
+		menuItem 
+			-label (uiRes("m_bpDrawOptionsPopup.kBluePencilGhostingPrevious"))
+			-radialPosition	"SW"
+			-checkBox `bluePencilUtil -q -ghostPrevious`
+			-c	("bluePencilUtil -e -ghostPrevious -1");
+
+		setParent -menu ..;
+
+	// West Marking Menu - CleanUp Options
+	menuItem -radialPosition "W"
+		-label (uiRes("m_bpDrawOptionsPopup.kBluePencilCleanUp"))
+		-subMenu 1;
+
+		menuItem 
+			-label (uiRes("m_bpDrawOptionsPopup.kBluePencilCleanUpClearAll"))
+			-radialPosition	"SW"
+			-c	("bluePencilDeleteAllNodes;");
+
+		menuItem 
+			-label (uiRes("m_bpDrawOptionsPopup.kBluePencilCleanUpActiveCameraLayers"))
+			-radialPosition	"W"
+			-c	("bluePencilDeleteActiveCameraLayers;");
+
+		menuItem 
+			-label (uiRes("m_bpDrawOptionsPopup.kBluePencilCleanUpActiveLayers"))
+			-radialPosition	"NW"
+			-c	("bluePencilDeleteActiveLayer;");
+
+		setParent -menu ..;
+}

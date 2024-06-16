@@ -1,0 +1,43 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+
+
+global proc texRotateValues ( string $toolName ) {
+
+	string $parent = (`toolPropertyWindow -q -location` + "|texRotate");
+	setParent $parent;
+ 
+	texTranConstUpdate("texTranConstTextField");
+
+	menu -e -dai texRotateSnapPopupMenu;
+	menuItem -label (uiRes("m_texRotateValues.kOff")) -p texRotateSnapPopupMenu -c ("texRotateContext -e -snap 0 " + $toolName);
+	menuItem -label (uiRes("m_texRotateValues.kOn")) -p texRotateSnapPopupMenu -c ("texRotateContext -e -snap 1 " + $toolName);
+	menu -e -pmc("texRotateContext -e -snap (!`texRotateContext -q -snap " + $toolName + "`) " + $toolName) texRotateSnapTogglePopupMenu; 
+
+	string $label = ""; 
+	int $snapMode = `texRotateContext -q -snap $toolName`;
+	if($snapMode) 
+		$label = uiRes("m_texRotateValues.kOn");
+	else 
+		$label = uiRes("m_texRotateValues.kOff");
+ 
+	textField -e -tx $label texRotateSnapModeLabel; 
+	floatField -e -en ($snapMode != 0) -v (`texRotateContext -q -snapValue $toolName`) texRotateSnapValue;
+	
+	floatField -e -cc("texRotateContext -e -snapValue #1 " + $toolName) texRotateSnapValue; 
+
+	// Update soft select values
+	reflectionValues( );
+	softSelectValues( $parent );
+	commonSelectValues( $parent );
+
+	string $icon = "rotateUVcw.png";
+	string $helpTag = "texRotateTool";
+	toolPropertySetCommon $toolName $icon $helpTag;
+	toolPropertySelect "texRotate";
+}

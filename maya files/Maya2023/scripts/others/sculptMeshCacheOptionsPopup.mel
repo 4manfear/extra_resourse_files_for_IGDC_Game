@@ -1,0 +1,83 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc sculptMeshCacheRestoreTool(string $toolName)
+{
+	string $cmd = "setToolTo " + $toolName;
+	evalDeferred $cmd;
+}
+
+global proc sculptMeshCacheMirrorTopoPopup()
+{
+	string $cmd = "sculptMeshCacheRestoreTool( \\\"" + `currentCtx` + "\\\")" ;
+	pickTopoSymmetryEdge($cmd, 0); 
+}
+
+global proc sculptMeshCacheOptionsPopup()
+{
+	global string $gSelect;
+	string $tool = `currentCtx`;
+	int $dw = `sculptMeshCacheCtx -q -displayWireframe $tool`;
+	int $uss = `sculptMeshCacheCtx -q -useSteadyStroke $tool`;
+	string $lm = `sculptMeshCacheCtx -q -lastMode $tool`;
+	string $lml = (uiRes("m_sculptMeshCacheOptionsPopup.kLastTool")) + $lm;
+	if ( $lm == "Clone" )
+		$lml = $lml + " Target";
+
+	menuItem -rp "NW" -l (uiRes("m_sculptMeshCacheOptionsPopup.kMirror")) -subMenu 1;
+		
+		menuItem -rp "N" -l (uiRes("m_sculptMeshCacheOptionsPopup.kMirrorOff"))
+ 			-c ("reflectionSetMode(\"none\")");
+		menuItem -rp "NE" -l (uiRes("m_sculptMeshCacheOptionsPopup.kObjectX"))
+ 			-c ("reflectionSetMode(\"objectx\")");
+		menuItem -rp "E" -l (uiRes("m_sculptMeshCacheOptionsPopup.kObjectY"))
+ 			-c ("reflectionSetMode(\"objecty\")");
+		menuItem -rp "SE" -l (uiRes("m_sculptMeshCacheOptionsPopup.kObjectZ"))
+ 			-c ("reflectionSetMode(\"objectz\")");
+		menuItem -rp "NW" -l (uiRes("m_sculptMeshCacheOptionsPopup.kWorldX"))
+ 			-c ("reflectionSetMode(\"worldx\")");
+		menuItem -rp "W" -l (uiRes("m_sculptMeshCacheOptionsPopup.kWorldY"))
+ 			-c ("reflectionSetMode(\"worldy\")");
+		menuItem -rp "SW" -l (uiRes("m_sculptMeshCacheOptionsPopup.kWorldZ"))
+ 			-c ("reflectionSetMode(\"worldz\")");
+		menuItem -rp "S" -l (uiRes("m_sculptMeshCacheOptionsPopup.kTopology"))
+ 			-c ("sculptMeshCacheMirrorTopoPopup");
+
+	setParent -m ..;
+
+	menuItem -rp "NE" -l (uiRes("m_sculptMeshCacheOptionsPopup.kSetSculpt"))
+ 		-c ("sculptMeshCacheCtx -e -mode \"Sculpt\" `currentCtx`; ");
+	
+	menuItem -rp "E" -l $lml  
+ 		-c ("sculptMeshCacheCtx -e -mode \"" + $lm + "\" `currentCtx`; ");
+	
+	menuItem -rp "SE" -l (uiRes("m_sculptMeshCacheOptionsPopup.kSetGrab"))
+ 		-c ("sculptMeshCacheCtx -e -mode \"Grab\" `currentCtx`; ");
+
+	menuItem -rp "S" -l (uiRes("m_sculptMeshCacheOptionsPopup.kExitSculpt"))
+ 		-c ("setToolTo $gSelect;");
+
+	menuItem -rp "SW" -l (uiRes("m_sculptMeshCacheOptionsPopup.kFalloffType")) -subMenu 1;
+
+		menuItem -rp "W" -l (uiRes("m_sculptMeshCacheOptionsPopup.kFalloffHybrid"))
+	 		-c ("sculptMeshCacheCtx -e -falloffType 0 `currentCtx`; ");
+		menuItem -rp "SW" -l (uiRes("m_sculptMeshCacheOptionsPopup.kFalloffSurface"))
+	 		-c ("sculptMeshCacheCtx -e -falloffType 1 `currentCtx`; ");
+		menuItem -rp "S" -l (uiRes("m_sculptMeshCacheOptionsPopup.kFalloffVolume"))
+	 		-c ("sculptMeshCacheCtx -e -falloffType 2 `currentCtx`; ");
+
+	setParent -m ..;
+
+	menuItem -rp "W" -l (uiRes("m_sculptMeshCacheOptionsPopup.kSteadyStroke"))
+		-checkBox $uss 
+ 		-c ("sculptMeshCacheCtx -e -useSteadyStroke " + !$uss + " `currentCtx`; ");
+	
+	menuItem -rp "N" -l (uiRes("m_sculptMeshCacheOptionsPopup.kShowWireframe"))
+		-checkBox $dw 
+ 		-c ("sculptMeshCacheCtx -e -displayWireframe " + !$dw + " `currentCtx`; ");
+	
+}

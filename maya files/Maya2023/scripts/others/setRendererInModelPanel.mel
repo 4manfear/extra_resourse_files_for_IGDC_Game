@@ -1,0 +1,55 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+proc setOGSRendererInModelPanel(string $overrideName, string $panel)
+{
+	global string $gViewport2;
+	int $consolidate = checkMemoryForConsolidatedWorld();
+	if ($consolidate)
+	{
+		if( catchQuiet(`modelEditor -edit -rnm $gViewport2 -rom $overrideName $panel`) ) {
+			print( "setOGSRendererInModelPanel failed for panel: " + $panel + "\n" );
+		}
+	}
+}
+
+global proc setRendererInModelPanel( string $rendererName, string $panel )
+{
+	global string $gViewport2;
+	global string $gHighQualityViewport;
+	if ($rendererName == $gHighQualityViewport)
+	{
+		// Switch to shaded mode if we are not already..
+		string $shadeMode = `modelEditor -q -displayAppearance $panel`;
+		if ($shadeMode == "wireframe" ||
+			$shadeMode == "boundingBox" ||
+			$shadeMode == "points")
+		{
+			modelEditor -edit -displayAppearance smoothShaded -activeOnly false $panel;
+		}		
+		modelEditor -edit -rnm $gHighQualityViewport $panel;
+	}
+	else if ($rendererName == $gViewport2)
+	{
+		setOGSRendererInModelPanel("", $panel);
+	}
+	else
+	{
+		modelEditor -edit -rnm $rendererName $panel;
+	}
+}
+
+global proc setRendererAndOverrideInModelPanel( string $rendererName, string $overrideName, string $panel )
+{
+	global string $gViewport2;
+
+	if ($rendererName == $gViewport2)
+	{
+		setOGSRendererInModelPanel($overrideName, $panel);
+	}
+}
+

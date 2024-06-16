@@ -1,0 +1,104 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+// ===========================================================================
+//
+//  Procedure Name:
+//      texPivotCycle
+//
+//  Description:
+//      Cycles the manipulator around the corners of the selection bounding
+//      box or the UV range bounds.
+//
+//  Input Arguments
+//      cycleType            - String - One of "uvRange" or "selection"
+//      position             - String - The position to place the manipulator.
+//
+//  Return Value:
+//      None
+//
+//  Notes:
+//  This script is part of the implementation of Nightshade UV Editor into
+//  Autodesk Maya. This script is sourced by NS_AUVM. Do not run it directly.
+//
+// ===========================================================================
+
+
+global proc texPivotCycle(string $cycleType, string $position)
+{
+    // Original selection
+    string $selection[] = `ls -selection`;
+
+    // Check for component selection
+    texCheckSelection("comps");
+
+    // Get mesh name from component by tokenizing
+    string $buffer[];
+    tokenize $selection[0] "." $buffer;
+    string $mesh = $buffer[0];
+
+	float $pivotMinU, $pivotMaxU, $pivotMinV, $pivotMaxV;
+
+    if ($cycleType == "uvRange")
+    {
+		// Cycle UV range bounds
+		$pivotMinU = `optionVar -q polyUVpivotMinU`;
+		$pivotMaxU = `optionVar -q polyUVpivotMaxU`;
+		$pivotMinV = `optionVar -q polyUVpivotMinV`;
+		$pivotMaxV = `optionVar -q polyUVpivotMaxV`;
+    } else if ($cycleType == "selection"){
+		// Cycle bounding box bounds
+        float $uvBox[] = `polyEvaluate -boundingBoxComponent2d`;
+
+ 		$pivotMinU = $uvBox[0];
+		$pivotMaxU = $uvBox[1];
+		$pivotMinV = $uvBox[2];
+		$pivotMaxV = $uvBox[3];
+    }
+
+	float $pivotCenterU = ($pivotMinU + $pivotMaxU) * 0.5;
+	float $pivotCenterV = ($pivotMinV + $pivotMaxV) * 0.5;
+
+    switch($position)
+    {
+    case "topLeft": // Top left
+        setAttr ($mesh + ".uvPivot") $pivotMinU $pivotMaxV;
+        break;
+
+    case "topMiddle": // Top middle
+        setAttr ($mesh + ".uvPivot") $pivotCenterU $pivotMaxV;
+        break;
+
+    case "topRight": // Top right
+        setAttr ($mesh + ".uvPivot") $pivotMaxU $pivotMaxV;
+        break;
+
+    case "middleLeft": // Middle left
+        setAttr ($mesh + ".uvPivot") $pivotMinU $pivotCenterV;
+        break;
+
+    case "middle": // Middle
+        setAttr ($mesh + ".uvPivot") $pivotCenterU $pivotCenterV;
+        break;
+
+    case "middleRight": // Middle right
+        setAttr ($mesh + ".uvPivot") $pivotMaxU $pivotCenterV;
+        break;
+
+    case "bottomLeft": // Bottom left
+        setAttr ($mesh + ".uvPivot") $pivotMinU $pivotMinV;
+        break;
+
+    case "bottomMiddle": // Bottom middle
+        setAttr ($mesh + ".uvPivot") $pivotCenterU $pivotMinV;
+        break;
+
+    case "bottomRight": // Bottom right
+        setAttr ($mesh + ".uvPivot") $pivotMaxU $pivotMinV;
+        break;
+    }
+}

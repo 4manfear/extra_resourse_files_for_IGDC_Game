@@ -1,0 +1,1475 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+proc setOptionVars (
+	string		$prefix, 
+	int			$forceFactorySettings,
+	string		$vars[]
+)
+{
+	string $varName;
+	string $category = "UV Editor.Layout";
+
+	// Must match $vars
+	int    $intValues[]= { 1, 1, 2, 1, 1 };
+
+	for ( $i = size($vars) ; $i-- ; )
+	{
+		$varName = ($prefix + $vars[$i]);
+		optionVar -init $forceFactorySettings -category $category
+			-iv $varName $intValues[$i];
+	}
+
+	optionVar -init $forceFactorySettings -category $category
+		-fv ($prefix + "eg") .2
+		-iv polyLayoutUVMultiOrNonMulti 1
+		// This is separated from the for loop above since the corresponding
+		// UI has been changed to optionMenuGrp.
+		-iv ($prefix + "l") 2
+		-iv ($prefix + "GridU") 1
+		-iv ($prefix + "GridV") 1
+		-iv ($prefix + "Prescale") 0		// prescaling - default node
+		-iv ($prefix + "RegionPresets") 0
+		-fv ($prefix + "ScaleU") 1.0
+		-fv ($prefix + "ScaleV") 1.0
+		-fv ($prefix + "OffsetU") 0.0
+		-fv ($prefix + "OffsetV") 0.0
+		-iv LayoutAlgorithm 1
+		-iv Unfold3DLayoutMulti 1
+		-iv Unfold3DLayoutStackSimilar 0
+		-iv Unfold3DLayoutResolution 256
+		-iv Unfold3DLayoutMutations 1
+		-iv Unfold3DLayoutPreRotate 1
+		-iv Unfold3DLayoutPreScale 2
+		-iv Unfold3DLayoutTranslate 1
+		-iv Unfold3DLayoutRotate 0
+		-fv Unfold3DLayoutRotateStep 90
+		-fv Unfold3DLayoutRotateMin 0
+		-fv Unfold3DLayoutRotateMax 360
+		-iv Unfold3DLayoutMapSize 3
+		-iv Unfold3DLayoutCustomSize 1024
+		-iv Unfold3DPaddingUnits 1
+		-fv Unfold3DLayoutShellPadding 0
+		-fv Unfold3DLayoutTilePadding 0
+		-iv Unfold3DLayoutShellAssignment 1
+		-iv Unfold3DLayoutTilesU 1
+		-iv Unfold3DLayoutTilesV 1
+		-iv Unfold3DLayoutPackRegion 1
+		-fv Unfold3DLayoutPackRegionMinU 0
+		-fv Unfold3DLayoutPackRegionMaxU 1
+		-fv Unfold3DLayoutPackRegionMinV 0
+		-fv Unfold3DLayoutPackRegionMaxV 1
+		-iv Unfold3DLayoutScaleMode 2
+		-iv Unfold3DFixNonManifoldBeforeLayout 0
+		-iv Unfold3DAskToFixNonManifoldBeforeLayout 1
+		;
+}
+
+// Also used in performSubdLayoutUV
+global float  $gShellSpacingPresets[] = {.05, .1, .2, .4, .8, 1.6, 3.2};
+
+global proc performPolyLayoutUVSetup (string $parent, int $forceFactorySettings)
+{
+    global float  $gShellSpacingPresets[];
+	string $prefix = "polyLayoutUV";
+	string $intVars[] = {"fr", "rbf", "se", "sc", "lm"};
+	string $varName;
+	int    $i, $val;
+	float  $fval;
+
+	setOptionVars($prefix, $forceFactorySettings, $intVars);
+	setParent $parent;
+	
+	int $alg = 2;
+	int $u3DLoaded = `pluginInfo -q -loaded Unfold3D`;
+	if ($u3DLoaded) {
+		// Which algorithm to use - 1) Unfold3D 2) Legacy
+		$alg = `optionVar -q LayoutAlgorithm`;
+		if ($alg < 1 || $alg > 2) $alg = 1;
+		radioButtonGrp -e -select $alg LayoutAlgorithm_RBG;
+		tabLayout -e -selectTabIndex $alg layoutAlgorithmTabs;
+	}
+
+	for ($i=size($intVars)-1; $i>0; $i--)
+	{
+		$varName = ($prefix + $intVars[$i]);
+		radioButtonGrp -e -sl (1+`optionVar -q $varName`) $varName;
+	}
+	
+	$varName = ($prefix + $intVars[0]);
+	checkBoxGrp -e -value1 `optionVar -q $varName` $varName;
+
+	$varName = "polyLayoutUVMultiOrNonMulti";
+	string $separateMenu = ($prefix + $intVars[2]);
+	int $currentMultiSelection = `optionVar -q $varName`;
+	int $switchedMultiSelection = 0;
+	if ($currentMultiSelection == 0) {
+		$switchedMultiSelection = 1;
+	}
+
+	radioButtonGrp -e -sl (1+$currentMultiSelection) $varName;
+	radioButtonGrp -e -en ($switchedMultiSelection) $separateMenu;
+
+	$varName = ($prefix + "eg");
+	$fval = `optionVar -q $varName`;
+	floatSliderGrp -e -v $fval $varName;
+
+	// See if the value corresponds to one of the shell spacing presets.
+	$varName = ($prefix + "egPresets");
+	optionMenuGrp -e -sl 1 $varName;
+	for ($i = size($gShellSpacingPresets) ; $i-- ; )
+	{
+		if ($fval == $gShellSpacingPresets[$i])
+		{
+			optionMenuGrp -e -sl ($i+2) $varName;
+			break;
+		}
+	}
+
+	$varName = ($prefix + "l");
+	optionMenuGrp -e -sl (`optionVar -q $varName`+ 1) $varName;	
+	int $layout = `optionMenuGrp -q -sl $varName`;
+
+	$varName = ($prefix + "Grid");
+	columnLayout -e -vis ($layout == 4) $varName;
+
+	$varName = ($prefix + "GridU");
+	$val = `optionVar -q $varName`;
+	intField -e -v $val $varName;
+
+	$varName = ($prefix + "GridV");
+	$val = `optionVar -q $varName`;
+	intField -e -v $val $varName;
+
+	$varName = ($prefix + "sc");
+	if (($layout==4 || $layout==5) && `radioButtonGrp -q -sl $varName` == 3)
+		radioButtonGrp -e -sl 2 $varName;
+	radioButtonGrp -e -en3 ($layout!=4 && $layout!=5) $varName;
+
+	// prescaling - default node
+	$varName = ($prefix + "Prescale");
+	radioButtonGrp -e -en ($currentMultiSelection) 
+		-sl (1+`optionVar -q $varName`) $varName;
+
+	int $enablePlacement = ($currentMultiSelection) && $layout!=4 && $layout!=5;
+
+	$varName = ($prefix + "RegionPresets");
+	optionMenuGrp -e -en $enablePlacement
+		-sl (`optionVar -q $varName`+ 1) $varName;
+
+	int $item = `optionMenuGrp -q -sl ($prefix + "RegionPresets")` - 1;
+	if ($enablePlacement && $item < 9) {
+		// fixed the placement
+		polyLayoutPlacement($prefix);
+	}
+	else {
+		// free placement
+		$varName = ($prefix + "ScaleU");
+		$fval = `optionVar -q $varName`;
+		floatSliderGrp -e -en $enablePlacement -v $fval $varName;
+
+		$varName = ($prefix + "ScaleV");
+		$fval = `optionVar -q $varName`;
+		floatSliderGrp -e -en $enablePlacement -v $fval $varName;
+
+		$varName = ($prefix + "OffsetU");
+		$fval = `optionVar -q $varName`;
+		floatSliderGrp -e -en $enablePlacement -v $fval $varName;
+
+		$varName = ($prefix + "OffsetV");
+		$fval = `optionVar -q $varName`;
+		floatSliderGrp -e -en $enablePlacement -v $fval $varName;
+	}
+
+	if ($u3DLoaded) {
+		$ival = `optionVar -query Unfold3DLayoutMulti`;
+		radioButtonGrp -e -select $ival Unfold3DLayoutMulti_RBG;
+
+		$ival = `optionVar -query Unfold3DLayoutStackSimilar`;
+		checkBoxGrp -e -v1 $ival Unfold3DLayoutStackSimilar_CBG;
+
+		$ival = `optionVar -query Unfold3DLayoutResolution`;
+		intSliderGrp -e -v $ival Unfold3DLayoutResolution_ISG;
+
+		$ival = `optionVar -query Unfold3DLayoutMutations`;
+		intSliderGrp -e -v $ival Unfold3DLayoutMutations_ISG;
+
+		$ival = `optionVar -query Unfold3DLayoutPreRotate`;
+		optionMenuGrp -e -select $ival Unfold3DLayoutPreRotate_OMG;
+
+		$ival = `optionVar -query Unfold3DLayoutPreScale`;
+		optionMenuGrp -e -select $ival Unfold3DLayoutPreScale_OMG;
+
+		$ival = `optionVar -query Unfold3DLayoutTranslate`;
+		checkBoxGrp -e -v1 $ival Unfold3DLayoutTranslate_CBG;
+
+		int $rot = `optionVar -query Unfold3DLayoutRotate`;
+		checkBoxGrp -e -v1 $rot Unfold3DLayoutRotate_CBG;
+
+		$fval = `optionVar -query Unfold3DLayoutRotateStep`;
+		floatFieldGrp -e -en $rot -v1 $fval Unfold3DLayoutRotateStep_FFG;
+
+		$fval = `optionVar -query Unfold3DLayoutRotateMin`;
+		floatFieldGrp -e -en $rot -v1 $fval Unfold3DLayoutRotateMin_FFG;
+
+		$fval = `optionVar -query Unfold3DLayoutRotateMax`;
+		floatFieldGrp -e -en $rot -v1 $fval Unfold3DLayoutRotateMax_FFG;
+
+		$ival = `optionVar -query Unfold3DLayoutMapSize`;
+		int $customSize = layoutIsCustomMapSize($ival);
+		optionMenu -e -sl $ival Unfold3DLayoutMapSize_OM;
+		
+		$ival = `optionVar -query Unfold3DLayoutCustomSize`;
+		intField -e -vis $customSize -v $ival Unfold3DLayoutCustomSize_IF;
+
+		$ival = `optionVar -query Unfold3DLayoutPaddingUnits`;
+		radioButtonGrp -e -sl $ival Unfold3DLayoutPaddingUnits_RBG;
+
+		$fval = `optionVar -query Unfold3DLayoutShellPadding`;
+		floatFieldGrp -e -v1 $fval Unfold3DLayoutShellPadding_FFG;
+
+		$fval = `optionVar -query Unfold3DLayoutTilePadding`;
+		floatFieldGrp -e -v1 $fval Unfold3DLayoutTilePadding_FFG;
+
+		$ival = `optionVar -query Unfold3DLayoutShellAssignment`;
+		optionMenuGrp -e -sl $ival Unfold3DLayoutShellAssignment_OMG;
+
+		$ival = `optionVar -query Unfold3DLayoutTilesU`;
+		intField -e -v $ival Unfold3DLayoutTilesU_IF;
+
+		$ival = `optionVar -query Unfold3DLayoutTilesV`;
+		intField -e -v $ival Unfold3DLayoutTilesV_IF;
+
+		$ival = `optionVar -query Unfold3DLayoutPackRegion`;
+		int $customRegion = layoutIsCustomRegion($ival);
+		optionMenuGrp -e -sl $ival Unfold3DLayoutPackRegion_OMG;
+
+		$fval = `optionVar -query Unfold3DLayoutPackRegionMinU`;
+		floatFieldGrp -e -v1 $fval -en $customRegion Unfold3DLayoutPackRegionU_FFG;
+
+		$fval = `optionVar -query Unfold3DLayoutPackRegionMaxU`;
+		floatFieldGrp -e -v2 $fval Unfold3DLayoutPackRegionU_FFG;
+
+		$fval = `optionVar -query Unfold3DLayoutPackRegionMinV`;
+		floatFieldGrp -e -v1 $fval -en $customRegion Unfold3DLayoutPackRegionV_FFG;
+
+		$fval = `optionVar -query Unfold3DLayoutPackRegionMaxV`;
+		floatFieldGrp -e -v2 $fval Unfold3DLayoutPackRegionV_FFG;
+
+		$ival = `optionVar -query Unfold3DLayoutScaleMode`;
+		optionMenuGrp -e -sl $ival Unfold3DLayoutScaleMode_OMG;
+		
+		$ival = `optionVar -query Unfold3DFixNonManifoldBeforeLayout`;
+		checkBoxGrp -e -v1 (0 != $ival) Unfold3DLayoutFixNonManifold_CBG;
+	}
+}
+
+global proc performPolyLayoutUVCallback (string $parent, int $doIt)
+{
+	string $prefix = "polyLayoutUV";
+	string $intVars[] = {"fr", "rbf", "se", "sc", "lm"};
+	string $varName;
+	int $ival;
+	float $fval;
+
+	setParent $parent;
+
+	int $u3DLoaded = `pluginInfo -q -loaded Unfold3D`;
+	if ($u3DLoaded) {
+		int $alg = `radioButtonGrp -q -select LayoutAlgorithm_RBG`;
+		optionVar -iv LayoutAlgorithm $alg;
+	}
+
+	for ($i=size($intVars)-1; $i>0; $i--)
+	{
+		$varName = ($prefix + $intVars[$i]);
+		optionVar -intValue $varName (`radioButtonGrp -q -sl $varName`-1);
+	}
+
+	$varName = ($prefix + $intVars[0]);
+	optionVar -intValue $varName `checkBoxGrp -q -value1 $varName`;
+	$varName = ($prefix + "eg");
+	optionVar -floatValue $varName `floatSliderGrp -q -v $varName`;
+
+	$varName = "polyLayoutUVMultiOrNonMulti";
+	optionVar -intValue $varName (`radioButtonGrp -q -sl $varName`-1);
+
+	$varName = ($prefix + "l");
+	optionVar -intValue $varName (`optionMenuGrp -q -sl $varName` - 1);
+
+	$varName = ($prefix + "GridU");
+	optionVar -intValue $varName `intField -q -v $varName`;
+	$varName = ($prefix + "GridV");
+	optionVar -intValue $varName `intField -q -v $varName`;
+
+	// prescaling - default node
+	$varName = ($prefix + "Prescale");
+	optionVar -intValue $varName (`radioButtonGrp -q -sl $varName` - 1);
+
+	$varName = ($prefix + "RegionPresets");
+	optionVar -intValue $varName (`optionMenuGrp -q -sl $varName` - 1);
+
+	$varName = ($prefix + "ScaleU");
+	optionVar -floatValue $varName `floatSliderGrp -q -v $varName`;
+
+	$varName = ($prefix + "ScaleV");
+	optionVar -floatValue $varName `floatSliderGrp -q -v $varName`;
+
+	$varName = ($prefix + "OffsetU");
+	optionVar -floatValue $varName `floatSliderGrp -q -v $varName`;
+
+	$varName = ($prefix + "OffsetV");
+	optionVar -floatValue $varName `floatSliderGrp -q -v $varName`;
+
+	if ($u3DLoaded) {
+		$ival = `radioButtonGrp -q -sl Unfold3DLayoutMulti_RBG`;
+		optionVar -iv Unfold3DLayoutMulti $ival;
+
+		$ival = `checkBoxGrp -q -v1 Unfold3DLayoutStackSimilar_CBG`;
+		optionVar -iv Unfold3DLayoutStackSimilar $ival;
+
+		$ival = `intSliderGrp -q -v Unfold3DLayoutResolution_ISG`;
+		optionVar -iv Unfold3DLayoutResolution $ival;
+
+		$ival = `intSliderGrp -q -v Unfold3DLayoutMutations_ISG`;
+		optionVar -iv Unfold3DLayoutMutations $ival;
+
+		$ival = `optionMenuGrp -q -sl Unfold3DLayoutPreRotate_OMG`;
+		optionVar -iv Unfold3DLayoutPreRotate $ival;
+
+		$ival = `optionMenuGrp -q -sl Unfold3DLayoutPreScale_OMG`;
+		optionVar -iv Unfold3DLayoutPreScale $ival;
+
+		$ival = `checkBoxGrp -q -v1 Unfold3DLayoutTranslate_CBG`;
+		optionVar -iv Unfold3DLayoutTranslate $ival;
+
+		$ival = `checkBoxGrp -q -v1 Unfold3DLayoutRotate_CBG`;
+		optionVar -iv Unfold3DLayoutRotate $ival;
+
+		$fval = `floatFieldGrp -q -v1 Unfold3DLayoutRotateStep_FFG`;
+		optionVar -fv Unfold3DLayoutRotateStep $fval;
+
+		$fval = `floatFieldGrp -q -v1 Unfold3DLayoutRotateMin_FFG`;
+		optionVar -fv Unfold3DLayoutRotateMin $fval;
+
+		$fval = `floatFieldGrp -q -v1 Unfold3DLayoutRotateMax_FFG`;
+		optionVar -fv Unfold3DLayoutRotateMax $fval;
+
+		$ival = `optionMenu -q -sl Unfold3DLayoutMapSize_OM`;
+		optionVar -iv Unfold3DLayoutMapSize $ival;
+
+		$ival = `intField -q -v Unfold3DLayoutCustomSize_IF`;
+		optionVar -iv Unfold3DLayoutCustomSize $ival;
+
+		$ival = `radioButtonGrp -q -sl Unfold3DLayoutPaddingUnits_RBG`;
+		optionVar -iv Unfold3DLayoutPaddingUnits $ival;
+
+		$fval = `floatFieldGrp -q -v1 Unfold3DLayoutShellPadding_FFG`;
+		optionVar -fv Unfold3DLayoutShellPadding $fval;
+
+		$fval = `floatFieldGrp -q -v1 Unfold3DLayoutTilePadding_FFG`;
+		optionVar -fv Unfold3DLayoutTilePadding $fval;
+
+		$ival = `optionMenuGrp -q -sl Unfold3DLayoutShellAssignment_OMG`;
+		optionVar -iv Unfold3DLayoutShellAssignment $ival;
+
+		$ival = `intField -q -v Unfold3DLayoutTilesU_IF`;
+		optionVar -iv Unfold3DLayoutTilesU $ival;
+
+		$ival = `intField -q -v Unfold3DLayoutTilesV_IF`;
+		optionVar -iv Unfold3DLayoutTilesV $ival;
+
+		$ival = `optionMenuGrp -q -sl Unfold3DLayoutPackRegion_OMG`;
+		optionVar -iv Unfold3DLayoutPackRegion $ival;
+
+		$fval = `floatFieldGrp -q -v1 Unfold3DLayoutPackRegionU_FFG`;
+		optionVar -fv Unfold3DLayoutPackRegionMinU $fval;
+
+		$fval = `floatFieldGrp -q -v2 Unfold3DLayoutPackRegionU_FFG`;
+		optionVar -fv Unfold3DLayoutPackRegionMaxU $fval;
+
+		$fval = `floatFieldGrp -q -v1 Unfold3DLayoutPackRegionV_FFG`;
+		optionVar -fv Unfold3DLayoutPackRegionMinV $fval;
+
+		$fval = `floatFieldGrp -q -v2 Unfold3DLayoutPackRegionV_FFG`;
+		optionVar -fv Unfold3DLayoutPackRegionMaxV $fval;
+
+		$ival = `optionMenuGrp -q -sl Unfold3DLayoutScaleMode_OMG`;
+		optionVar -iv Unfold3DLayoutScaleMode $ival;
+		
+		$ival = `checkBoxGrp -q -v1 Unfold3DLayoutFixNonManifold_CBG`;
+		optionVar -iv Unfold3DFixNonManifoldBeforeLayout $ival;
+	}
+
+	if ($doIt) 
+	{
+		int $alg = 2;
+		int $u3DLoaded = `pluginInfo -q -loaded Unfold3D`;
+		if ($u3DLoaded) {
+			$alg = `optionVar -q LayoutAlgorithm`;
+			if ($alg < 1 || $alg > 2) $alg = 1;
+		}
+
+		if ($alg == 1) {
+			performPolyLayoutUV 0;
+			addToRecentCommandQueue "performPolyLayoutUV 0" "PolyLayoutUV";
+		}
+		else
+		{
+			$varName = "polyLayoutUVMultiOrNonMulti";
+			int $multi = `optionVar -q $varName`;
+
+			if ($multi == 1) {
+				performPolyMultiLayoutUV 0;
+				addToRecentCommandQueue "performPolyMultiLayoutUV 0" "PolyMultiLayoutUV";
+			} else {
+				performPolyLayoutUV 0;
+				addToRecentCommandQueue "performPolyLayoutUV 0" "PolyLayoutUV";
+			}
+		}
+	}
+}
+
+global proc polyLayoutSpacingPresets()
+{
+	int $item = `optionMenuGrp -q -sl "polyLayoutUVegPresets"`-2;
+    global float  $gShellSpacingPresets[];
+
+	if ($item>=0 && $item<size($gShellSpacingPresets) )
+		floatSliderGrp -e -v $gShellSpacingPresets[$item] "polyLayoutUVeg";
+}
+
+
+global proc polyLayoutPlacement(string $prefix)
+{
+	int $item = `optionMenuGrp -q -sl ($prefix + "RegionPresets")` - 1;
+
+	float $scu[]  = {1.0, 1.0, 1.0, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5};
+	float $scv[]  = {1.0, 0.5, 0.5, 1.0, 1.0, 0.5, 0.5, 0.5, 0.5};
+	float $offu[] = {0.0, 0.0, 0.0, 0.0, 0.5, 0.0, 0.5, 0.0, 0.5};
+	float $offv[] = {0.0, 0.0, 0.5, 0.0, 0.0, 0.0, 0.0, 0.5, 0.5};
+
+	if ($item >= 0 && $item < 9) {
+
+		floatSliderGrp -e -en 0 -v $scu[$item]  ($prefix + "ScaleU");	
+		floatSliderGrp -e -en 0 -v $scv[$item]  ($prefix + "ScaleV");	
+		floatSliderGrp -e -en 0 -v $offu[$item] ($prefix + "OffsetU");
+		floatSliderGrp -e -en 0 -v $offv[$item] ($prefix + "OffsetV");
+	}
+	else {
+		// enable the sliders
+		floatSliderGrp -e -en 1 ($prefix + "ScaleU");	
+		floatSliderGrp -e -en 1 ($prefix + "ScaleV");	
+		floatSliderGrp -e -en 1 ($prefix + "OffsetU");
+		floatSliderGrp -e -en 1 ($prefix + "OffsetV");
+	}
+}
+
+global proc polyLayoutEnablePlacement(int $val, string $prefix)
+{
+	int $layout = `optionMenuGrp -q -sl ($prefix + "l")`;
+	int $enablePlacement = ($val) && $layout!=4 && $layout!=5;
+
+	radioButtonGrp -e -en $val ($prefix + "Prescale");
+	optionMenuGrp  -e -en $enablePlacement ($prefix + "RegionPresets");
+
+	int $item = `optionMenuGrp -q -sl ($prefix + "RegionPresets")` - 1;
+	if ($item >= 0 && $item < 9) {
+		floatSliderGrp -e -en 0 ($prefix + "ScaleU");
+		floatSliderGrp -e -en 0 ($prefix + "ScaleV");
+		floatSliderGrp -e -en 0 ($prefix + "OffsetU");
+		floatSliderGrp -e -en 0 ($prefix + "OffsetV");
+	}
+	else {
+		floatSliderGrp -e -en $enablePlacement ($prefix + "ScaleU");
+		floatSliderGrp -e -en $enablePlacement ($prefix + "ScaleV");
+		floatSliderGrp -e -en $enablePlacement ($prefix + "OffsetU");
+		floatSliderGrp -e -en $enablePlacement ($prefix + "OffsetV");
+	}
+}
+
+global proc polyLayoutGrayPresets()
+{
+	string $prefix = "polyLayoutUV";
+
+	$varName = ($prefix + "l");
+	int $layout = `optionMenuGrp -q -sl $varName`;
+
+	$varName = ($prefix + "eg");
+	floatSliderGrp -e -en ($layout==3 || $layout==4 || $layout==5) $varName;
+
+	$varName = ($prefix + "egPresets");
+	optionMenuGrp -e -en ($layout==3 || $layout==4 || $layout==5) $varName;
+
+	$varName = ($prefix + "Grid");
+	columnLayout -e -vis ($layout==4) $varName;
+
+	$varName = ($prefix + "sc");
+	if (($layout==4 || $layout==5) && `radioButtonGrp -q -sl $varName` == 3)
+		radioButtonGrp -e -sl 2 $varName;
+	radioButtonGrp -e -en3 ($layout!=4 && $layout!=5) $varName;
+
+	$varName = "polyLayoutUVMultiOrNonMulti";
+	int $enablePlacement = (`radioButtonGrp -q -sl $varName`==2) && $layout!=4 && $layout!=5;
+
+	optionMenuGrp -e -en $enablePlacement ($prefix + "RegionPresets");
+	int $item = `optionMenuGrp -q -sl ($prefix + "RegionPresets")` - 1;
+	if ($enablePlacement && $item < 9) {
+		// fixed the placement
+		polyLayoutPlacement($prefix);
+	}
+	else {
+		floatSliderGrp -e -en $enablePlacement ($prefix + "ScaleU");
+		floatSliderGrp -e -en $enablePlacement ($prefix + "ScaleV");
+		floatSliderGrp -e -en $enablePlacement ($prefix + "OffsetU");
+		floatSliderGrp -e -en $enablePlacement ($prefix + "OffsetV");
+	}
+}
+
+global proc int layoutIsCustomMapSize(int $i)
+{
+	return ($i == 9);
+}
+
+global proc int layoutIndexToMapSize(int $i)
+{
+	int $val = 0;
+	switch ($i) {
+	case 1: $val = 4096; break;
+	case 2: $val = 2048; break;
+	case 3:	$val = 1024; break;
+	case 4: default: $val = 512; break;
+	case 5: $val = 256; break;
+	case 6: $val = 128; break;
+	case 7: $val = 64; break;
+	case 8: $val = 32; break;
+	case 9: $val = `optionVar -query Unfold3DLayoutCustomSize`; break;
+	}
+	return $val;
+}
+
+global proc layoutAlgorithmChange()
+{
+	if (`radioButtonGrp -exists LayoutAlgorithm_RBG`) {
+		int $alg = `radioButtonGrp -q -select LayoutAlgorithm_RBG`;
+		tabLayout -e -selectTabIndex $alg layoutAlgorithmTabs;
+	}
+}
+
+global proc layoutEnableRotationControls(int $enable)
+{
+	floatFieldGrp -e -en $enable Unfold3DLayoutRotateStep_FFG;
+	floatFieldGrp -e -en $enable Unfold3DLayoutRotateMin_FFG;
+	floatFieldGrp -e -en $enable Unfold3DLayoutRotateMax_FFG;
+}
+
+global proc layoutEnableCustomSize()
+{
+	int $ival = `optionMenu -q -sl Unfold3DLayoutMapSize_OM`;
+	int $custom = layoutIsCustomMapSize($ival);
+	intField -e -vis $custom Unfold3DLayoutCustomSize_IF;
+}
+
+global proc int layoutIsCustomRegion(int $i)
+{
+	return ($i == 10);
+}
+
+global proc layoutUpdatePackingRegion()
+{
+	int $custom = 0;
+	float $minU = 0; float $maxU = 1;
+	float $minV = 0; float $maxV = 1;
+	int $i = `optionMenuGrp -q -sl Unfold3DLayoutPackRegion_OMG`;
+
+	switch ($i) {
+	case 1:  default: break;					// FullSquare
+	case 2:  $minV = 0.5; break;				// TopHalf
+	case 3:  $maxU = 0.5; $minV = 0.5; break;	// TopLeft
+	case 4:  $minU = 0.5; $minV = 0.5; break;	// TopRight
+	case 5:  $maxV = 0.5; break;				// BottomHalf
+	case 6:  $maxU = 0.5; $maxV = 0.5; break;	// BottomLeft
+	case 7:  $minU = 0.5; $maxV = 0.5; break;	// BottomRight
+	case 8:  $maxU = 0.5; break;				// LeftHalf
+	case 9:  $minU = 0.5; break;				// RightHalf
+	case 10: $custom = 1; break;				// Custom
+	}
+
+	if ($custom) {
+		// Note: Keep existing values when switching to custom mode
+		floatFieldGrp -e -en 1 Unfold3DLayoutPackRegionU_FFG;
+		floatFieldGrp -e -en 1 Unfold3DLayoutPackRegionV_FFG;
+	} else {
+		floatFieldGrp -e -en 0 -v1 $minU -v2 $maxU Unfold3DLayoutPackRegionU_FFG;
+		floatFieldGrp -e -en 0 -v1 $minV -v2 $maxV Unfold3DLayoutPackRegionV_FFG;
+	}
+}
+
+proc newLayoutUVOptions()
+{
+	string $topLevelParent = `setParent -q`;
+	string $parent = `columnLayout`;
+	string $offLabel = (uiRes("m_performPolyLayoutUV.kOff"));
+
+	// Setting frame
+	frameLayout -l (uiRes("m_performPolyLayoutUV.kSettingsFrame"));
+		columnLayout;
+	
+		checkBoxGrp 
+			-l "" -label1 (uiRes("m_performPolyLayoutUV.kFixNonManifold")) 
+			-value1 false 
+			Unfold3DLayoutFixNonManifold_CBG;
+		
+		setParent ..; //columnLayout
+	setParent $parent; // frameLayout
+	
+	// Solver settings frame
+	frameLayout -l (uiRes("m_performPolyLayoutUV.kPackSettings"));
+		columnLayout;
+
+		intSliderGrp -field true
+			-l (uiRes("m_performPolyLayoutUV.kPackResolution"))
+			-min 64 -max 4096 -v 256
+			Unfold3DLayoutResolution_ISG;
+
+		intSliderGrp -field true
+			-l (uiRes("m_performPolyLayoutUV.kPackIteration"))
+			-min 1 -max 50 -v 1
+			Unfold3DLayoutMutations_ISG;
+
+		radioButtonGrp -nrb 2
+			-l (uiRes("m_performPolyLayoutUV.kPackMultipleObjects"))
+			-labelArray2
+			(uiRes("m_performPolyLayoutUV.kPackTogether"))
+			(uiRes("m_performPolyLayoutUV.kPackSeparately"))
+			-vertical
+			Unfold3DLayoutMulti_RBG;
+
+		checkBoxGrp
+			-l (uiRes("m_performPolyLayoutUV.kStackSimilar"))
+			Unfold3DLayoutStackSimilar_CBG;
+
+		setParent ..;
+	setParent $parent; // frameLayout	
+
+	frameLayout -l (uiRes("m_performPolyLayoutUV.kPreTransformSettings"));
+		columnLayout;
+
+		optionMenuGrp
+			-l (uiRes("m_performPolyLayoutUV.kShellPreRotation"))
+			Unfold3DLayoutPreRotate_OMG;
+			menuItem -l $offLabel;
+			menuItem -l (uiRes("m_performPolyLayoutUV.kHorizont"));
+			menuItem -l (uiRes("m_performPolyLayoutUV.kVertical"));
+			menuItem -l (uiRes("m_performPolyLayoutUV.kAxisXtoV"));
+			menuItem -l (uiRes("m_performPolyLayoutUV.kAxisYtoV"));
+			menuItem -l (uiRes("m_performPolyLayoutUV.kAxisZtoV"));
+
+		optionMenuGrp
+			-l (uiRes("m_performPolyLayoutUV.kShellPreScaling"))
+			Unfold3DLayoutPreScale_OMG;
+			menuItem -l $offLabel;
+			menuItem -l (uiRes("m_performPolyLayoutUV.kPreserve3D"));
+			menuItem -l (uiRes("m_performPolyLayoutUV.kPreserveUV"));
+
+		setParent ..;
+	setParent $parent; // frameLayout	
+
+	frameLayout -l (uiRes("m_performPolyLayoutUV.kTransformSettings"));
+		columnLayout;
+
+		checkBoxGrp
+			-l (uiRes("m_performPolyLayoutUV.kTranslateShell"))
+			Unfold3DLayoutTranslate_CBG;
+
+		checkBoxGrp
+			-l (uiRes("m_performPolyLayoutUV.kRotateShell"))
+			-cc1 "layoutEnableRotationControls #1"
+			Unfold3DLayoutRotate_CBG;
+
+		floatFieldGrp
+			-l (uiRes("m_performPolyLayoutUV.kRotateShellStep"))
+			Unfold3DLayoutRotateStep_FFG;
+
+		floatFieldGrp
+			-l (uiRes("m_performPolyLayoutUV.kRotateShellMin"))
+			Unfold3DLayoutRotateMin_FFG;
+
+		floatFieldGrp
+			-l (uiRes("m_performPolyLayoutUV.kRotateShellMax"))
+			Unfold3DLayoutRotateMax_FFG;
+
+		rowLayout -nc 2 -adj 2;
+			text -l "";
+			text -al left -l (uiRes("m_performPolyLayoutUV.kRotateStepWarning"));
+			setParent ..;
+
+		setParent ..;
+	setParent $parent; // frameLayout	
+
+	frameLayout -l (uiRes("m_performPolyLayoutUV.kLayoutSettings"));
+		columnLayout;
+
+		rowLayout -nc 3 -cw 2 100 -cw 3 70;
+			text -al right -l (uiRes("m_performPolyLayoutUV.kTextureMapSize"));
+			optionMenu
+				-l ""
+				-cc "layoutEnableCustomSize"
+				Unfold3DLayoutMapSize_OM;
+				menuItem -l "4096";
+				menuItem -l "2048";
+				menuItem -l "1024";
+				menuItem -l "512";
+				menuItem -l "256";
+				menuItem -l "128";
+				menuItem -l "64";
+				menuItem -l "32";
+				menuItem -l (uiRes("m_performPolyLayoutUV.kCustom"));
+			intField -min 1 -v 512 -vis 0 Unfold3DLayoutCustomSize_IF;
+			setParent ..;
+
+		radioButtonGrp -nrb 2 -cw 2 70 -cw 3 70
+			-l  (uiRes("m_performPolyLayoutUV.kPaddingUnits"))
+			-label1 (uiRes("m_performPolyLayoutUV.kPixelUnits"))
+			-label2 (uiRes("m_performPolyLayoutUV.kUVUnits")) 
+			Unfold3DLayoutPaddingUnits_RBG;
+
+		floatFieldGrp
+			-l (uiRes("m_performPolyLayoutUV.kShellPadding"))
+			Unfold3DLayoutShellPadding_FFG;
+
+		floatFieldGrp
+			-l (uiRes("m_performPolyLayoutUV.kTilePadding"))
+			Unfold3DLayoutTilePadding_FFG;
+
+		optionMenuGrp
+			-l (uiRes("m_performPolyLayoutUV.kShellDistribution"))
+			Unfold3DLayoutShellAssignment_OMG;
+			menuItem -l (uiRes("m_performPolyLayoutUV.kShellDistribute"));
+			menuItem -l (uiRes("m_performPolyLayoutUV.kShellCenter"));
+
+		rowLayout -nc 4 -cw 2 70 -cw 3 20 -cw 4 70;
+			text -al right -l (uiRes("m_performPolyLayoutUV.kTilesU"));
+			intField -v 1 Unfold3DLayoutTilesU_IF;
+			text -al center -l (uiRes("m_performPolyLayoutUV.kV"));
+			intField -v 1 Unfold3DLayoutTilesV_IF;
+			setParent ..;
+
+		optionMenuGrp
+			-l (uiRes("m_performPolyLayoutUV.kShellPackRegion"))
+			-cc "layoutUpdatePackingRegion"
+			Unfold3DLayoutPackRegion_OMG;
+			menuItem -l (uiRes("m_performPolyLayoutUV.kPresetFullSquare"));
+			menuItem -l (uiRes("m_performPolyLayoutUV.kPresetTopHalf"));
+			menuItem -l (uiRes("m_performPolyLayoutUV.kPresetTopLeft"));
+			menuItem -l (uiRes("m_performPolyLayoutUV.kPresetTopRight"));
+			menuItem -l (uiRes("m_performPolyLayoutUV.kPresetBottomHalf"));
+			menuItem -l (uiRes("m_performPolyLayoutUV.kPresetBottomLeft"));
+			menuItem -l (uiRes("m_performPolyLayoutUV.kPresetBottomRight"));
+			menuItem -l (uiRes("m_performPolyLayoutUV.kPresetLeftHalf"));
+			menuItem -l (uiRes("m_performPolyLayoutUV.kPresetRightHalf"));
+			menuItem -l (uiRes("m_performPolyLayoutUV.kCustom"));
+
+		floatFieldGrp -nf 2
+			-l (uiRes("m_performPolyLayoutUV.kU"))
+			Unfold3DLayoutPackRegionU_FFG;
+
+		floatFieldGrp -nf 2
+			-l (uiRes("m_performPolyLayoutUV.kV"))
+			Unfold3DLayoutPackRegionV_FFG;
+
+		optionMenuGrp
+			-l (uiRes("m_performPolyLayoutUV.kLayoutScaleMode"))
+			Unfold3DLayoutScaleMode_OMG;
+			menuItem -l $offLabel;
+			menuItem -l (uiRes("m_performPolyLayoutUV.kUniform"));
+			menuItem -l (uiRes("m_performPolyLayoutUV.kNonUniform"));
+
+		setParent ..;
+	setParent $parent; // frameLayout	
+
+	setParent $topLevelParent;
+}
+
+proc legacyLayoutUVOptions (string $prefix, string $intVars[])
+{
+	// Global template variables for form spacing
+	global int $gOptionBoxTemplateFrameSpacing;
+	global int $gOptionBoxTemplateInnerFrameMarginHeight; 
+	global int $gOptionBoxTemplateInnerFrameMarginWidth;
+	global int $gOptionBoxTemplateOffsetText;
+	global int $gOptionBoxTemplateTextColumnWidth;
+	global int $gOptionBoxTemplateSingleWidgetWidth;
+
+	// Global template variables for form spacing	
+	string $separateMenu = ($prefix + $intVars[2]);
+
+	// Form layout
+	string $parent = `formLayout polyLayoutUVOptions`;
+
+		// Overlapping frame
+		string $overlappingFrame = 
+		`frameLayout -label (uiRes("m_performPolyLayoutUV.kOverlappingFrame"))`; 
+	
+			columnLayout;
+
+				$varName = "polyLayoutUVMultiOrNonMulti";
+				string $disableSeparateCmd = 
+					"{ int $tmp = `radioButtonGrp -q -sl "+$varName+"`;" +
+					"  polyLayoutEnablePlacement ($tmp==2) "+$prefix+";" + 				
+					"  radioButtonGrp -e -en ($tmp==1) "+$separateMenu+";}";
+
+				radioButtonGrp 
+					-label (uiRes("m_performPolyLayoutUV.kLayoutMultipleObjects")) 
+					-nrb 2 
+					-cc $disableSeparateCmd
+					-label1 (uiRes("m_performPolyLayoutUV.kOverlapping"))
+					-label2 (uiRes("m_performPolyLayoutUV.kNonOverlapping")) 
+					-vr 
+					$varName;
+
+				separator -style "none";
+
+				radioButtonGrp 
+					-label (uiRes("m_performPolyLayoutUV.kPrescaling"))
+					-nrb 3
+					-label1 (uiRes("m_performPolyLayoutUV.kPrescaleNonde"))
+					-label2 (uiRes("m_performPolyLayoutUV.kPresacleObject"))
+					-label3 (uiRes("m_performPolyLayoutUV.kPrescaleWorld"))
+					-vr 
+					($prefix + "Prescale");
+
+				separator -style "none";
+
+				$varName = $separateMenu;
+				radioButtonGrp 
+					-label (uiRes("m_performPolyLayoutUV.kSeparateShells"))
+					-nrb 3
+					-label1 (uiRes("m_performPolyLayoutUV.kSeparateShellsOff"))
+					-label2 (uiRes("m_performPolyLayoutUV.kSeparateShellsFolds"))
+					-label3 (uiRes("m_performPolyLayoutUV.kSeparateShellsAllIntersectiong")) 
+					-vr 
+					$varName;
+
+				separator -style "none";
+
+				$varName = ($prefix + $intVars[0]);
+				checkBoxGrp -label1 (uiRes("m_performPolyLayoutUV.kFlipReversed")) $varName;
+			
+			setParent ..; // columnLayout
+
+		setParent $parent; // frameLayout
+		
+		// Layout settings frame
+		string $layoutSettingsFrame = 
+		`frameLayout -label (uiRes("m_performPolyLayoutUV.kLayoutSettingsFrame"))`;
+
+			columnLayout;
+
+				$varName = ($prefix + "l");
+				$gapName = ($prefix + "eg");
+				$menuName = ($prefix + "egPresets");
+
+				optionMenuGrp -label (uiRes("m_performPolyLayoutUV.kShellLayout")) -cc polyLayoutGrayPresets $varName;
+				menuItem -label (uiRes("m_performPolyLayoutUV.kShellLayoutNone"));
+				menuItem -label (uiRes("m_performPolyLayoutUV.kShellLayoutAlongU"));
+				menuItem -label (uiRes("m_performPolyLayoutUV.kShellLayoutIntoSquare"));
+				menuItem -label (uiRes("m_performPolyLayoutUV.kShellLayoutGrid"));
+				menuItem -label (uiRes("m_performPolyLayoutUV.kShellLayoutNearest"));
+
+				setParent -m ..;
+
+				$varName = ($prefix + "Grid");
+				columnLayout $varName;
+					setUITemplate -popTemplate;
+
+					rowLayout -nc 4
+						-columnAlign4	"right" "center" "center" "center"
+						-columnAttach4	"both" "both" "both" "both"
+						-columnOffset4	$gOptionBoxTemplateOffsetText 0 0 0
+						-columnWidth4	$gOptionBoxTemplateTextColumnWidth
+										$gOptionBoxTemplateSingleWidgetWidth
+										10
+										$gOptionBoxTemplateSingleWidgetWidth;
+					text -l "";
+					text -label (uiRes("m_performPolyLayoutUV.kShellLayoutGridU"));
+					text -l "";
+					text -label (uiRes("m_performPolyLayoutUV.kShellLayoutGridV"));
+					setParent ..;
+
+					rowLayout -nc 4
+						-columnAlign4	"right" "center" "center" "center"
+						-columnAttach4	"both" "both" "both" "both"
+						-columnOffset4	$gOptionBoxTemplateOffsetText 0 0 0
+						-columnWidth4	$gOptionBoxTemplateTextColumnWidth
+										$gOptionBoxTemplateSingleWidgetWidth
+										10
+										$gOptionBoxTemplateSingleWidgetWidth;
+					text -label (uiRes("m_performPolyLayoutUV.kShellLayoutGridUV"));
+					intField -min 1 -max 100 -v 1 ($prefix + "GridU");
+					text -label (uiRes("m_performPolyLayoutUV.kShellLayoutGridX"));
+					intField -min 1 -max 100 -v 1 ($prefix + "GridV");
+					setParent ..;
+
+					setUITemplate -pushTemplate OptionBoxTemplate;
+				setParent ..;
+
+				separator -style "none";
+
+				$varName = ($prefix + $intVars[3]);
+				radioButtonGrp 
+					-label (uiRes("m_performPolyLayoutUV.kScaleMode")) 
+					-nrb 3
+					-label1 (uiRes("m_performPolyLayoutUV.kScaleModeNone"))
+					-label2 (uiRes("m_performPolyLayoutUV.kScaleModeUniform"))
+					-label3 (uiRes("m_performPolyLayoutUV.kScaleModeStretchToSquare")) 
+					-vr 
+					$varName;
+
+				separator -style "none";
+
+				$varName = ($prefix + $intVars[4]);
+				radioButtonGrp 
+					-label (uiRes("m_performPolyLayoutUV.kShellStacking")) 
+					-nrb 2
+					-label1 (uiRes("m_performPolyLayoutUV.kShellStackingBoundingBox"))
+					-label2 (uiRes("m_performPolyLayoutUV.kShellStackingShape")) 
+					-vr 
+					$varName;
+
+				separator -style "none";
+
+				$varName = ($prefix + $intVars[1]);
+				radioButtonGrp 
+					-label (uiRes("m_performPolyLayoutUV.kRotate"))
+					-nrb 3
+					-label1 (uiRes("m_performPolyLayoutUV.kRotateNone"))
+					-label2 (uiRes("m_performPolyLayoutUV.kRotate90"))
+					-label3 (uiRes("m_performPolyLayoutUV.kRotateFree")) 
+					-vr 
+					$varName;
+
+				// Shell spacing frame
+				string $shellSpacingFrame = `frameLayout -label (uiRes("m_performPolyLayoutUV.kShellSpacingFrame"))`;
+
+					columnLayout;
+
+						optionMenuGrp 
+							-label (uiRes("m_performPolyLayoutUV.kSpacingPresets")) 
+							-cc polyLayoutSpacingPresets 
+							$menuName;
+
+                            // If you change this update gShellSpacingPresets and
+                            // duplicate that in performSubdLayoutUV.mel
+							menuItem -label (uiRes("m_performPolyLayoutUV.kSpacingPresetsCustom"));
+							menuItem -label (uiRes("m_performPolyLayoutUV.kSpacingPresets2048Map"));
+							menuItem -label (uiRes("m_performPolyLayoutUV.kSpacingPresets1024Map"));
+							menuItem -label (uiRes("m_performPolyLayoutUV.kSpacingPresets512Map"));
+							menuItem -label (uiRes("m_performPolyLayoutUV.kSpacingPresets256Map"));
+							menuItem -label (uiRes("m_performPolyLayoutUV.kSpacingPresets128Map"));
+							menuItem -label (uiRes("m_performPolyLayoutUV.kSpacingPresets64Map"));
+							menuItem -label (uiRes("m_performPolyLayoutUV.kSpacingPresets32Map"));
+
+						setParent -m ..;
+
+						string $cmd = ("optionMenuGrp -e -sl 1 " + $menuName);
+						floatSliderGrp 
+							-label (uiRes("m_performPolyLayoutUV.kPercentageSpace")) 
+							-min 0.0 
+							-max 5.0 
+							-cc $cmd 
+							$gapName;
+
+					setParent ..; // columnLayout
+				
+				setParent ..;  // frame
+
+				// Shell spacing frame
+				string $regionFrame = `frameLayout -label (uiRes("m_performPolyLayoutUV.kShellPlacement"))`;
+
+					columnLayout;
+						// User defined region
+						$menuName = ($prefix + "RegionPresets");
+
+						optionMenuGrp 
+							-label (uiRes("m_performPolyLayoutUV.kRegionPreset")) 
+							-cc  ("polyLayoutPlacement " + $prefix)
+							$menuName;
+
+							menuItem -label (uiRes("m_performPolyLayoutUV.kPresetFullSquare"));
+							menuItem -label (uiRes("m_performPolyLayoutUV.kPresetBottomHalf"));
+							menuItem -label (uiRes("m_performPolyLayoutUV.kPresetTopHalf"));
+							menuItem -label (uiRes("m_performPolyLayoutUV.kPresetLeftHalf"));
+							menuItem -label (uiRes("m_performPolyLayoutUV.kPresetRightHalf"));
+							menuItem -label (uiRes("m_performPolyLayoutUV.kPresetBottomLeft"));
+							menuItem -label (uiRes("m_performPolyLayoutUV.kPresetBottomRight"));
+							menuItem -label (uiRes("m_performPolyLayoutUV.kPresetTopLeft"));
+							menuItem -label (uiRes("m_performPolyLayoutUV.kPresetTopRight"));
+							menuItem -label (uiRes("m_performPolyLayoutUV.kPresetNone"));
+
+						setParent -m ..;
+
+						floatSliderGrp 
+							-label (uiRes("m_performPolyLayoutUV.kRegionScaleU")) 
+							-min 0.01
+							-max 5.0 
+							-cc  ("polyLayoutPlacement " + $prefix)
+							($prefix + "ScaleU");
+
+						floatSliderGrp 
+							-label  (uiRes("m_performPolyLayoutUV.kRegionScaleV")) 
+							-min 0.01 
+							-max 5.0 
+							-cc  ("polyLayoutPlacement " + $prefix)
+							($prefix + "ScaleV");
+						
+						floatSliderGrp 
+							-label (uiRes("m_performPolyLayoutUV.kRegionOffsetU")) 
+							-min -5.0 
+							-fieldMinValue -100.0 
+							-max 5.0 
+							-fieldMaxValue 100.0 
+							-cc  ("polyLayoutPlacement " + $prefix)
+							($prefix + "OffsetU");
+						
+						floatSliderGrp 
+							-label (uiRes("m_performPolyLayoutUV.kRegionOffsetV")) 
+							-min -5.0 
+							-fieldMinValue -100.0 
+							-max 5.0 
+							-fieldMaxValue 100.0 
+							-cc  ("polyLayoutPlacement " + $prefix)
+							($prefix + "OffsetV");
+
+					setParent ..; // columnLayout
+
+				setParent ..;  // frame
+
+			setParent ..; // columnLayout
+
+		setParent $parent; // frameLayout
+
+	setParent ..;	// formLayout
+
+	// Attach frames to form layout
+	formLayout -e
+		-af $overlappingFrame "top" $gOptionBoxTemplateFrameSpacing
+		-af $overlappingFrame "left" $gOptionBoxTemplateFrameSpacing
+		-af $overlappingFrame "right" $gOptionBoxTemplateFrameSpacing
+		-an $overlappingFrame "bottom"
+
+		-ac $layoutSettingsFrame "top" $gOptionBoxTemplateFrameSpacing $overlappingFrame
+		-af $layoutSettingsFrame "left" $gOptionBoxTemplateFrameSpacing
+		-af $layoutSettingsFrame "right" $gOptionBoxTemplateFrameSpacing
+		-an $layoutSettingsFrame "bottom" 
+		$parent;
+}
+
+proc polyLayoutUVOptions (string $prefix, string $intVars[])
+{
+	string $commandName = "performPolyLayoutUV";
+	string $callback = ($commandName + "Callback");
+	string $setup = ($commandName + "Setup");
+	string $varName;
+
+	string $layout = getOptionBox();
+	setParent $layout;
+	setUITemplate -pushTemplate OptionBoxTemplate;
+	waitCursor -state 1;
+	
+	//string $separateMenu = ($prefix + $intVars[2]);
+	string $parent = `scrollLayout`;
+	formLayout polyLayoutOptions;
+
+		int $u3DLoaded = `pluginInfo -q -loaded Unfold3D`;
+		if ($u3DLoaded) {
+			radioButtonGrp -numberOfRadioButtons 2 -label (uiRes("m_performPolyLayoutUV.kMethodLabel"))
+				-labelArray2 
+				(uiRes("m_performPolyLayoutUV.kUnfoldLabel"))
+				(uiRes("m_performPolyLayoutUV.kLegacyLabel"))
+				-vertical
+				-changeCommand "layoutAlgorithmChange"
+				LayoutAlgorithm_RBG;
+			setParent ..;
+
+			string $tabs = `tabLayout -tabsVisible false layoutAlgorithmTabs`;
+				newLayoutUVOptions();
+				legacyLayoutUVOptions($prefix, $intVars);
+			setParent ..;
+		} else
+		{
+			legacyLayoutUVOptions($prefix, $intVars);
+		}
+	setParent ..;
+	
+	waitCursor -state 0;
+	setUITemplate -popTemplate;
+
+	string $applyBtn = getOptionBoxApplyBtn();
+	button -edit -label (uiRes("m_performPolyLayoutUV.kLayoutUVs"))
+	       -command ($callback + " " + $parent + " " + 1) $applyBtn;
+	string $saveBtn = getOptionBoxSaveBtn();
+	button -edit 
+		-command ($callback + " " + $parent + " " + 0 + "; hideOptionBox")
+		$saveBtn;
+	string $resetBtn = getOptionBoxResetBtn();
+	button -edit 
+		-command ($setup + " " + $parent + " " + 1) $resetBtn;
+
+	setOptionBoxTitle (uiRes("m_performPolyLayoutUV.kLayoutUVsOptions"));
+
+	setOptionBoxHelpTag( "LayoutUVs" );
+
+	eval (($setup + " " + $parent + " " + 0));
+
+	showOptionBox();
+
+	global string $gOptionBox;
+	window -e -widthHeight 546 685 $gOptionBox;
+}
+
+proc string[] addPreStackShellsToSelection()
+{
+	string $selection[] = `ls -selection`;
+	string $compSelType = `getComponentMask`;
+
+	// handle object mode
+	if($compSelType == "none")
+	{
+		$selection = `ls -dag -selection`;
+		for($i = 0; $i < size($selection); $i++)
+		{
+			if(`nodeType $selection[$i]` == "mesh")
+				$selection[$i] = $selection[$i] + ".f[*]";
+		}
+	}
+
+	string $cmd = "polyUVStackSimilarShells -to 0.1 -om"; // only get matched target shells, don't really stack.
+	for ($i = 0; $i < size($selection); $i++)
+	{
+		$cmd = $cmd + " \"" + $selection[$i] + "\"";
+	}
+	string $matchShells[] = evalEcho($cmd);
+	select -clear;
+	for ($i = 0; $i < size($matchShells); $i++)
+	{
+		string $matchUVs[] = stringToStringArray($matchShells[$i], " ");
+		for ($j = 0; $j < size($matchUVs); $j++)
+		{
+			select -add $matchUVs[$j]; // add target shells to selection for doing layout.
+		}
+	}
+	return $selection; // return original selection handled by object mode.
+}
+
+global proc Unfold3DFixNonManifoldBeforeLayoutDialog()
+{
+	string $commandName = "Layout";
+	string $commandDisplayName = (uiRes("m_performPolyLayoutUV.kLayout"));
+	Unfold3DFixNonManifoldDialog($commandName, $commandDisplayName);
+}
+
+global proc string performPolyLayoutUV (int $option)
+{
+	string $prefix = "polyLayoutUV";
+	string $intVars[] = {"fr", "rbf", "se", "sc", "lm"};
+	string $cmd="";
+	int $val;
+	float $fval;
+	switch ($option) 
+	{
+		case 0: 
+		{
+			setOptionVars($prefix, false, $intVars);	
+		
+			int $alg = 2;
+			int $u3DLoaded = `pluginInfo -q -loaded Unfold3D`;
+			if ($u3DLoaded) {
+				$alg = `optionVar -q LayoutAlgorithm`;
+				if ($alg < 1 || $alg > 2) $alg = 1;
+			}
+			if ($alg == 1) {
+		
+				$cmd = "u3dLayout";
+
+				string $originalSelect[];
+				string $selection[];
+
+				int $multi = `optionVar -q Unfold3DLayoutMulti`;
+				if ($multi == 2) $cmd += " -m 0";
+
+				int $stackSimilar = `optionVar -q Unfold3DLayoutStackSimilar`;
+				if($stackSimilar == 1)
+				{
+					$originalSelect = `ls -selection`;
+					$selection = addPreStackShellsToSelection();
+				}
+
+				int $resolution = `optionVar - q Unfold3DLayoutResolution`;
+				if ($resolution > 0) $cmd += " -res " + $resolution;
+
+				int $mutations = `optionVar - q Unfold3DLayoutMutations`;
+				if ($mutations > 1) $cmd += " -mut " + $mutations;
+
+				int $preRot = `optionVar - q Unfold3DLayoutPreRotate`;
+				if ($preRot > 1) $cmd += " -rot " + ($preRot - 1);
+
+				int $preScl = `optionVar - q Unfold3DLayoutPreScale`;
+				if ($preScl == 3) $preScl = 4; // options does not map 1:1 with command flag
+				if ($preScl > 1) $cmd += " -scl " + ($preScl - 1);
+
+				int $trs = `optionVar - q Unfold3DLayoutTranslate`;
+				if (!$trs) $cmd += " -trs " + $trs;
+
+				int $rot = `optionVar - q Unfold3DLayoutRotate`;
+				if ($rot) {
+					float $rmn = `optionVar - q Unfold3DLayoutRotateMin`;
+					float $rmx = `optionVar - q Unfold3DLayoutRotateMax`;
+					float $rst = `optionVar - q Unfold3DLayoutRotateStep`;
+					$cmd += " -rmn " + $rmn + " -rmx " + $rmx + " -rst " + $rst;
+				}
+
+				int $mapSize = layoutIndexToMapSize(`optionVar - q Unfold3DLayoutMapSize`);
+				int $pixels = (`optionVar - q Unfold3DLayoutPaddingUnits` == 1);
+				float $minU = `optionVar - q Unfold3DLayoutPackRegionMinU`;
+				float $maxU = `optionVar - q Unfold3DLayoutPackRegionMaxU`;
+				float $minV = `optionVar - q Unfold3DLayoutPackRegionMinV`;
+				float $maxV = `optionVar - q Unfold3DLayoutPackRegionMaxV`;
+				float $width = ($minU < $maxU ? $maxU - $minU : 1.0);
+				float $pixelScale = $width / $mapSize;
+
+				float $shellPadding = `optionVar - q Unfold3DLayoutShellPadding`;
+				if ($shellPadding > 0) {
+					if ($pixels) $shellPadding *= $pixelScale;
+					$cmd += " -spc " + $shellPadding;
+				}
+
+				float $tilePadding = `optionVar - q Unfold3DLayoutTilePadding`;
+				if ($tilePadding > 0) {
+					if ($pixels) $tilePadding *= $pixelScale;
+					$cmd += " -mar " + $tilePadding;
+				}
+
+				int $shellAssignment = `optionVar - q Unfold3DLayoutShellAssignment`;
+				if ($shellAssignment > 1) {
+					$cmd += " -ta " + ($shellAssignment - 1);
+				}
+
+				int $tilesU = `optionVar - q Unfold3DLayoutTilesU`;
+				if ($tilesU > 1) {
+					$cmd += " -u " + $tilesU;
+				}
+
+				int $tilesV = `optionVar - q Unfold3DLayoutTilesV`;
+				if ($tilesV > 1) {
+					$cmd += " -v " + $tilesV;
+				}
+
+				if ($minU < $maxU && $minV < $maxV) {
+					$cmd += " -box " + $minU + " " + $maxU + " " + $minV + " " + $maxV;
+				}
+
+				int $scl = `optionVar - q Unfold3DLayoutScaleMode`;
+				if ($scl != /*uniform*/2) {
+					$cmd += " -ls " + $scl;
+				}
+
+				string $sel[];
+				$sel = `ls - sl`;
+				// get preSelectHilite list when no selectList.
+				if (size($sel) == 0)
+				{
+					$sel = `ls - preSelectHilite`;
+				}
+
+				string $filteredSel[];
+				for ($i in $sel)
+				{
+					string $theNodeType = `nodeType $i`;
+					if ($theNodeType == "transform" || $theNodeType == "mesh")
+						$filteredSel[size($filteredSel)] = $i;
+				}
+				int $index = 0;
+				string $finalSel[];
+				while (size($filteredSel) > $index)
+				{
+					string $cursel[];
+					$index = `polyNextSelectionBatch $filteredSel $cursel $index`;
+
+					if (size($cursel) != 0){
+						for ($k in $cursel){
+							$finalSel[size($finalSel)] = $k;
+						}
+					}
+				}
+				for ($i in $finalSel)
+				{
+					$cmd = ($cmd + " " + $i);
+				}
+				
+				// validate the mesh and clean it up
+				string $topoValidCmd = "u3dTopoValid -type";
+				for ($i in $finalSel)
+				{
+					$topoValidCmd=($topoValidCmd + " " + $i);
+				}
+				string $topoErrors[] = eval($topoValidCmd);
+
+				if (size($topoErrors) > 0)
+				{
+					int $doClean = 0;
+					if (`optionVar -q Unfold3DFixNonManifoldBeforeLayout`)
+						$doClean = 1;
+					else if (`optionVar -q Unfold3DAskToFixNonManifoldBeforeLayout`)
+					{
+						string $ret = `layoutDialog -title (uiRes("m_performPolyLayoutUV.kFixNonManifold")) -ui "Unfold3DFixNonManifoldBeforeLayoutDialog"`;
+						if($ret == "yes")
+							$doClean = 1;
+					}
+					
+					if ($doClean)
+						Unfold3DFixNonManifold($topoErrors);
+				}
+
+				evalEcho($cmd);
+
+				if($stackSimilar == 1)
+				{
+					select -r $selection; // select original selection(handle object mode) to stack similar
+					polyUVStackSimilarShells -to 0.1;
+					select -r $originalSelect;	//restore original selection.
+				}
+			}
+			else
+			{
+				string $varName;
+				$varName = "polyLayoutUVMultiOrNonMulti";
+				int $multi = `optionVar -q $varName`;
+
+				if ($multi == 1) 
+				{
+					performPolyMultiLayoutUV 0;
+				} 
+				else 
+				{					
+					$cmd = $prefix;
+					for ($i = size($intVars) - 1; $i >= 0; $i--)
+					{
+						$varName = ($prefix + $intVars[$i]);
+						int $ival = `optionVar -query $varName`;
+						$cmd = $cmd + " -" + $intVars[$i] + " " + $ival;
+					}
+
+					$varName = ($prefix + "eg");
+					$fval = `optionVar -query $varName`;
+					$cmd = $cmd + " -ps " + $fval;
+
+					$varName = ($prefix + "l");
+					$fval = `optionVar -query $varName`;
+					$cmd = $cmd + " -l " + $fval;
+
+					$varName = ($prefix + "GridU");
+					$val = `optionVar -query $varName`;
+					$cmd = $cmd + " -gu " + $val;
+
+					$varName = ($prefix + "GridV");
+					$val = `optionVar -query $varName`;
+					$cmd = $cmd + " -gv " + $val;
+
+					// get selectlist or pre preSelectHilite list in polyPerformAction.
+					polyPerformAction $cmd "f" 0;
+				}
+			}
+			break;
+		}
+		case 1:
+		{
+			polyLayoutUVOptions($prefix, $intVars);
+			break;
+		}
+		case 2:
+		{
+			$cmd="performPolyLayoutUV 0";
+			break;
+		}
+	}
+	return $cmd;
+}
+
+global proc string performPolyMultiLayoutUV (int $option)
+{
+	string $prefix = "polyLayoutUV";
+	string $intVars[] = {"fr", "rbf", "se", "sc", "lm"};
+	string $cmd="";
+
+	int $ival;
+	float $fval;
+
+	switch ($option)
+	{
+		case 0:
+			string $varName;
+			setOptionVars($prefix, false, $intVars);
+			$cmd = "polyMultiLayoutUV";
+			for ( $i = size($intVars)-1 ; $i >= 0 ; $i--)
+			{
+				// Skip "se" as it does not exist for layoutMultiUVs.
+				//
+				if ($intVars[$i] == "se") { continue; }
+
+				string $varName = ($prefix + $intVars[$i]);
+				$ival = `optionVar -query $varName`;
+				$cmd = $cmd + " -" + $intVars[$i] + " " + $ival;
+			}
+
+			$varName = ($prefix + "eg");
+			$fval = `optionVar -query $varName`;
+			$cmd = $cmd + " -ps " + $fval;
+
+			$varName = ($prefix + "l");
+			$fval = `optionVar -query $varName`;
+			$cmd = $cmd + " -l " + $fval;
+			
+			$varName = ($prefix + "GridU");
+			$val = `optionVar -query $varName`;
+			$cmd = $cmd + " -gu " + $val;
+
+			$varName = ($prefix + "GridV");
+			$val = `optionVar -query $varName`;
+			$cmd = $cmd + " -gv " + $val;
+
+			$varName = ($prefix + "Prescale");
+			$val = `optionVar -query $varName`;
+			$cmd = $cmd + " -psc " + $val;
+
+			$varName = ($prefix + "ScaleU");
+			$fval = `optionVar -query $varName`;
+			$cmd = $cmd + " -su " + $fval;
+
+			$varName = ($prefix + "ScaleV");
+			$fval = `optionVar -query $varName`;
+			$cmd = $cmd + " -sv " + $fval;			
+
+			$varName = ($prefix + "OffsetU");
+			$fval = `optionVar -query $varName`;
+			$cmd = $cmd + " -ou " + $fval;	
+
+			$varName = ($prefix + "OffsetV");
+			$fval = `optionVar -query $varName`;
+			$cmd = $cmd + " -ov " + $fval;	
+
+			evalEcho($cmd);
+			break;
+		case 1:
+			polyLayoutUVOptions($prefix, $intVars);
+			break;
+		case 2:
+			$cmd="performPolyMultiLayoutUV 0";
+			break;
+	}
+	return $cmd;
+}

@@ -1,0 +1,53 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//  Procedure Name:
+//	AEmotionTrailTemplate
+//
+//  Description Name;
+//	Creates the attribute editor controls for the motionTrail Node
+//
+//  Input Value:
+//	nodeName 
+//
+//  Output Value:
+//	None
+//
+global proc AEmotionTrailTemplate ( string $nodeName )
+{
+	global string $motionTrailTemplateName;
+	editorTemplate -beginScrollLayout;
+
+		editorTemplate -beginLayout (uiRes("m_AEmotionTrailTemplate.kMotionTrailAttributes"))  -collapse 0;
+			editorTemplate -addControl "startTime";
+			editorTemplate -addControl "endTime";
+			editorTemplate -addControl "increment";
+			editorTemplate -suppress "update";
+
+			string $obj = (uiRes("m_AEmotionTrailTemplate.kMotionObj"));
+			editorTemplate -callCustom 
+				( "AEinputNew \"" + $obj + "\"" )
+				( "AEinputReplace \"" + $obj+ "\"" )
+				"inputMatrix";
+
+		editorTemplate -endLayout;
+		editorTemplate -suppress "animCurveChanged";
+		editorTemplate -suppress "frames";
+		editorTemplate -suppress "points";
+		editorTemplate -suppress "localPosition";
+		editorTemplate -suppress "keyframes";
+		editorTemplate -suppress "keyframeTimes";
+		editorTemplate -suppress "keyframeFlags";
+		editorTemplate -suppress "inputGeom";
+
+		// include/call base class/node attributes
+		AEdependNodeTemplate $nodeName;
+
+	editorTemplate -addExtraControls;
+	editorTemplate -endScrollLayout;
+}

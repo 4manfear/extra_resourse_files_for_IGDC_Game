@@ -1,0 +1,83 @@
+//**************************************************************************/
+// Copyright (c) 2007 Autodesk, Inc.
+// All rights reserved.
+// 
+// These coded instructions, statements, and computer programs contain
+// unpublished proprietary information written by Autodesk, Inc., and are
+// protected by Federal copyright law. They may not be disclosed to third
+// parties or copied or duplicated in any form, in whole or in part, without
+// the prior written consent of Autodesk, Inc.
+//**************************************************************************/
+// DESCRIPTION: Monochrome filter effect.
+// AUTHOR: Bernard Kwok
+// CREATED: November 2007
+//**************************************************************************/
+
+// World-view-projection transformation.
+float4x4 gWVPXf : WorldViewProjection < string UIWidget = "None"; >;
+
+// The single filter input, i.e. the image to be filtered.
+texture gInputTex : InputTexture
+<
+    string UIName = "Input Texture";
+>;
+
+// Filter input sampler.
+sampler2D gInputSamp = sampler_state
+{
+    Texture = <gInputTex>;
+    MinFilter = Point;
+    MagFilter = Point;
+    MipFilter = Point;
+};
+
+// The luminance conversion factors for RGB.
+static float3 gLuminanceConv = { 0.2125f, 0.7154f, 0.0721f };
+
+// Vertex shader input structure.
+struct VS_INPUT
+{
+    float4 Pos : POSITION;
+    float3 UV : TEXCOORD0;
+};
+
+// Vertex shader output structure.
+struct VS_TO_PS
+{
+    float4 HPos : POSITION;
+    float3 UV : TEXCOORD0;
+};
+
+// Vertex shader.
+VS_TO_PS VS_FilterMonochrome(VS_INPUT In)
+{
+    VS_TO_PS Out;
+    
+    // Transform the position from object space to clip space for output.
+    Out.HPos = mul(gWVPXf, In.Pos);
+    
+    // Pass the texture coordinates unchanged.
+    Out.UV = In.UV;
+    
+    return Out;
+}
+
+// Pixel shader.
+float4 PS_FilterMonochrome(VS_TO_PS In) : COLOR0
+{
+    // The color of the output pixel is the dot product of the input texture sample and the
+    // luminance conversion factors, applied to all components.
+    float3 output = dot((float3) tex2D(gInputSamp, In.UV), gLuminanceConv);
+    
+    return float4(output, 1.0f);
+}
+
+// The main technique.
+technique Main
+{
+    pass p0
+    {
+        VertexProgram = compile glslv VS_FilterMonochrome();
+        FragmentProgram  = compile glslf PS_FilterMonochrome();
+    }
+}

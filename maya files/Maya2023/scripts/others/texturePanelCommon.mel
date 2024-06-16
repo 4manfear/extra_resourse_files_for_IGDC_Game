@@ -1,0 +1,430 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+
+global proc txtWndUpdateEditor(string $editor, string $editorCmd, string $updatFunc, int $reason)
+//
+// Description:
+//		Update menu items based on current state of texture window
+//		options. 
+//
+//		This proc should also be registered as the textureWindow's change
+//		command (by calling: "textureWindow -e -cc " with the appropriate
+//		parms). It is for this reason that an updateFunc and reason param
+//		are included.
+//
+// 		This proc is explicitly called from all menuItems and
+//		buttons that modify the state of another menuItem or button
+//		(e.g. the toggleGridButton modifies the state of the Grid menuItem)
+//		The default reason 101 is given so as not to conflict with any
+//		textureWindow specific reasons (see docs for a brief explanation).
+//
+// Arguments:
+//
+// Returns:
+//
+// Notes:
+//		hmmm $updateFunc is never used ?
+//
+{
+	global string $gTextureEditorMenubarPrefix;
+
+	string $popupPrefix = $editor;
+	string $menubarPrefix = ($gTextureEditorMenubarPrefix + $editor);
+
+	// update texture items
+	//
+	if( $updatFunc == "addTextureWindow" || $reason == 6) //kIIWindowEditor_UpdateReason_displayType
+    {
+        setChannelButtonImage($editor);
+        $rgb = eval($editorCmd + " -q -displayStyle " + $editor);
+        menuItem -e -rb ($rgb == "color") ($popupPrefix+"ImageRGB");
+        menuItem -e -rb ($rgb == "color") ($menubarPrefix+"ImageRGB");
+        menuItem -e -rb ($rgb == "colorWithMask") ($popupPrefix+"ImageRGBA");
+        menuItem -e -rb ($rgb == "colorWithMask") ($menubarPrefix+"ImageRGBA");
+        menuItem -e -rb ($rgb == "mask") ($popupPrefix+"ImageAlpha");
+        menuItem -e -rb ($rgb == "mask") ($menubarPrefix+"ImageAlpha");
+    }
+	if ( $reason == 101 ) {
+
+		// update image display menu item
+		//
+		int $drawImage = textureWindowTextureImage(0,0) ;
+		menuItem -e -cb  $drawImage ($popupPrefix+"ImageDisplay") ;
+		menuItem -e -cb  $drawImage ($menubarPrefix+"ImageDisplay") ;
+		if (`iconTextCheckBox -exists imageDisplayButton`)
+			iconTextCheckBox -e -value $drawImage imageDisplayButton;
+		
+
+		// update image dimming menu item
+		//
+		int $dimmed = textureWindowImageDimming(0,0) ;
+		menuItem -e -cb  $dimmed ($popupPrefix+"DimImage") ;
+		menuItem -e -cb  $dimmed ($menubarPrefix+"DimImage") ;
+		iconTextCheckBox -e -value $dimmed dimmerButton;
+
+		optionVar -init false -category "UV Editor.Dim Image" -fv tvImageDimming 0.5;
+		float $dimValue = `optionVar -q tvImageDimming`;
+		floatSliderGrp -e -value $dimValue uvTbImageDimmingSlider;
+
+		// update editor image display menu items and icone
+		//
+		int $drawEditorImage = `optionVar -q displayEditorImage`;
+		menuItem -e -cb  $drawEditorImage ($popupPrefix+"BakeTexture") ;
+		menuItem -e -cb  $drawEditorImage ($menubarPrefix+"BakeTexture") ;
+		if (`iconTextCheckBox -exists editorImageDisplayButton`)
+			iconTextCheckBox -e -value $drawEditorImage editorImageDisplayButton;
+
+		// update the checker ui items
+		int $checkeredImage = textureWindowDisplayCheckered(0,0);
+		if (`iconTextCheckBox -exists checkeredButton`)
+			iconTextCheckBox -e -value $checkeredImage checkeredButton;
+
+		//showUVImageButton -e -value 0; // update toolbar
+
+		int $flag = textureWindowImageUnfiltered(0,0);
+		menuItem -e -cb  $flag ($popupPrefix+"ImageUnfiltered") ;
+		menuItem -e -cb  $flag ($menubarPrefix+"ImageUnfiltered") ;
+		iconTextCheckBox -e -value $flag filteredButton;
+
+		$flag = textureWindowImageRatio(0,0) ;
+		menuItem -e -cb  $flag ($popupPrefix+"ImageRatio") ;
+		menuItem -e -cb  $flag ($menubarPrefix+"ImageRatio") ;
+		iconTextCheckBox -e -value $flag ratioButton;
+
+		$flag = snapModePixelSnap(0,0);
+		menuItem -e -cb  $flag ($popupPrefix+"ImageSnap") ;
+		menuItem -e -cb  $flag ($menubarPrefix+"ImageSnap") ;
+
+		if (`iconTextCheckBox -exists pixelSnapButton`)
+			iconTextCheckBox -e -value $flag pixelSnapButton;
+
+		// update grid settings menu item
+		//
+		int $drawGrid = textureWindowDisplayGrid(0, 0) ;
+		menuItem -e -cb  $drawGrid ($popupPrefix+"toggleGrid") ;
+		menuItem -e -cb  $drawGrid ($menubarPrefix+"toggleGrid") ;
+		if (`iconTextCheckBox -exists gridDisplayButton`)
+			iconTextCheckBox -e -value $drawGrid gridDisplayButton;
+
+		// update shade uv
+		//
+		int $shadeUV = textureWindowSolidMap(0,0) ;
+		menuItem -e -rb $shadeUV ($popupPrefix+"ShadedUV") ;
+		menuItem -e -rb $shadeUV ($menubarPrefix+"ShadedUV") ;
+		menuItem -e -rb (!$shadeUV) ($popupPrefix+"Wireframe") ;
+		menuItem -e -rb (!$shadeUV) ($menubarPrefix+"Wireframe") ;
+
+		// update uv distortion
+		//
+		int $uvDistortion = textureWindowDistortion(0,0) ;
+		menuItem -e -cb  $uvDistortion ($popupPrefix+"UVDistortion") ;
+		menuItem -e -cb  $uvDistortion ($menubarPrefix+"UVDistortion") ;
+		if (`iconTextCheckBox -exists distortionButton`)
+			iconTextCheckBox -e -value $uvDistortion distortionButton;
+
+		// showUVGridButton -e -value 0; // update toolbar
+		
+		// update Toolbar menuItem
+		//
+		int $showToolbar = (!`optionVar -q textureEditorToolbarState`);
+		menuItem -e -cb $showToolbar ($popupPrefix+"toggleToolbar");
+		menuItem -e -cb $showToolbar ($menubarPrefix+"toggleToolbar");
+
+		// update Custom Shelf menuItem
+		//
+		int $showShelfbar = (!`optionVar -q textureEditorCustomShelfState`);
+		menuItem -e -cb $showShelfbar ($popupPrefix+"toggleCustomShelf");
+		menuItem -e -cb $showShelfbar ($menubarPrefix+"toggleCustomShelf");
+		
+		// update "contained faces" menu item
+		//
+		int $selectContained = eval($editorCmd + " -q -internalFaces " + $editor);
+		menuItem -e -cb $selectContained ($popupPrefix+"containedFacesItem");
+		menuItem -e -cb $selectContained ($menubarPrefix+"containedFacesItem");
+		if ( $selectContained ) {
+			optionVar -iv textureWindowShaderFacesMode 0;
+		}			
+
+		// update "connected faces" menu item
+		//
+		int $selectConnected = eval($editorCmd + " -q -relatedFaces " + $editor);
+		menuItem -e -cb $selectConnected ($popupPrefix+"connectedFacesItem");
+		menuItem -e -cb $selectConnected ($menubarPrefix+"connectedFacesItem");
+		if ($selectConnected) {
+			optionVar -iv textureWindowShaderFacesMode 0;
+		}			
+
+		// update "shader faces" menu item
+		//
+		int $useFaceGroup = eval($editorCmd + " -q -useFaceGroup " + $editor);
+		int $selectShader = `optionVar -q textureWindowShaderFacesMode`;
+		int $shaderFacesVal = 0;
+		int $isolateViewVal = 0;
+
+		if (0 == $useFaceGroup && 0 == $selectShader)
+		{
+			$shaderFacesVal = 0;
+			$isolateViewVal = 0;
+		}
+		else
+		{
+			if (1 == $useFaceGroup && 0 == $selectShader)
+			{
+				$shaderFacesVal = 0;
+				$isolateViewVal = 0;
+			}
+			if ( 1 == $useFaceGroup && 1 == $selectShader)
+			{
+				$shaderFacesVal = 1;
+				$isolateViewVal = 0;
+				int $shaderIndex = textureWindowFindActiveShader($editor);
+				if (0 != $shaderIndex) 
+					textureWindowSelectImage($shaderIndex-1, $editor);
+			}
+			if ( 1 == $useFaceGroup && 2 == $selectShader)
+			{
+				$shaderFacesVal = 0;
+				$isolateViewVal = 1;
+			}
+		}
+		menuItem -edit -checkBox $shaderFacesVal 
+			($popupPrefix+"shaderFacesItem");
+		menuItem -edit -checkBox $shaderFacesVal 
+			($menubarPrefix+"shaderFacesItem");
+		menuItem -edit -checkBox $isolateViewVal 
+			($popupPrefix+"isolateViewSelected");
+		menuItem -edit -checkBox $isolateViewVal 
+			($menubarPrefix+"isolateViewSelected");
+
+		//need to remove this when old toolbar is removed.
+		/*if(`iconTextCheckBox -exists isolateSelectButton`)
+			iconTextCheckBox -edit -value $isolateViewVal isolateSelectButton;*/
+
+		// update "Heads-Up Display" menu Item
+		//
+		int $displayUVPositionHUD = textureWindowUVEditorUVPositionHUD(0,0);
+		menuItem -edit -checkBox $displayUVPositionHUD
+			($menubarPrefix+"UVPositionHUDItem");
+
+		int $displayIsolateSelectHUD = textureWindowUVEditorIsolateSelectHUD(0,0);
+		menuItem -edit -checkBox $displayIsolateSelectHUD
+			($menubarPrefix+"isolateSelectHUDItem");
+
+		int $displayUVStatisticsHUD = textureWindowUVEditorDisplayUVStatisticsHUD(0,0);
+		menuItem -edit -checkBox $displayUVStatisticsHUD
+			($menubarPrefix+"UVStatisticsHUDItem");
+
+
+		// texture border
+		int $displayTexBorder = textureWindowTexBorder(0,0);
+		menuItem -edit -checkBox $displayTexBorder ( $menubarPrefix + "toggleTextureBorder" );
+		menuItem -edit -checkBox $displayTexBorder ( $popupPrefix + "toggleTextureBorder" );
+
+		int $shellBorder[] = eval("polyOptions -q -displayShellBorder");
+
+		//need to remove this when old toolbar is removed.
+		/*if (`iconTextCheckBox -exists overlapButton`)
+			iconTextCheckBox -e -value $shadeUV overlapButton;*/
+
+		// update new uv tool icon
+		iconTextCheckBox -edit -value (!$shadeUV) viewUVWireframeButton;
+		iconTextCheckBox -edit -value $shadeUV viewShadeUVButton;
+		iconTextCheckBox -edit -value $displayTexBorder toggleTextureBorderButton;
+		iconTextCheckBox -edit -value $shellBorder[0] toggleShellBorderButton;
+		iconTextCheckBox -edit -value $isolateViewVal isolateViewSelectButton;
+	}
+}
+
+global proc txtWndShapesFromSelList(string $shapes[])
+{
+	// Counter to maintain current insertion point for new shapes
+	//
+	int $shapeCount = 0;
+	
+	// Loop through selection list *and* hilite list for shapes.
+	//
+	string $selList[] = `ls -l -sl`;
+	string $hiliteList[] = `ls -l -hl`;
+	$selList = stringArrayCatenate( $selList, $hiliteList );
+	$selList = stringArrayRemoveDuplicates( $selList );
+
+	int $i;
+	for( $i = 0; $i < size($selList); $i++ )
+	{
+		// Determine object type
+		//
+		string $object = $selList[$i];
+		string $type = `objectType $object`;
+
+		string $tmpShapes[];
+		int $nShapes = 0;
+		if( $type == "transform" )
+		{
+			// Get all children that are shapes of the transform
+			//
+			$tmpShapes = `listRelatives -f -ad -typ "shape" $object`;
+			$nShapes = size($tmpShapes);
+		}
+		else
+		{
+			// If it is not a transform, we assume it to be a shape.
+			//
+			$tmpShapes[0] = $object;
+			$nShapes = 1;
+		}
+
+		// Append the list of shapes obtained from this object to our return
+		// value
+		//
+		int $j;
+		for( $j = 0; $j < $nShapes; $j++ )
+		{
+			$shapes[$shapeCount] = $tmpShapes[$j];
+			$shapeCount++;
+		}
+	}
+}
+
+global proc txtWndSelectedTypes( int $selectedTypes[] )
+//
+//	Description:
+//		Returns (3) booleans of what types have been selected. The integer array
+//	parameter serves as the output array of booleans. The meaning of each element
+//	is as follows:
+//
+//	$selectedType[0] == "A Poly is selected"
+//	$selectedType[1] == "A NURBS is selected"
+//	$selectedType[2] == "A Subdiv is selected"
+//
+{
+	string $shapes[];
+	txtWndShapesFromSelList( $shapes );
+
+	int $polySelected = 0;
+	int $nurbsSelected = 0;
+	int $subdivSelected = 0;
+	int $i = 0;
+	int $nShapes = size($shapes);
+	for( $i = 0; $i < $nShapes; $i++ )
+	{
+		string $type = `objectType $shapes[$i]`;
+		if( $type == "mesh" )
+		{
+			$polySelected = 1;
+		}
+		else if( $type == "nurbsSurface" )
+		{
+			$nurbsSelected = 1;
+		}
+		else if( $type == "subdiv" )
+		{
+			$subdivSelected = 1;
+		}
+	}
+
+	$selectedTypes[0] = $polySelected;
+	$selectedTypes[1] = $nurbsSelected;
+	$selectedTypes[2] = $subdivSelected;
+}
+
+global proc int queryNurbsEditUVMode()
+{
+	int $value = 0;
+
+	string $shapes[];
+	txtWndShapesFromSelList( $shapes );
+	
+	// Go through all shapes. If any one has EditUV mode enabled,
+	// return true.
+	//
+	int $i;
+	for( $i = 0; $i < size($shapes); $i++ )
+	{
+		// Only grab first selected object to reflect state
+		//
+		string $shape = $shapes[$i];
+
+		if( `objectType $shape` == "nurbsSurface" )
+		{
+			int $values[] = `nurbsUVSet -q -ue $shape`;
+			$value = $values[0];
+
+			if( $value )
+			{
+				break;
+			}
+		}
+	}
+	return $value;
+}
+
+proc int isMesh(string $thisObject) {
+	if ("" == $thisObject) return 0;
+	return size(`polyListComponentConversion -tf $thisObject`);
+}
+
+global proc int textureWindowFindActiveShader(string $whichPanel)
+{
+	string $menuNames[] = `textureWindow -q -imageNames $whichPanel`;
+	int $i = 0;	
+	for ($menuName in $menuNames) {
+		$i++;
+		string $buffer[];
+		tokenize $menuName " " $buffer;
+		string $thisObject = $buffer[0];
+		string $thisShader = $buffer[2];
+
+		if (!isMesh($thisObject)) {
+			continue;
+		}
+		
+		int $activeGid = getAttr ($thisObject+".dfgi");
+		string $objGroups[] = `listConnections -p on ($thisShader+".dsm")`; 
+		string $shapes[] = `listConnections -sh on ($thisShader+".dsm")`;
+		for ($objGroup in $objGroups) {
+			int $gid = -99;
+			if (`objExists ($objGroup+".gid")`) {
+				if( catchQuiet( $gid = `getAttr ($objGroup+".gid")` ) ) {
+					int $gids[] = `getAttr ($objGroup+".gid")`;
+					if( size($gids) > 0 )
+						$gid = $gids[0];
+				}
+			} else {
+				continue;
+			}
+			if ($gid == $activeGid) {
+				return $i;
+			}
+		}
+	}
+	return $i;
+}
+
+global proc int textureWindowFindActiveShaderTexture(string $whichPanel)
+{
+	int $i = textureWindowFindActiveShader($whichPanel); 
+	$i--;
+	int $t = `textureWindow -e -imageToTextureNumber $i $whichPanel`;
+	return $t;
+}
+
+global proc int textureWindowIsTextureBorderDisplay(string $editor)
+{
+	if ($editor == "")
+	{
+		string $texWinName[] = `getPanel -sty polyTexturePlacementPanel`;
+		$editor = $texWinName[0];
+	}
+	int $display = `textureWindow -q -displayTextureBorder $editor`;
+	return $display; 
+}
+global proc ToggleTextureBorderDisplay()
+{
+	$display = textureWindowTexBorder(0,0);
+	textureWindowTexBorder(1,!($display));
+}

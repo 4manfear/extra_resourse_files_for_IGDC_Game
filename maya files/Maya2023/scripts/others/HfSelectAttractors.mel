@@ -1,0 +1,31 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//<doc>
+//<name HfSelectAttractors>
+//
+//<synopsis>
+//		HfSelectAttractors(string $attractorSetName)
+//
+//<description>
+//		Used to select all the attractors in a set.
+//
+//<flags>
+//      None.
+//
+//<returns>
+//		None.
+//
+//<examples>
+// string  $attractorSetName = "myAttractor";
+// HfSelectAttractors $attractorSetName; 
+// // Where $attractorSetName is the name of the attractor set from
+// // which you want to select attractors.
+//
+//</doc>
+//

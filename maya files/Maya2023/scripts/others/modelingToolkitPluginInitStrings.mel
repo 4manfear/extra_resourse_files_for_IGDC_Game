@@ -1,0 +1,682 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//	Description:
+//		Procedure to register and initialize localizable
+//		string resources for the Model[l]ing Toolkit (previously referred to as NEX)
+//		[others are in modelingToolkitStrings.h]
+//
+
+// list of keys defined in modelingToolkitStrings.h so far:
+// kMTName
+// kOk
+// kLowerApply
+// kMTErrorCouldntGetShapeUnderTransform
+// kMTErrorMustBeMinOneFacePresent
+// kMTDialogTitleQuadDraw
+// kMTDialogMsgQuadDrawLiveRefMesh
+// kMTDialogTitleQuadDrawWarning
+// kMTHUDConnectSlide
+// kMTHUDConnectPinch
+// kMTHUDConnectSegments
+// kMTHUDExtrudeDivisions
+// kMTHUDExtrudeOffset
+// kMTHUDExtrudeLocalZ
+// kMTHUDBevelSegments
+// kMTHUDBevelOffset
+// kMTHUDVertexDivisions
+// kMTHUDVertexWidth
+// kMTHUDVertexLength
+// kMTHUDBridgeTwist
+// kMTHUDBridgeTaper
+// kMTHUDBridgeOffset
+// kMTHUDBridgeDivisions
+// kMTWarnSymObjNoLongerExists
+// kMTErrorSelectionMustConsistOneEdge
+// kMTErrorSelectedEdgeMustHaveTwoConnPolys
+// kMTErrorTopologyMismatch
+// kMTErrorSelectedPolysMustShareTwoPnts
+// kMTErrorMeshMustHaveEvenNumPolys
+// kMTErrorSelectedPolysMustHaveSameNumUnsharedPnts
+// kMTDebugSymmetryCalculationTookXMilliseconds
+// kMTErrorInvalidTopology
+// kMTErrorCouldNotFindCommonSymEdge
+// kMTErrorInvalidSymEdge
+// kMTErrorTopologyChangeSignificantly
+// kMTErrorCouldNotSymmetrize
+// kMTErrorSymSeamNonPlanar
+
+// kMTMsgReleaseToEditParams
+// kMTMsgLeftClickReleaseToEditParams
+
+// kMTErrorMustSpecifyArgument
+// kMTErrorInvalidArgument
+// kMTErrorCouldNotExtractResources
+// kMTErrorDynamicUnloadNotSupported
+// kMTErrorInvalidLockSetObject
+// kMTErrorInvalidSelectionForTranslation
+// kMTErrorInvalidSelectionForRotation
+// kMTErrorInvalidSelectionForScale
+// kMTWarnDisableViewCube
+// kActive
+// kMTErrorModelRemoveCallbackFailed
+
+// kMTErrorNexOptNonQueryFlags
+// kMTErrorNexOptValidFlagMustBeSpecified
+// kMTErrorNexOptInvalidOptionNameSpecified
+// kMTErrorNexOptToggleFlagOnlyWithInts
+// kMTErrorNexOptColorValsReqBetweenZeroOne
+// kMTErrorNexOptReqArgsMissing
+
+// kTargetWeldHelp
+
+// kDistance
+// kOffset
+// kWidth
+// kLength
+// kMTHUDExtrude
+// kMTHUDBevel
+// kMTHUDExtrudeVertex
+// kMTDialogSymmetry
+
+// kNexToolAnnot
+// kSTRMTSymmetrizeAnnot
+// kSTRMTConform
+// kSTRMTObjectHideTGL
+// kSTRMTObjectTemplateTGL
+// kSTRMTObjectXrayTGL
+// kSTRMTObjectBackfaceTGL
+// kSTRMTObjectEdgesOnlyTGL
+
+global proc modelingToolkitPluginInitStrings()
+{
+	// registerPluginResource("modelingToolkit", "kMTName", "Modeling Toolkit"); // shows up in modelingToolkitStrings.h now
+	
+	// start shelf labels/annotations
+	registerPluginResource("modelingToolkit", "kCustomShelf", "Custom Shelf");
+	registerPluginResource("modelingToolkit", "kCustomShelfAnn", "Use Ctrl+Shift+MMB to drag and drop shelf items into this area.");
+	// end shelf labels/annotations
+	
+	// start dialog messages
+	registerPluginResource("modelingToolkit", "kDoNotShowMessageAgain", "Do not show this message again");
+	registerPluginResource("modelingToolkit", "kMayNeedToRestart", "You may need to restart Maya for this change to take effect.");
+	// end dialog messages
+	
+	// start general controls
+	// registerPluginResource("modelingToolkit", "kOk", "Ok"); // shows up in modelingToolkitStrings.h now
+	registerPluginResource("modelingToolkit", "kCancel", "Cancel");
+	registerPluginResource("modelingToolkit", "kClose", "Close");
+	registerPluginResource("modelingToolkit", "kOff", "Off");
+	registerPluginResource("modelingToolkit", "kOn", "On");
+	registerPluginResource("modelingToolkit", "kAuto", "Auto");
+	registerPluginResource("modelingToolkit", "kOnAllCaps", "ON");
+	registerPluginResource("modelingToolkit", "kOffAllCaps", "OFF");
+	registerPluginResource("modelingToolkit", "kResetSettings", "Reset Settings");
+	registerPluginResource("modelingToolkit", "kMTPrefs", "Modeling Toolkit Preferences...");
+	registerPluginResource("modelingToolkit", "kHelpOnMT", "Help on Modeling Toolkit");
+	registerPluginResource("modelingToolkit", "kMTPrefsAnnot", "Open the Modeling Toolkit Preferences in the Preferences window");
+	// end general controls
+	
+	// start general menu titles
+	registerPluginResource("modelingToolkit", "kMTOptions", "Modeling Toolkit Options");
+	registerPluginResource("modelingToolkit", "kOptions", "Options");
+	registerPluginResource("modelingToolkit", "kHelp", "Help");
+	// end general menu titles
+	
+	// start alignment items
+	registerPluginResource("modelingToolkit", "kAlignAlong", "Align Along");
+	registerPluginResource("modelingToolkit", "kResetPivotPosition", "Reset Pivot Position");
+	registerPluginResource("modelingToolkit", "kResetPivotOrientation", "Reset Pivot Orientation");
+	registerPluginResource("modelingToolkit", "kResetPivotPositionAndOrientation", "Reset Pivot Position and Orientation");
+	registerPluginResource("modelingToolkit", "kAdjustPivotTool", "Adjust Pivot Tool");
+	registerPluginResource("modelingToolkit", "kCustomCoordinateSpace", "Custom Coordinate Space");
+	// end alignment items
+	
+	// start axis items
+	registerPluginResource("modelingToolkit", "kActiveAxis", "Active Axis");
+	registerPluginResource("modelingToolkit", "kY", "Y");
+	registerPluginResource("modelingToolkit", "kYZ", "YZ");
+	registerPluginResource("modelingToolkit", "kZ", "Z");
+	registerPluginResource("modelingToolkit", "kXZ", "XZ");
+	registerPluginResource("modelingToolkit", "kXYZ", "XYZ");
+	registerPluginResource("modelingToolkit", "kX", "X");
+	registerPluginResource("modelingToolkit", "kXY", "XY");
+	registerPluginResource("modelingToolkit", "kZX", "ZX");
+	// end axis items
+	
+	// start docking/toggle options
+	registerPluginResource("modelingToolkit", "kDockRight", "Dock Right");
+	registerPluginResource("modelingToolkit", "kFloat", "Float");
+	registerPluginResource("modelingToolkit", "kMTPanel", "Modeling Toolkit Panel");
+	// end docking/toggle options
+	
+	// start heads up display
+	registerPluginResource("modelingToolkit", "kCoordSpace", "Coord Space");
+	// end heads up display
+	
+	// start soft selection
+	registerPluginResource("modelingToolkit", "kSoftSelection", "Soft Selection");
+	registerPluginResource("modelingToolkit", "kSoftSelect", "Soft Select");
+	registerPluginResource("modelingToolkit", "kEnableDisableSoftSelect", "Enable/disable soft select (B)");
+	registerPluginResource("modelingToolkit", "kSetSoftSelFalloffRadius", "Set soft select falloff radius (B+LMB)");
+	registerPluginResource("modelingToolkit", "kSetSoftSelFalloffMode", "Set soft select falloff mode");
+	registerPluginResource("modelingToolkit", "kSoftSelCurve", "Soft selection falloff curve");
+	registerPluginResource("modelingToolkit", "kResetCurve", "Reset Curve");
+	registerPluginResource("modelingToolkit", "kSurface", "Surface");
+	registerPluginResource("modelingToolkit", "kVolume", "Volume");
+	registerPluginResource("modelingToolkit", "kGlobal", "Global");
+	registerPluginResource("modelingToolkit", "kSpherical", "Spherical");
+	// end soft selection
+	
+	// start symmetry
+	registerPluginResource("modelingToolkit", "kSymmetrize", "Symmetrize");
+	registerPluginResource("modelingToolkit", "kSymmetry", "Symmetry");
+	registerPluginResource("modelingToolkit", "kSymmetryAnn", "Enable symmetry");
+	// end symmetry
+	
+	// start selection locking
+	registerPluginResource("modelingToolkit", "kLockSelected", "Lock Selected");
+	registerPluginResource("modelingToolkit", "kLockSelectedAnn", "Lock selected vertices");
+	registerPluginResource("modelingToolkit", "kSelectLocked", "Select Locked");
+	registerPluginResource("modelingToolkit", "kSelectLockedAnn", "Select locked vertices");
+	registerPluginResource("modelingToolkit", "kUnlockAll", "Unlock All");
+	registerPluginResource("modelingToolkit", "kUnlockAllAnn", "Unlock all vertices");
+	registerPluginResource("modelingToolkit", "kVertexLocking", "Vertex Locking");
+	// end selection locking
+	
+	// start selection constraints
+	registerPluginResource("modelingToolkit", "kSelectionConstraints", "Selection Constraint");
+	registerPluginResource("modelingToolkit", "kSetSelectionConstraintType", "Set the Selection Constraint Type");
+	registerPluginResource("modelingToolkit", "kAngle", "Angle");
+	registerPluginResource("modelingToolkit", "kBorder", "Border");
+	registerPluginResource("modelingToolkit", "kEdgeLoop", "Edge Loop");
+	registerPluginResource("modelingToolkit", "kEdgeRing", "Edge Ring");
+	registerPluginResource("modelingToolkit", "kShell", "Shell");
+	registerPluginResource("modelingToolkit", "kUVEdgeLoop", "UV Edge Loop");
+	// end selection constraints
+	
+	// start selection mode options
+	registerPluginResource("modelingToolkit", "kSelectionStyle", "Selection Style");
+	
+	registerPluginResource("modelingToolkit", "kPickMarquee", "Pick/Marquee");
+	registerPluginResource("modelingToolkit", "kPickMarqueeAnn", "Click to select or click-drag to select using a rectangular marquee");
+	
+	registerPluginResource("modelingToolkit", "kRaycast", "Drag");
+	registerPluginResource("modelingToolkit", "kRaycastAnn", "Click-drag components to paint a selection (Tab)");
+	
+	registerPluginResource("modelingToolkit", "kTweakMarquee", "Tweak/Marquee");
+	registerPluginResource("modelingToolkit", "kTweakMarqueeAnn", "Click-drag highlighted components to tweak; click-drag to marquee select ( ` )");
+	// end selection mode options
+	
+	// start selection component types
+	registerPluginResource("modelingToolkit", "kMultiComponent", "Multi-Component");
+	registerPluginResource("modelingToolkit", "kMultiComponentAnn", "Select vertices, edges and faces (F7)");
+	
+	registerPluginResource("modelingToolkit", "kObject", "Object");
+	registerPluginResource("modelingToolkit", "kObjectSelectionAnn", "Object selection (F8)\nCtrl + LMB: Convert selection to objects\nRMB: Clear selection");
+	
+	registerPluginResource("modelingToolkit", "kVertex", "Vertex");
+	registerPluginResource("modelingToolkit", "kVertexComponentAnn", "Vertex selection (F9)\nCtrl + LMB: Convert selection to vertices\nCtrl + Shift + LMB: Convert selection to vertex perimeter\nRMB: Clear selection");
+	
+	registerPluginResource("modelingToolkit", "kEdge", "Edge");
+	registerPluginResource("modelingToolkit", "kEdgeComponentAnn", "Edge selection (F10)\nCtrl + LMB: Convert selection to edges\nCtrl + Shift + LMB: Convert selection to edge perimeter\nRMB: Clear selection");
+	
+	registerPluginResource("modelingToolkit", "kFace", "Face");
+	registerPluginResource("modelingToolkit", "kFaceComponentAnn", "Face selection (F11)\nCtrl + LMB: Convert selection to faces\nCtrl + Shift + LMB: Convert selection to face perimeter\nRMB: Clear selection");
+	
+	registerPluginResource("modelingToolkit", "kUV", "UV");
+	registerPluginResource("modelingToolkit", "kUVSelectionAnn", "UV selection (F12)\nCtrl + LMB: Convert selection to UVs\nCtrl + Shift + LMB: Convert selection to UV perimeter\nRMB: Clear selection");
+	// end selection component types
+
+	// start component selection count display
+	registerPluginResource("modelingToolkit", "kVertexSelected", "^1s vertex selected");
+	registerPluginResource("modelingToolkit", "kVerticesSelected", "^1s vertices selected");
+	
+	registerPluginResource("modelingToolkit", "kEdgeSelected", "^1s edge selected");
+	registerPluginResource("modelingToolkit", "kEdgesSelected", "^1s edges selected");
+	
+	registerPluginResource("modelingToolkit", "kFaceSelected", "^1s face selected");
+	registerPluginResource("modelingToolkit", "kFacesSelected", "^1s faces selected");
+	
+	registerPluginResource("modelingToolkit", "kUVSelected", "^1s UV selected");
+	registerPluginResource("modelingToolkit", "kUVsSelected", "^1s UVs selected");
+	
+	registerPluginResource("modelingToolkit", "kObjectSelected", "^1s object selected");
+	registerPluginResource("modelingToolkit", "kObjectsSelected", "^1s objects selected");
+	
+	registerPluginResource("modelingToolkit", "kMultiCompSelected", "Multiple components selected");
+	// end component selection count display
+
+	// start coord space types
+	registerPluginResource("modelingToolkit", "kWorld", "World");
+	registerPluginResource("modelingToolkit", "kLocal", "Local");
+	registerPluginResource("modelingToolkit", "kCustom", "Custom");
+	// end coord space types
+	
+	// start transform constraints
+	registerPluginResource("modelingToolkit", "kTransformConstraints", "Transform Constraint");
+	registerPluginResource("modelingToolkit", "kSetTransformContraintType", "Select a transform constraint (MMB to toggle)");
+	registerPluginResource("modelingToolkit", "kGrid", "Grid");
+	registerPluginResource("modelingToolkit", "kEdgeSlide", "Edge Slide");
+	registerPluginResource("modelingToolkit", "kSurfaceSlide", "Surface Slide");
+	registerPluginResource("modelingToolkit", "kUsingLiveSurface", "Live Surface");
+	registerPluginResource("modelingToolkit", "kTransformConstraintAnn", "Displays the selected transform constraint");
+	registerPluginResource("modelingToolkit", "kTransformConstraintEdgesAnn", "Slide components along the edges of the selected object");
+	registerPluginResource("modelingToolkit", "kTransformConstraintSurfaceAnn", "Slide components along the surface of the selected object");
+	// end transform constraints
+	
+	// start mesh editing tools
+	registerPluginResource("modelingToolkit", "kMeshEditing", "Mesh");
+	registerPluginResource("modelingToolkit", "kMeshComponents", "Components");
+	registerPluginResource("modelingToolkit", "kMeshTools", "Tools");
+
+	registerPluginResource("modelingToolkit", "kCombine", "Combine");
+	registerPluginResource("modelingToolkit", "kCombineAnn", "Combine the selected polygon objects into one single object to allow operations such as merges or face trims");
+
+	registerPluginResource("modelingToolkit", "kSeparate", "Separate");
+	registerPluginResource("modelingToolkit", "kSeparateAnn", "Separate the selected polygon object shells or the shells of any selected faces from the object into distinct objects");
+
+	registerPluginResource("modelingToolkit", "kSmooth", "Smooth");
+	registerPluginResource("modelingToolkit", "kSmoothAnn", "Add polygons to the selected polygon objects to smooth them");
+
+	registerPluginResource("modelingToolkit", "kBoolean", "Boolean");
+	registerPluginResource("modelingToolkit", "kBooleanAnn", "Performs a boolean union on the selected polygon objects, creating a new object");
+
+	registerPluginResource("modelingToolkit", "kConnect", "Connect");
+	registerPluginResource("modelingToolkit", "kConnectAnn", "Connect vertices, edges and polygons");
+	
+	registerPluginResource("modelingToolkit", "kBridge", "Bridge");
+	registerPluginResource("modelingToolkit", "kBridgeAnn", "Bridge selected components together");
+	registerPluginResource("modelingToolkit", "kBridgeError", "Invalid Selection. The number of components in the selected regions must be the same.");
+	
+	registerPluginResource("modelingToolkit", "kAddDivisions", "Add Divisions");
+	registerPluginResource("modelingToolkit", "kAddDivisionsAnn", "Subdivide the selected edges or faces");
+	
+	registerPluginResource("modelingToolkit", "kBevel", "Bevel");
+	registerPluginResource("modelingToolkit", "kBevelAnn", "Create bevels along selected components");
+	
+	registerPluginResource("modelingToolkit", "kExtrude", "Extrude");
+	registerPluginResource("modelingToolkit", "kExtrudeAnn", "Extrude components");
+	
+	registerPluginResource("modelingToolkit", "kMultiCut", "Multi-Cut");
+	registerPluginResource("modelingToolkit", "kMultiCutTool", "Multi-Cut Tool");
+	registerPluginResource("modelingToolkit", "kMultiCutAnn", "Divide faces by splitting, cutting and inserting edge loops");
+	
+	registerPluginResource("modelingToolkit", "kTargetWeld", "Target Weld");
+	registerPluginResource("modelingToolkit", "kTargetWeldAnn", "Merge selected components together");
+	registerPluginResource("modelingToolkit", "kMergeTo", "Merge To:");
+	registerPluginResource("modelingToolkit", "kMergeToTarget", "Target");
+	registerPluginResource("modelingToolkit", "kMergeToCenter", "Center");
+	registerPluginResource("modelingToolkit", "kPreserveUVs", "Preserve UVs");
+	registerPluginResource("modelingToolkit", "kPreserveUVsAnn", "Offset UVs to prevent texture warping when welding components");
+	
+	registerPluginResource("modelingToolkit", "kQuadDraw", "Quad Draw");
+	registerPluginResource("modelingToolkit", "kQuadDrawTool", "Quad Draw Tool");
+	registerPluginResource("modelingToolkit", "kQuadDrawAnn", "Interactively create polygons");
+	// end mesh editing tools
+	
+	// Various Mouse/Key shortcut combos
+	registerPluginResource("modelingToolkit", "kLMB", "LMB");
+	registerPluginResource("modelingToolkit", "kRMB", "RMB");
+	registerPluginResource("modelingToolkit", "kMMB", "MMB");
+	registerPluginResource("modelingToolkit", "kCtrl", "Ctrl");
+	registerPluginResource("modelingToolkit", "kShift", "Shift");
+	registerPluginResource("modelingToolkit", "kEnter", "Enter");
+	registerPluginResource("modelingToolkit", "kTab", "Tab");
+	registerPluginResource("modelingToolkit", "kSnapToGrid", "X");
+	registerPluginResource("modelingToolkit", "kSnapToPoints", "V");
+
+	registerPluginResource("modelingToolkit", "kBackOrDelete", "Backspace / Del");
+
+	// start mesh editing tools/manip option titles
+	registerPluginResource("modelingToolkit", "kConnectOptions", "Connect Options");
+	registerPluginResource("modelingToolkit", "kConnectShortcut0", "Click edge to insert edge loop");
+	registerPluginResource("modelingToolkit", "kConnectShortcut1", "Insert connecting edges");
+	registerPluginResource("modelingToolkit", "kConnectShortcut2", "Remove components from selection");
+	registerPluginResource("modelingToolkit", "kConnectShortcut3", "Adjust active Connect option (Slide, Segments, Pinch)");
+	registerPluginResource("modelingToolkit", "kConnectShortcut4", "Toggle active Connect option");
+	registerPluginResource("modelingToolkit", "kBridgeOptions", "Bridge Options");
+	registerPluginResource("modelingToolkit", "kBevelOptions", "Bevel Options");
+	registerPluginResource("modelingToolkit", "kVertexExtrudeOptions", "Vertex Extrude Options");
+	registerPluginResource("modelingToolkit", "kVertexChamferOptions", "Vertex Chamfer Options");
+	registerPluginResource("modelingToolkit", "kFaceExtrudeOptions", "Face Extrude Options");
+	registerPluginResource("modelingToolkit", "kMultiCutOptions", "Multi-Cut Options");
+	registerPluginResource("modelingToolkit", "kCutOptions", "Cut / Insert Edge Loop Tool");
+	registerPluginResource("modelingToolkit", "kSliceOptions", "Slice Tool");
+	registerPluginResource("modelingToolkit", "kColorOptions", "Color Settings");
+	registerPluginResource("modelingToolkit", "kShortcuts", "Keyboard/Mouse Shortcuts");
+	registerPluginResource("modelingToolkit", "kLiveSurfaceOptions", "Live Constraint Options");
+	registerPluginResource("modelingToolkit", "kMultiCutShortcut0", "Click to drop or edit point");
+	registerPluginResource("modelingToolkit", "kMultiCutShortcut1", "Insert edge loop");
+	registerPluginResource("modelingToolkit", "kMultiCutShortcut2", "Insert centered edge loop");
+	registerPluginResource("modelingToolkit", "kMultiCutShortcut3", "Click or drag off mesh to slice");
+	registerPluginResource("modelingToolkit", "kMultiCutShortcut4", "Drag on mesh to quick slice");
+	registerPluginResource("modelingToolkit", "kMultiCutShortcut5", "Tweak last dropped point");
+	registerPluginResource("modelingToolkit", "kMultiCutShortcut6", "Undo last dropped point");
+	registerPluginResource("modelingToolkit", "kMultiCutShortcut7", "Click to snap point along edge midpoint");
+	registerPluginResource("modelingToolkit", "kMultiCutShortcut8", "Drag to snap point along edge");
+	registerPluginResource("modelingToolkit", "kMultiCutShortcut9", "Constrain to perpendicular angles");
+	registerPluginResource("modelingToolkit", "kMultiCutShortcut10", "Commit cut");
+	registerPluginResource("modelingToolkit", "kMultiCutShortcutSnapToGrid", "Snap to grid");
+	registerPluginResource("modelingToolkit", "kMultiCutShortcutSnapToPoints", "Snap to points");
+	registerPluginResource("modelingToolkit", "kQuadDrawOptions", "Quad Draw Options");
+	registerPluginResource("modelingToolkit", "kQuadDrawShortcut0", "(Hovering outside the quad mesh)");
+	registerPluginResource("modelingToolkit", "kQuadDrawShortcut1", "Click to drop dots");
+	registerPluginResource("modelingToolkit", "kQuadDrawShortcut2", "Drag to tweak dots");
+	registerPluginResource("modelingToolkit", "kQuadDrawShortcut2a", "Drag dots along normals **");
+	registerPluginResource("modelingToolkit", "kQuadDrawShortcut3", "Delete dots");
+	registerPluginResource("modelingToolkit", "kQuadDrawShortcut4", "Drag to draw quad strips");
+	registerPluginResource("modelingToolkit", "kQuadDrawShortcut5", "Drag to resize quad strips");
+	registerPluginResource("modelingToolkit", "kQuadDrawShortcut6", "Click between dots to create geometry");
+	registerPluginResource("modelingToolkit", "kQuadDrawShortcut7", "");
+	registerPluginResource("modelingToolkit", "kQuadDrawShortcut8", "(Hovering inside the quad mesh)");
+	registerPluginResource("modelingToolkit", "kQuadDrawShortcut9", "Drag to tweak components");
+	registerPluginResource("modelingToolkit", "kQuadDrawShortcut9a", "Drag components along normals **");
+	registerPluginResource("modelingToolkit", "kQuadDrawShortcut10", "Click edge to insert loop");
+	registerPluginResource("modelingToolkit", "kQuadDrawShortcut11", "Click edge to insert centered loop");
+	registerPluginResource("modelingToolkit", "kQuadDrawShortcut12", "Drag to relax points");
+	registerPluginResource("modelingToolkit", "kQuadDrawShortcut13", "Drag to relax highlighted points");
+	registerPluginResource("modelingToolkit", "kQuadDrawShortcut14", "Drag to extend border edge");
+	registerPluginResource("modelingToolkit", "kQuadDrawShortcut15", "Drag to extend border edge loop");
+	registerPluginResource("modelingToolkit", "kQuadDrawShortcut16", "Click or drag across faces to delete");
+	registerPluginResource("modelingToolkit", "kQuadDrawShortcut17", "Click edge to delete edge loop");
+	registerPluginResource("modelingToolkit", "kQuadDrawShortcut18", "Drag edge to tweak edge loop");
+	registerPluginResource("modelingToolkit", "kQuadDrawShortcut19", "Quad Draw options");
+	registerPluginResource("modelingToolkit", "kQuadDrawShortcutNote1", "** when no live surface constraint is active");
+	registerPluginResource("modelingToolkit", "kTransformOptions", "Transform Options");
+	registerPluginResource("modelingToolkit", "kTargetWeldOptions", "Target Weld Options");
+	registerPluginResource("modelingToolkit", "kTargetWeldShortcut0", "Drag to merge components");
+	registerPluginResource("modelingToolkit", "kTargetWeldShortcut1", "Drag to merge components to center");
+	// end mesh editing tools/manip option titles
+
+	// start transform options
+	registerPluginResource("modelingToolkit", "kMoveOptions", "Move Settings");
+	registerPluginResource("modelingToolkit", "kRotateOptions", "Rotate Settings");
+	registerPluginResource("modelingToolkit", "kScaleOptions", "Scale Settings");
+	registerPluginResource("modelingToolkit", "kStepSnap", "Step Snap:");
+	registerPluginResource("modelingToolkit", "kStepSnapAnn", "Transform an object or component in increments (J)");
+	registerPluginResource("modelingToolkit", "kRelative", "Relative");
+	registerPluginResource("modelingToolkit", "kAbsolute", "Absolute");
+	registerPluginResource("modelingToolkit", "kComponent", "Component");
+	registerPluginResource("modelingToolkit", "kParent", "Parent");
+	registerPluginResource("modelingToolkit", "kNormal", "Normal");
+	registerPluginResource("modelingToolkit", "kAlongRotationAxis", "Along Rotation Axis");
+	registerPluginResource("modelingToolkit", "kAlongRotationAxisShort", "Rotation Axis");
+	registerPluginResource("modelingToolkit", "kAlongLiveObjectAxis", "Along Live Axis");
+	registerPluginResource("modelingToolkit", "kAlongLiveObjectAxisShort", "Live Axis");
+	registerPluginResource("modelingToolkit", "kGimbal", "Gimbal");
+	// end transform options
+
+	// start quad draw relax affects options
+	registerPluginResource("modelingToolkit", "kRelaxAffectsAnn", "Set which type of components are affected by the relax brush");
+	registerPluginResource("modelingToolkit", "kRelaxAffectsAuto", "Auto-Lock");
+	registerPluginResource("modelingToolkit", "kRelaxAffectsAll", "All vertices");
+	registerPluginResource("modelingToolkit", "kRelaxAffectsInterior", "Interior vertices");
+	registerPluginResource("modelingToolkit", "kRelaxAffectsBorders", "Border vertices");
+	registerPluginResource("modelingToolkit", "kRelaxAffectsLabel", "Relax:");
+	registerPluginResource("modelingToolkit", "kRelaxAffectsMenu", "Relax");
+	// end quad draw relax affects options
+
+	// start quad draw extend options
+	registerPluginResource("modelingToolkit", "kExtendAnn", "Extend an existing edge, border edge, or edge loop to create new polygons");
+	registerPluginResource("modelingToolkit", "kExtendEdge", "Edge");
+	registerPluginResource("modelingToolkit", "kExtendLoop", "Loop");
+	registerPluginResource("modelingToolkit", "kExtendBorder", "Border");
+	registerPluginResource("modelingToolkit", "kExtendLabel", "Extend:");
+	registerPluginResource("modelingToolkit", "kExtendMenu", "Extend");
+	// end quad draw extend options
+	
+	// start visibility options
+	registerPluginResource("modelingToolkit", "kCameraBasedSelection", "Camera Based Selection");
+	registerPluginResource("modelingToolkit", "kCameraBasedSelectionAnn", "Select only camera-facing components");
+	registerPluginResource("modelingToolkit", "kCameraBasedSelectionAutoAnn", "Automatically enable camera-based selection when in shaded mode");
+	registerPluginResource("modelingToolkit", "kHighlightBackfaces", "Highlight Backfaces");
+	registerPluginResource("modelingToolkit", "kHighlightBackfacesAnn", "Preselect backfacing components");
+	registerPluginResource("modelingToolkit", "kHighlightClosest", "Highlight Nearest Component");
+	registerPluginResource("modelingToolkit", "kHighlightClosestAnn", "Preselect the nearest component to the cursor");
+	registerPluginResource("modelingToolkit", "kHide", "Show/Hide");
+	registerPluginResource("modelingToolkit", "kFreeze", "Freeze/Unfreeze");
+	registerPluginResource("modelingToolkit", "kXRay", "X-Ray On/Off");
+	registerPluginResource("modelingToolkit", "kBackfaceCull", "Show/Hide Backfaces");
+	registerPluginResource("modelingToolkit", "kFaceTriangles", "Show/Hide Face Triangles");
+	registerPluginResource("modelingToolkit", "kPreviewLoopRing", "Preview Loop/Ring");
+	// end visibility options
+	
+	// start contextual details/options
+	// registerPluginResource("modelingToolkit", "kOffset", "Offset"); // shows up in modelingToolkitStrings.h now
+	registerPluginResource("modelingToolkit", "kSegments", "Segments");
+	// registerPluginResource("modelingToolkit", "kWidth", "Width"); // shows up in modelingToolkitStrings.h now
+	registerPluginResource("modelingToolkit", "kHeight", "Height");
+	// registerPluginResource("modelingToolkit", "kLength", "Length"); // shows up in modelingToolkitStrings.h now
+	registerPluginResource("modelingToolkit", "kLengthWidth", "Length + Width");
+	registerPluginResource("modelingToolkit", "kDivisions", "Divisions");
+	registerPluginResource("modelingToolkit", "kSlide", "Slide");
+	registerPluginResource("modelingToolkit", "kPinch", "Pinch");
+	registerPluginResource("modelingToolkit", "kTaper", "Taper");
+	registerPluginResource("modelingToolkit", "kTwist", "Twist");
+	registerPluginResource("modelingToolkit", "kLocalZ", "Local Z");
+	registerPluginResource("modelingToolkit", "kSnapPercent", "Snap Percent");
+	registerPluginResource("modelingToolkit", "kSnapStepLabel", "Snap Step %");
+	registerPluginResource("modelingToolkit", "kSnapStepAnn", "Snap Step %");
+	registerPluginResource("modelingToolkit", "kSmoothingAngle", "Smoothing Angle");
+	registerPluginResource("modelingToolkit", "kEdgeFlow", "Edge Flow");
+	registerPluginResource("modelingToolkit", "kEdgeFlowAnn", "Set Edge Flow");
+	registerPluginResource("modelingToolkit", "kSubdivisions", "Subdivisions");
+	
+	registerPluginResource("modelingToolkit", "kCutClrLineLabel", "Line");
+	registerPluginResource("modelingToolkit", "kCutClrVertLabel", "Vertex Point");
+	registerPluginResource("modelingToolkit", "kCutClrEdgeLabel", "Edge Point");
+	registerPluginResource("modelingToolkit", "kCutClrFaceLabel", "Face Point");
+	registerPluginResource("modelingToolkit", "kSliceLabel", "Slice");
+	registerPluginResource("modelingToolkit", "kSliceAlongPlaneLabel", "Slice Along Plane:");
+	registerPluginResource("modelingToolkit", "kDeleteFacesChk", "Delete Faces");
+	registerPluginResource("modelingToolkit", "kDetachEdges", "Detach Edges");
+	registerPluginResource("modelingToolkit", "kExtractFacesChk", "Extract Faces");
+	registerPluginResource("modelingToolkit", "kSliceIgnoreBackfacesChk", "Ignore Backfaces");
+	
+	registerPluginResource("modelingToolkit", "kKeepFacesTogether", "Keep Faces Together");
+	registerPluginResource("modelingToolkit", "kKeepSpacing", "Keep Spacing");
+	registerPluginResource("modelingToolkit", "kKeepSpacingAnn", "Maintain component spacing when snapping");
+	
+	registerPluginResource("modelingToolkit", "kSetTransformCoordSpace", "Set the orientation of the tool's axis");
+	registerPluginResource("modelingToolkit", "kXYZAxis", "XYZ Axis");
+	registerPluginResource("modelingToolkit", "kXAxis", "X Axis");
+	registerPluginResource("modelingToolkit", "kYAxis", "Y Axis");
+	registerPluginResource("modelingToolkit", "kZAxis", "Z Axis");
+	registerPluginResource("modelingToolkit", "kAdjustPivot", "Edit Pivot");
+	registerPluginResource("modelingToolkit", "kAdjustPivotAnn", "Activate pivot editing mode. Set the pivot position and axis orientation by selecting objects and components in the scene (D)");
+	registerPluginResource("modelingToolkit", "kOverlayAppendMesh", "Wireframe Overlay");
+	registerPluginResource("modelingToolkit", "kMeshColorOverride", "Mesh Color");
+	registerPluginResource("modelingToolkit", "kSnapToBackfaces", "Snap to Backfaces");
+	registerPluginResource("modelingToolkit", "kClearDots", "Clear Dots");
+	registerPluginResource("modelingToolkit", "kMeshAlpha", "Mesh Alpha");
+	registerPluginResource("modelingToolkit", "kMeshAlphaAnn", "Override the generated mesh's alpha");
+	registerPluginResource("modelingToolkit", "kMeshOffset", "Surface Offset");
+	registerPluginResource("modelingToolkit", "kMeshOffsetAnn", "Live surface offset distance");
+
+	registerPluginResource("modelingToolkit", "kAutoWeld", "Auto-weld");
+	registerPluginResource("modelingToolkit", "kAutoWeldAnn", "Automatically weld components while tweaking or extending");
+	registerPluginResource("modelingToolkit", "kAutoWeldToleranceAnn", "Set the tolerance for Auto-weld (in pixels)");
+
+	registerPluginResource("modelingToolkit", "kStripSizeLabel", "Quad Strip Width:");
+	registerPluginResource("modelingToolkit", "kQuadStripSizeAnn", "Set the width for strips");
+	registerPluginResource("modelingToolkit", "kQuadDrawSoftenHarden", "Soften/Harden Edges");
+	registerPluginResource("modelingToolkit", "kQuadDrawSoftenHardenOptions", "Soften/Harden Edge Options");
+	
+	registerPluginResource("modelingToolkit", "kCurveTypes", "Curve Types");
+	registerPluginResource("modelingToolkit", "kBlend", "Blend");
+	registerPluginResource("modelingToolkit", "kLinear", "Linear");
+	
+		// start masks
+		registerPluginResource("modelingToolkit", "kNURBSMask", "NURBS Mask");
+		registerPluginResource("modelingToolkit", "kHierarchy", "Hierarchy");
+		registerPluginResource("modelingToolkit", "kAnimationMask", "Animation Mask");
+		registerPluginResource("modelingToolkit", "kDeformationsMask", "Deformations Mask");
+		registerPluginResource("modelingToolkit", "kDynamicsMask", "Dynamics Mask");
+		registerPluginResource("modelingToolkit", "kPolygonsMask", "Polygons Mask");
+		registerPluginResource("modelingToolkit", "kRenderingMask", "Rendering Mask");
+		registerPluginResource("modelingToolkit", "kObjectComponents", "Object/Components");
+		// end masks
+		
+	// end contextual details/options
+	
+	// start hotbox buttons
+	registerPluginResource("modelingToolkit", "kNewCamera", "New Camera");
+	// end hotbox buttons
+	
+	// start warnings
+	registerPluginResource("modelingToolkit", "kMTWarnCannotAutoWhileUVOpen", "The modeling toolkit cannot be automatically activated while UV Editor is open");
+	registerPluginResource("modelingToolkit", "kMTWarnDeactivatedBCUVOpen", "The modeling toolkit has been deactivated because a UV Editor window is open");
+	registerPluginResource("modelingToolkit", "kMTWarnExtraFacesExist", "extra faces exist");
+	registerPluginResource("modelingToolkit", "kMTWarnNoMeshDeformer", "Delete the mesh object history to allow for component transformations. The Modeling Toolkit does not support component transformations on mesh objects that have deformer node connections.");
+	registerPluginResource("modelingToolkit", "kMTWarnTooManyObjects", "too many objects");
+	registerPluginResource("modelingToolkit", "kSTRMTErrorTopologyChangeSignificantly", "Symmetry activation failed. The topology has changed significantly. Please reselect an edge and re-enable symmetry");
+	registerPluginResource("modelingToolkit", "kUndoNotPossibleDuringMulticut", "Undo is not possible while object is currently being edited.");
+	// end warnings
+	
+	// start items from commented out code
+	
+		// start selection tools
+		registerPluginResource("modelingToolkit", "kSelectionTools", "Selection Tools");
+		registerPluginResource("modelingToolkit", "kSelectSimilar", "Select Similar");
+		// end selection tools
+	
+	// end items from commented out code
+	
+	// start items to be deprecated as the model[l]ing toolkit is integrated into Maya
+	registerPluginResource("modelingToolkit", "kNewVersionAvailable", "A new version of the modeling toolkit is available!");
+	registerPluginResource("modelingToolkit", "kDownloadUpdate", "Download Update");
+	// end items to be deprecated as the model[l]ing toolkit is integrated into Maya
+	
+	// primitives
+	registerPluginResource("modelingToolkit", "kPolyDiscHistory", "Poly Disc History");
+	registerPluginResource("modelingToolkit", "kPolyGearHistory", "Poly Gear History");
+	registerPluginResource("modelingToolkit", "kPolyPlatonicHistory", "Poly Platonic History");
+	registerPluginResource("modelingToolkit", "kPolySuperShapeHistory", "Poly Super Shape History");
+	registerPluginResource("modelingToolkit", "kDiscSides", "Sides:");
+	registerPluginResource("modelingToolkit", "kDiscSubdivisionMode", "Subdivision Mode:");
+	registerPluginResource("modelingToolkit", "kDiscSubdivisionModeQuads", "Quads");
+	registerPluginResource("modelingToolkit", "kDiscSubdivisionModeTriangles", "Triangles");
+	registerPluginResource("modelingToolkit", "kDiscSubdivisionModePie", "Pie");
+	registerPluginResource("modelingToolkit", "kDiscSubdivisionModeCaps", "Caps");
+	registerPluginResource("modelingToolkit", "kDiscSubdivisionModeCircle", "Circle");
+	registerPluginResource("modelingToolkit", "kDiscSubdivisions", "Subdivisions:");
+	registerPluginResource("modelingToolkit", "kDiscRadius", "Radius:");
+	registerPluginResource("modelingToolkit", "kCreateButton", "Create");
+	registerPluginResource("modelingToolkit", "kPolygonDiscOptions", "Polygon Disc Options");
+	registerPluginResource("modelingToolkit", "kGearSides", "Sides:");
+	registerPluginResource("modelingToolkit", "kGearRadius", "Radius:");
+	registerPluginResource("modelingToolkit", "kGearInternalRadius", "Internal Radius:");
+	registerPluginResource("modelingToolkit", "kGearHeight", "Height:");
+	registerPluginResource("modelingToolkit", "kGearHeightDivisions", "Height Divisions:");
+	registerPluginResource("modelingToolkit", "kGearGearSpacing", "Gear Spacing:");
+	registerPluginResource("modelingToolkit", "kGearGearOffset", "Gear Offset:");
+	registerPluginResource("modelingToolkit", "kGearGearTip", "Gear Tip:");
+	registerPluginResource("modelingToolkit", "kGearGearMiddle", "Gear Middle:");
+	registerPluginResource("modelingToolkit", "kGearTwist", "Twist:");
+	registerPluginResource("modelingToolkit", "kGearTaper", "Taper:");
+	registerPluginResource("modelingToolkit", "kPolygonGearOptions", "Polygon Gear Options");
+	registerPluginResource("modelingToolkit", "kPlatonicPrimitive", "Primitive:");
+	registerPluginResource("modelingToolkit", "kPlatonicSubdivisionMode", "Subdivision Mode:");
+	registerPluginResource("modelingToolkit", "kPlatonicSubdivisionModeQuads", "Quads");
+	registerPluginResource("modelingToolkit", "kPlatonicSubdivisionModeTriangles", "Triangles");
+	registerPluginResource("modelingToolkit", "kPlatonicSubdivisionModePie", "Pie");
+	registerPluginResource("modelingToolkit", "kPlatonicSubdivisionModeCaps", "Caps");
+	registerPluginResource("modelingToolkit", "kPlatonicSubdivisions", "Subdivisions:");
+	registerPluginResource("modelingToolkit", "kPlatonicRadius", "Radius:");
+	registerPluginResource("modelingToolkit", "kPlatonicSphericalInflation", "Spherical Inflation:");
+	registerPluginResource("modelingToolkit", "kPolygonPlatonicOptions", "Polygon Platonic Options");
+	registerPluginResource("modelingToolkit", "kSuperShapeGeneralFrame", "Poly Super Shape");
+	registerPluginResource("modelingToolkit", "kSuperShapeShape", "Shape:");
+	registerPluginResource("modelingToolkit", "kShapeSuperEllipse", "Super Ellipse");
+	registerPluginResource("modelingToolkit", "kShapeSphericalHarmonics", "Spherical Harmonics");
+	registerPluginResource("modelingToolkit", "kShapeUltraShape", "Ultra Shape");
+	registerPluginResource("modelingToolkit", "kSuperShapeRadius", "Radius:");
+	registerPluginResource("modelingToolkit", "kSuperShapeHDiv", "Horizontal Divisions:");
+	registerPluginResource("modelingToolkit", "kSuperShapeVDiv", "Vertical Divisions:");
+	registerPluginResource("modelingToolkit", "kSuperShapeUVMode", "Create UVs:");
+	registerPluginResource("modelingToolkit", "kSuperShapeUVModeAE", "Create UVs");
+	registerPluginResource("modelingToolkit", "kShapeSuperUVModeNone", "None");
+	registerPluginResource("modelingToolkit", "kShapeSuperUVModePinched", "Pinched at pole" );
+	registerPluginResource("modelingToolkit", "kShapeSuperUVModeSawtooth", "Sawtooth at pole" );
+	registerPluginResource("modelingToolkit", "kHelixFrame", "Helix");
+	registerPluginResource("modelingToolkit", "kHelixMergeVertices", "Merge Vertices:");
+	registerPluginResource("modelingToolkit", "kSuperShapeHRev", "Horizontal Revolutions:");
+	registerPluginResource("modelingToolkit", "kSuperShapeVRev", "Vertical Revolutions:");
+	registerPluginResource("modelingToolkit", "kSuperShapeVOff", "Vertical Offset:");
+	registerPluginResource("modelingToolkit", "kSuperShapeIntRad", "Internal Radius:");
+	registerPluginResource("modelingToolkit", "kSuperShapeXOff", "X Offset:");
+	registerPluginResource("modelingToolkit", "kSuperShapeZOff", "Z Offset:");
+	registerPluginResource("modelingToolkit", "kEllipseFrame", "Super Ellipse");
+	registerPluginResource("modelingToolkit", "kEllipseVExponent", "V Exponent:");
+	registerPluginResource("modelingToolkit", "kEllipseVExponentAE", "V Exponent");
+	registerPluginResource("modelingToolkit", "kEllipseHExponent", "H Exponent:");
+	registerPluginResource("modelingToolkit", "kEllipseHExponentAE", "H Exponent");
+	registerPluginResource("modelingToolkit", "kEllipseMirror", "Mirror:");
+	registerPluginResource("modelingToolkit", "kEllipseMirrorAE", "Mirror");
+	registerPluginResource("modelingToolkit", "kSHFrame", "Spherical Harmonics");
+	registerPluginResource("modelingToolkit", "kSHVmult1", "V Multiplier 1:");
+	registerPluginResource("modelingToolkit", "kSHVmult1AE", "V Multiplier 1");
+	registerPluginResource("modelingToolkit", "kSHVexp1", "V Exponent 1:");
+	registerPluginResource("modelingToolkit", "kSHVexp1AE", "V Exponent 1");
+	registerPluginResource("modelingToolkit", "kSHVmult2", "V Multiplier 2:");
+	registerPluginResource("modelingToolkit", "kSHVmult2AE", "V Multiplier 2");
+	registerPluginResource("modelingToolkit", "kSHVexp2", "V Exponent 2:");
+	registerPluginResource("modelingToolkit", "kSHVexp2AE", "V Exponent 2");
+	registerPluginResource("modelingToolkit", "kSHHmult1", "H Multiplier 1:");
+	registerPluginResource("modelingToolkit", "kSHHmult1AE", "H Multiplier 1");
+	registerPluginResource("modelingToolkit", "kSHHexp1", "H Exponent 1:");
+	registerPluginResource("modelingToolkit", "kSHHexp1AE", "H Exponent 1");
+	registerPluginResource("modelingToolkit", "kSHHmult2", "H Multiplier 2:");
+	registerPluginResource("modelingToolkit", "kSHHmult2AE", "H Multiplier 2");
+	registerPluginResource("modelingToolkit", "kSHHexp2", "H Exponent 2:");
+	registerPluginResource("modelingToolkit", "kSHHexp2AE", "H Exponent 2");
+	registerPluginResource("modelingToolkit", "kUltraFrame", "Ultra");
+	registerPluginResource("modelingToolkit", "kUltraHorizontalFrame", "Horizontal" );
+	registerPluginResource("modelingToolkit", "kUHmult1", "Multiplier 1:");
+	registerPluginResource("modelingToolkit", "kUHmult1AE", "Multiplier 1");
+	registerPluginResource("modelingToolkit", "kUHexp1", "Exponent 1:");
+	registerPluginResource("modelingToolkit", "kUHexp1AE", "Exponent 1");
+	registerPluginResource("modelingToolkit", "kUHexp2", "Exponent 2:");
+	registerPluginResource("modelingToolkit", "kUHexp2AE", "Exponent 2");
+	registerPluginResource("modelingToolkit", "kUHMixer", "Mixer:");
+	registerPluginResource("modelingToolkit", "kUHMixerAE", "Mixer");
+	registerPluginResource("modelingToolkit", "kUHmult2", "Multiplier 2:");
+	registerPluginResource("modelingToolkit", "kUHmult2AE", "Multiplier 2");
+	registerPluginResource("modelingToolkit", "kUHexp3", "Exponent 3:");
+	registerPluginResource("modelingToolkit", "kUHexp3AE", "Exponent 3");
+	registerPluginResource("modelingToolkit", "kUHexp4", "Exponent 4:");
+	registerPluginResource("modelingToolkit", "kUHexp4AE", "Exponent 4");
+	registerPluginResource("modelingToolkit", "kUHexp5", "Exponent 5:");
+	registerPluginResource("modelingToolkit", "kUHexp5AE", "Exponent 5");
+	registerPluginResource("modelingToolkit", "kUltraVerticalFrame", "Vertical");
+	registerPluginResource("modelingToolkit", "kUVmult1", "Multiplier 1:");
+	registerPluginResource("modelingToolkit", "kUVmult1AE", "Multiplier 1");
+	registerPluginResource("modelingToolkit", "kUVexp1", "Exponent 1:");
+	registerPluginResource("modelingToolkit", "kUVexp1AE", "Exponent 1");
+	registerPluginResource("modelingToolkit", "kUVexp2", "Exponent 2:");
+	registerPluginResource("modelingToolkit", "kUVexp2AE", "Exponent 2");
+	registerPluginResource("modelingToolkit", "kUVMixer", "Mixer:");
+	registerPluginResource("modelingToolkit", "kUVMixerAE", "Mixer");
+	registerPluginResource("modelingToolkit", "kUVmult2", "Multiplier 2:");
+	registerPluginResource("modelingToolkit", "kUVmult2AE", "Multiplier 2");
+	registerPluginResource("modelingToolkit", "kUVexp3", "Exponent 3:");
+	registerPluginResource("modelingToolkit", "kUVexp3AE", "Exponent 3");
+	registerPluginResource("modelingToolkit", "kUVexp4", "Exponent 4:");
+	registerPluginResource("modelingToolkit", "kUVexp4AE", "Exponent 4");
+	registerPluginResource("modelingToolkit", "kUVexp5", "Exponent 5:");
+	registerPluginResource("modelingToolkit", "kUVexp5AE", "Exponent 5");
+	registerPluginResource("modelingToolkit", "kUltraMirror", "Mirror:");
+	registerPluginResource("modelingToolkit", "kUltraMirrorAE", "Mirror");
+	registerPluginResource("modelingToolkit", "kSuperShapeRandom", "Random");
+	registerPluginResource("modelingToolkit", "kSuperShapeReset", "Reset");
+	registerPluginResource("modelingToolkit", "kPolygonSuperShapeOptions", "Polygon Super Shape Options");
+
+	loadPluginLanguageResources("modelingToolkit", "modelingToolkit.pres.mel");
+}

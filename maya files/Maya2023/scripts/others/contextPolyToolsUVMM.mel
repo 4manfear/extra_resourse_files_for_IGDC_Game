@@ -1,0 +1,166 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//  Procedure Name:
+//      contextPolyToolsUVMM
+//
+//  Description:
+//      This procedure creates the popup/marking menu
+//      for poly UV tools. See ModelEdMenu.
+//
+//  Input Arguments:
+//      None
+//
+//  Return Value:
+//      None.
+
+
+global proc contextPolyToolsUVMM()
+{
+	menuItem
+		-label (uiRes("m_contextPolyToolsUVMM.kMapping"))
+		-subMenu 1
+		-tearOff 0
+		-radialPosition "N" 
+		-allowOptionBoxes 1
+		-postMenuCommandOnce 0
+		;
+
+			contextPolyToolsUVMappingMM;
+
+			setParent -m ..;
+
+	menuItem
+		-version 2016
+		-label (uiRes("m_contextPolyToolsUVMM.kGrabUVTool"))
+		-annotation `getRunTimeCommandAnnotation("SetMeshGrabUVTool")`
+		-command "SetMeshGrabUVTool"
+		-radialPosition "NE" 
+		-allowOptionBoxes 1
+		-image "UV_3D_Grab_Brush.png" 
+		;
+
+	menuItem -optionBox 1 
+		-annotation (getRunTimeCommandAnnotation("ShowMeshGrabUVToolOptions")) 
+		-c "ShowMeshGrabUVToolOptions"
+		-image "UV_3D_Grab_Brush.png" 
+		;
+
+	menuItem
+		-label (uiRes("m_contextPolyToolsUVMM.kSewUVs"))
+		-ecr true
+		-annotation (uiRes("m_contextPolyToolsUVMM.kSewUVsAnnot"))  
+		-command "performPolyMapSew"
+		-radialPosition "E" 
+		-allowOptionBoxes 1
+		-image "polySewUV.png" 
+		;
+
+	menuItem
+		-version "2015"
+		-ecr true
+		-label (uiRes("m_contextPolyToolsUVMM.kCreateUVShell"))
+		-annotation ( getRunTimeCommandAnnotation ( "CreateUVShellAlongBorder" ) )
+		-command "CreateUVShellAlongBorder"
+		-radialPosition "SE" 
+		-image "polyCreateUVShell.png"
+		;
+
+	menuItem
+		-label (uiRes("m_contextPolyToolsUVMM.kMergeUVs"))
+		-command "MergeUV"
+		-annotation ( getRunTimeCommandAnnotation ( "MergeUV" ) )
+		-radialPosition "S" 
+		-allowOptionBoxes 1
+		-image "polyMergeUV.png" 
+		;
+
+	menuItem -optionBox true 
+		-ecr false 
+		-annotation ( getRunTimeCommandAnnotation ( "MergeUVOptions" ) ) 
+		-command "MergeUVOptions" 
+		;
+
+	menuItem
+		-label (uiRes("m_contextPolyToolsUVMM.kDeleteUVs"))
+		-ecr true
+		-annotation (getRunTimeCommandAnnotation("DeleteUVs"))
+		-command "DeleteUVs"
+		-radialPosition "SW" 
+		-allowOptionBoxes 1
+		-image "polyMapDel.png" 
+		;
+
+	menuItem
+		-label (uiRes("m_contextPolyToolsUVMM.kCutUVs"))
+		-ecr true
+		-annotation (uiRes("m_contextPolyToolsUVMM.kCutUVsAnnot"))
+		-command "polyPerformAction polyMapCut e 0"
+		-radialPosition "W" 
+		-image "polyCutUV.png" 
+		;
+
+	menuItem
+		-version "2018"
+		-label (uiRes("m_contextPolyToolsUVMM.kCutSewUV"))
+		-annotation (getRunTimeCommandAnnotation("SetCutSewUVTool"))
+		-command "SetCutSewUVTool"
+		-radialPosition "NW" 
+		-image "CutSewUVTool.png"
+		;
+	menuItem -optionBox true 
+		-ecr false 
+		-annotation (getRunTimeCommandAnnotation("SetCutSewUVTool")) 
+		-command "SetCutSewUVTool;toolPropertyWindow;"
+		-image "CutSewUVTool.png"
+		;
+			menuItem
+				-version "2018"
+				-label (uiRes("m_contextPolyToolsUVMM.kAutoSeams"))
+				-ecr true
+				-annotation (uiRes("m_contextPolyToolsUVMM.kAutoSeamUVsAnnot")) 
+				-command "performPolyAutoSeamUV 0" 
+				-image "polyAutoSeams.png" 
+				;
+
+			menuItem  
+				-optionBox true 
+				-ecr false 
+				-annotation (uiRes("m_contextPolyToolsUVMM.kAutoSeamUVsOptionsAnnot"))  
+				-command "performPolyAutoSeamUV 1"  
+				-image "polyAutoSeams.png" 
+				;
+
+			menuItem -divider 1;
+
+			int $teb[] = `polyOptions -q -dmb`;
+			menuItem
+				-label (uiRes("m_contextPolyToolsUVMM.kTextureBorders"))
+				-annotation (getRunTimeCommandAnnotation("ToggleTextureBorderEdges"))
+				-checkBox $teb[0] 
+				-command ("ToggleTextureBorderEdges")
+				;
+
+			menuItem -divider 1;
+
+			menuItem
+				-version 2018
+				-label (uiRes("m_contextPolyToolsUVMM.kUVEditor"))
+				-annotation (getRunTimeCommandAnnotation("TextureViewWindow"))
+				-command "TextureViewWindow" 
+				-image "textureEditor.png"
+				;
+
+			menuItem
+				-label (uiRes("m_contextPolyToolsUVMM.kUVSetEditor"))
+				-ecr true
+				-annotation (uiRes("m_contextPolyToolsUVMM.kUVSetEditorAnnot"))
+				-command "UVSetEditor" 
+				-image "polyUVSetEditor.png" 
+				;
+}

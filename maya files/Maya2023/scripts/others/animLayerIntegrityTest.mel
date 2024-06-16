@@ -1,0 +1,183 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//<doc>
+//<name animLayerIntegrityTest>
+//
+//<synopsis>
+//		animLayerIntegrityTest ( int $fix )
+//<returns>
+//		None
+// 
+//<description>
+//      Helper script that performs an integrity test on
+// the animLayers graph. Encountered errors are printed 
+// to the history output pane. The command can also be used
+// to fix discovered errors.
+//
+//<flags>
+//		int $fix	0 only output errors. 1 fixes them.
+//
+//<examples>
+//	animLayerIntegrityTest 1;
+//
+// Identify animLayer inconsistencies and fix them
+//</doc>
+     
+proc int searchDownFor( string $currentNode, string $lookedFor, string $walked[], string $outAttr )
+{
+	string $destinations[];
+	
+	$destinations = `listConnections -d 1 -type animBlendNodeBase ($currentNode+"."+$outAttr)`;
+	
+	
+	for( $destination in $destinations )
+	{
+		if( $destination == $lookedFor )
+		{
+			return 1;
+		}
+		
+		if( stringArrayContains( $destination, $walked ) )
+		{
+			// downstream looping not implying lookedFor node detected
+			// do not go further
+		}
+		else
+		{
+			$walked[size($walked)] = $destination;
+			if( searchDownFor( $destination, $lookedFor, $walked, $outAttr ) )
+			{
+				return 1;
+			}
+		}
+	}
+	return 0;
+}
+
+
+proc int fixBlendNodeRecurse( string $currentNode, string $start, string $outAttr )
+{
+	// Walk upstream until double output or same node is found and cut the chain there	
+	// returns number of disconnections done
+	
+	string $destinations[];
+	
+	$destinations = `listConnections -d 1 ($currentNode+"."+$outAttr)`;
+	$blendNodeDestinations = `listConnections -d 1 -type animBlendNodeBase ($currentNode+"."+$outAttr)`;
+	$blendNodeDestinationPlugs = `listConnections -d 1 -p 1  -type animBlendNodeBase ($currentNode+"."+$outAttr)`;
+	int $disconnectDone = 0;
+
+	if( size( $blendNodeDestinationPlugs ) > 0 && size( $blendNodeDestinationPlugs ) < size( $destinations ) )
+	{
+		// Output to blend nodes and other type of nodes
+		// That is the ideal place to cut chains
+		// No validation is done to verify if there are loops before we cut
+		// and even if we normaly do not expect output types to be a mix of 
+		// blend nodes and other type of node, it is still advised to test 
+		// for evaluation loop before calling this method. 
+		// animLayerFixBlendNodesLoops does that
+
+		for( $dest in  $blendNodeDestinationPlugs )
+		{	
+			disconnectAttr ($currentNode+"."+$outAttr) ($dest);
+			$disconnectDone++;
+		}
+	}
+
+	if( $disconnectDone == 0 )
+	{
+		int $index = 0;
+		for( $dest in  $blendNodeDestinations )
+		{
+			if( $dest == $start )
+			{
+				disconnectAttr ($currentNode+"."+$outAttr) ($blendNodeDestinationPlugs[$index]);
+				$disconnectDone++;
+			}
+			else
+			{
+				$disconnectDone += fixBlendNodeRecurse( $dest, $start, $outAttr );
+			}
+			$index++;
+		}
+	}	
+	return $disconnectDone;
+}
+
+global proc animLayerFixBlendNodeLoop( string $blendNode )
+{
+	int $nbDisconnect = 0;
+	$nbDisconnect += fixBlendNodeRecurse( $blendNode, $blendNode, "output" );
+	
+	if( nodeType( $blendNode ) == "animBlendNodeAdditiveRotation" )
+	{
+		$nbDisconnect += fixBlendNodeRecurse( $blendNode, $blendNode, "outputX" );	
+		$nbDisconnect += fixBlendNodeRecurse( $blendNode, $blendNode, "outputY" );	
+		$nbDisconnect += fixBlendNodeRecurse( $blendNode, $blendNode, "outputZ" );	
+	}
+
+	if( animLayerIsBlendNodeLooped( $blendNode ) )
+	{
+		print( "Warning: loop still detected on node : " + $blendNode + "\n" );
+	}
+	else if( $nbDisconnect != 1 && $nbDisconnect != 3 )
+	{
+		print( "Warning: Unexpected number of faulty connections :" +$blendNode+ " (" +$nbDisconnect + ")\n" );
+	}		
+}
+
+global proc int animLayerIsBlendNodeLooped( string $blendNode )
+{
+
+	// walk blendNodes upstream and return true if original node is found
+	
+	string $walked[];
+	
+	int $isLooped;
+	
+	$isLooped = searchDownFor( $blendNode, $blendNode, $walked, "output" );
+	
+	if( !$isLooped && (nodeType( $blendNode ) == "animBlendNodeAdditiveRotation") )
+	{
+		$isLooped += searchDownFor( $blendNode, $blendNode, $walked, "outputX" );
+		$isLooped += searchDownFor( $blendNode, $blendNode, $walked, "outputY" );
+		$isLooped += searchDownFor( $blendNode, $blendNode, $walked, "outputZ" );
+	}
+	
+	return $isLooped;
+}
+
+
+global proc animLayerIntegrityTest( int $fix )
+{
+	// Test for animLayer subgraph integrity
+	// Currently this check for blend node chains that create evaluation loops	
+	// and it output warning line for each of the implied blendNodes
+	//
+	// If fix is not equal to zero, integrity errors will be corrected
+	string $nodes[];
+	
+	$nodes = `ls -type animBlendNodeBase`;
+	
+	for( $node in $nodes )
+	{
+		if( animLayerIsBlendNodeLooped( $node ) )
+		{
+			if( $fix )
+			{
+				print( "Fixing loop on node : " + $node + "\n" );				
+				animLayerFixBlendNodeLoop( $node );
+			}
+			else
+			{
+				print( "Warning: loop detected on node : " + $node + "\n" );
+			}
+		}
+	}
+}

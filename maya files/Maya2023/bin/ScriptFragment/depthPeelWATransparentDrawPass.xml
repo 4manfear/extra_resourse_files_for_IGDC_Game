@@ -1,0 +1,399 @@
+<!--
+Copyright 2016 Autodesk, Inc. All rights reserved. 
+
+Use of this software is subject to the terms of the Autodesk 
+license agreement provided at the time of installation or download, 
+or which otherwise accompanies this software in either electronic 
+or hard copy form.
+-->
+<fragment  uiName="depthPeelWATransparentDrawPass" name="depthPeelWATransparentDrawPass" type="sceneEffect" class="ScriptFragment" version="1.0" feature_level="30" >
+    <description>
+    <![CDATA[
+        Depth Peeling Order-Independent Transparency
+    ]]>
+    </description>
+    <properties>
+        <countedObject  name="transpList" />
+        <countedObject  name="unsupportedTranspList" />
+        <camera  name="camera" />
+        <target  name="final" />
+        <target  name="depth" />
+        <target  name="opaquedepthtexture" />
+        <float4  name="viewport" />
+        <float4  name="scissorRect" />
+        <effectInstance  name="materialOverrideInstance" />
+        <bool  name="drawTransparentList" />
+        <bool  name="backfaceTransparency" />
+        <bool  name="quality2" />
+        <bool  name="quality4" />
+        <bool  name="quality6" />
+        <bool  name="quality8" />
+        <bool  name="listEmpty" />
+    </properties>
+    <values>
+        <float4 name="viewport" value="0.000000,0.000000,1.000000,1.000000"  />
+        <float4 name="scissorRect" value="0.000000,0.000000,1.000000,1.000000"  />
+        <bool name="drawTransparentList" value="true"  />
+        <bool name="backfaceTransparency" value="true"  />
+        <bool name="quality2" value="false"  />
+        <bool name="quality4" value="false"  />
+        <bool name="quality6" value="false"  />
+        <bool name="quality8" value="false"  />
+        <bool name="listEmpty" value="true"  />
+    </values>
+    <outputs>
+        <target  name="output" />
+    </outputs>
+    <parametershare>
+    </parametershare>
+    <implementation render="OGS" language="ScriptInterpreter" version="0.1" >
+        <scriptCommands>
+            <Declare name="transpRenderer" type="ScriptPipeRenderer" value="OGSMayaNullAgent" />
+            <SetRenderer name="transpRenderer" />
+            <SetDepthStencil value="@depth" />
+            <SetEffect name="" />
+            <If value="@drawTransparentList" />
+                <Call name="SetPassSemantic" arg0="transparentGeometry" arg1="TRUE" />
+                <If value="@materialOverrideInstance" />
+                    <SetTarget index="0" value="@final" />
+                    <Call name="SetEffectInstance" arg0="@materialOverrideInstance" />
+                    <Call name="SetPassSemantic" arg0="materialOverride" arg1="TRUE" />
+                    <Render name="@transpList" />
+                    <Render name="@unsupportedTranspList" />
+                    <Call name="SetPassSemantic" arg0="materialOverride" arg1="FALSE" />
+                    <Call name="SetEffectInstance" arg0="" />
+                <Else />
+                    <Call name="isListEmpty" arg0="@transpList" arg1="@listEmpty" />
+                    <IfNot value="@listEmpty" />
+                    <AcquireTarget name="TransparentAccum" format="EFORMAT_R16G16B16A16_FLOAT" size="@final" relSize="1,1" />
+                    <AcquireTarget name="Depth0" format="EFORMAT_R32_FLOAT" size="@final" relSize="1,1" />
+                    <AcquireTarget name="Depth1" format="EFORMAT_R32_FLOAT" size="@final" relSize="1,1" />
+                    <AcquireTarget name="LayerColor" format="EFORMAT_R16G16B16A16_FLOAT" size="@final" relSize="1,1" />
+                    <AcquireTarget name="TempLayer" format="EFORMAT_R16G16B16A16_FLOAT" size="@final" relSize="1,1" />
+                    <AcquireTarget name="LocalDepth" format="@depth" size="@depth" relSize="1,1" />
+                    <SetDepthStencil value="LocalDepth" />
+                    <SetTarget index="1" value="" />
+                    <SetTarget index="0" value="Depth0" />
+                    <Clear color="0.0,0.0,0.0,0.0" depth="" stencil="" />
+                    <SetTarget index="0" value="TransparentAccum" />
+                    <Clear color="0.0,0.0,0.0,1.0" depth="" stencil="" />
+                    <SetTarget index="0" value="Depth1" />
+                    <Clear color="10000000.0,0.0,0.0,0.0" depth="" stencil="" />
+                    <SetTarget index="0" value="LayerColor" />
+                    <Clear color="0.0,0.0,0.0,0.0" depth="1.0" stencil="0" />
+                    <SetTarget index="1" value="Depth1" />
+                    <SetCamera value="@camera" />
+                    <SetViewport value="@viewport" />
+                    <If value="@backfaceTransparency" />
+                        <SetState name="RenderState" value="mayaZLessEqNoBlendNoCull" />
+                    <Else />
+                        <SetState name="RenderState" value="mayaZLessEqNoBlendCullBack" />
+                    <EndIf />
+                    <Call name="mayaTransparentCB" arg0="transparentPeel" arg1="Depth0" arg2="@opaquedepthtexture" />
+                    <Render name="@transpList" />
+                    <Call name="mayaTransparentCB" arg0="transparentOff" />
+                    <SetState name="RenderState" value="maya_SAd+D_AdAsi" />
+                    <SetEffect name="DepthPeelingBlendEffect" path="Copy" />
+                    <SetTexture effect="DepthPeelingBlendEffect" name="gInputTex" value="" texture="LayerColor" />
+                    <SetEffectParameter effect="DepthPeelingBlendEffect" name="gInputSampler" value="PointClamp" />
+                    <SetTarget index="0" value="TransparentAccum" />
+                    <SetTarget index="1" value="" />
+                    <Render name="Quad" useDefault="false" />
+                    <RestoreOverrideEffect />
+                    <SetTarget index="0" value="Depth0" />
+                    <Clear color="10000000.0,0.0,0.0,0.0" depth="" stencil="" />
+                    <SetTarget index="0" value="LayerColor" />
+                    <Clear color="0.0,0.0,0.0,0.0" depth="1.0" stencil="0" />
+                    <SetTarget index="1" value="Depth0" />
+                    <SetCamera value="@camera" />
+                    <SetViewport value="@viewport" />
+                    <If value="@backfaceTransparency" />
+                        <SetState name="RenderState" value="mayaZLessEqNoBlendNoCull" />
+                    <Else />
+                        <SetState name="RenderState" value="mayaZLessEqNoBlendCullBack" />
+                    <EndIf />
+                    <Call name="mayaTransparentCB" arg0="transparentPeel" arg1="Depth1" arg2="@opaquedepthtexture" />
+                    <Render name="@transpList" />
+                    <Call name="mayaTransparentCB" arg0="transparentOff" />
+                    <SetState name="RenderState" value="maya_SAd+D_AdAsi" />
+                    <SetEffect name="DepthPeelingBlendEffect" path="Copy" />
+                    <SetTexture effect="DepthPeelingBlendEffect" name="gInputTex" value="" texture="LayerColor" />
+                    <SetEffectParameter effect="DepthPeelingBlendEffect" name="gInputSampler" value="PointClamp" />
+                    <SetTarget index="0" value="TransparentAccum" />
+                    <SetTarget index="1" value="" />
+                    <Render name="Quad" useDefault="false" />
+                    <RestoreOverrideEffect />
+                    <IfNot value="@quality2" />
+                    <SetTarget index="0" value="Depth1" />
+                    <Clear color="10000000.0,0.0,0.0,0.0" depth="" stencil="" />
+                    <SetTarget index="0" value="LayerColor" />
+                    <Clear color="0.0,0.0,0.0,0.0" depth="1.0" stencil="0" />
+                    <SetTarget index="1" value="Depth1" />
+                    <SetCamera value="@camera" />
+                    <SetViewport value="@viewport" />
+                    <If value="@backfaceTransparency" />
+                        <SetState name="RenderState" value="mayaZLessEqNoBlendNoCull" />
+                    <Else />
+                        <SetState name="RenderState" value="mayaZLessEqNoBlendCullBack" />
+                    <EndIf />
+                    <Call name="mayaTransparentCB" arg0="transparentPeel" arg1="Depth0" arg2="@opaquedepthtexture" />
+                    <Render name="@transpList" />
+                    <Call name="mayaTransparentCB" arg0="transparentOff" />
+                    <SetState name="RenderState" value="maya_SAd+D_AdAsi" />
+                    <SetEffect name="DepthPeelingBlendEffect" path="Copy" />
+                    <SetTexture effect="DepthPeelingBlendEffect" name="gInputTex" value="" texture="LayerColor" />
+                    <SetEffectParameter effect="DepthPeelingBlendEffect" name="gInputSampler" value="PointClamp" />
+                    <SetTarget index="0" value="TransparentAccum" />
+                    <SetTarget index="1" value="" />
+                    <Render name="Quad" useDefault="false" />
+                    <RestoreOverrideEffect />
+                    <SetTarget index="0" value="Depth0" />
+                    <Clear color="10000000.0,0.0,0.0,0.0" depth="" stencil="" />
+                    <SetTarget index="0" value="LayerColor" />
+                    <Clear color="0.0,0.0,0.0,0.0" depth="1.0" stencil="0" />
+                    <SetTarget index="1" value="Depth0" />
+                    <SetCamera value="@camera" />
+                    <SetViewport value="@viewport" />
+                    <If value="@backfaceTransparency" />
+                        <SetState name="RenderState" value="mayaZLessEqNoBlendNoCull" />
+                    <Else />
+                        <SetState name="RenderState" value="mayaZLessEqNoBlendCullBack" />
+                    <EndIf />
+                    <Call name="mayaTransparentCB" arg0="transparentPeel" arg1="Depth1" arg2="@opaquedepthtexture" />
+                    <Render name="@transpList" />
+                    <Call name="mayaTransparentCB" arg0="transparentOff" />
+                    <SetState name="RenderState" value="maya_SAd+D_AdAsi" />
+                    <SetEffect name="DepthPeelingBlendEffect" path="Copy" />
+                    <SetTexture effect="DepthPeelingBlendEffect" name="gInputTex" value="" texture="LayerColor" />
+                    <SetEffectParameter effect="DepthPeelingBlendEffect" name="gInputSampler" value="PointClamp" />
+                    <SetTarget index="0" value="TransparentAccum" />
+                    <SetTarget index="1" value="" />
+                    <Render name="Quad" useDefault="false" />
+                    <RestoreOverrideEffect />
+                    <IfNot value="@quality4" />
+                    <SetTarget index="0" value="Depth1" />
+                    <Clear color="10000000.0,0.0,0.0,0.0" depth="" stencil="" />
+                    <SetTarget index="0" value="LayerColor" />
+                    <Clear color="0.0,0.0,0.0,0.0" depth="1.0" stencil="0" />
+                    <SetTarget index="1" value="Depth1" />
+                    <SetCamera value="@camera" />
+                    <SetViewport value="@viewport" />
+                    <If value="@backfaceTransparency" />
+                        <SetState name="RenderState" value="mayaZLessEqNoBlendNoCull" />
+                    <Else />
+                        <SetState name="RenderState" value="mayaZLessEqNoBlendCullBack" />
+                    <EndIf />
+                    <Call name="mayaTransparentCB" arg0="transparentPeel" arg1="Depth0" arg2="@opaquedepthtexture" />
+                    <Render name="@transpList" />
+                    <Call name="mayaTransparentCB" arg0="transparentOff" />
+                    <SetState name="RenderState" value="maya_SAd+D_AdAsi" />
+                    <SetEffect name="DepthPeelingBlendEffect" path="Copy" />
+                    <SetTexture effect="DepthPeelingBlendEffect" name="gInputTex" value="" texture="LayerColor" />
+                    <SetEffectParameter effect="DepthPeelingBlendEffect" name="gInputSampler" value="PointClamp" />
+                    <SetTarget index="0" value="TransparentAccum" />
+                    <SetTarget index="1" value="" />
+                    <Render name="Quad" useDefault="false" />
+                    <RestoreOverrideEffect />
+                    <SetTarget index="0" value="Depth0" />
+                    <Clear color="10000000.0,0.0,0.0,0.0" depth="" stencil="" />
+                    <SetTarget index="0" value="LayerColor" />
+                    <Clear color="0.0,0.0,0.0,0.0" depth="1.0" stencil="0" />
+                    <SetTarget index="1" value="Depth0" />
+                    <SetCamera value="@camera" />
+                    <SetViewport value="@viewport" />
+                    <If value="@backfaceTransparency" />
+                        <SetState name="RenderState" value="mayaZLessEqNoBlendNoCull" />
+                    <Else />
+                        <SetState name="RenderState" value="mayaZLessEqNoBlendCullBack" />
+                    <EndIf />
+                    <Call name="mayaTransparentCB" arg0="transparentPeel" arg1="Depth1" arg2="@opaquedepthtexture" />
+                    <Render name="@transpList" />
+                    <Call name="mayaTransparentCB" arg0="transparentOff" />
+                    <SetState name="RenderState" value="maya_SAd+D_AdAsi" />
+                    <SetEffect name="DepthPeelingBlendEffect" path="Copy" />
+                    <SetTexture effect="DepthPeelingBlendEffect" name="gInputTex" value="" texture="LayerColor" />
+                    <SetEffectParameter effect="DepthPeelingBlendEffect" name="gInputSampler" value="PointClamp" />
+                    <SetTarget index="0" value="TransparentAccum" />
+                    <SetTarget index="1" value="" />
+                    <Render name="Quad" useDefault="false" />
+                    <RestoreOverrideEffect />
+                    <IfNot value="@quality6" />
+                    <SetTarget index="0" value="Depth1" />
+                    <Clear color="10000000.0,0.0,0.0,0.0" depth="" stencil="" />
+                    <SetTarget index="0" value="LayerColor" />
+                    <Clear color="0.0,0.0,0.0,0.0" depth="1.0" stencil="0" />
+                    <SetTarget index="1" value="Depth1" />
+                    <SetCamera value="@camera" />
+                    <SetViewport value="@viewport" />
+                    <If value="@backfaceTransparency" />
+                        <SetState name="RenderState" value="mayaZLessEqNoBlendNoCull" />
+                    <Else />
+                        <SetState name="RenderState" value="mayaZLessEqNoBlendCullBack" />
+                    <EndIf />
+                    <Call name="mayaTransparentCB" arg0="transparentPeel" arg1="Depth0" arg2="@opaquedepthtexture" />
+                    <Render name="@transpList" />
+                    <Call name="mayaTransparentCB" arg0="transparentOff" />
+                    <SetState name="RenderState" value="maya_SAd+D_AdAsi" />
+                    <SetEffect name="DepthPeelingBlendEffect" path="Copy" />
+                    <SetTexture effect="DepthPeelingBlendEffect" name="gInputTex" value="" texture="LayerColor" />
+                    <SetEffectParameter effect="DepthPeelingBlendEffect" name="gInputSampler" value="PointClamp" />
+                    <SetTarget index="0" value="TransparentAccum" />
+                    <SetTarget index="1" value="" />
+                    <Render name="Quad" useDefault="false" />
+                    <RestoreOverrideEffect />
+                    <SetTarget index="0" value="Depth0" />
+                    <Clear color="10000000.0,0.0,0.0,0.0" depth="" stencil="" />
+                    <SetTarget index="0" value="LayerColor" />
+                    <Clear color="0.0,0.0,0.0,0.0" depth="1.0" stencil="0" />
+                    <SetTarget index="1" value="Depth0" />
+                    <SetCamera value="@camera" />
+                    <SetViewport value="@viewport" />
+                    <If value="@backfaceTransparency" />
+                        <SetState name="RenderState" value="mayaZLessEqNoBlendNoCull" />
+                    <Else />
+                        <SetState name="RenderState" value="mayaZLessEqNoBlendCullBack" />
+                    <EndIf />
+                    <Call name="mayaTransparentCB" arg0="transparentPeel" arg1="Depth1" arg2="@opaquedepthtexture" />
+                    <Render name="@transpList" />
+                    <Call name="mayaTransparentCB" arg0="transparentOff" />
+                    <SetState name="RenderState" value="maya_SAd+D_AdAsi" />
+                    <SetEffect name="DepthPeelingBlendEffect" path="Copy" />
+                    <SetTexture effect="DepthPeelingBlendEffect" name="gInputTex" value="" texture="LayerColor" />
+                    <SetEffectParameter effect="DepthPeelingBlendEffect" name="gInputSampler" value="PointClamp" />
+                    <SetTarget index="0" value="TransparentAccum" />
+                    <SetTarget index="1" value="" />
+                    <Render name="Quad" useDefault="false" />
+                    <RestoreOverrideEffect />
+                    <IfNot value="@quality8" />
+                    <SetTarget index="0" value="Depth1" />
+                    <Clear color="10000000.0,0.0,0.0,0.0" depth="" stencil="" />
+                    <SetTarget index="0" value="LayerColor" />
+                    <Clear color="0.0,0.0,0.0,0.0" depth="1.0" stencil="0" />
+                    <SetTarget index="1" value="Depth1" />
+                    <SetCamera value="@camera" />
+                    <SetViewport value="@viewport" />
+                    <If value="@backfaceTransparency" />
+                    <SetState name="RenderState" value="mayaZLessEqNoBlendNoCull" />
+                    <Else />
+                    <SetState name="RenderState" value="mayaZLessEqNoBlendCullBack" />
+                    <EndIf />
+                    <Call name="mayaTransparentCB" arg0="transparentPeel" arg1="Depth0" arg2="@opaquedepthtexture" />
+                    <Render name="@transpList" />
+                    <Call name="mayaTransparentCB" arg0="transparentOff" />
+                    <SetState name="RenderState" value="maya_SAd+D_AdAsi" />
+                    <SetEffect name="DepthPeelingBlendEffect" path="Copy" />
+                    <SetTexture effect="DepthPeelingBlendEffect" name="gInputTex" value="" texture="LayerColor" />
+                    <SetEffectParameter effect="DepthPeelingBlendEffect" name="gInputSampler" value="PointClamp" />
+                    <SetTarget index="0" value="TransparentAccum" />
+                    <SetTarget index="1" value="" />
+                    <Render name="Quad" useDefault="false" />
+                    <RestoreOverrideEffect />
+                    <SetTarget index="0" value="Depth0" />
+                    <Clear color="10000000.0,0.0,0.0,0.0" depth="" stencil="" />
+                    <SetTarget index="0" value="LayerColor" />
+                    <Clear color="0.0,0.0,0.0,0.0" depth="1.0" stencil="0" />
+                    <SetTarget index="1" value="Depth0" />
+                    <SetCamera value="@camera" />
+                    <SetViewport value="@viewport" />
+                    <If value="@backfaceTransparency" />
+                        <SetState name="RenderState" value="mayaZLessEqNoBlendNoCull" />
+                    <Else />
+                        <SetState name="RenderState" value="mayaZLessEqNoBlendCullBack" />
+                    <EndIf />
+                    <Call name="mayaTransparentCB" arg0="transparentPeel" arg1="Depth1" arg2="@opaquedepthtexture" />
+                    <Render name="@transpList" />
+                    <Call name="mayaTransparentCB" arg0="transparentOff" />
+                    <SetState name="RenderState" value="maya_SAd+D_AdAsi" />
+                    <SetEffect name="DepthPeelingBlendEffect" path="Copy" />
+                    <SetTexture effect="DepthPeelingBlendEffect" name="gInputTex" value="" texture="LayerColor" />
+                    <SetEffectParameter effect="DepthPeelingBlendEffect" name="gInputSampler" value="PointClamp" />
+                    <SetTarget index="0" value="TransparentAccum" />
+                    <SetTarget index="1" value="" />
+                    <Render name="Quad" useDefault="false" />
+                    <RestoreOverrideEffect />
+                    <EndIf />
+                    <EndIf />
+                    <EndIf />
+                    <EndIf />
+                    <SetTarget index="0" value="Depth1" />
+                    <Clear color="0.0,0.0,0.0,0.0" depth="" stencil="" />
+                    <SetTarget index="0" value="LayerColor" />
+                    <Clear color="0.0,0.0,0.0,0.0" depth="1.0" stencil="0" />
+                    <SetTarget index="1" value="Depth1" />
+                    <SetCamera value="@camera" />
+                    <SetViewport value="@viewport" />
+                    <If value="@backfaceTransparency" />
+                    <SetState name="RenderState" value="mayaTwoSidedWA" />
+                    <Else />
+                    <SetState name="RenderState" value="mayaOneSidedWA" />
+                    <EndIf />
+                    <Call name="mayaTransparentCB" arg0="transparentPeelAndAvg" arg1="Depth0" arg2="@opaquedepthtexture" />
+                    <Render name="@transpList" />
+                    <Call name="mayaTransparentCB" arg0="transparentOff" />
+                    <SetTarget index="1" value="" />
+                    <SetTarget index="0" value="TempLayer" />
+                    <SetViewport value="0.0,0.0,1.0,1.0" />
+                    <Clear color="0.0,0.0,0.0,0.0" depth="1.0" stencil="0" />
+                    <SetFragmentEffect name="WeightedAverageFinalEffect" path="weightedAverageFinal" />
+                    <SetTexture effect="WeightedAverageFinalEffect" name="transparentSum" value="" texture="LayerColor" />
+                    <SetTexture effect="WeightedAverageFinalEffect" name="depthComplexity" value="" texture="Depth1" />
+                    <SetEffectParameter effect="WeightedAverageFinalEffect" name="transparentSumSampler" value="PointClamp" />
+                    <SetEffectParameter effect="WeightedAverageFinalEffect" name="depthComplexitySampler" value="PointClamp" />
+                    <SetState name="RenderState" value="mayaFinalWA" />
+                    <Render name="Quad" useDefault="false" />
+                    <RestoreOverrideEffect />
+                    <SetState name="RenderState" value="maya_SAd+D_AdAsi" />
+                    <SetEffect name="DepthPeelingBlendEffect" path="Copy" />
+                    <SetTexture effect="DepthPeelingBlendEffect" name="gInputTex" value="" texture="TempLayer" />
+                    <SetEffectParameter effect="DepthPeelingBlendEffect" name="gInputSampler" value="PointClamp" />
+                    <SetTarget index="0" value="TransparentAccum" />
+                    <SetTarget index="1" value="" />
+                    <Render name="Quad" useDefault="false" />
+                    <RestoreOverrideEffect />
+                    <SetFragmentEffect name="DepthPeelingFinalEffect" path="transp2alpha" />
+                    <SetTexture effect="DepthPeelingFinalEffect" name="transparentSum" value="" texture="TransparentAccum" />
+                    <SetEffectParameter effect="DepthPeelingFinalEffect" name="transparentSumSampler" value="PointClamp" />
+                    <SetState name="RenderState" value="maya_DAsi+S_AdAsi+As" />
+                    <SetTarget index="0" value="@final" />
+                    <Render name="Quad" useDefault="false" />
+                    <SetDepthStencil value="@depth" />
+                    <RestoreOverrideEffect />
+                    <SetState name="RenderState" value="mayaZLessEqNoBlendNoCull" />
+                    <EndIf />
+                    <Call name="isListEmpty" arg0="@unsupportedTranspList" arg1="@listEmpty" />
+                    <IfNot value="@listEmpty" />
+                    <SetTarget index="0" value="@final" />
+                    <SetViewport value="@viewport" />
+                    <SetCamera value="@camera" />
+                    <Call name="sortRenderListByZ" arg0="@unsupportedTranspList" arg1="@camera" />
+                    <Declare name="transpState" type="stateSetter" />
+                    <SetStateCommand commandName="SetStateParameter" name="transpState" parameter="DepthEnable" value="true" />
+                    <SetStateCommand commandName="SetStateParameter" name="transpState" parameter="SetBlendEnable" value="true" />
+                    <SetStateCommand commandName="SetRenderState" name="transpState" parameter="BlendOver" />
+                    <SetStateCommand commandName="SetRenderState" name="transpState" parameter="ZLessNoW" />
+                    <SetStateCommand commandName="SetStateParameter" name="transpState" parameter="AlphaTestEnabled" value="false" />
+                    <SetStateCommand commandName="CommitNewState" name="transpState" />
+                    <Declare name="localState" type="stateSetter" />
+                    <SetStateCommand commandName="SetStateParameter" name="localState" parameter="CullMode" value="ECullFront" />
+                    <SetStateCommand commandName="CommitNewState" name="localState" />
+                    <Call name="SetPassSemantic" arg0="cullFront" arg1="TRUE" />
+                    <Render name="@unsupportedTranspList" />
+                    <Call name="SetPassSemantic" arg0="cullFront" arg1="FALSE" />
+                    <SetStateCommand commandName="RestorePreviousState" name="localState" />
+                    <Declare name="localState2" type="stateSetter" />
+                    <SetStateCommand commandName="SetStateParameter" name="localState2" parameter="CullMode" value="ECullBack" />
+                    <SetStateCommand commandName="CommitNewState" name="localState2" />
+                    <Call name="SetPassSemantic" arg0="cullBack" arg1="TRUE" />
+                    <Render name="@unsupportedTranspList" />
+                    <Call name="SetPassSemantic" arg0="cullBack" arg1="FALSE" />
+                    <SetStateCommand commandName="RestorePreviousState" name="localState2" />
+                    <SetStateCommand commandName="RestorePreviousState" name="transpState" />
+                    <EndIf />
+                <EndIf />
+                <Call name="SetPassSemantic" arg0="transparentGeometry" arg1="FALSE" />
+            <EndIf />
+            <SetParameter name="@output" value="@final" />
+        </scriptCommands>
+    </implementation>
+</fragment>
+

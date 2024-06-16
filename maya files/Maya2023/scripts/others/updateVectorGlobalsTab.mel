@@ -1,0 +1,28 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//==================================================================
+// Vector Renderer Tab
+//==================================================================
+
+// Description:
+//		Update procedure that is called whenever renderer is changed or
+//		different layer is selected.
+//		Must update any controls whose state may have changed
+//		through another instance of the tab.
+//
+global proc updateVectorGlobalsTab()
+{
+	updateMayaVectorGlobalsUI();
+	updateMayaVectorEdgeWeightUI();
+	updateMayaVectorEdgeStyle();
+	updateMayaVectorDetailLevelUI();
+	updateMayaVectorFillStyleUI();
+	enableMayaVectorFillStyleUI();
+	updateMayaVectorRenderOptimizationUI();
+	enableMayaVectorEdgeOptions();
+}

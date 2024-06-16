@@ -1,0 +1,33 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+
+global proc string[] poseInterpolatorConnectedShapeDeformers(string $tpl)
+{
+	string $bs[];
+	int $bsIdx = 0; 
+	
+	int $indices[] = poseInterpolatorPoseIndices($tpl); 
+	
+	for ($i in $indices)
+	{
+		string $sPlug = poseInterpolatorShape($tpl) + ".output[" + $i + "]";
+		string $connections[] = `listConnections -source 0 $sPlug`;
+		
+		for ($conn in $connections)
+		{
+			if (nodeType($conn) == "blendShape")
+			{
+				$bs[$bsIdx] = $conn;
+				++$bsIdx;
+			}
+		}
+	}
+	string $result[] = stringArrayRemoveDuplicates($bs);
+	
+	return $result;
+} 

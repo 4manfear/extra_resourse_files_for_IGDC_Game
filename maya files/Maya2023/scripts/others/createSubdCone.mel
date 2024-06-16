@@ -1,0 +1,47 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//
+//
+//
+// Creation Date:  Dec 2000
+//
+//
+//  Procedure Name:
+//      createSubdCone
+//
+//  Description:
+//		Create a subd cone
+//
+//  Input Arguments:
+//      None
+//
+//  Return Value:
+//      None.
+//
+global proc createSubdConeProc(){
+	string $polyName[];
+	string $subdName[];   
+	$polyName = `polyCone -r 1.5 -h 2.2 -sx 4 -sy 2 -sz 0 -ax 0 1 0 -cuv 2 -ch 1`;
+
+	// normalize UVs into 0-1 domain
+	polyNormalizeUV  -normalizeType 1 -preserveAspectRatio on ($polyName[0] + ".f[*]");
+
+	$subdName = `polyToSubdiv -ap 0 -ch off -aut off  -maxPolyCount 1000  -maxEdgesPerVert 32 -name "subdivCone#" $polyName[0]`;
+	delete $polyName;
+	select -r $subdName;
+}
+
+global proc createSubdCone(){
+	string $cmd;
+	
+	$cmd = "createSubdConeProc()";
+	
+	evalEcho($cmd);
+}

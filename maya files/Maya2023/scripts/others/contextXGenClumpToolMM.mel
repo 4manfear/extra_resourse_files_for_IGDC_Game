@@ -1,0 +1,263 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc xgmToggleClumpInvertFrozenEffect()
+{
+	int $newInvertFrozenValue = !`xgmClumpBrushContext -q -freezeMode xgmClumpBrushTool`;
+	xgmClumpBrushContext -e -freezeMode $newInvertFrozenValue xgmClumpBrushTool;
+}
+
+global proc xgmToggleClumpFalloffColor()
+{
+	int $newFalloffColorValue = !`xgmClumpBrushContext -q -fc xgmClumpBrushTool`;
+	xgmClumpBrushContext -e -fc $newFalloffColorValue xgmClumpBrushTool;
+}
+
+global proc xgmToggleClumpPreselectionHighlight()
+{
+	int $newPreselectionHighlight = !`xgmClumpBrushContext -q -ps xgmClumpBrushTool`;
+	xgmClumpBrushContext -e -ps $newPreselectionHighlight xgmClumpBrushTool;
+}
+
+global proc xgmToggleClumpShowFrozen()
+{
+	int $newShowFrozen = !`xgmClumpBrushContext -q -sf xgmClumpBrushTool`;
+	xgmClumpBrushContext -e -sf $newShowFrozen xgmClumpBrushTool;
+}
+
+global proc xgmToggleClumpPreserveLength()
+{
+	int $newPreserveLength = !`xgmClumpBrushContext -q -preserveLength xgmClumpBrushTool`;
+	xgmClumpBrushContext -e -preserveLength $newPreserveLength xgmClumpBrushTool;
+}
+
+global proc xgmToggleClumpEnableCollide()
+{
+	int $newEnableCollide = !`xgmClumpBrushContext -q -ec xgmClumpBrushTool`;
+	xgmClumpBrushContext -e -ec $newEnableCollide xgmClumpBrushTool;
+}
+
+global proc xgmSwitchClumpSelectionMode(int $selectionMode) 
+{
+	xgmClumpBrushContext -e -lockSelection $selectionMode xgmClumpBrushTool;
+}
+
+global proc xgmToggleClumpFilterBackfaces()
+{
+	int $newFilterBackfaces = !`xgmClumpBrushContext -q -fb xgmClumpBrushTool`;
+	xgmClumpBrushContext -e -fb $newFilterBackfaces xgmClumpBrushTool;
+}
+
+global proc xgmSwitchClumpFallOffType(string $falloffType) 
+{
+	xgmClumpBrushContext -e -brushFalloffType $falloffType xgmClumpBrushTool;
+}
+
+global proc contextXGenClumpToolMM()
+{
+	int $currentInvertFrozen = !`xgmClumpBrushContext -q -freezeMode xgmClumpBrushTool`;
+	menuItem
+		-label (uiRes("m_contextXGenClumpToolMM.kInvertFrozenEffect"))
+		-command xgmToggleClumpInvertFrozenEffect
+		-checkBox $currentInvertFrozen
+		-radialPosition "N" 
+		-enableCommandRepeat 1
+		;
+
+	int $currentFalloffColor = `xgmClumpBrushContext -q -fc xgmClumpBrushTool`;
+	menuItem
+		-label (uiRes("m_contextXGenClumpToolMM.kBrushFalloffColor"))
+		-command xgmToggleClumpFalloffColor
+		-checkBox $currentFalloffColor
+		-radialPosition "NE" 
+		-enableCommandRepeat 1
+		;
+
+	int $currentPreselectionHighlight = `xgmClumpBrushContext -q -ps xgmClumpBrushTool`;
+	menuItem
+		-label (uiRes("m_contextXGenClumpToolMM.kPreselectionHighlight"))
+		-command xgmToggleClumpPreselectionHighlight 
+		-checkBox $currentPreselectionHighlight
+		-radialPosition "E"
+		-enableCommandRepeat 1
+		;
+
+	int $currentShowFrozen = `xgmClumpBrushContext -q -sf xgmClumpBrushTool`;
+	menuItem
+		-label (uiRes("m_contextXGenClumpToolMM.kShowFrozen"))
+		-command xgmToggleClumpShowFrozen 
+		-checkBox $currentShowFrozen
+		-radialPosition "SE" 
+		-enableCommandRepeat 1
+		;
+		
+	int $currentPreserveLength = `xgmClumpBrushContext -q -preserveLength xgmClumpBrushTool`;
+	menuItem
+		-label (uiRes("m_contextXGenClumpToolMM.kPreserveLength"))
+		-command xgmToggleClumpPreserveLength 
+		-checkBox $currentPreserveLength
+		-radialPosition "S" 
+		-enableCommandRepeat 1
+		;
+		
+	int $currentEnableCollide = `xgmClumpBrushContext -q -ec xgmClumpBrushTool`;
+	menuItem
+		-label (uiRes("m_contextXGenClumpToolMM.kCollideWithMeshes"))
+		-command xgmToggleClumpEnableCollide 
+		-checkBox $currentEnableCollide
+		-radialPosition "SW" 
+		-enableCommandRepeat 1
+		;
+
+	menuItem
+		-label (uiRes("m_contextXGenClumpToolMM.kSelectionMode"))
+		-subMenu 1
+		-radialPosition "W" 
+		-enableCommandRepeat 1
+		;
+		
+		radioMenuItemCollection;
+		string $currentSelectionMode = `xgmClumpBrushContext -q -lockSelection xgmClumpBrushTool`;
+		menuItem
+			-label (uiRes("m_contextXGenClumpToolMM.kLocked"))
+			-command "xgmSwitchClumpSelectionMode(1)"
+			-radialPosition "W" 
+			-radioButton ($currentSelectionMode == 1)
+			-enableCommandRepeat 1
+			;
+			
+		menuItem
+			-label (uiRes("m_contextXGenClumpToolMM.kFloating"))
+			-command "xgmSwitchClumpSelectionMode(0)"
+			-radialPosition "S" 
+			-radioButton ($currentSelectionMode == 0)
+			-enableCommandRepeat 1
+			;
+			
+	setParent -m ..;
+
+	int $currentFilterBackFaces = `xgmClumpBrushContext -q -fb xgmClumpBrushTool`;
+	menuItem
+		-label (uiRes("m_contextXGenClumpToolMM.kFilterBackFaces"))
+		-command xgmToggleClumpFilterBackfaces
+		-checkBox $currentFilterBackFaces
+		-radialPosition "NW" 
+		-enableCommandRepeat 1
+		;
+
+	menuItem
+		-label (uiRes("m_contextXGenClumpToolMM.kFalloffType"))
+		-subMenu 1
+		-enableCommandRepeat 1
+		;
+		
+		radioMenuItemCollection;
+		string $currentFallOffType = `xgmClumpBrushContext -q -bft xgmClumpBrushTool`;
+		menuItem
+			-label (uiRes("m_contextXGenClumpToolMM.kScreen"))
+			-command "xgmSwitchClumpFallOffType(\"screen\")"
+			-radioButton ($currentFallOffType == "screen")
+			-enableCommandRepeat 1
+			;
+			
+		menuItem
+			-label (uiRes("m_contextXGenClumpToolMM.kVolume"))
+			-command "xgmSwitchClumpFallOffType(\"volume\")"
+			-radioButton ($currentFallOffType == "volume")
+			-enableCommandRepeat 1
+			;
+
+		menuItem
+			-label (uiRes("m_contextXGenClumpToolMM.kSurface"))
+			-command "xgmSwitchClumpFallOffType(\"surface\")"
+			-radioButton ($currentFallOffType == "surface")
+			-enableCommandRepeat 1
+			;
+	setParent -m ..;
+
+	string $brushCmd = "xgmClumpBrushContext";
+	string $tool = "xgmClumpBrushTool";
+	string $flag = "-brushFalloffCurve";
+	string $defaultValFlag = "-defaultBrushFalloffCurve";
+	string $param = $brushCmd + "\", \"" + $tool + "\", \"" + $flag + "\", \"" + $defaultValFlag;
+	menuItem
+		-label (uiRes("m_contextXGenClumpToolMM.kAdjustBrushFalloffCurve"))
+		-command ("xgmMarkingMenuAdjustFalloffCurve( \"" + $param + "\" )")
+		-enableCommandRepeat 1
+		;
+
+	$flag = "-rootToTipCurve";
+	$defaultValFlag = "-defaultRootToTipCurve";
+	$param = $brushCmd + "\", \"" + $tool + "\", \"" + $flag + "\", \"" + $defaultValFlag;
+	menuItem
+		-label (uiRes("m_contextXGenClumpToolMM.kAdjustClumpScale"))
+		-command ("xgmMarkingMenuAdjustFalloffCurve( \"" + $param + "\" )")
+		-enableCommandRepeat 1
+		;
+	
+	menuItem
+		-label (uiRes("m_contextXGenClumpToolMM.kSymmetry"))
+		-subMenu 1
+		-enableCommandRepeat 1
+		;
+		
+		radioMenuItemCollection;
+		string $currentSymmetryType = `xgmClumpBrushContext -q -brushSymmetryType xgmClumpBrushTool`;
+		menuItem
+			-label (uiRes("m_contextXGenClumpToolMM.kOff"))
+			-command "xgmSwitchSymmetryType(\"xgmClumpBrushContext\", \"xgmClumpBrushTool\", 0)"
+			-radioButton ($currentSymmetryType == 0)
+			-enableCommandRepeat 1
+			;
+			
+		menuItem
+			-label (uiRes("m_contextXGenClumpToolMM.kObjectX"))
+			-command "xgmSwitchSymmetryType(\"xgmClumpBrushContext\", \"xgmClumpBrushTool\", 1)"
+			-radioButton ($currentSymmetryType == 1)
+			-enableCommandRepeat 1
+			;
+
+		menuItem
+			-label (uiRes("m_contextXGenClumpToolMM.kObjectY"))
+			-command "xgmSwitchSymmetryType(\"xgmClumpBrushContext\", \"xgmClumpBrushTool\", 2)"
+			-radioButton ($currentSymmetryType == 2)
+			-enableCommandRepeat 1
+			;
+			
+		menuItem
+			-label (uiRes("m_contextXGenClumpToolMM.kObjectZ"))
+			-command "xgmSwitchSymmetryType(\"xgmClumpBrushContext\", \"xgmClumpBrushTool\", 3)"
+			-radioButton ($currentSymmetryType == 3)
+			-enableCommandRepeat 1
+			;
+			
+		menuItem
+			-label (uiRes("m_contextXGenClumpToolMM.kWorldX"))
+			-command "xgmSwitchSymmetryType(\"xgmClumpBrushContext\", \"xgmClumpBrushTool\", 4)"
+			-radioButton ($currentSymmetryType == 4)
+			-enableCommandRepeat 1
+			;
+
+		menuItem
+			-label (uiRes("m_contextXGenClumpToolMM.kWorldY"))
+			-command "xgmSwitchSymmetryType(\"xgmClumpBrushContext\", \"xgmClumpBrushTool\", 5)"
+			-radioButton ($currentSymmetryType == 5)
+			-enableCommandRepeat 1
+			;
+			
+		menuItem
+			-label (uiRes("m_contextXGenClumpToolMM.kWorldZ"))
+			-command "xgmSwitchSymmetryType(\"xgmClumpBrushContext\", \"xgmClumpBrushTool\", 6)"
+			-radioButton ($currentSymmetryType == 6)
+			-enableCommandRepeat 1
+			;
+			
+	setParent -m ..;
+	
+	setParent -menu ..;
+
+}

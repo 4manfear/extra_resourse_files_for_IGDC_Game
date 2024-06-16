@@ -1,0 +1,468 @@
+<fragment uiName="mayaStandardSurfaceParamsBuilder" name="mayaStandardSurfaceParamsBuilder" type="plumbing" class="ShadeFragment" version="1.0" feature_level="0">
+    <description><![CDATA[Builds the parameter struct for standard surface.]]></description>
+    <properties>
+        <float3 name="Nw" flags="varyingInputParam" />
+        <float3 name="mayaTangentIn" flags="varyingInputParam" semantic="tangent"/>
+        <float name="base" />
+        <float3 name="baseColor" />
+        <float name="diffuseRoughness" />
+        <float name="metalness" />
+        <float name="specular" />
+        <float3 name="specularColor" />
+        <float name="specularIOR" />
+        <float name="specularRoughness" />
+        <float name="specularAnisotropy" />
+        <float name="specularRotation" />
+        <float name="transmission" />
+        <float3 name="transmissionColor" />
+        <float3 name="opacity" />
+        <float name="subsurface" />
+        <float3 name="subsurfaceColor" />
+        <float name="coat" />
+        <float3 name="coatColor" />
+        <float name="coatIOR" />
+        <float name="coatRoughness" />
+        <float name="coatAnisotropy" />
+        <float name="coatRotation" />
+        <float name="coatAffectRoughness" />
+        <float name="coatAffectColor" />
+        <float name="sheen" />
+        <float3 name="sheenColor" />
+        <float name="sheenRoughness" />
+        <float name="emission" />
+        <float3 name="emissionColor" />
+    </properties>
+    <values>
+    </values>
+    <outputs>
+        <struct name="outParams" struct_name="mayaStandardSurfaceParams" />
+    </outputs>
+    <implementation>
+        <implementation render="OGSRenderer" language="Cg" lang_version="2.1">
+            <function_name val="mayaStandardSurfaceParamsBuilder" />
+            <source>
+                <![CDATA[
+const float M_FLOAT_EPS = 0.000001f;
+const float M_PI = 3.14159265358f;
+
+bool nonZero(float3 c)
+{
+    return (c.x > M_FLOAT_EPS || c.y > M_FLOAT_EPS || c.z > M_FLOAT_EPS);
+}
+
+float square(float x)
+{
+    return x * x;
+}
+
+void artisticToComplexIOR(float3 reflectivity, float3 edgeColor, out float3 ior, out float3 extinction)
+{
+    float3 r = clamp(reflectivity, 0.0f, 0.99f);
+    float3 r_sqrt = sqrt(r);
+    float3 n_min = (1.0f - r) / (1.0f + r);
+    float3 n_max = (1.0f + r_sqrt) / (1.0f - r_sqrt);
+    ior = lerp(n_max, n_min, edgeColor);
+
+    float3 np1 = ior + 1.0f;
+    float3 nm1 = ior - 1.0f;
+    float3 k2 = (np1*np1 * r - nm1*nm1) / (1.0f - r);
+    k2 = max(k2, 0.0f);
+    extinction = sqrt(k2);
+}
+
+mayaStandardSurfaceParams mayaStandardSurfaceParamsBuilder(
+                float3 N,
+                float3 T,
+                float base,
+                float3 baseColor,
+                float diffuseRoughness,
+                float metalness,
+                float specular,
+                float3 specularColor,
+                float specularIOR,
+                float specularRoughness,
+                float specularAnisotropy,
+                float specularRotation,
+                float transmission,
+                float3 transmissionColor,
+                float3 opacity,
+                float subsurface,
+                float3 subsurfaceColor,
+                float coat,
+                float3 coatColor,
+                float coatIOR,
+                float coatRoughness,
+                float coatAnisotropy,
+                float coatRotation,
+                float coatAffectRoughness,
+                float coatAffectColor,
+                float sheen,
+                float3 sheenColor,
+                float sheenRoughness,
+                float emission,
+                float3 emissionColor)
+{
+    mayaStandardSurfaceParams params;
+
+    params.N = N;
+    params.T = T;
+    params.B = normalize(cross(N,T));
+    params.coatT = params.T;
+    params.coatB = params.B;
+
+    params.base = base;
+    params.baseColor = baseColor;
+    params.diffuseRoughness = diffuseRoughness;
+    params.metalness = metalness;
+    params.specular = specular;
+    params.specularColor = specularColor;
+    params.specularIOR = specularIOR;
+    params.opacity = opacity;
+    params.subsurface = subsurface;
+    params.coat = coat;
+    params.coatColor = coatColor;
+    params.coatIOR = coatIOR;
+    params.sheen = sheen;
+    params.sheenColor = sheenColor;
+    params.sheenRoughness = clamp(sheenRoughness, M_FLOAT_EPS, 1.0);
+    params.emission = emissionColor * emission;
+    params.transmission = transmission * max(transmissionColor.x, max(transmissionColor.y, transmissionColor.z));
+
+    float exponent = 1.0f + coat * coatAffectColor;
+    params.diffuseColor = pow(baseColor * base, float3(exponent,exponent,exponent));
+
+    specularRoughness = clamp(specularRoughness, 0.02f, 1.0f);
+    coatRoughness = clamp(coatRoughness, 0.02f, 1.0f);
+
+    float roughness = lerp(specularRoughness, 1.0f, coat * coatAffectRoughness * coatRoughness);
+    float roughnessSqr = square(roughness);
+    params.specularRoughness.x = roughnessSqr;
+    params.specularRoughness.y = roughnessSqr;
+    if (specularAnisotropy > M_FLOAT_EPS)
+    {
+        float aspect = sqrt(1.0f - clamp(specularAnisotropy, 0.0f, 0.98f));
+        params.specularRoughness.x = min(roughnessSqr / aspect, 1.0f);
+        params.specularRoughness.y = roughnessSqr * aspect;
+        if (specularRotation > M_FLOAT_EPS)
+        {
+            float rotAngle = 2.0f * M_PI * specularRotation;
+            params.T = normalize(params.T * cos(rotAngle) - params.B * sin(rotAngle));
+            params.B = normalize(cross(params.N, params.T));
+        }
+    }
+
+    if (coat > 0.0f)
+    {
+        float roughnessSqr = square(coatRoughness);
+        params.coatRoughness.x = roughnessSqr;
+        params.coatRoughness.y = roughnessSqr;
+        if (coatAnisotropy > M_FLOAT_EPS)
+        {
+            float aspect = sqrt(1.0f - clamp(coatAnisotropy, 0.0f, 0.98f));
+            params.coatRoughness.x = min(roughnessSqr / aspect, 1.0f);
+            params.coatRoughness.y = roughnessSqr * aspect;
+            if (coatRotation > M_FLOAT_EPS)
+            {
+                float rotAngle = 2.0f * M_PI * coatRotation;
+                params.coatT = normalize(params.coatT * cos(rotAngle) - params.coatB * sin(rotAngle));
+                params.coatB = normalize(cross(params.N, params.coatT));
+            }
+        }
+    }
+
+    if (metalness > 0.0f)
+    {
+        artisticToComplexIOR(baseColor, specularColor, params.metalIOR, params.metalExtinction);
+    }
+
+    return params;
+}
+                ]]>
+            </source>
+        </implementation>
+        <implementation render="OGSRenderer" language="HLSL" lang_version="11.0">
+            <function_name val="mayaStandardSurfaceParamsBuilder" />
+            <source>
+                <![CDATA[
+const float M_FLOAT_EPS = 0.000001f;
+const float M_PI = 3.14159265358f;
+
+bool nonZero(float3 c)
+{
+    return (c.x > M_FLOAT_EPS || c.y > M_FLOAT_EPS || c.z > M_FLOAT_EPS);
+}
+
+float square(float x)
+{
+    return x * x;
+}
+
+void artisticToComplexIOR(float3 reflectivity, float3 edgeColor, out float3 ior, out float3 extinction)
+{
+    float3 r = clamp(reflectivity, 0.0f, 0.99f);
+    float3 r_sqrt = sqrt(r);
+    float3 n_min = (1.0f - r) / (1.0f + r);
+    float3 n_max = (1.0f + r_sqrt) / (1.0f - r_sqrt);
+    ior = lerp(n_max, n_min, edgeColor);
+
+    float3 np1 = ior + 1.0f;
+    float3 nm1 = ior - 1.0f;
+    float3 k2 = (np1*np1 * r - nm1*nm1) / (1.0f - r);
+    k2 = max(k2, 0.0f);
+    extinction = sqrt(k2);
+}
+
+mayaStandardSurfaceParams mayaStandardSurfaceParamsBuilder(
+                float3 N,
+                float3 T,
+                float base,
+                float3 baseColor,
+                float diffuseRoughness,
+                float metalness,
+                float specular,
+                float3 specularColor,
+                float specularIOR,
+                float specularRoughness,
+                float specularAnisotropy,
+                float specularRotation,
+                float transmission,
+                float3 transmissionColor,
+                float3 opacity,
+                float subsurface,
+                float3 subsurfaceColor,
+                float coat,
+                float3 coatColor,
+                float coatIOR,
+                float coatRoughness,
+                float coatAnisotropy,
+                float coatRotation,
+                float coatAffectRoughness,
+                float coatAffectColor,
+                float sheen,
+                float3 sheenColor,
+                float sheenRoughness,
+                float emission,
+                float3 emissionColor)
+{
+    mayaStandardSurfaceParams params;
+
+    params.N = N;
+    params.T = T;
+    params.B = normalize(cross(N,T));
+    params.coatT = params.T;
+    params.coatB = params.B;
+
+    params.base = base;
+    params.baseColor = baseColor;
+    params.diffuseRoughness = diffuseRoughness;
+    params.metalness = metalness;
+    params.specular = specular;
+    params.specularColor = specularColor;
+    params.specularIOR = specularIOR;
+    params.opacity = opacity;
+    params.subsurface = subsurface;
+    params.coat = coat;
+    params.coatColor = coatColor;
+    params.coatIOR = coatIOR;
+    params.sheen = sheen;
+    params.sheenColor = sheenColor;
+    params.sheenRoughness = clamp(sheenRoughness, M_FLOAT_EPS, 1.0);
+    params.emission = emissionColor * emission;
+    params.transmission = transmission * max(transmissionColor.x, max(transmissionColor.y, transmissionColor.z));
+
+    float exponent = 1.0f + coat * coatAffectColor;
+    params.diffuseColor = pow(baseColor * base, float3(exponent,exponent,exponent));
+
+    specularRoughness = clamp(specularRoughness, 0.02f, 1.0f);
+    coatRoughness = clamp(coatRoughness, 0.02f, 1.0f);
+
+    float roughness = lerp(specularRoughness, 1.0f, coat * coatAffectRoughness * coatRoughness);
+    float roughnessSqr = square(roughness);
+    params.specularRoughness.x = roughnessSqr;
+    params.specularRoughness.y = roughnessSqr;
+    if (specularAnisotropy > M_FLOAT_EPS)
+    {
+        float aspect = sqrt(1.0f - clamp(specularAnisotropy, 0.0f, 0.98f));
+        params.specularRoughness.x = min(roughnessSqr / aspect, 1.0f);
+        params.specularRoughness.y = roughnessSqr * aspect;
+        if (specularRotation > M_FLOAT_EPS)
+        {
+            float rotAngle = 2.0f * M_PI * specularRotation;
+            params.T = normalize(params.T * cos(rotAngle) - params.B * sin(rotAngle));
+            params.B = normalize(cross(params.N, params.T));
+        }
+    }
+
+    if (coat > 0.0f)
+    {
+        float roughnessSqr = square(coatRoughness);
+        params.coatRoughness.x = roughnessSqr;
+        params.coatRoughness.y = roughnessSqr;
+        if (coatAnisotropy > M_FLOAT_EPS)
+        {
+            float aspect = sqrt(1.0f - clamp(coatAnisotropy, 0.0f, 0.98f));
+            params.coatRoughness.x = min(roughnessSqr / aspect, 1.0f);
+            params.coatRoughness.y = roughnessSqr * aspect;
+            if (coatRotation > M_FLOAT_EPS)
+            {
+                float rotAngle = 2.0f * M_PI * coatRotation;
+                params.coatT = normalize(params.coatT * cos(rotAngle) - params.coatB * sin(rotAngle));
+                params.coatB = normalize(cross(params.N, params.coatT));
+            }
+        }
+    }
+
+    if (metalness > 0.0f)
+    {
+        artisticToComplexIOR(baseColor, specularColor, params.metalIOR, params.metalExtinction);
+    }
+
+    return params;
+}
+                ]]>
+            </source>
+        </implementation>
+        <implementation render="OGSRenderer" language="GLSL" lang_version="3.0">
+            <function_name val="mayaStandardSurfaceParamsBuilder" />
+            <source>
+                <![CDATA[
+const float M_FLOAT_EPS = 0.000001f;
+const float M_PI = 3.14159265358f;
+
+bool nonZero(vec3 c)
+{
+    return (c.x > M_FLOAT_EPS || c.y > M_FLOAT_EPS || c.z > M_FLOAT_EPS);
+}
+
+float square(float x)
+{
+    return x * x;
+}
+
+void artisticToComplexIOR(vec3 reflectivity, vec3 edgeColor, out vec3 ior, out vec3 extinction)
+{
+    vec3 r = clamp(reflectivity, 0.0f, 0.99f);
+    vec3 r_sqrt = sqrt(r);
+    vec3 n_min = (1.0f - r) / (1.0f + r);
+    vec3 n_max = (1.0f + r_sqrt) / (1.0f - r_sqrt);
+    ior = lerp(n_max, n_min, edgeColor);
+
+    vec3 np1 = ior + 1.0f;
+    vec3 nm1 = ior - 1.0f;
+    vec3 k2 = (np1*np1 * r - nm1*nm1) / (1.0f - r);
+    k2 = max(k2, 0.0f);
+    extinction = sqrt(k2);
+}
+
+mayaStandardSurfaceParams mayaStandardSurfaceParamsBuilder(
+                vec3 N,
+                vec3 T,
+                float base,
+                vec3 baseColor,
+                float diffuseRoughness,
+                float metalness,
+                float specular,
+                vec3 specularColor,
+                float specularIOR,
+                float specularRoughness,
+                float specularAnisotropy,
+                float specularRotation,
+                float transmission,
+                vec3 transmissionColor,
+                vec3 opacity,
+                float subsurface,
+                vec3 subsurfaceColor,
+                float coat,
+                vec3 coatColor,
+                float coatIOR,
+                float coatRoughness,
+                float coatAnisotropy,
+                float coatRotation,
+                float coatAffectRoughness,
+                float coatAffectColor,
+                float sheen,
+                vec3 sheenColor,
+                float sheenRoughness,
+                float emission,
+                vec3 emissionColor)
+{
+    mayaStandardSurfaceParams params;
+
+    params.N = N;
+    params.T = T;
+    params.B = normalize(cross(N,T));
+    params.coatT = params.T;
+    params.coatB = params.B;
+
+    params.base = base;
+    params.baseColor = baseColor;
+    params.diffuseRoughness = diffuseRoughness;
+    params.metalness = metalness;
+    params.specular = specular;
+    params.specularColor = specularColor;
+    params.specularIOR = specularIOR;
+    params.opacity = opacity;
+    params.subsurface = subsurface;
+    params.coat = coat;
+    params.coatColor = coatColor;
+    params.coatIOR = coatIOR;
+    params.sheen = sheen;
+    params.sheenColor = sheenColor;
+    params.sheenRoughness = clamp(sheenRoughness, M_FLOAT_EPS, 1.0);
+    params.emission = emissionColor * emission;
+    params.transmission = transmission * max(transmissionColor.x, max(transmissionColor.y, transmissionColor.z));
+
+    float exponent = 1.0f + coat * coatAffectColor;
+    params.diffuseColor = pow(baseColor * base, vec3(exponent,exponent,exponent));
+
+    specularRoughness = clamp(specularRoughness, 0.02f, 1.0f);
+    coatRoughness = clamp(coatRoughness, 0.02f, 1.0f);
+
+    float roughness = lerp(specularRoughness, 1.0f, coat * coatAffectRoughness * coatRoughness);
+    float roughnessSqr = square(roughness);
+    params.specularRoughness.x = roughnessSqr;
+    params.specularRoughness.y = roughnessSqr;
+    if (specularAnisotropy > M_FLOAT_EPS)
+    {
+        float aspect = sqrt(1.0f - clamp(specularAnisotropy, 0.0f, 0.98f));
+        params.specularRoughness.x = min(roughnessSqr / aspect, 1.0f);
+        params.specularRoughness.y = roughnessSqr * aspect;
+        if (specularRotation > M_FLOAT_EPS)
+        {
+            float rotAngle = 2.0f * M_PI * specularRotation;
+            params.T = normalize(params.T * cos(rotAngle) - params.B * sin(rotAngle));
+            params.B = normalize(cross(params.N, params.T));
+        }
+    }
+
+    if (coat > 0.0f)
+    {
+        float roughnessSqr = square(coatRoughness);
+        params.coatRoughness.x = roughnessSqr;
+        params.coatRoughness.y = roughnessSqr;
+        if (coatAnisotropy > M_FLOAT_EPS)
+        {
+            float aspect = sqrt(1.0f - clamp(coatAnisotropy, 0.0f, 0.98f));
+            params.coatRoughness.x = min(roughnessSqr / aspect, 1.0f);
+            params.coatRoughness.y = roughnessSqr * aspect;
+            if (coatRotation > M_FLOAT_EPS)
+            {
+                float rotAngle = 2.0f * M_PI * coatRotation;
+                params.coatT = normalize(params.coatT * cos(rotAngle) - params.coatB * sin(rotAngle));
+                params.coatB = normalize(cross(params.N, params.coatT));
+            }
+        }
+    }
+
+    if (metalness > 0.0f)
+    {
+        artisticToComplexIOR(baseColor, specularColor, params.metalIOR, params.metalExtinction);
+    }
+
+    return params;
+}
+                ]]>
+            </source>
+        </implementation>
+    </implementation>
+</fragment>

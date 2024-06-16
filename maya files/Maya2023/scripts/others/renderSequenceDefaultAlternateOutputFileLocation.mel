@@ -1,0 +1,33 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+// Returns the default alternate file location for rendering a sequence
+global proc string renderSequenceDefaultAlternateOutputFileLocation()
+{
+    // Get the images file rule entry to determine the directory we should use
+    string $imageFileRuleEntry = `workspace -q -fileRuleEntry "images"`;
+
+    // If we have a valid directory use it
+    if(`filetest -d $imageFileRuleEntry`)
+    {
+        return $imageFileRuleEntry;
+    }
+    else
+    {
+        // Otherwise we need to get the full path using the workspace expand Name flag
+        $imageFileRuleEntry = `workspace -expandName $imageFileRuleEntry`;
+        if(`filetest -d $imageFileRuleEntry`)
+        {
+            return $imageFileRuleEntry;
+        }
+        else
+        {
+            // Note: this shouldn't happen, but just in case it does return a reasonable path...
+            return `workspace -q -directory`;
+        }
+    }
+}

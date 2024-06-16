@@ -1,0 +1,171 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc xgmToggleCutInvertFrozenEffect()
+{
+	int $newInvertFrozenValue = !`xgmCutBrushContext -q -freezeMode xgmCutBrushTool`;
+	xgmCutBrushContext -e -freezeMode $newInvertFrozenValue xgmCutBrushTool;
+}
+
+global proc xgmToggleCutPreselectionHighlight()
+{
+	int $newPreselectionHighlight = !`xgmCutBrushContext -q -ps xgmCutBrushTool`;
+	xgmCutBrushContext -e -ps $newPreselectionHighlight xgmCutBrushTool;
+}
+
+global proc xgmToggleCutShowFrozen()
+{
+	int $newShowFrozen = !`xgmCutBrushContext -q -sf xgmCutBrushTool`;
+	xgmCutBrushContext -e -sf $newShowFrozen xgmCutBrushTool;
+}
+
+global proc xgmToggleCutFilterBackfaces()
+{
+	int $newFilterBackfaces = !`xgmCutBrushContext -q -fb xgmCutBrushTool`;
+	xgmCutBrushContext -e -fb $newFilterBackfaces xgmCutBrushTool;
+}
+
+global proc xgmSwitchCutMode(string $cutMode) 
+{
+	xgmCutBrushContext -e -mode $cutMode xgmCutBrushTool;
+}
+
+global proc contextXGenCutToolMM()
+{
+	int $currentInvertFrozen = !`xgmCutBrushContext -q -freezeMode xgmCutBrushTool`;
+	menuItem
+		-label (uiRes("m_contextXGenCutToolMM.kInvertFrozenEffect"))
+		-command xgmToggleCutInvertFrozenEffect
+		-checkBox $currentInvertFrozen
+		-radialPosition "N" 
+		-enableCommandRepeat 1
+		;
+			
+	menuItem
+		-label (uiRes("m_contextXGenCutToolMM.kSymmetry"))
+		-subMenu 1
+		-radialPosition "NE"
+		-enableCommandRepeat 1
+		;
+		
+		radioMenuItemCollection;
+		string $currentSymmetryType = `xgmCutBrushContext -q -brushSymmetryType xgmCutBrushTool`;
+		menuItem
+			-label (uiRes("m_contextXGenCutToolMM.kOff"))
+			-radialPosition "N"
+			-command "xgmSwitchSymmetryType(\"xgmCutBrushContext\", \"xgmCutBrushTool\", 0)"
+			-radioButton ($currentSymmetryType == 0)
+			-enableCommandRepeat 1
+			;
+			
+		menuItem
+			-label (uiRes("m_contextXGenCutToolMM.kObjectX"))
+			-radialPosition "NE"
+			-command "xgmSwitchSymmetryType(\"xgmCutBrushContext\", \"xgmCutBrushTool\", 1)"
+			-radioButton ($currentSymmetryType == 1)
+			-enableCommandRepeat 1
+			;
+
+		menuItem
+			-label (uiRes("m_contextXGenCutToolMM.kObjectY"))
+			-radialPosition "E"
+			-command "xgmSwitchSymmetryType(\"xgmCutBrushContext\", \"xgmCutBrushTool\", 2)"
+			-radioButton ($currentSymmetryType == 2)
+			-enableCommandRepeat 1
+			;
+			
+		menuItem
+			-label (uiRes("m_contextXGenCutToolMM.kObjectZ"))
+			-radialPosition "SE"
+			-command "xgmSwitchSymmetryType(\"xgmCutBrushContext\", \"xgmCutBrushTool\", 3)"
+			-radioButton ($currentSymmetryType == 3)
+			-enableCommandRepeat 1
+			;
+			
+		menuItem
+			-label (uiRes("m_contextXGenCutToolMM.kWorldX"))
+			-radialPosition "SW"
+			-command "xgmSwitchSymmetryType(\"xgmCutBrushContext\", \"xgmCutBrushTool\", 4)"
+			-radioButton ($currentSymmetryType == 4)
+			-enableCommandRepeat 1
+			;
+
+		menuItem
+			-label (uiRes("m_contextXGenCutToolMM.kWorldY"))
+			-radialPosition "W"
+			-command "xgmSwitchSymmetryType(\"xgmCutBrushContext\", \"xgmCutBrushTool\", 5)"
+			-radioButton ($currentSymmetryType == 5)
+			-enableCommandRepeat 1
+			;
+			
+		menuItem
+			-label (uiRes("m_contextXGenCutToolMM.kWorldZ"))
+			-radialPosition "NW"
+			-command "xgmSwitchSymmetryType(\"xgmCutBrushContext\", \"xgmCutBrushTool\", 6)"
+			-radioButton ($currentSymmetryType == 6)
+			-enableCommandRepeat 1
+			;
+			
+	setParent -m ..;
+	
+	int $currentPreselectionHighlight = `xgmCutBrushContext -q -ps xgmCutBrushTool`;
+	menuItem
+		-label (uiRes("m_contextXGenCutToolMM.kPreselectionHighlight"))
+		-command xgmToggleCutPreselectionHighlight 
+		-checkBox $currentPreselectionHighlight
+		-radialPosition "E"
+		-enableCommandRepeat 1
+		;
+
+	int $currentShowFrozen = `xgmCutBrushContext -q -sf xgmCutBrushTool`;
+	menuItem
+		-label (uiRes("m_contextXGenCutToolMM.kShowFrozen"))
+		-command xgmToggleCutShowFrozen 
+		-checkBox $currentShowFrozen
+		-radialPosition "SE" 
+		-enableCommandRepeat 1
+		;
+
+	menuItem
+		-label (uiRes("m_contextXGenCutToolMM.kCutMode"))
+		-radialPosition "W"
+		-subMenu 1
+		-enableCommandRepeat 1
+		;
+		
+		radioMenuItemCollection;
+		string $currentCutMode = `xgmCutBrushContext -q -mode xgmCutBrushTool`;
+		menuItem
+			-label (uiRes("m_contextXGenCutToolMM.kScreen"))
+			-command "xgmSwitchCutMode(\"screen\")"
+			-radioButton ($currentCutMode == "screen")
+			-radialPosition "W"
+			-enableCommandRepeat 1
+			;
+			
+		menuItem
+			-label (uiRes("m_contextXGenCutToolMM.kVolume"))
+			-command "xgmSwitchCutMode(\"volume\")"
+			-radioButton ($currentCutMode == "volume")
+			-radialPosition "S"
+			-enableCommandRepeat 1
+			;
+			
+		setParent -m ..;
+
+	int $currentFilterBackFaces = `xgmCutBrushContext -q -fb xgmCutBrushTool`;
+	menuItem
+		-label (uiRes("m_contextXGenCutToolMM.kFilterBackFaces"))
+		-command xgmToggleCutFilterBackfaces
+		-checkBox $currentFilterBackFaces
+		-radialPosition "NW" 
+		-enableCommandRepeat 1
+		;
+
+	setParent -menu ..;
+
+}

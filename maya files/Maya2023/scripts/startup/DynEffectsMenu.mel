@@ -1,0 +1,166 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+// Creation Date:  JUN 2014
+//
+//
+//  Procedure Name:
+//      DynEffectsMenu
+//
+//  Description:
+//		Create the DYNAMICS->Effects
+//
+//  Input Arguments:
+//      parent to parent the menu to.
+//
+//  Return Value:
+//      None.
+//
+global proc DynCreateApplyEffectMenu( string $parent ) 
+//
+// Build the apply effect submenu
+{
+	setParent -menu $parent;
+	menu -edit -deleteAllItems $parent;
+	
+	string $effects[] = `getEffectsAssets`;
+	for( $effect in $effects ) {
+		menuItem -label $effect -command ("applyEffect " + $effect );
+	}
+	setParent -menu ..;
+}
+
+global proc DynCreateCollideEffectMenu( string $parent ) 
+//
+// Build the collide with effect submenu
+{
+	setParent -menu $parent;
+	menu -edit -deleteAllItems $parent;
+	
+	string $effects[] = `getEffectsAssets`;
+	for( $effect in $effects ) {
+		menuItem -label $effect -command ("makeCollideEffect " + $effect );
+	}
+	setParent -menu ..;
+}
+
+global proc DynEffectsMenu( string $parent )
+{
+	setParent -menu $parent;
+	if( `menu -query -numberOfItems $parent` != 0 ) {
+		//
+		//	Menu is built already - just return
+		//
+		return;
+	}
+
+	menuItem -divider true -dividerLabel (uiRes("m_DynEffectsMenu.kEffectsAssets"));
+	
+	menuItem -rtc "nucleusGetEffectsAsset";
+
+	// Apply Effect submenu
+	//
+	string $applyEffectItem = `menuItem -label (uiRes("m_DynEffectsMenu.kApplyEffect")) 
+        -annotation (uiRes("m_DynEffectsMenu.kApplyEffectAnnot")) 
+		-subMenu true -tearOff true -allowOptionBoxes false nucleusApplyEffectItem`;
+	menuItem -edit 
+		-postMenuCommand ("DynCreateApplyEffectMenu " + $applyEffectItem)
+		nucleusApplyEffectItem;
+
+	setParent -menu ..;
+	
+	// Collide with Effect submenu
+	//
+	string $collideEffectItem = `menuItem -label (uiRes("m_DynEffectsMenu.kCollideEffect")) 
+        -annotation (uiRes("m_DynEffectsMenu.kCollideEffectAnnot")) 
+		-subMenu true -tearOff true -allowOptionBoxes false nucleusCollideEffectItem`;
+	menuItem -edit 
+		-postMenuCommand ("DynCreateCollideEffectMenu " + $collideEffectItem)
+		nucleusCollideEffectItem;
+	setParent -menu ..;
+	
+	menuItem -divider true -dividerLabel (uiRes("m_DynEffectsMenu.kEffectsCreate"));
+	
+	string $cmd = "Fire";
+	menuItem -rtc $cmd
+		-dragMenuCommand "performDynamicsClipEffects Fire 2"
+		fireEffectItem;
+		$cmd = "FireOptions";
+		menuItem -optionBox true 
+			-rtc $cmd
+			createFireDialogItem;
+			
+	$cmd = "Fireworks";
+	menuItem -rtc $cmd
+		-dragMenuCommand "performDynamicsClipEffects Fireworks 2"
+		fireworksEffectItem;
+		$cmd = "FireworksOptions";
+		menuItem -optionBox true //  -image "posEmitter.png"
+			-rtc $cmd
+			createFireworksDialogItem;
+
+	menuItem -label (uiRes("m_DynEffectsMenu.kEffectsFlow")) -sm true -to true;
+	
+		$cmd = "CurveFlow";
+		menuItem -rtc $cmd
+			-dragMenuCommand "performDynamicsClipEffects Flow 2"
+			curveFlowEffectItem;
+			$cmd = "CurveFlowOptions";
+			menuItem -optionBox true 
+				-rtc $cmd
+				createFlowDialogItem;
+
+		$cmd = "SurfaceFlow";
+		menuItem -rtc $cmd
+			-dragMenuCommand "performDynamicsClipEffects SurfaceFlow 2"
+			surfaceFlowEffectItem;
+			$cmd = "SurfaceFlowOptions";
+			menuItem -optionBox true
+				-rtc $cmd
+				createSurfaceFlowDialogItem;
+				
+		$cmd = "DeleteSurfaceFlow";
+		menuItem -rtc $cmd
+			-dragMenuCommand "performDynamicsClipEffects DeleteSurfaceFlow 2"
+			deleteSurfaceFlowEffectItem;
+			$cmd = "DeleteSurfaceFlowOptions";
+			menuItem -optionBox true
+				-rtc $cmd
+				deleteSurfaceFlowDialogItem;		
+	
+		setParent -m ..;	
+			
+	$cmd = "Lightning";
+	menuItem -rtc $cmd
+		-dragMenuCommand "performDynamicsClipEffects Lightning 2"
+		lightningEffectItem;
+		$cmd = "LightningOptions";
+		menuItem -optionBox true 
+			-rtc $cmd
+			createLightningDialogItem;			
+
+	$cmd = "Shatter";
+	menuItem -rtc $cmd
+		-dragMenuCommand "performDynamicsClipEffects Shatter 2"
+		shatterEffectItem;
+		$cmd = "ShatterOptions";
+		menuItem -optionBox true 
+			-rtc $cmd
+			createShatterDialogItem;
+			
+	$cmd = "Smoke";
+	menuItem -rtc $cmd
+		-dragMenuCommand "performDynamicsClipEffects Smoke 2"
+		smokeEffectItem;
+		$cmd = "SmokeOptions";
+		menuItem -optionBox true 
+			-rtc $cmd
+			createSmokeDialogItem;
+
+}

@@ -1,0 +1,194 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  April, 1997
+//
+//  Description:
+//      This script contains code to create and/or set the default
+//		values for the option vars for the Fluids menus/option
+//		boxes.
+//
+//  Input Arguments to dynCreateLayout():
+//		int $theCmd -- the command for which the layout is being created
+//		int $setFactorySettings -- whether to set the default values.
+//
+//
+
+global proc setFluidOptionVars( int $setFactorySettings )
+{
+}
+
+global proc setFluidSaveOptionVars( int $setFactorySettings )
+{
+}
+
+global proc setFluidClearOptionVars( int $setFactorySettings )
+{
+}
+
+global proc setFluidPBCOptionVars( int $setFactorySettings )
+{
+}
+
+global proc setFluidTruncatePBCOptionVars( int $setFactorySettings )
+{
+}
+
+global proc setFluidDeletePBCOptionVars( int $setFactorySettings )
+{
+}
+
+global proc setFluidToPolyOptionVars( int $setFactorySettings )
+{
+}
+
+global proc setExtendFluidOptionVars( int $setFactorySettings )
+{
+	optionVar -init $setFactorySettings -category "Dynamics.Fluids.Extend Fluid"
+		-iv "extendFluidRebuildIC" 1
+		-iv "extendFluidMinY" 0
+		-iv "extendFluidMaxY" 2
+		-iv "extendFluidMinX" 0
+		-iv "extendFluidMaxX" 0
+		-iv "extendFluidMinZ" 0
+		-iv "extendFluidMaxZ" 0
+		;
+}
+
+global proc setResampleFluidOptionVars( int $setFactorySettings )
+{
+	optionVar -init $setFactorySettings -category "Dynamics.Fluids.Edit Fluid Resolution"
+		-iv "resampleFluidRebuildIC" 1
+		-iv "resampleFluidY" 10
+		-iv "resampleFluidX" 10
+		-iv "resampleFluidZ" 10
+		;
+}
+
+global proc setCreate3DFluidOptionVars( int $setFactorySettings )
+{
+	optionVar -init $setFactorySettings -category "Dynamics.Fluids.3D Container"
+		-iv "create3DFluidYRes" 10
+		-iv "create3DFluidXRes" 10
+		-iv "create3DFluidZRes" 10
+		-fv "create3DFluidYSize" 10
+		-fv "create3DFluidXSize" 10
+		-fv "create3DFluidZSize" 10
+		;
+}
+
+global proc setCreate2DFluidOptionVars( int $setFactorySettings )
+{
+	optionVar -init $setFactorySettings -category "Dynamics.Fluids.2D Container"
+		-iv "create2DFluidYRes" 40
+		-iv "create2DFluidXRes" 40
+		-fv "create2DFluidYSize" 10
+		-fv "create2DFluidXSize" 10
+		-fv "create2DFluidZSize" 0.25
+		;
+}
+
+global proc setMakeCollideFluidOptionVars( int $setFactorySettings )
+{
+	optionVar -init $setFactorySettings -category "Dynamics.Fluids.Make Collide"
+		-iv "tessellationFactor" 200
+		;
+}
+
+global proc setFluidEmitterOptionVars (int $setFactorySettings)
+{
+	optionVar -init $setFactorySettings -category "Dynamics.Fluids.Emitter"
+		-sv flEmitterName ""
+		-iv flEmitterParenting 1
+		-sv flEmitterTypeOM (uiRes("m_dynCreateFluidLayout.kOmni"))
+		-fv flEmitterDensityRate 1.0
+		-fv flEmitterHeatRate 1.0
+		-fv flEmitterFuelRate 1.0
+		-fv flEmitterFluidDropoff 2.0
+		-iv flEmitterCycleOM 1
+		-iv flEmitterCycleInterval 1
+		-fv flEmitterMaxDistance 1.0
+		-fv flEmitterMinDistance 0.0
+		-iv flEmitterVolumeShapeOM 1
+		-fv flEmitterVolumeOffsetX 0.0
+		-fv flEmitterVolumeOffsetY 0.0
+		-fv flEmitterVolumeOffsetZ 0.0
+		-fv flEmitterVolumeSweep 360.0
+		-fv flEmitterTorusSectionRadius 0.5
+		;
+}
+
+global proc setFluidEmitFromObjectOptionVars( int $setFactorySettings )
+{
+	optionVar -init $setFactorySettings -category "Dynamics.Fluids.Emit from Object"
+		-sv flEmitObjectName ""
+		-sv flEmitObjectTypesOM (uiRes("m_dynCreateFluidLayout.kSurface"))
+		-fv flEmitObjectDensityRate 1.0
+		-fv flEmitObjectHeatRate 1.0
+		-fv flEmitObjectFuelRate 1.0
+		-fv flEmitObjectFluidDropoff 2.0
+		-iv flEmitObjectCycleOM 1
+		-iv flEmitObjectCycleInterval 1
+		-fv flEmitObjectMaxDistance 1.0
+		-fv flEmitObjectMinDistance 0.0
+		;
+}
+
+global proc set2DFluidAndEmitterOptionVars( int $setFactorySettings )
+{
+	setCreate2DFluidOptionVars( $setFactorySettings );
+
+	optionVar -init $setFactorySettings -category "Dynamics.Fluids.2D Emitter"
+		-iv create2DAddEmitter 1
+		-sv fl2DEmitterName ""
+		-iv fl2DEmitterParenting 1
+		-sv fl2DEmitterTypesOM (uiRes("m_dynCreateFluidLayout.kOmni"))
+		-fv fl2DEmitterDensityRate 1.0
+		-fv fl2DEmitterHeatRate 1.0
+		-fv fl2DEmitterFuelRate 1.0
+		-fv fl2DEmitterFluidDropoff 2.0
+		-iv fl2DEmitterCycleOM 1
+		-iv fl2DEmitterCycleInterval 1
+		-fv fl2DEmitterMaxDistance 1.0
+		-fv fl2DEmitterMinDistance 0.0
+		-iv fl2DEmitterVolumeShapeOM 1
+		-fv fl2DEmitterVolumeOffsetX 0.0
+		-fv fl2DEmitterVolumeOffsetY 0.0
+		-fv fl2DEmitterVolumeOffsetZ 0.0
+		-fv fl2DEmitterVolumeSweep 360.0
+		-fv fl2DEmitterTorusSectionRadius 0.5
+		;
+}
+
+global proc set3DFluidAndEmitterOptionVars( int $setFactorySettings )
+{
+	setCreate3DFluidOptionVars( $setFactorySettings );
+
+	optionVar -init $setFactorySettings -category "Dynamics.Fluids.3D Emitter"
+		-iv create3DAddEmitter 1
+		-sv fl3DEmitterName ""
+		-iv fl3DEmitterParenting 1
+		-sv fl3DEmitterTypesOM (uiRes("m_dynCreateFluidLayout.kOmni"))
+		-fv fl3DEmitterDensityRate 1.0
+		-fv fl3DEmitterHeatRate 1.0
+		-fv fl3DEmitterFuelRate 1.0
+		-fv fl3DEmitterFluidDropoff 2.0
+		-iv fl3DEmitterCycleOM 1
+		-iv fl3DEmitterCycleInterval 1
+		-fv fl3DEmitterMaxDistance 1.0
+		-fv fl3DEmitterMinDistance 0.0
+		-iv fl3DEmitterVolumeShapeOM 1
+		-fv fl3DEmitterVolumeOffsetX 0.0
+		-fv fl3DEmitterVolumeOffsetY 0.0
+		-fv fl3DEmitterVolumeOffsetZ 0.0
+		-fv fl3DEmitterVolumeSweep 360.0
+		-fv fl3DEmitterTorusSectionRadius 0.5
+		;
+}
+

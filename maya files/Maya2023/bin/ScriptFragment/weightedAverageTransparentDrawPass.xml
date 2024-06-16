@@ -1,0 +1,123 @@
+<!--
+Copyright 2016 Autodesk, Inc. All rights reserved. 
+
+Use of this software is subject to the terms of the Autodesk 
+license agreement provided at the time of installation or download, 
+or which otherwise accompanies this software in either electronic 
+or hard copy form.
+-->
+<fragment  uiName="weightedAverageTransparentDrawPass" name="weightedAverageTransparentDrawPass" type="sceneEffect" class="ScriptFragment" version="1.0" feature_level="30" >
+    <description>
+    <![CDATA[
+        Weighted Average Order-Independent Transparency.
+    ]]>
+    </description>
+    <properties>
+        <countedObject  name="transpList" />
+        <countedObject  name="unsupportedTranspList" />
+        <camera  name="camera" />
+        <target  name="final" />
+        <target  name="depth" />
+        <float4  name="viewport" />
+        <float4  name="scissorRect" />
+        <effectInstance  name="materialOverrideInstance" />
+        <bool  name="drawTransparentList" />
+        <bool  name="backfaceTransparency" />
+        <bool  name="highPrecisionTarget" />
+    </properties>
+    <values>
+        <float4 name="viewport" value="0.000000,0.000000,1.000000,1.000000"  />
+        <float4 name="scissorRect" value="0.000000,0.000000,0.990000,1.000000"  />
+        <bool name="drawTransparentList" value="true"  />
+        <bool name="backfaceTransparency" value="true"  />
+        <bool name="highPrecisionTarget" value="false"  />
+    </values>
+    <outputs>
+        <target  name="output" />
+    </outputs>
+    <parametershare>
+    </parametershare>
+    <implementation render="OGS" language="ScriptInterpreter" version="0.1" >
+        <scriptCommands>
+            <Declare name="transpRenderer" type="ScriptPipeRenderer" value="::StdDrawAgents" />
+            <SetRenderer name="transpRenderer" />
+            <SetDepthStencil value="@depth" />
+            <SetViewport value="@viewport" />
+            <SetCamera value="@camera" />
+            <SetEffect name="" />
+            <If value="@drawTransparentList" />
+                <Call name="SetPassSemantic" arg0="transparentGeometry" arg1="TRUE" />
+                <If value="@materialOverrideInstance" />
+                    <SetTarget index="0" value="@final" />
+                    <Call name="SetEffectInstance" arg0="@materialOverrideInstance" />
+                    <Call name="SetPassSemantic" arg0="materialOverride" arg1="TRUE" />
+                    <Render name="@transpList" />
+                    <Render name="@unsupportedTranspList" />
+                    <Call name="SetPassSemantic" arg0="materialOverride" arg1="FALSE" />
+                    <Call name="SetEffectInstance" arg0="" />
+                <Else />
+                    <If value="@highPrecisionTarget" />
+                        <AcquireTarget name="DepthComplexityCount" format="EFORMAT_R32_FLOAT" size="@final.size" relSize="1,1" msaa="@final.NumMSAASamples" />
+                    <Else />
+                        <AcquireTarget name="DepthComplexityCount" format="EFORMAT_R16G16B16A16_FLOAT" size="@final.size" relSize="1,1" msaa="@final.NumMSAASamples" />
+                    <EndIf />
+                    <AcquireTarget name="transpSum" format="EFORMAT_R16G16B16A16_FLOAT" size="@final" relSize="1,1" msaa="@final.NumMSAASamples" />
+                    <SetTarget index="0" value="transpSum" />
+                    <SetTarget index="1" value="DepthComplexityCount" />
+                    <Clear color="0.0,0.0,0.0,0.0" depth="" stencil="" />
+                    <If value="@backfaceTransparency" />
+                        <SetState name="RenderState" value="mayaTwoSidedWA" />
+                        <Call name="mayaTransparentCB" arg0="transparentWeightedAvg" />
+                        <Render name="@transpList" />
+                        <Call name="mayaTransparentCB" arg0="transparentOff" />
+                    <Else />
+                        <SetState name="RenderState" value="mayaOneSidedWA" />
+                        <Call name="mayaTransparentCB" arg0="transparentWeightedAvg" />
+                        <Render name="@transpList" />
+                        <Call name="mayaTransparentCB" arg0="transparentOff" />
+                    <EndIf />
+                    <SetFragmentEffect name="WeightedAverageFinalEffect" path="weightedAverageFinal" />
+                    <SetTexture effect="WeightedAverageFinalEffect" name="transparentSum" value="" texture="transpSum" />
+                    <SetTexture effect="WeightedAverageFinalEffect" name="depthComplexity" value="" texture="DepthComplexityCount" />
+                    <SetEffectParameter effect="WeightedAverageFinalEffect" name="transparentSumSampler" value="PointClamp" />
+                    <SetEffectParameter effect="WeightedAverageFinalEffect" name="depthComplexitySampler" value="PointClamp" />
+                    <SetTarget index="0" value="@final" />
+                    <SetTarget index="1" value="" />
+                    <SetViewport value="0.0, 0.0, 1.0, 1.0" />
+                    <SetState name="RenderState" value="mayaFinalWA" />
+                    <Render name="Quad" useDefault="false" />
+                    <SetState name="RenderState" value="mayaZLessEqNoBlendNoCull" />
+                    <RestoreOverrideEffect />
+                    <SetViewport value="@viewport" />
+                    <SetCamera value="@camera" />
+                    <Call name="sortRenderListByZ" arg0="@unsupportedTranspList" arg1="@camera" />
+                    <Declare name="transpState" type="stateSetter" />
+                    <SetStateCommand commandName="SetStateParameter" name="transpState" parameter="DepthEnable" value="true" />
+                    <SetStateCommand commandName="SetStateParameter" name="transpState" parameter="SetBlendEnable" value="true" />
+                    <SetStateCommand commandName="SetRenderState" name="transpState" parameter="BlendOver" />
+                    <SetStateCommand commandName="SetRenderState" name="transpState" parameter="ZLessNoW" />
+                    <SetStateCommand commandName="SetStateParameter" name="transpState" parameter="AlphaTestEnabled" value="false" />
+                    <SetStateCommand commandName="CommitNewState" name="transpState" />
+                    <Declare name="localState" type="stateSetter" />
+                    <SetStateCommand commandName="SetStateParameter" name="localState" parameter="CullMode" value="ECullFront" />
+                    <SetStateCommand commandName="CommitNewState" name="localState" />
+                    <Call name="SetPassSemantic" arg0="cullFront" arg1="TRUE" />
+                    <Render name="@unsupportedTranspList" />
+                    <Call name="SetPassSemantic" arg0="cullFront" arg1="FALSE" />
+                    <SetStateCommand commandName="RestorePreviousState" name="localState" />
+                    <Declare name="localState2" type="stateSetter" />
+                    <SetStateCommand commandName="SetStateParameter" name="localState2" parameter="CullMode" value="ECullBack" />
+                    <SetStateCommand commandName="CommitNewState" name="localState2" />
+                    <Call name="SetPassSemantic" arg0="cullBack" arg1="TRUE" />
+                    <Render name="@unsupportedTranspList" />
+                    <Call name="SetPassSemantic" arg0="cullBack" arg1="FALSE" />
+                    <SetStateCommand commandName="RestorePreviousState" name="localState2" />
+                    <SetStateCommand commandName="RestorePreviousState" name="transpState" />
+                <EndIf />
+                <Call name="SetPassSemantic" arg0="transparentGeometry" arg1="FALSE" />
+            <EndIf />
+            <SetParameter name="@output" value="@final" />
+        </scriptCommands>
+    </implementation>
+</fragment>
+

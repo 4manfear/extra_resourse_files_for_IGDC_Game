@@ -1,0 +1,29 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//  Description:
+//		This script is executed when the renderSetup plugin is unloaded
+//		to unload the render setup Outliner itemFilters.
+//
+global proc unloadRenderLayerFilters() {
+	global string $gDefaultNotInRenderLayersFilter;
+	global string $gDefaultInRenderLayersFilter;
+	global string $gDefaultNotInSelectedRenderLayersFilter;
+	global string $gDefaultInSelectedRenderLayersFilter;
+	global string $gRenderSetupPluginName;
+
+    // Early out if we're in batch mode.
+    if (`about -batch`) {
+        return;
+    }
+
+	deleteCustomOutlinerFilter($gDefaultNotInRenderLayersFilter);
+	deleteCustomOutlinerFilter($gDefaultInRenderLayersFilter);
+	deleteCustomOutlinerFilter($gDefaultNotInSelectedRenderLayersFilter);
+	deleteCustomOutlinerFilter($gDefaultInSelectedRenderLayersFilter);
+}

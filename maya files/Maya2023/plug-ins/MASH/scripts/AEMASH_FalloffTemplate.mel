@@ -1,0 +1,271 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc MASHcheckFalloffMode ( string $nodeName )
+{
+    if ( `objExists $nodeName` == 0 )
+            return;
+
+    string $nodeAttr = $nodeName + ".falloffShape";
+    int $value = `getAttr $nodeAttr`;
+
+    $nodeAttr = $nodeName + ".falloffEventType";
+    int $eventValue = `getAttr $nodeAttr`;
+
+    $nodeAttr = $nodeName + ".meshMode";
+    int $meshValue = `getAttr $nodeAttr`;
+    //sphere or cube
+    if ($value == 1 || $value == 2) {
+
+    } else {
+
+    }
+
+
+    //curve particles or mesh
+    if ($value == 4 || $value == 5 || $value == 6) {
+        editorTemplate  -dimControl $nodeName "searchRadius" false;
+    } else {
+        editorTemplate  -dimControl $nodeName "searchRadius" true;
+    }
+
+    //mesh
+    if ($value == 6) {
+        editorTemplate  -dimControl $nodeName "excludeInterior" false;
+    } else {
+        editorTemplate  -dimControl $nodeName "excludeInterior" true;
+    }
+
+    //add mode
+    if ($eventValue == 2 ) {
+        editorTemplate  -dimControl $nodeName "fade" false;
+    } else {
+        editorTemplate  -dimControl $nodeName "fade" true;
+    }
+
+}
+
+
+global proc AEfalloffInputReplace ( string $attributeUIName, int $connectButton, string $input )
+{
+    setUITemplate -pst attributeEditorTemplate;
+
+    string $connections[] = `listConnections -d true -s true -sh true $input`;
+    int $numInputs = size( $connections );
+
+    string $textName;
+    int $index;
+
+    string $buffer[];
+    tokenize($input, ".", $buffer);
+    string $nodeName = $buffer[0];
+    string $att  = $buffer[1];
+
+    setParent ($att + "Column");
+    $layoutName=`setParent -q`;
+    int $oldCount = `columnLayout -q -nch $layoutName`;
+
+        if ( `rowLayout -ex ("row")` )
+        {
+            // replace existing one
+            $textName = $attributeUIName;
+            text -e -l $textName inputName;
+            textField -e  -tx $connections[0]
+                ($att);
+            if ($connections[0] == ""){
+                symbolButton -e -en 0 goToConnectedInput;
+                if ($connectButton) {
+                    symbolButton -e -en 1  -command ("AEconnectFalloffInputNew(\""+$input+"\")") aeConnectInput;
+                }
+            } else {
+                symbolButton -e -en 1
+                    -c ("showEditor " + $connections[0] )
+                    goToConnectedInput;
+                if ($connectButton)   {
+                    symbolButton -e -en 0
+                    aeConnectInput;
+                }
+            }
+        }
+
+    setParent ..;
+    setUITemplate -ppt;
+
+}
+
+
+
+global proc AEfalloffInputNew ( string $attributeUIName, int $connectButton, string $input )
+{
+    setUITemplate -pst attributeEditorTemplate;
+
+    string $buffer[];
+    tokenize($input, ".", $buffer);
+    string $nodeName = $buffer[0];
+    string $att  = $buffer[1];
+
+    string $connections[] = `listConnections -d true -s true -sh true $input`;
+    int $numInputs = size( $connections );
+    string $textName;
+    int $index;
+
+    columnLayout ($att + "Column");
+    $layoutName = `setParent -q`;
+
+    rowLayout -nc 4 ("row");
+    $textName = $attributeUIName;
+    text -width 100 -l $textName inputName;
+    textField  -ed 0
+        -tx $connections[0]
+        ($att);
+    if ($connections[0] == ""){
+        symbolButton -i "inArrow.png" -en 0
+            goToConnectedInput;
+        if ($connectButton) {
+            symbolButton -i "addBookmark.png" -en 1  -command ("AEconnectFalloffInputNew(\""+$input+"\")")
+                aeConnectInput;
+        }
+    } else {
+        symbolButton -i "inArrow.png"
+            -c ("showEditor " + $connections[0] )
+            goToConnectedInput;
+        popupMenu -b 3 goToConnectedMenu;
+            menuItem
+                -l $connections[0]
+                -c ("showEditor "+$connections[0])
+                goToConnectedMenuItem;
+        setParent -m ..;
+        if ($connectButton) {
+            symbolButton -i "addBookmark.png" -en 0
+                aeConnectInput;
+        }
+        }
+        setParent ..;
+
+    setParent ..;
+
+    setUITemplate -ppt;
+}
+
+global proc AEconnectFalloffInputNew (string $input )
+{
+    string $buffer[];
+    tokenize($input, ".", $buffer);
+    string $nodeName = $buffer[0];
+    string $att  = $buffer[1];
+    string $sel[] = `ls -sl`;
+
+    string $id = `nodeType $sel[0]`;
+    string $sourceNode = $sel[0];
+
+    if ($id == "transform") {
+        string $shape[] = `listRelatives -s $sel[0]`;
+        $id = `nodeType $shape[0]`;
+        if ($id == "mesh"  || $id == "nParticle" || $id == "nurbsCurve") {
+            $sourceNode = $shape[0];
+        }
+    }
+
+    if ($id == "mesh" ) {
+        connectAttr -force ($sourceNode+".worldMesh[0]") $input;
+        MASHinViewMessage("Shape connected.", "Info");
+        updateAE $nodeName;
+        setAttr ($nodeName+".falloffShape") 6;
+    } else if ( $id == "nParticle") {
+        connectAttr -force ($sourceNode+".position") $input;
+        MASHinViewMessage("Shape connected.", "Info");
+        updateAE $nodeName;
+        setAttr ($nodeName+".falloffShape") 5;
+    } else if ($id == "nurbsCurve") {
+        connectAttr -force ($sourceNode+".worldSpace[0]") $input;
+        MASHinViewMessage("Shape connected.", "Info");
+        updateAE $nodeName;
+        setAttr ($nodeName+".falloffShape") 4;
+    } else {
+        MASHinViewMessage("Please select an appropriate shape.", "Warning");
+    }
+}
+
+
+global proc AEMASH_FalloffTemplate( string $nodeName )
+{
+
+    editorTemplate  -beginScrollLayout;
+    python("import MASH.nodeHeaders; MASH.nodeHeaders.addHeader('" + $nodeName + "', 'Falloff', False)")
+    editorTemplate -endLayout;
+
+    editorTemplate  -beginLayout (getPluginResource("MASH", "kFalloffNode")) -collapse 0;
+
+    editorTemplate  -label (getPluginResource("MASH", "kFalloffInvert")) -addControl "invertFalloff";
+    editorTemplate  -addSeparator;
+    editorTemplate  -label (getPluginResource("MASH", "kShape")) -addControl "falloffShape" "MASHcheckFalloffMode";
+    editorTemplate  -label (getPluginResource("MASH", "kMode")) -addControl "falloffEventType" "MASHcheckFalloffMode";
+    editorTemplate  -suppress "radius";
+    editorTemplate  -label (getPluginResource("MASH", "kInnerZone")) -addControl "innerRadius";
+    editorTemplate  -addSeparator;
+    editorTemplate  -label (getPluginResource("MASH", "kDispColour")) -addControl "colour";
+    editorTemplate  -label (getPluginResource("MASH", "kAddFade")) -addControl "fade";
+    AEaddRampControl ($nodeName+".falloffRamp");
+    editorTemplate  -beginLayout (getPluginResource("MASH", "kMeshMode")) -collapse 1;
+    editorTemplate  -label (getPluginResource("MASH", "kCustomShapeRad")) -addControl "searchRadius";
+    editorTemplate  -label (getPluginResource("MASH", "kExcludeInterior")) -addControl "excludeInterior";
+    editorTemplate  -label (getPluginResource("MASH", "kInCompType")) -addControl "componentReadType";
+    editorTemplate  -label (getPluginResource("MASH", "kVertColour")) -addControl "vertexColour";
+    editorTemplate  -endLayout;
+
+    string $falloffIn = "Positions from";
+    string $falloffOut = "Strength to";
+    string $shapeIn = "Shape in";
+
+    editorTemplate  -beginLayout (getPluginResource("MASH", "kConnections")) -collapse 1;
+    editorTemplate -callCustom "MASHfalloffSingleInputBuildQt" "MASHfalloffSingleInputUpdateQt" "";
+    editorTemplate -callCustom ("AEfalloffInputNew \""+$falloffIn+"\" 0")
+                ("AEfalloffInputReplace \""+$falloffIn+"\" 0")
+                "falloffIn";
+    editorTemplate -callCustom ("AEfalloffInputNew \""+$falloffOut+"\" 0")
+                ("AEfalloffInputReplace \""+$falloffOut+"\" 0")
+                "falloffOut";
+    editorTemplate -endLayout;
+    editorTemplate -endLayout;
+
+    editorTemplate -suppress "componentTags";
+    editorTemplate -suppress "componentTagName";
+    editorTemplate -suppress "componentTagContents";
+
+    AEdependNodeTemplate $nodeName;
+    editorTemplate -addExtraControls;
+    editorTemplate -endScrollLayout;
+
+}
+
+
+global proc MASHfalloffSingleInputBuildQt(string $nodeName)
+{
+    string $buffer[];
+    tokenize($nodeName, ".", $buffer);
+    $nodeName = $buffer[0];
+
+    python("import MASHsingleInputQtWidget");
+    rowLayout -numberOfColumns 2 -columnWidth2 139 250 falloffDragDropLayout;
+    text -w 105 -h 20 -vis 1
+    -label (getPluginResource("MASH", "kShapeIn"))
+    -align "right" -font "plainLabelFont" ;
+    //get python to create the widget, include the desired nodeType as an arguement
+    python("MASHsingleInputQtWidget.build_qt_widget('falloffDragDropLayout', '" + $nodeName + "', 'mesh,nParticle,nurbsCurve', 'shapeIn', 'worldMesh[0],position,worldSpace[0]', 'FalloffShapeIn')");
+    setParent..;
+
+}
+
+global proc MASHfalloffSingleInputUpdateQt(string $nodeName )
+{
+    string $buffer[];
+    tokenize($nodeName, ".", $buffer);
+    $nodeName = $buffer[0];
+    python("import MASHsingleInputQtWidget");
+
+    python("MASHsingleInputQtWidget.update_qt_widget('falloffDragDropLayout', '" + $nodeName + "', 'mesh,nParticle,nurbsCurve', 'shapeIn', 'worldMesh[0],position,worldSpace[0]', 'FalloffShapeIn')");
+}

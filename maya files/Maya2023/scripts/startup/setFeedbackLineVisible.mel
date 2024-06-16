@@ -1,0 +1,25 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//	Description:
+//		Set the visibility of the feedback line.
+//
+//	Arguments:
+//		$visible - Visibility for the feedback line.
+//
+//	Globals:
+//		gFeedbackLineForm - The control layout containing the UI content
+//			of the Feedback line.  Note that this layout is assumed to
+//			be a formLayout.
+//
+//		gFeedbackLineVisible - Current visibility of the Feedback line.
+//			This procedure updates this global variable. 
+//
+global proc setFeedbackLineVisible(int $visible)
+{
+	// The feedback line was removed from Maya 3.0
+}

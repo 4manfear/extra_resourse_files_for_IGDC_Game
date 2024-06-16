@@ -1,0 +1,36 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//
+//
+//  Creation Date:  November 17/2015
+//
+// Description:
+//
+//		Returns an array of all the render setup layer members.
+//
+
+global proc string[] renderSetupLayerMembers(int $index)
+{
+	string $result[], $renderLayers[] ;
+
+	// get render layers based on the index, 
+	// if the index is 2(Inside Selected) or 3(Outside Selected), then we should get selected layers/collections instead of all of them. 
+	if($index == 2 || $index == 3)
+		$renderLayers = `renderSetupSelect -q -renderLayers` ;
+	else
+		$renderLayers = `renderSetup -q -renderLayers` ;
+
+	if(`size($renderLayers)`) 
+	{
+		string $cmds = "renderLayerMembers " + " -rl " + stringArrayToString($renderLayers, " ") ;
+		$result = eval($cmds);
+	}
+	return $result ;
+}

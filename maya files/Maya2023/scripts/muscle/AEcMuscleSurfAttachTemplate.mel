@@ -1,0 +1,37 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc AEcMuscleSurfAttachTemplate(string $nodeName)
+{
+
+    editorTemplate -beginScrollLayout;
+	editorTemplate -beginLayout (uiRes("m_AEcMuscleSurfAttachTemplate.kMuscleSurfAttachAttributes")) -collapse 0;
+	    editorTemplate -addControl "uLoc";
+	    editorTemplate -addControl "vLoc";
+	    editorTemplate -addSeparator ;
+	    editorTemplate -addControl "edgeIdx1";
+	    editorTemplate -addControl "edgeIdx2";
+	    editorTemplate -addControl "fixPolyFlip";
+	    editorTemplate -addControl "size";
+	    editorTemplate -addControl "lockSlidingWt";
+	editorTemplate -endLayout;
+
+	// Maya's
+    editorTemplate -suppress "localPosition";
+
+	// And these...
+    editorTemplate -suppress "inputData";
+    editorTemplate -suppress "outputData";
+
+
+    AElocatorInclude $nodeName ;
+
+    editorTemplate -addExtraControls;
+    editorTemplate -endScrollLayout;
+
+}
+

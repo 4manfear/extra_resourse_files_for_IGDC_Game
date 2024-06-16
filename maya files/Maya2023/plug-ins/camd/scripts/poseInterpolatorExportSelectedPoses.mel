@@ -1,0 +1,39 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+  
+global proc int poseInterpolatorExportSelectedPoses()
+{
+	// get the selected poses 
+	string $tplPoses[] = getPoseEditorTreeviewSelection(2);
+	string $tpls[];
+	string $poses[]; 
+	for ($item in $tplPoses)
+	{
+		string $buffer[];
+		tokenize( $item, ".", $buffer );
+		if (size($buffer) != 2)
+			continue;
+		
+		$tpls[size($tpls)] = $buffer[0];
+		$poses[size($poses)] = poseInterpolatorPoseName($buffer[0], $buffer[1]);
+	}
+	
+	// get the file path 
+	string $shpFileFilter = getPluginResource("poseInterpolator", "kPose") +  " (*.pose) (*.pose)";
+	string $title = getPluginResource("poseInterpolator", "kExportPoses");
+	string $result[] = `fileDialog2 -fileFilter $shpFileFilter -caption $title`;
+	if (size($result) == 0)
+	{
+		// for example Cancel button is clicked.
+		return -1;
+	}
+	string $filePath = $result[0];	
+	
+	int $shape = 1;
+	return poseInterpolatorExportPoses($filePath, $tpls, $poses, $shape); 
+} 

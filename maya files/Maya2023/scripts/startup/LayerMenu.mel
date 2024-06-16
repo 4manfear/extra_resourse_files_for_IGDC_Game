@@ -1,0 +1,31 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+// Creation Date:  28 June 1996
+//
+//
+//  Procedure Name:
+//      LayerMenu
+//
+//  Description:
+//		This procedure creates a Layer menu in the
+//		main menubar.  It controls things like
+//		creating/deleting/hiding/showing of layers.
+//
+//  Input Arguments:
+//      Parent to attach the menu to.
+//
+//  Return Value:
+//      None.
+//
+	
+global proc LayerMenu( string $parent )
+{
+	obsoleteProc("LayerMenu", "LayerMenu.mel");
+}

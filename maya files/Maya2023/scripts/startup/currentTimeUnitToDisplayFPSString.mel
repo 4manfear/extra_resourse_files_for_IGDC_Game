@@ -1,0 +1,123 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+// Function returning a formatted string to display the current time 
+// in FPS unit. This function returns an empty string if the current unit 
+// is not a FPS (seconds, minutes...).
+//
+global proc string currentTimeUnitToDisplayFPSString ()
+{
+	string $unit = `currentUnit -q -time`;
+	return internalTimeUnitStringToDisplayFPSString($unit);
+}
+
+//
+// Function returning a formatted string to display the specified 
+// internal MEL time unit string in FPS unit. 
+// This function returns an empty string if the current unit 
+// is not a FPS (seconds, minutes...).
+//
+global proc string internalTimeUnitStringToDisplayFPSString (string $unit)
+{
+	if( $unit == "game" ) {
+		return "15 fps";
+	} else if( $unit == "film" ) {
+		return "24 fps";
+	} else if( $unit == "pal" ) {
+		return "25 fps";
+	} else if( $unit == "ntsc" ) {
+		return "30 fps";
+	} else if( $unit == "show" ) {
+		return "48 fps";
+	} else if( $unit == "palf" ) {
+		return "50 fps";
+	} else if( $unit == "ntscf" ) {
+		return "60 fps";
+	} else if( $unit == "2fps" ) {
+		return "2 fps";
+	} else if( $unit == "3fps" ) {
+		return "3 fps";
+	} else if( $unit == "4fps" ) {
+		return "4 fps";
+	} else if( $unit == "5fps" ) {
+		return "5 fps";
+	} else if( $unit == "6fps" ) {
+		return "6 fps";
+	} else if( $unit == "8fps" ) {
+		return "8 fps";
+	} else if( $unit == "10fps" ) {
+		return "10 fps";
+	} else if( $unit == "12fps" ) {
+		return "12 fps";
+	} else if( $unit == "16fps" ) {
+		return "16 fps";
+	} else if( $unit == "20fps" ) {
+		return "20 fps";
+	} else if( $unit == "23.976fps" ) {
+		return "23.976 fps";
+	} else if( $unit == "29.97fps" ) {
+		return "29.97 fps";
+	} else if( $unit == "29.97df" ) {
+		return "29.97 df";
+	} else if( $unit == "40fps" ) {
+		return "40 fps";
+	} else if( $unit == "47.952fps" ) {
+		return "47.952 fps";
+	} else if( $unit == "59.94fps" ) {
+		return "59.94 fps";
+	} else if( $unit == "75fps" ) {
+		return "75 fps";
+	} else if( $unit == "80fps" ) {
+		return "80 fps";
+	} else if( $unit == "90fps" ) {
+		return "90 fps";
+	} else if( $unit == "100fps" ) {
+		return "100 fps";
+	} else if( $unit == "120fps" ) {
+		return "120 fps";
+	} else if( $unit == "125fps" ) {
+		return "125 fps";
+	} else if( $unit == "150fps" ) {
+		return "150 fps";
+	} else if( $unit == "200fps" ) {
+		return "200 fps";
+	} else if( $unit == "240fps" ) {
+		return "240 fps";
+	} else if( $unit == "250fps" ) {
+		return "250 fps";
+	} else if( $unit == "300fps" ) {
+		return "300 fps";
+	} else if( $unit == "375fps" ) {
+		return "375 fps";
+	} else if( $unit == "400fps" ) {
+		return "400 fps";
+	} else if( $unit == "500fps" ) {
+		return "500 fps";
+	} else if( $unit == "600fps" ) {
+		return "600 fps";
+	} else if( $unit == "750fps" ) {
+		return "750 fps";
+	} else if( $unit == "1200fps" ) {
+		return "1200 fps";
+	} else if( $unit == "1500fps" ) {
+		return "1500 fps";
+	} else if( $unit == "2000fps" ) {
+		return "2000 fps";
+	} else if( $unit == "3000fps" ) {
+		return "3000 fps";
+	} else if( $unit == "6000fps" ) {
+		return "6000 fps";
+	} else if( $unit == "44100fps" ) {
+		return "44100 fps";
+	} else if( $unit == "48000fps" ) {
+		return "48000 fps";
+	}
+
+	return "";
+}
+

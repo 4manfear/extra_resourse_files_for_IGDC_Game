@@ -1,0 +1,40 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//  Procedure Name:
+//      connectToExistingWindow
+//
+//  Description:
+//		Procedure to popup a modal prompt dialog that requests the user
+//		type in the name of an existing node or node.attribute that
+//		should be the source end of a connection.
+//
+//  Input Arguments:
+//
+//  Return Value:
+//      The string that represents the text the user typed.  Could
+//		be an empty string.
+//
+
+
+global proc string connectToExistingWindow() {
+	string $cancel = (uiRes("m_connectToExistingWindow.kCancel"));
+	string $dialogName = 
+			`promptDialog 	-title (uiRes("m_connectToExistingWindow.kConnecttoExisting"))
+							-message (uiRes("m_connectToExistingWindow.kAttributeNodeMessage"))
+							-dismissString ""
+							-button (uiRes("m_connectToExistingWindow.kOk"))
+							-button $cancel`;
+
+	string $retVal = `promptDialog -q $dialogName`;
+
+	if ($retVal == $cancel)
+		$retVal = "";
+
+	return $retVal;
+};

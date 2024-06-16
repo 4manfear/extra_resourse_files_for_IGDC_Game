@@ -1,0 +1,83 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+// Global Maya compatibility file, version 6.0ff10
+////////////////////////////////////////////////////////////////////////////
+//
+// This version becomes effective as of the Jan 20, 2004 release.
+//
+////////////////////////////////////////////////////////////////////////////
+
+attrCompatibility -v "6.0ff10";
+
+attrCompatibility -removeAttr directionalLight physical ;
+attrCompatibility -removeAttr directionalLight phy ;
+
+attrCompatibility -removeAttr pointLight physical ;
+attrCompatibility -removeAttr pointLight phy ;
+
+attrCompatibility -removeAttr spotLight physical ;
+attrCompatibility -removeAttr spotLight phy ;
+
+attrCompatibility -removeAttr envFog mentalRayControls ;
+attrCompatibility -removeAttr envFog mrc ;
+
+attrCompatibility -removeAttr envFog miScatterPhotons ;
+attrCompatibility -removeAttr envFog misp ;
+
+attrCompatibility -removeAttr envFog miColor ;
+attrCompatibility -removeAttr envFog mic ;
+
+attrCompatibility -removeAttr envFog miColorR ;
+attrCompatibility -removeAttr envFog micr ;
+
+attrCompatibility -removeAttr envFog miColorG ;
+attrCompatibility -removeAttr envFog micg ;
+
+attrCompatibility -removeAttr envFog miColorB ;
+attrCompatibility -removeAttr envFog micb ;
+
+attrCompatibility -removeAttr envFog miColorBasedTransparency ;
+attrCompatibility -removeAttr envFog mict ;
+
+attrCompatibility -removeAttr envFog miSaturationDistance ;
+attrCompatibility -removeAttr envFog misa ;
+
+attrCompatibility -removeAttr envFog miUseLayer ;
+attrCompatibility -removeAttr envFog miul ;
+
+attrCompatibility -removeAttr envFog miLayer ;
+attrCompatibility -removeAttr envFog mil ;
+
+attrCompatibility -removeAttr envFog miForwardScatter ;
+attrCompatibility -removeAttr envFog mifs ;
+
+attrCompatibility -removeAttr envFog miBackwardScatter ;
+attrCompatibility -removeAttr envFog mibs ;
+
+attrCompatibility -removeAttr envFog miScatterDirection ;
+attrCompatibility -removeAttr envFog misc ;
+
+attrCompatibility -removeAttr envFog miMinimumReflections ;
+attrCompatibility -removeAttr envFog mirl ;
+
+attrCompatibility -removeAttr envFog miMinimumRefractions ;
+attrCompatibility -removeAttr envFog mirr ;
+
+attrCompatibility -removeAttr envFog miCausticPhotonsOnly ;
+attrCompatibility -removeAttr envFog mico ;
+
+attrCompatibility -removeAttr envFog miExitingPhotonsOnly ;
+attrCompatibility -removeAttr envFog mieo ;
+
+attrCompatibility -removeAttr envFog miVolumeSamples ;
+attrCompatibility -removeAttr envFog mivs ;
+
+attrCompatibility -removeAttr envFog miDepthJitter ;
+attrCompatibility -removeAttr envFog midj ;
+

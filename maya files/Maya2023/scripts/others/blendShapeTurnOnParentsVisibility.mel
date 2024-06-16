@@ -1,0 +1,103 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc int blendShapeTurnOnParentsVisibility(string $visibilityAttrs[])
+//
+//  Description:
+//		Check the parent visibility state of all the specified visibility
+//		attributes. If it's off, loop all its parents and turn them on.
+//
+//  Return Value:
+//		The number of parents which are originally off.
+//
+{
+
+	int $count = 0;
+
+	for ($attr in $visibilityAttrs)
+	{
+		$count += turnOnParentsForSingleAttr($attr);
+	}
+
+	return $count;
+}
+
+global proc int turnOnParentsForSingleAttr(string $attr)
+{
+	int $count = 0;
+
+	if (endsWith($attr, "inbetweenVisibility"))
+		return $count;
+
+	string $parentVisibility;
+	if (endsWith($attr, "directoryVisibility"))
+		$parentVisibility = substituteAllString($attr, "].directoryVisibility", "].directoryParentVisibility");
+	else
+		$parentVisibility = substituteAllString($attr, ".targetVisibility[", ".targetParentVisibility[");
+
+	int $attrParentVisible = `getAttr $parentVisibility`;
+	if ($attrParentVisible)
+		return $count;
+
+	string $visibilityAttr;
+	string $buffer[];
+	tokenize($attr, ".", $buffer);
+	string $bsdName = $buffer[0];
+	if (endsWith($bsdName, "shapeEditorManager"))
+	{
+		// blendShape group
+		string $parentIndexAttr = substituteAllString($attr, "].directoryVisibility", "].parentIndex");
+		int $parentIndex = `getAttr $parentIndexAttr`;
+		if ($parentIndex >= 0)
+			$visibilityAttr = $bsdName + ".blendShapeDirectory[" + $parentIndex + "].directoryVisibility";
+		if ($parentIndex < 0 || $visibilityAttr == $attr)
+			return $count;
+	}
+	else
+	{
+		if (endsWith($attr, "directoryVisibility"))
+		{
+			string $parentIndexAttr = substituteAllString($attr, "].directoryVisibility", "].parentIndex");
+			int $parentIndex = `getAttr $parentIndexAttr`;
+
+			// target group
+			if ($parentIndex >= 0)
+				$visibilityAttr = $bsdName + ".targetDirectory[" + $parentIndex + "].directoryVisibility";
+
+			// blendShape
+			if ($parentIndex < 0 || $visibilityAttr == $attr)
+			{
+				$parentIndexAttr = $bsdName + ".midLayerParent";
+				$parentIndex = `getAttr $parentIndexAttr`;
+				string $manager[] = `listConnections -s 0 -d 1 $parentIndexAttr`;
+
+				if ($parentIndex < 0)
+					$parentIndex = 0;
+				$visibilityAttr = $manager[0] + ".blendShapeDirectory[" + $parentIndex + "].directoryVisibility";
+			}
+		}
+		else
+		{
+			// target
+			string $parentIndexAttr = substituteAllString($attr, ".targetVisibility[", ".parentDirectory[");
+			int $parentIndex = `getAttr $parentIndexAttr`;
+			if ($parentIndex < 0)
+				$parentIndex = 0;
+			$visibilityAttr = $bsdName + ".targetDirectory[" + $parentIndex + "].directoryVisibility";
+		}
+	}
+
+	if (!`getAttr $visibilityAttr`)
+	{
+		setAttr $visibilityAttr 1;
+		$count++;
+	}
+	$count += turnOnParentsForSingleAttr($visibilityAttr);
+
+	return $count;
+}
+

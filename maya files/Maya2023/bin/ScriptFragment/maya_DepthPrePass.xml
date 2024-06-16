@@ -1,0 +1,85 @@
+<!--
+Copyright 2016 Autodesk, Inc. All rights reserved. 
+
+Use of this software is subject to the terms of the Autodesk 
+license agreement provided at the time of installation or download, 
+or which otherwise accompanies this software in either electronic 
+or hard copy form.
+-->
+<fragment  uiName="maya_DepthPrePass" name="maya_DepthPrePass" type="sceneEffect" class="ScriptFragment" version="1.0" feature_level="30" >
+    <description>
+<![CDATA[
+depth pre-pass: make depthStencil & linear, readable opaque depth texture]]>
+</description>
+    <properties>
+        <world  name="preOpaqueUIList" />
+        <countedObject  name="alphaCutList" />
+        <countedObject  name="holdOutList" />
+        <countedObject  name="imagePlaneDepthPrepassList" />
+        <countedObject  name="opaqueList" />
+        <countedObject  name="opaqueUIList" />
+        <countedObject  name="transparentBitmapsList" />
+        <camera  name="camera" />
+        <float4  name="viewport" />
+        <target  name="finalDesc" />
+        <bool  name="useZPrePass" />
+        <target  name="depth" />
+        <target  name="prevOpaqueDepthTexture" />   <!-- If not NULL, reuse this target -->
+    </properties>
+    <values>
+        <float4 name="viewport" value="0.000000,0.000000,1.000000,1.000000"  />
+        <bool name="useZPrePass" value="true"  />
+    </values>
+    <outputs>
+        <target  name="depthOut" />
+        <target  name="opaquedepthtexture" />
+    </outputs>
+    <parametershare>
+    </parametershare>
+    <implementation render="OGS" language="ScriptInterpreter" version="0.1" >
+        <scriptCommands>
+            <AssignTarget destName="localZ" srcName="@prevOpaqueDepthTexture" format="EFORMAT_R32_FLOAT" size="@finalDesc.size" relSize="1.0,1.0" msaa="0" />
+            <SetDepthStencil value="@depth" />
+            <SetTarget index="0" value="localZ" />
+            <IfNot value="@prevOpaqueDepthTexture" />
+                <!-- Only clear the render target on the first pass in the frame -->
+                <Clear color="10000000.0,0.0,0.0,0.0" />
+            <EndIf />
+
+            <Declare name="ZPrePassRenderer" type="ScriptPipeRenderer" value="::StdMayaPreUIDrawAgents" />
+            <SetRenderer name="ZPrePassRenderer" />
+            <SetCamera value="@camera" />
+            <SetViewport value="@viewport" />
+            <SetRenderParameter renderer="ZPrePassRenderer" name="EnableComputeMissingChannel" value="false" />
+            <Call name="SetPassSemantic" arg0="depthPass" arg1="TRUE" />
+            
+            <Declare name="localState" type="stateSetter" />
+            <SetStateCommand commandName="SetStateParameter" name="localState" parameter="SetBlendEnable" value="false" index="0" />
+            <SetStateCommand commandName="SetStateParameter" name="localState" parameter="SetWriteMask" value="Red" />
+            <SetStateCommand commandName="CommitNewState" name="localState" />
+
+            <SetFragmentEffect name="depthEffect" path="mayaLinearDepthSurface" />
+            <Render name="@opaqueList" />
+            <Render name="@holdOutList" />
+            <Render name="@preOpaqueUIList" />
+            <RestoreOverrideEffect />
+
+            <Call name="mayaTransparentCB" arg0="alphaCutDepthPrepass" />
+            <Render name="@alphaCutList" />
+            <Call name="mayaTransparentCB" arg0="transparentOff" />
+
+            <Render name="@imagePlaneDepthPrepassList" />
+
+            <Render name="@opaqueUIList" />
+            <Render name="@transparentBitmapsList" />
+            <SetStateCommand commandName="RestorePreviousState" name="localState" />
+            <Call name="SetPassSemantic" arg0="depthPass" arg1="FALSE" />
+            <SetParameter name="@opaquedepthtexture" value="localZ" />
+            <SetParameter name="@depthOut" value="@depth" />
+            <IfNot value="@useZPrePass" />
+                <Clear color="" depth="1.0" stencil="0" />
+            <EndIf />
+        </scriptCommands>
+    </implementation>
+</fragment>
+

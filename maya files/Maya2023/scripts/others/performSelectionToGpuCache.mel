@@ -1,0 +1,153 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+proc string optionVarName(string $input)
+{
+    return "selectionToGPUCache" + $input + "Option";
+}
+
+proc string uiItemName(string $input)
+{
+    return "selectionToGPUCache" + $input + "UI";
+}
+
+proc resetOptions(int $force)
+{
+    optionVar -init $force -category "Cache.GPU Cache"
+        -iv (optionVarName("saveEvery")) 1
+        ;
+
+    if ($force) {
+        gpuCacheOptions("reset", "CONVERT");
+        cacheTimeRangeOptions("reset", "CONVERT");
+    }
+    else {
+        gpuCacheOptions("initialize", "CONVERT");
+        cacheTimeRangeOptions("initialize", "CONVERT");
+    }
+}
+
+proc saveOptions()
+{
+    gpuCacheOptions("save", "CONVERT");
+    cacheTimeRangeOptions("save", "CONVERT");
+
+    optionVar -intValue
+        (optionVarName("saveEvery"))
+        `intFieldGrp -q -value1 (uiItemName("saveEvery"))`;
+}
+
+proc loadOptions()
+{
+    gpuCacheOptions("load", "CONVERT");
+    cacheTimeRangeOptions("load", "CONVERT");
+
+    intFieldGrp -e
+        -value1 `optionVar -q (optionVarName("saveEvery"))`
+        (uiItemName("saveEvery"));
+}
+
+proc displayOptions()
+{
+    setParent (getOptionBox());
+
+    setUITemplate -pushTemplate DefaultTemplate;
+    scrollLayout;
+    columnLayout -adjustableColumn 1;
+
+    gpuCacheOptions("createUI", "CONVERT");
+    cacheTimeRangeOptions("createUI", "CONVERT");
+
+    intFieldGrp
+        -label (uiRes("m_performSelectionToGpuCache.kSaveEvery"))
+        -extraLabel (uiRes("m_performSelectionToGpuCache.kEvaluation"))
+        -nf 1
+        (uiItemName("saveEvery"));
+
+    setParent ..;
+    setParent ..;
+    setUITemplate -popTemplate;
+
+    setOptionBoxTitle (uiRes("m_performSelectionToGpuCache.kOptionBoxTitle"));
+
+    button -e
+        -label (uiRes("m_performSelectionToGpuCache.kCreate"))
+        -command ("selectionToGPUCacheCreate; hideOptionBox")
+        (getOptionBoxApplyAndCloseBtn());
+    button -e
+        -command ("selectionToGPUCacheCreate")
+        (getOptionBoxApplyBtn());
+    button -e
+        -command ("selectionToGPUCacheSave")
+        (getOptionBoxSaveBtn());
+    button -e
+        -command ("selectionToGPUCacheReset")
+        (getOptionBoxResetBtn());
+
+    loadOptions();
+
+    showOptionBox();
+
+}
+
+proc string assembleCommand()
+{
+    string $command = gpuCacheOptions("assembleCommand", "CONVERT");
+
+    // Time range options
+    float $timeRange[] = cacheTimeRangeOptions("queryTimeRange", "CONVERT");
+    float $evaluationRate[] = cacheTimeRangeOptions("queryEvaluationRate", "CONVERT");
+    $command = $command + " -startTime " + $timeRange[0] + " ";
+    $command = $command + " -endTime " + $timeRange[1] + " ";
+    $command = $command + " -simulationRate " + $evaluationRate[0] + " ";
+
+    int $saveEvery =
+        `optionVar -q (optionVarName("saveEvery"))`;
+    $command = $command + " -sampleMultiplier " + $saveEvery + " ";
+
+    return $command;
+}
+
+global proc selectionToGPUCacheCreate()
+{
+    saveOptions();
+    eval(assembleCommand());
+}
+
+global proc selectionToGPUCacheSave()
+{
+    saveOptions();
+}
+
+global proc selectionToGPUCacheReset()
+{
+    resetOptions(1);
+    loadOptions();
+}
+
+global proc string performSelectionToGPUCache(string $message)
+{
+    resetOptions(0);
+
+    string $command;
+    if ($message == "executeCommand")
+    {
+        // Execute the command with current options
+        $command = assembleCommand();
+        eval($command);
+    }
+    else if ($message == "displayOptions")
+    {
+        // Display the option box
+        displayOptions();
+    }
+    else if ($message == "assembleCommand")
+    {
+        $command = assembleCommand();
+    }
+    return $command;
+}

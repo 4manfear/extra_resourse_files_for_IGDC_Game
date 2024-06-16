@@ -1,0 +1,47 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  July 10, 1997
+//
+//  Procedure Name:
+//  AEnewComponent
+//
+//  Description Name;
+//  Creates a channel box to hold a node's components
+//
+//  Input Value:
+//  node (name)
+//
+//  Output Value:
+//  None
+//
+
+global proc AEnewComponent( string $node )
+{
+	global int $gTextColumnWidthIndex;
+	global int $gChannelBoxWidgetWidthIndex;
+	global int $gChannelBoxWidgetHeightIndex;
+
+	setUITemplate -pushTemplate attributeEditorTemplate;
+	$createdLayout = `columnLayout -adj true -vis false`;
+		$createdSelectionConnection = `selectionConnection
+											-p $createdLayout
+											-act`;
+		$createdChannelBox = `channelBox
+								-mw $gChannelBoxWidgetWidthIndex
+								-lw $gTextColumnWidthIndex
+								-mh $gChannelBoxWidgetHeightIndex
+								-p $createdLayout
+								-mlc $createdSelectionConnection
+								-aem true`;
+	setParent ..;
+	columnLayout -e -vis true $createdLayout;
+	setUITemplate -popTemplate;
+
+}

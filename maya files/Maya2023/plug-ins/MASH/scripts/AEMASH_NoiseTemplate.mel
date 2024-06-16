@@ -1,0 +1,135 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc MASHcheckNoiseType ( string $nodeName )
+{
+        if ( `objExists $nodeName` == 0 )
+            return;
+
+        string $nodeAttr = $nodeName + ".noiseType";
+        int $value = `getAttr $nodeAttr`;
+
+        string $uniformAttr = $nodeName + ".uniformNoise";
+        int $uniform = `getAttr $uniformAttr`;
+
+
+
+        //perlin of bFM
+        if ($value == 1 || $value == 4 || $value == 5) {
+            editorTemplate  -dimControl $nodeName "frequencyX" false;
+            editorTemplate  -dimControl $nodeName "frequencyY" false;
+            editorTemplate  -dimControl $nodeName "frequencyZ" false;
+            if ($uniform == 1) {
+                editorTemplate  -dimControl $nodeName "amplitudeY" true;
+                editorTemplate  -dimControl $nodeName "amplitudeZ" true;
+                editorTemplate  -dimControl $nodeName "frequencyY" true;
+                editorTemplate  -dimControl $nodeName "frequencyZ" true;
+            } else {
+                editorTemplate  -dimControl $nodeName "amplitudeY" false;
+                editorTemplate  -dimControl $nodeName "amplitudeZ" false;
+                editorTemplate  -dimControl $nodeName "frequencyY" false;
+                editorTemplate  -dimControl $nodeName "frequencyZ" false;
+            }
+        } else {
+            editorTemplate  -dimControl $nodeName "frequencyX" true;
+            editorTemplate  -dimControl $nodeName "frequencyY" true;
+            editorTemplate  -dimControl $nodeName "frequencyZ" true;
+        }
+
+        //perlin looping
+        if ($value == 5) {
+            editorTemplate  -dimControl $nodeName "loopNoiseRadius" false;
+        } else {
+            editorTemplate  -dimControl $nodeName "loopNoiseRadius" true;
+        }
+
+        //seek
+        if ($value == 3) {
+            editorTemplate  -dimControl $nodeName "fov" false;
+            editorTemplate  -dimControl $nodeName "octaves" true;
+            editorTemplate  -dimControl $nodeName "persistence" true;
+            editorTemplate  -dimControl $nodeName "step" true;
+        } else {
+            editorTemplate  -dimControl $nodeName "fov" true;
+            editorTemplate  -dimControl $nodeName "octaves" false;
+            editorTemplate  -dimControl $nodeName "persistence" false;
+            editorTemplate  -dimControl $nodeName "step" false;
+        }
+}
+
+global proc AEMASH_NoiseTemplate( string $nodeName )
+{
+
+    editorTemplate -beginScrollLayout;
+    python("import MASH.nodeHeaders; MASH.nodeHeaders.addHeader('" + $nodeName + "', 'Noise')")
+    editorTemplate -endLayout;
+
+    editorTemplate -beginLayout (getPluginResource("MASH", "kNoiseNode")) -collapse 0;
+    editorTemplate  -label (getPluginResource("MASH", "kNoiseType")) -addControl "noiseType" "MASHcheckNoiseType";
+    editorTemplate -addSeparator;
+    editorTemplate  -label (getPluginResource("MASH", "kAmplitudeX")) -addControl "amplitudeX";
+    editorTemplate  -label (getPluginResource("MASH", "kAmplitudeY")) -addControl "amplitudeY";
+    editorTemplate  -label (getPluginResource("MASH", "kAmplitudeZ")) -addControl "amplitudeZ";
+    editorTemplate -addSeparator;
+
+    editorTemplate -beginLayout (getPluginResource("MASH", "kPerlinSettings")) -collapse 0;
+    editorTemplate  -label (getPluginResource("MASH", "kFrequencyX")) -addControl "frequencyX";
+    editorTemplate  -label (getPluginResource("MASH", "kFrequencyY")) -addControl "frequencyY";
+    editorTemplate  -label (getPluginResource("MASH", "kFrequencyZ")) -addControl "frequencyZ";
+    editorTemplate -endLayout;
+
+    editorTemplate -beginLayout (getPluginResource("MASH", "kSeekSettings")) -collapse 1;
+    editorTemplate  -label (getPluginResource("MASH", "kSeekAngle")) -addControl "fov";
+    editorTemplate -endLayout;
+
+    editorTemplate -beginLayout (getPluginResource("MASH", "kPerlinLoopSet")) -collapse 1;
+    editorTemplate  -label (getPluginResource("MASH", "kLoopTime")) -addControl "loopNoiseRadius";
+    editorTemplate -endLayout;
+
+    editorTemplate -beginLayout (getPluginResource("MASH", "kStrength")) -collapse 0;
+    editorTemplate  -label (getPluginResource("MASH", "kStrength")) -addControl "Envelope";
+    editorTemplate  -label (getPluginResource("MASH", "kRandStrength")) -addControl "randEnvelope";
+    editorTemplate  -label (getPluginResource("MASH", "kStepStrength")) -addControl "StepEnvelope";
+    editorTemplate -addSeparator;
+    editorTemplate  -label (getPluginResource("MASH", "kStrengthMap")) -addControl "mColour";
+    editorTemplate  -label (getPluginResource("MASH", "kMapProjAxis")) -addControl "mapDirection";
+    editorTemplate -callCustom "MASHmapHelperButton" "MASHmapHelperButtonEdit" "";
+
+    editorTemplate -beginLayout (getPluginResource("MASH", "kPerPointAdjust")) -collapse 1;
+    editorTemplate - bn;
+    editorTemplate  -label (getPluginResource("MASH", "kMapAmpAdjust")) -ann (getPluginResource("MASH", "kMapAmpAdjustAnn")) -addControl "strengthAffectsAmplitude";
+    editorTemplate  -label (getPluginResource("MASH", "kMapFreqAdjust")) -ann (getPluginResource("MASH", "kMapFreqAdjustAnn")) -addControl "strengthAffectsFrequency";
+    editorTemplate  -label (getPluginResource("MASH", "kMapStepAdjust")) -ann (getPluginResource("MASH", "kMapStepAdjustAnn")) -addControl "strengthAffectsStep";
+    editorTemplate -en;
+    editorTemplate -endLayout;
+    editorTemplate -endLayout;
+
+    editorTemplate  -label (getPluginResource("MASH", "kStep")) -addControl "step";
+    editorTemplate  -label (getPluginResource("MASH", "kOctaves")) -addControl "octaves";
+    editorTemplate  -label (getPluginResource("MASH", "kRandSeed")) -addControl "seed";
+    editorTemplate  -label (getPluginResource("MASH", "kPersistence")) -addControl "persistence";
+
+    editorTemplate  -label (getPluginResource("MASH", "kAbsoluteNoise")) -addControl "positiveNoise" ;
+    editorTemplate  -label (getPluginResource("MASH", "kWholeNumbers")) -addControl "intRes";
+    editorTemplate  -label (getPluginResource("MASH", "kUniformNoise")) -addControl "uniformNoise" "MASHcheckNoiseType";
+    editorTemplate -suppress "inIterations";
+    editorTemplate -suppress "modular";
+    editorTemplate -suppress "offsetValues";
+
+    editorTemplate -beginLayout (getPluginResource("MASH", "kFalloffObject")) -collapse 1;
+    editorTemplate -callCustom "MASHfalloffButtons" "MASHfalloffButtonsEdit" "";
+    editorTemplate -endLayout;
+
+    editorTemplate  -label (getPluginResource("MASH", "kTime")) -addControl "time";
+    editorTemplate -endLayout;
+
+    AEdependNodeTemplate $nodeName;
+    editorTemplate -addExtraControls;
+    editorTemplate -endScrollLayout;
+}
+
+

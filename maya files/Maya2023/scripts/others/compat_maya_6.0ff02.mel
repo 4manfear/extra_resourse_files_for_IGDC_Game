@@ -1,0 +1,28 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+// Global Maya compatibility file, version 6.0ff02
+////////////////////////////////////////////////////////////////////////////
+//
+// This version becomes effective as of the Oct 22, 2003 release.
+//
+////////////////////////////////////////////////////////////////////////////
+
+attrCompatibility -v "6.0ff02";
+
+attrCompatibility -renameAttr con  rigidConstraint  cst ;
+
+attrCompatibility -renameAttr ctr  parentConstraint trc ;
+attrCompatibility -renameAttr ctrx parentConstraint trcx ;
+attrCompatibility -renameAttr ctry parentConstraint trcy ;
+attrCompatibility -renameAttr ctrz parentConstraint trcz ;
+
+attrCompatibility -renameAttr ctr  orientConstraint trc ;
+attrCompatibility -renameAttr ctrx orientConstraint trcx ;
+attrCompatibility -renameAttr ctry orientConstraint trcy ;
+attrCompatibility -renameAttr ctrz orientConstraint trcz ;

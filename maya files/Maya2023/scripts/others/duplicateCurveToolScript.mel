@@ -1,0 +1,106 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+// Creation Date:  14 January 1999
+//
+//
+//  Procedure Name:
+//      duplicateCurveToolScript
+//
+//  Description:
+//	create wrapper around the duplicateCurve command
+//
+//  Input Arguments:
+//		0 ==> do the command.
+//		1 ==> show the action option box
+//		2 ==> return the command
+//		3 ==> show tool option box
+//		4 ==> enter the tool
+//
+//  Return Value:
+//      None.
+//
+
+global proc duplicateCurveToolSetup( int $forceFactorySettings,
+									 string $goToTool )
+{
+	optionVar -init $forceFactorySettings -category "Modeling.Curves.Duplicate Surface Curves"
+		-iv duplicateCurveEuc 0
+		-iv duplicateCurveLac 1
+		;
+
+	if( "" != $goToTool ) {
+		scriptCtx -e -euc `optionVar -q duplicateCurveEuc` $goToTool;
+		scriptCtx -e -lac `optionVar -q duplicateCurveLac` $goToTool;
+	}
+}
+
+global proc duplicateCurveValues ( string $toolName ) 
+{
+	performDuplicateCurve 3 $toolName;
+	scriptCtxCommonValues( $toolName );
+}
+
+global proc duplicateCurveProperties()
+{
+	scriptCtxCommonProperties;
+}
+
+proc createDuplicateCurveContext( string $tool )
+{
+	if( ! `scriptCtx -exists $tool` ) {
+		duplicateCurveToolSetup( 0, "" );
+		scriptCtx -i1 "duplicateCurve.png"
+		  -title (uiRes("m_duplicateCurveToolScript.kDuplicateTool"))
+		  -bcn "duplicateCurve"
+
+		  -totalSelectionSets 1
+		  -expandSelectionList true
+		  -fcs ("duplicateCurveToolScript 0")
+
+		  -setNoSelectionPrompt (uiRes("m_duplicateCurveToolScript.kSelectSurface"))
+		  -setSelectionPrompt (uiRes("m_duplicateCurveToolScript.kDuplicateSurface"))
+
+		  -showManipulators true
+		  -setSelectionCount 0
+		  -setAutoToggleSelection true
+
+		  -setAutoComplete `optionVar -q duplicateCurveLac`
+		  -exitUponCompletion `optionVar -q duplicateCurveEuc`
+		  -setAllowExcessCount true
+
+		  -surfaceEdge true
+		  -curveOnSurface true
+		  -isoparm true
+		  -polymeshEdge true
+		$tool;
+	}
+}
+
+global proc string duplicateCurveToolScript( int $setToTool )
+//
+//	Description :
+//		0 ==> do the command.
+//		1 ==> show the action option box
+//		2 ==> return the command
+//		3 ==> show tool/action option box
+//		4 ==> enter the tool/do the command
+{
+	string $tool = "";
+	if( $setToTool > 2 ) {
+		if( !`optionVar -q modelWithToolDuplCurve` ) {
+			$setToTool = 4 - $setToTool;
+		}
+		else {
+			$tool = "duplicateCurveContext";
+			createDuplicateCurveContext $tool;
+		}
+	}
+	return scriptToolScript( "performDuplicateCurve", $setToTool, $tool );
+}

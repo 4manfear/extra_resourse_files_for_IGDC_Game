@@ -1,0 +1,54 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc AEMASH_JiggleTemplate( string $nodeName )
+{
+
+    editorTemplate -beginScrollLayout;
+    python("import MASH.nodeHeaders; MASH.nodeHeaders.addHeader('" + $nodeName + "', 'Jiggle Deformer', False)")
+    editorTemplate -endLayout;
+    
+    editorTemplate -beginLayout (getPluginResource("MASH", "kJiggleDeformer")) -collapse 0;
+    editorTemplate  -label (getPluginResource("MASH", "kDamping")) -ann (getPluginResource("MASH", "kDampAnn")) -addControl "damping";
+    editorTemplate  -label (getPluginResource("MASH", "kStiffness")) -ann (getPluginResource("MASH", "kStiffnessAnn")) -addControl "stiffness";
+    editorTemplate -addSeparator;
+    editorTemplate  -label (getPluginResource("MASH", "kDirectionalJiggle")) -addControl "directionBias";
+    editorTemplate  -label (getPluginResource("MASH", "kNormalStr"))  -addControl "normalStrength";
+    editorTemplate -addSeparator;
+    editorTemplate  -label (getPluginResource("MASH", "kMaxVelocity")) -addControl "maxVelocity";
+    editorTemplate  -label (getPluginResource("MASH", "kScale")) -addControl "scale";
+    editorTemplate -addSeparator;
+    editorTemplate  -label (getPluginResource("MASH", "kStartTime")) -addControl "startFrame";
+
+    editorTemplate -beginLayout (getPluginResource("MASH", "kStrength")) -collapse 0;
+    editorTemplate  -label (getPluginResource("MASH", "kStrength")) -ann (getPluginResource("MASH", "kJiggleStrAnn")) -addControl "envelope";
+    editorTemplate  -label (getPluginResource("MASH", "kRandStrength")) -addControl "randEnvelope";
+    editorTemplate  -label (getPluginResource("MASH", "kStepStrength")) -addControl "StepEnvelope";
+    editorTemplate -addSeparator;
+    editorTemplate  -label (getPluginResource("MASH", "kStrengthMap")) -addControl "mColour";
+    editorTemplate  -label (getPluginResource("MASH", "kMapProjAxis")) -addControl "mapDirection";
+    editorTemplate -callCustom "MASHmapHelperButton" "MASHmapHelperButtonEdit" "";
+    editorTemplate -endLayout;
+
+    editorTemplate -beginLayout (getPluginResource("MASH", "kFalloffObject")) -collapse 1;
+    editorTemplate -callCustom "MASHfalloffButtons" "MASHfalloffButtonsEdit" "";
+    editorTemplate -endLayout;
+    editorTemplate -endLayout;
+
+
+    editorTemplate -suppress "input";
+    editorTemplate -suppress "envelope";
+    editorTemplate -suppress "weightFunction";
+    editorTemplate -suppress "weightList";
+    editorTemplate -suppress "map64BitIndices";
+    editorTemplate -suppress "originalGeometry";
+
+    AEdependNodeTemplate $nodeName;
+    editorTemplate -addExtraControls;
+    editorTemplate -endScrollLayout;
+
+}

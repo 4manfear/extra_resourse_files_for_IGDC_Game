@@ -1,0 +1,194 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//  Procedure Name:
+//	AEaddCurveControl
+//
+//  Description Name;
+//	Creates the attribute editor controls for the curve widget
+//
+//  Input Value:
+//	nodeName 
+//
+//  Output Value:
+//	None
+// 
+
+global string $gCurveControlLookupTable[];
+global int $gCurveControlLookupTableCreated = false;
+
+proc string localizedAttrName( string $name ) {
+	if( $name == "Selected Color" ) {
+		return (uiRes("m_AEaddCurveControl.kSelClr"));
+	} else if( $name == "Selected Position" ) {
+		return (uiRes("m_AEaddCurveControl.kSelPos"));
+	} else if( $name == "Selected Value" ) {
+		return (uiRes("m_AEaddCurveControl.kSelVal"));
+	}
+}
+
+global proc AEmakeLargeCurve(	string $nodeAttr,
+								int $bound )
+//
+//	Description:
+//
+{
+global string $gCurveControlLookupTable[];
+
+	string $buffer[];
+	tokenize($nodeAttr, ".", $buffer);
+	string $attr = $buffer[ size($buffer) - 1];
+
+	string $curveAttrName = $attr + "Curve";
+	string $spName = $attr +"Sp";
+	string $svName = $attr +"Sv";
+
+	setUITemplate -pst attributeEditorTemplate;
+	columnLayout -rowSpacing 2;
+
+	// curve block
+	string $curveForm = `formLayout ($curveAttrName + "Form")`;
+		string $spc	= `attrFieldSliderGrp -label (localizedAttrName("Selected Position"))
+			-cw 1 123 -annotation (localizedAttrName("Selected Position")) $spName`;
+		string $svc = `attrFieldSliderGrp -label (localizedAttrName("Selected Value"))
+			-cw 1 123 -annotation (localizedAttrName("Selected Value")) $svName`;
+
+		string $rframe = `frameLayout -lv 0 -cll 0 ($curveForm + "fr")`;
+		string $widgetName = `falloffCurveAttr
+								-at $nodeAttr
+								-w 148 -h 148
+								$curveAttrName`;
+		setParent ..;
+
+		string $resetValue = lookupTableLookup($gCurveControlLookupTable, "curveAttrName", $nodeAttr, "resetValue");
+
+		string $resetCommand = "falloffCurveAttr -edit -asString \"" + $resetValue + "\" " + $widgetName;
+		string $reset = `button -label (uiRes("m_AEaddCurveControl.kResetCurve")) -command $resetCommand`;
+
+		formLayout
+			-edit
+				-attachForm $spc "left"  0
+				-attachNone $spc "right"
+				-attachForm $spc "top" 0
+				-attachNone $spc "bottom"
+
+				-attachForm $svc "left" 0 
+				-attachNone $svc "right"
+				-attachControl $svc "top" 0 $spc
+				-attachNone $svc "bottom"
+
+				-attachControl $rframe "left" 2 $svc
+				-attachNone $rframe "right"
+				-attachForm $rframe "top" 0
+				-attachNone $rframe "bottom"
+
+				$curveForm;
+
+		formLayout
+			-edit
+				-attachForm $reset "left" 32
+				-attachControl $reset "right" 8 $rframe
+				-attachControl $reset "top" 0 $svc
+				-attachNone $reset "bottom"
+
+				$curveForm;
+
+	setParent ..;
+
+	// tell the port about the controls
+	falloffCurveAttr -e -spc $spc $widgetName;
+	falloffCurveAttr -e -svc $svc $widgetName;
+	setUITemplate -ppt;
+}
+
+global proc AEmakeCurveControlInteractiveNew_doIt(string $nodeAttr)
+{
+	AEmakeLargeCurve( $nodeAttr,1 );
+}
+
+global proc AEmakeCurveControlInteractiveNew (string $nodeAttr)
+{
+	AEmakeCurveControlInteractiveNew_doIt( $nodeAttr );
+}
+
+global proc AEmakeCurveControlInteractiveReplace (string $nodeAttr)
+{
+	string $buffer[];
+	tokenize($nodeAttr, ".", $buffer);
+	string $attr = $buffer[1];
+
+	string $curveAttrName = $attr + "Curve";
+	string $editButton = $attr + "CurveEdit";
+
+	falloffCurveAttr -edit -at $nodeAttr $curveAttrName;
+}
+
+global proc AEaddCurveControl_doIt( string $curveAttrName )
+//  
+//  Description: 
+// 
+{
+	string $curveTitle;
+	string $nodeAttr[];
+
+	// tokenize $curveAttrName on "." to see if we get the nodeName and attrName
+	// pieces required for a catalog lookup.
+	//
+	tokenize ($curveAttrName,".",$nodeAttr);
+	if( size($nodeAttr) == 2 ) {
+		
+		$curveTitle = `attributeName -nice $curveAttrName`;
+
+		// Change curveAttrName back to attrName format
+		//
+		$curveAttrName = $nodeAttr[1];     
+	}
+
+	editorTemplate -beginLayout $curveTitle -collapse false;
+
+	editorTemplate -callCustom 
+						"AEmakeCurveControlInteractiveNew"
+						"AEmakeCurveControlInteractiveReplace" $curveAttrName;
+
+    editorTemplate -endLayout;
+}
+
+// Main entry point for creating a curve control
+//
+global proc AEaddCurveControl( string $curveAttrName, string $resetValue )
+{
+global string $gCurveControlLookupTable[];
+global int $gCurveControlLookupTableCreated;
+
+	if (!$gCurveControlLookupTableCreated) {
+		string $columns[];
+
+		$columns[0] = "curveAttrName";
+		$columns[1] = "resetValue";
+		$columns[2] = "componentName";
+		$columns[3] = "optionVar";
+
+		lookupTable($gCurveControlLookupTable, $columns);
+		$gCurveControlLookupTableCreated = true;
+	}
+	if (lookupTableRowExists($gCurveControlLookupTable, "curveAttrName", $curveAttrName)) {
+		lookupTableEdit($gCurveControlLookupTable, "curveAttrName", $curveAttrName, "resetValue", $resetValue);
+	}
+	else {
+		string $row[];
+
+		$row[0] = $curveAttrName;
+		$row[1] = $resetValue;
+		$row[2] = "None";
+		$row[3] = "None";
+
+		lookupTableAddRow($gCurveControlLookupTable, $row);
+	}
+
+	AEaddCurveControl_doIt( $curveAttrName );
+}

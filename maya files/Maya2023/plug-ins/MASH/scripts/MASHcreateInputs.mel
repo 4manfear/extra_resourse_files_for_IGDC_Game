@@ -1,0 +1,44 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//  Procedure Name:
+//  MASHcreateInputs
+//
+//  Description;
+//  Legacy script used to display which node an attribute is connected to.
+//  Superseeded by drag and drop, but still in use on a couple of nodes.
+//
+global proc MASHcreateInputs(string $attr, string $attrString)
+{
+
+    rowColumnLayout -nc 3 -cw 1 145 -cw 2 210 -cw 3 25 layoutMASHinputs;
+    string $attrLabel[];
+    tokenize $attrString "." $attrLabel;
+    string $destConnection[] = `listConnections -s 1 -d 1 -p 1 $attr`;
+
+    if(size($destConnection) > 0)
+    {
+        text -l ($attrLabel[1]+" ") -al "right";
+        textField -tx $destConnection[0] -ed 0;
+        symbolButton -image "inArrow.xpm" -c ("select "+$destConnection[0]);
+    }
+    else
+    {
+        text -l ($attrLabel[1]+" ") -al "right";
+        textField -tx "" -ed 0;
+        symbolButton -image "inArrow.xpm" -en 0;
+    }
+
+    setParent ..;
+}
+
+global proc MASHeditInputs(string $attr, string $attrString)
+{
+    deleteUI -layout layoutMASHinputs;
+    MASHcreateInputs($attr, $attrString);
+}

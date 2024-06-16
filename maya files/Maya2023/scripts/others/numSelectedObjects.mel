@@ -1,0 +1,28 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//  Creation Date:  29 October 2019
+//
+//
+//  Procedure Name:
+//      numSelectedObjects
+//
+//  Description:
+//      Returns the number of objects (including UFE) in the selection.
+//
+//  Input Arguments:
+//      None.
+//
+//  Return Value:
+//      Number of objects in the selection.
+//
+
+global proc int numSelectedObjects()
+{
+    return python("import ufe; len(ufe.GlobalSelection.get())");
+}

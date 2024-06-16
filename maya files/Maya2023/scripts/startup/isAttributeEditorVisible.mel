@@ -1,0 +1,33 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  26 November 1998
+//
+//  Procedure Name:
+//      isAttributeEditorVisible
+//
+//  Description:
+//      Return the visibility of the Attribute Editor.
+//
+//  Input Arguments:
+//      None.
+//
+//  Return Value:
+//      True if the Channel box is visible, false otherwise.
+//
+global proc int isAttributeEditorVisible() {
+
+	// fails in batch mode unless we source this first
+	//
+	if( !`exists isUIComponentVisible` ) {
+		source "UIComponents.mel";
+	}
+
+	return isUIComponentVisible("Attribute Editor");
+}

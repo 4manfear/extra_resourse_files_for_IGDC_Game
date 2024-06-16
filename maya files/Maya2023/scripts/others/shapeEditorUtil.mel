@@ -1,0 +1,661 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc int isRebuildTargetShapeEnabled()
+//
+//  Description:
+// 		Judge if rebuild target can be performed by treeview selection.
+//
+//  Return Value:
+//      Return 1 if enabled; otherwise return 0;
+//
+{
+	string $selectedTargetL[] = getShapeEditorTreeviewSelection(24);
+	string $selectedInBetweenTargetL[] = getShapeEditorTreeviewSelection(16);
+	if(size($selectedTargetL) == 0 && size($selectedInBetweenTargetL) == 0)
+		return 0; // no target item is selected, disable rebuild menu.
+
+	for($target in $selectedTargetL)
+	{
+		string $array[] = stringToStringArray($target, "."); //blendShape1.w[1] => blendShape1 w 1
+		string $cmd = "getAttr " + $array[0] + ".deformationOrder";
+		if(eval($cmd) == 1)
+			return 0;  //MAYA-58846 Disable 'Rebuild' in UI when a post deformation blend shape deformer has a target
+	}
+	if(isSelectMeshEnabled())
+		return 0;
+	else
+		return 1;
+}
+
+global proc int isSelectMeshEnabled()
+//
+//  Description:
+// 		Judge target shapes exist or not by treeview selection.
+//
+//  Return Value:
+//      Return 1 if enabled; otherwise return 0;
+//
+{
+	string $selectedTargetL[] = getShapeEditorTreeviewSelection(24);
+	string $selectedInBetweenTargetL[] = getShapeEditorTreeviewSelection(16);
+	if(size($selectedTargetL) == 0 && size($selectedInBetweenTargetL) == 0)
+		return 0; // no target item is selected, disable rebuild menu.
+
+	for($target in $selectedTargetL)
+	{
+		string $array[] = stringToStringArray($target, "."); //blendShape1.w[1] => blendShape1 w 1
+		string $targetIndex = $array[1];
+		string $baseShapes[] = `blendShape -q -g $array[0]`; //get base shapes.
+		for ($i = 0; $i < size($baseShapes); $i++)
+		{
+			string $destPlug = $array[0] + ".inputTarget[" + $i + "].inputTargetGroup[" + $targetIndex + "].inputTargetItem[6000].inputGeomTarget";
+			string $sourcePlugs[] = `listConnections -d 0 -s 1 $destPlug`;
+			if(size($sourcePlugs) > 0) // has target shape(s) exists, enable select mesh
+				return 1;
+		}
+	}
+	
+	for($inBetweenTarget in $selectedInBetweenTargetL)
+	{
+		string $array[] = stringToStringArray($inBetweenTarget, "."); 
+		string $targetIndex = $array[1];
+		string $inbetweenTargetIndex = $array[2];
+		string $baseShapes[] = `blendShape -q -g $array[0]`; //get base shapes.
+		for ($i = 0; $i < size($baseShapes); $i++)
+		{
+			string $destPlug = $array[0] + ".inputTarget[" + $i + "].inputTargetGroup[" + $targetIndex + "].inputTargetItem[" + $inbetweenTargetIndex +"].inputGeomTarget";
+			string $sourcePlugs[] = `listConnections -d 0 -s 1 $destPlug`;
+			if(size($sourcePlugs) > 0) // has target shape(s) exists, enable select mesh
+				return 1;
+		}
+	}
+	return 0;
+}
+global proc int isGroupTargetShapeEnabled()
+//
+//  Description:
+// 		Judge selected item is inbetween target item or not by treeview selection.
+//
+//  Return Value:
+//      Return 1 if enabled; otherwise return 0;
+//
+{
+	if(size(getShapeEditorTreeviewSelection(6)) > 0)
+		return 0;
+	else
+		return 1;
+}
+
+global proc int isKeyOrResetTargetEnabled()
+//
+//  Description:
+// 		Judge treeview selected status for disabling/enabling key and reset button.
+//
+//  Return Value:
+//      Return 1 if enabled; otherwise return 0;
+//
+{
+	if(size(getShapeEditorTreeviewSelection(24)) > 0)
+		return 1;
+	else
+		return 0;
+}
+
+
+global proc int isAddTargetToSelectedBSDEnabled()
+//
+//  Description:
+// 		Check if add target can be performed
+//
+//  Return Value:
+//      For single selection: 
+//          If blend shape node can be traced from selected item, return 1; Otherwise return 0;
+//
+{
+	if((size(getShapeEditorTreeviewSelection(11)) == 1) ||  //Purely selected blend shape deformer
+	    (size(getShapeEditorTreeviewSelection(13)) == 1) || //Purely selected target group
+		(size(getShapeEditorTreeviewSelection(14)) == 1))   //Purely selected target
+		return 1;
+	else
+		return 0;
+}
+
+global proc int isAddSelectionAsTargetToSelectedBSDEnabled()
+//
+//  Description:
+// 		Check if add selection as target can be performed
+//
+//  Return Value:
+//      For single selection: 
+//          If blend shape node can be traced from selected item and user selected shape node, return 1; Otherwise return 0;
+//
+{
+	if(!isAddTargetToSelectedBSDEnabled())
+		return 0;
+	string $sel[] = `ls -dag -g -sl`;
+    string $selectedMeshes[];
+    for ($i = 0; $i < size($sel); ++ $i)
+        if (blendShapeCanAddAsTarget($sel[$i]))
+             $selectedMeshes = stringArrayCatenate($selectedMeshes, {$sel[$i]});
+    if(size($selectedMeshes) > 0)
+		return 1;
+	return 0;
+}
+
+global proc int isAddInBetweenTargetEnabled()
+//
+//  Description:
+// 		Check if add in-between target can be performed
+//
+//  Return Value:
+//      For single selection: 
+//          If selected is a single hero target, return 1; 
+//          Otherwise return 0;
+//
+{
+	if((size(getShapeEditorTreeviewSelection(14)) == 1) ||
+	   (size(getShapeEditorTreeviewSelection(16)) == 1))
+		return 1;
+	else
+		return 0;
+}
+
+global proc int isAddSelectionAsInBetweenTargetEnabled()
+//
+//  Description:
+// 		Check if add selection as in-between target can be performed
+//
+//  Return Value:
+//      For single selection: 
+//          If blend shape node can be traced from selected item and user selected shape node, return 1; Otherwise return 0;
+//
+{
+	if(!isAddInBetweenTargetEnabled())
+		return 0;
+	string $sel[] = `ls -dag -g -sl`;
+    string $selectedMeshes[];
+    for ($i = 0; $i < size($sel); ++ $i)
+        if (blendShapeCanAddAsTarget($sel[$i]))
+             $selectedMeshes = stringArrayCatenate($selectedMeshes, {$sel[$i]});
+    if(size($selectedMeshes) > 0)
+		return 1;
+	return 0;
+}
+
+global proc int isRemoveKeyMenuEnabled()
+//
+//  Description:
+// 		Check if remove key can be performed
+//
+//  Return Value:
+//      For single selection: 
+//          If there's a key at the current frame from selected item and user selected shape node, return 1; Otherwise return 0;
+//
+{
+	string $selectedTargetL[] = getShapeEditorTreeviewSelection(4);
+	for($target in $selectedTargetL)
+	{
+		string $targetName = targetIdToTargetName($target);
+		$curTime = `currentTime -q`;
+		if(size(`keyframe -t $curTime -q $targetName`))
+			return 1;
+	}
+	string $selectedTgtGL[] = getShapeEditorTreeviewSelection(3);
+	for($tgtG in $selectedTgtGL)
+	{
+		string $subStrings[] = stringToStringArray($tgtG, ".");
+		string $weightAttr = $subStrings[0] + ".targetDirectory[" + stringRemovePrefix($subStrings[1], "-") + "].directoryWeight";
+		$curTime = `currentTime -q`;
+		if(size(`keyframe -t $curTime -q $weightAttr`))
+			return 1;
+	}
+
+	string $selectedBsdL[] = stringArrayCatenate(getShapeEditorTreeviewSelection(1),getShapeEditorTreeviewSelection(2));
+	for($bsd in $selectedBsdL)
+	{
+		string $bsEnvelope = $bsd + ".envelope";
+		$curTime = `currentTime -q`;
+		if(size(`keyframe -t $curTime -q $bsEnvelope`))
+			return 1;
+	}
+	return 0;
+}
+
+global proc int isDeleteSelectedBSDAndGroupEnabled()
+//
+//  Description:
+// 		Check if delete blend shape deformer(group) action can be performed
+//
+//  Return Value:
+//      Return 1 when blend shape deformer(group) selected, otherwise return 0.
+//
+{
+	if (size(getShapeEditorTreeviewSelection(0)) || size(getShapeEditorTreeviewSelection(1)))
+		return 1;
+	else
+		return 0;
+}
+
+global proc int isDeleteSelectedTargetAndGroupEnabled()
+//
+//  Description:
+// 		Check if delete target(group) action can be performed
+//
+//  Return Value:
+//      Return 1 when target(group) selected, otherwise return 0.
+//
+{
+	if (size(getShapeEditorTreeviewSelection(3)) || size(getShapeEditorTreeviewSelection(4)))
+		return 1;
+	else
+		return 0;
+}
+
+global proc int isDeleteSelectedInBetweenTargetEnabled()
+//
+//  Description:
+// 		Check if delete in-between target action can be performed
+//
+//  Return Value:
+//      Return 1 when in-between target selected, otherwise return 0.
+//
+{
+	if (size(getShapeEditorTreeviewSelection(6)) > 0)
+		return 1;
+	else
+		return 0;
+}
+
+global proc int isFlipTargetShapeEnabled()
+//
+//  Description:
+// 		Check if flip target action can be performed
+//
+//  Return Value:
+//      Return 1 when only target(group) selected, otherwise return 0.
+//
+{
+	if(isShapeEditorRefItemSelected())
+		return 0; //not work for reference items
+	if (size(getShapeEditorTreeviewSelection(24)) > 0)
+		return 1;
+	else
+		return 0;
+}
+
+global proc int isExportShapesEnabled()
+{
+	if(isShapeEditorRefItemSelected())
+		return 0; //not work for reference items
+	// Single blendShape node is selected.
+	if (size(getShapeEditorTreeviewSelection(11)) == 1)
+		return 1;
+		
+	// single or multiple targets from a single blendShape node are selected.  
+	// single or multiple target groups from a single blendShape node are selected. 
+	string $selectedTargetsAndTargetGroups[] = getShapeEditorTreeviewSelection(9);
+	if (size($selectedTargetsAndTargetGroups) > 0)
+		return 1; 
+	
+	return 0; 
+} 
+
+global proc int isImportShapesEnabled()
+{
+	if(isShapeEditorRefItemSelected())
+		return 0; //not work for reference items
+	// Single blendShape node is selected.
+	if (size(getShapeEditorTreeviewSelection(11)) == 1)
+		return 1;
+
+	return 0; 
+}
+
+global proc int isCreateCombinationTargetEnalbed(int $createNewTarget)
+//
+//  Description:
+// 		check if create combination target enabled, if enalbed return 1, otherwise return 0;
+//
+{
+	if(isShapeEditorRefItemSelected())
+		return 0; //not work for reference items
+	if(!$createNewTarget)
+	{
+		string $last[] = getShapeEditorTreeviewSelection(20);
+		if(size($last) != 1)
+			return 0; //No last selected item
+		$lastTgtStrings = stringToStringArray($last[0], ".");
+		if(size($lastTgtStrings) != 2)
+			return 0; //Last selected Item is not target
+		if(substring($lastTgtStrings[1], 1, 1) == "-")
+			return 0; //Last selected Item is not target
+		$source = eval("connectionInfo -sourceFromDestination \""+$lastTgtStrings[0]+".w["+$lastTgtStrings[1]+"]\"");
+		$sourceStrings = stringToStringArray($source, ".");
+		if(size($sourceStrings) != 0)
+			return 0; //Already found a source 
+	}
+	string $targets[] = getShapeEditorTreeviewSelection(24);
+    int $targetNum = size($targets);
+	if($targetNum == 0 || ($targetNum == 1 && !$createNewTarget) || !size(filterSingleBSD($targets)))
+        return 0; //Wrong selected targets count or not from same BSD
+	return 1;
+}
+
+global proc int getLastSelectedTargetIndex()
+//
+//  Description:
+// 		return last selected target index, if none return -1
+//
+{
+	string $last[] = getShapeEditorTreeviewSelection(20);
+	if(size($last) != 1)
+		return -1; //No last selected item
+	$lastTgtStrings = stringToStringArray($last[0], ".");
+	if(size($lastTgtStrings) != 2)
+		return -1; //Last selected Item is not target
+	if(substring($lastTgtStrings[1], 1, 1) == "-")
+		return -1; //Last selected Item is a group
+	return $lastTgtStrings[1];
+}
+
+global proc int isAddTargetsAsDriversEnabled()
+//
+//  Description:
+// 		check if add targets as drivers enabled, if enalbed return 1, otherwise return 0;
+//
+{
+	if(isShapeEditorRefItemSelected())
+		return 0; //not work for reference items
+    string $targets[] = getShapeEditorTreeviewSelection(24);
+	if(!size(filterSingleBSD($targets)))
+		return 0; //not from same BSD
+	$targets = stringArrayRemove(getShapeEditorTreeviewSelection(20), $targets);
+	int $targetNum = size($targets);
+	if($targetNum < 1)
+        return 0; //Wrong selected targets count
+    string $oneComboShape = getLastSelectedComboShape();
+	if($oneComboShape == "")
+		return 0; 
+	//Check if other selected targets are from same BSD	and already connected to the combination shape
+	for ($i = 0; $i < $targetNum; ++$i)
+    {
+        string $subStrings[] = stringToStringArray($targets[$i], ".");
+        $destL = eval("connectionInfo -destinationFromSource \""+$subStrings[0]+".w["+$subStrings[1]+"]\"");
+        for($dest in $destL)
+        {
+            $destStrings = stringToStringArray($dest, ".");
+            if(size($destStrings) != 2)
+                continue;
+            if($destStrings[0] == $oneComboShape)
+                return 0; //Target already connected to current combinationShape
+        }
+    }
+    return 1;
+}
+
+global proc int isRemoveTargetsFromDriversEnabled()
+//
+//  Description:
+// 		check if remove targets from drivers enabled, if enalbed return 1, otherwise return 0;
+//
+{
+	if(isShapeEditorRefItemSelected())
+		return 0; //not work for reference items
+    string $targets[] = getShapeEditorTreeviewSelection(24);
+	if(!size(filterSingleBSD($targets)))
+		return 0; //not from same BSD
+	$targets = stringArrayRemove(getShapeEditorTreeviewSelection(20), $targets);
+	int $targetNum = size($targets);
+	if($targetNum < 1)
+        return 0; //Wrong selected targets count
+    string $oneComboShape = getLastSelectedComboShape();
+	if($oneComboShape == "")
+		return 0; 
+	//Check if other selected targets are from same BSD	and also not connected to the combination shape
+	for ($i = 0; $i < $targetNum; ++$i)
+    {
+        string $subStrings[] = stringToStringArray($targets[$i], ".");
+        $destL = eval("connectionInfo -destinationFromSource \""+$subStrings[0]+".w["+$subStrings[1]+"]\"");
+        int $foundOneComboShape = 0;
+        for($dest in $destL)
+        {
+            $destStrings = stringToStringArray($dest, ".");
+            if(size($destStrings) != 2)
+                continue;
+            if($destStrings[0] == $oneComboShape)
+            {
+                $foundOneComboShape = 1;
+                break;
+            }
+        }
+        if(!$foundOneComboShape)
+            return 0; //not found selected combo shape
+    }
+    return 1;
+}
+
+global proc string getLastSelectedComboShape()
+//
+//  Description:
+// 		return connected combo shape of last selected blend shape target.
+//
+{
+	string $last[] = getShapeEditorTreeviewSelection(20);
+    if(size($last) != 1)
+		return ""; //No last selected item
+	$lastTgtStrings = stringToStringArray($last[0], ".");
+	if(size($lastTgtStrings) != 2)
+		return ""; //Last selected Item is not target
+	if(substring($lastTgtStrings[1], 1, 1) == "-")
+		return ""; //Last selected Item is not target
+	return blendShapeTargetGetCombinationShape($lastTgtStrings[0], $lastTgtStrings[1]);
+}
+
+global proc int isDuplicateTargetEnabled()
+{
+	if(isShapeEditorRefItemSelected())
+		return 0; //not work for reference items
+	
+	if (size(getShapeEditorTreeviewSelection(0))
+	|| size(getShapeEditorTreeviewSelection(1))
+	|| size(getShapeEditorTreeviewSelection(2))
+	)
+	{
+		// do not support to duplicate blendShape node and blendShape directories
+		return 0; 
+	}
+		
+	string $selectedTargets[];
+	$selectedTargets = stringArrayCatenate($selectedTargets, getShapeEditorTreeviewSelection(24)); 
+	if (size($selectedTargets) < 1)
+		return 0; 
+		
+	string $selectedIBs[] = getShapeEditorTreeviewSelection(6);
+	if (size($selectedIBs))
+	{
+		string $selectedTargets[];
+		$selectedTargets = stringArrayCatenate($selectedTargets, getShapeEditorTreeviewSelection(3));
+		$selectedTargets = stringArrayCatenate($selectedTargets, getShapeEditorTreeviewSelection(4));
+	
+		for ($selectedIB in $selectedIBs)
+		{
+			string $array[] = stringToStringArray($selectedIB, ".");
+			if (size($array) != 3)
+				continue; 
+			
+			string $heroTarget = $array[0] + "." + $array[1];
+			
+			if (stringArrayFind($heroTarget, 0, $selectedTargets) == -1 
+				&& blendShapeEditorSelectedAncestor($array[0], (int)$array[1], $selectedTargets) == 0)
+				return 0;
+		}
+	}
+	return 1;
+}
+
+global proc string findConnectedPoseInterpolator(string $plugName)
+//
+//  Description: 
+//  	Utility method to find out the connected poseInterpolator
+//  	given a plug name. 
+//
+//  Return value: "" if fail to find a poseInterpolator, else the name of the poseInterpolator.
+//   
+{
+	string $node[] = `listConnections -d false $plugName`;
+	if (size($node))
+	{
+		string $type = `nodeType $node[0]`;
+		if ( $type == "transform" )
+			return $node[0];
+	}
+	
+	return "";
+} 
+
+global proc string findConnectedPoseInterpolatorShape(string $plugName)
+//
+//  Description: 
+//  	Utility method to find out the connected poseInterpolator shape
+//  	given a plug name. 
+//
+//  Return value: "" if fail to find a poseInterpolator, else the name of the poseInterpolator shape.
+//   
+{
+	string $node[] = `listConnections -d false -sh true $plugName`;
+	if (size($node))
+	{
+		string $type = `nodeType $node[0]`;
+		if ( $type == "poseInterpolator" )
+			return $node[0];
+	}
+	
+	return "";
+}
+
+global proc string[] findPoseInterpolatorDrivers(string $poseInterpolator)
+{
+	string $result[]; 
+	
+	string $type = `nodeType $poseInterpolator`;
+	if ( $type == "poseInterpolator" )
+	{
+		$result = `poseInterpolator -q -drivers $poseInterpolator`;
+		return $result;
+	}
+	else
+		return $result; 
+} 
+
+global proc string findConnectedPose(string $plugName)
+{
+	string $tNode = findConnectedPoseInterpolatorShape($plugName);
+	if ( $tNode == "" ) 
+		return "";
+	else
+	{
+		string $poseAttr = $tNode + ".pose";
+		int $poseIndex[] = `getAttr -mi $poseAttr`;
+		
+		int $ii = 0;
+		for ($ii in $poseIndex)
+		{
+			string $tplOutput = $tNode + ".output[" + $ii +"]";
+			string $dests[] = `connectionInfo -dfs $tplOutput`;
+			
+			string $dest;
+			for ($dest in $dests)
+			{
+				if ( $dest == $plugName )
+				{
+					string $poseNameAttr = $poseAttr +"["+$ii+"].poseName";
+					string $poseName = `getAttr $poseNameAttr`;
+					return $poseName;
+				}
+			}
+		}
+	}
+	return "";
+}
+
+global proc int isMergeTargetEnabled()
+{
+	if(isShapeEditorRefItemSelected())
+		return 0; //not work for reference items
+	
+	if (size(getShapeEditorTreeviewSelection(0))
+	|| size(getShapeEditorTreeviewSelection(1))
+	|| size(getShapeEditorTreeviewSelection(2))
+	)
+	{
+		// do not support to merge blendShape node and blendShape directories
+		return 0; 
+	}
+		
+	// to get all the selected items at the Shape Editor.
+	string $selectedTargets[];
+	$selectedTargets = stringArrayCatenate($selectedTargets, getShapeEditorTreeviewSelection(24)); 
+	
+	if (size($selectedTargets) < 2)
+		return 0; // at least two targets for merge
+		
+	string $blendShapeName = ""; 
+	for ($item in $selectedTargets)
+	{
+		string $buffer[];
+		tokenize($item, ".", $buffer);
+		if (size($buffer) != 2)
+			continue; // in-between or others
+					
+		string $bsdName = $buffer[0];
+		if ($blendShapeName == "")
+			$blendShapeName = $bsdName;
+		else
+		{
+			if ($blendShapeName != $bsdName)
+				return 0; //more than one blendShape 
+		}					
+	}	
+	
+	string $selectedIBs[] = getShapeEditorTreeviewSelection(6);
+	if (size($selectedIBs))
+	{
+		string $selectedTargets[];
+		$selectedTargets = stringArrayCatenate($selectedTargets, getShapeEditorTreeviewSelection(3));
+		$selectedTargets = stringArrayCatenate($selectedTargets, getShapeEditorTreeviewSelection(4));
+	
+		for ($selectedIB in $selectedIBs)
+		{
+			string $array[] = stringToStringArray($selectedIB, ".");
+			if (size($array) != 3)
+				continue; 
+			
+			string $heroTarget = $array[0] + "." + $array[1];
+			
+			if (stringArrayFind($heroTarget, 0, $selectedTargets) == -1 
+				&& blendShapeEditorSelectedAncestor($array[0], (int)$array[1], $selectedTargets) == 0)
+				return 0;
+		}
+	}
+	
+	return 1;
+} 
+
+global proc int isAddSelectionAsCombinationTargetToSelectedBSDEnabled()
+{
+	if(!isAddTargetToSelectedBSDEnabled())
+		return 0;
+	string $sel[] = `ls -dag -g -sl`;
+    string $selectedMeshes[];
+    for ($i = 0; $i < size($sel); ++ $i)
+        if (blendShapeCanAddAsTarget($sel[$i]))
+             $selectedMeshes = stringArrayCatenate($selectedMeshes, {$sel[$i]});
+    if(size($selectedMeshes) > 1)
+		return 1;
+	return 0;
+}

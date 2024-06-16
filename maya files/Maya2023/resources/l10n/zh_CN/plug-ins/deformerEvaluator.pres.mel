@@ -1,0 +1,80 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+// Resources for Plug-in: deformerEvaluator
+// 
+// ----------------------------
+// Registered string resources:
+// ----------------------------
+setPluginResource( "deformerEvaluator", "rAllViewportsVP2", "GPU 覆盖无法初始化。所有视口必须使用 Viewport 2.0。");
+setPluginResource( "deformerEvaluator", "rAlreadyClaimed", "GPU 覆盖不支持节点 %s，因为它已由自定义解算器 %s 声明。");
+setPluginResource( "deformerEvaluator", "rAnimatedTopologyFailed", "不支持网格 %s，因为拓扑被视为已设置动画。");
+setPluginResource( "deformerEvaluator", "rChainUnsupported", "节点 %s 属于不受支持的链。有关详细信息，请参见输出窗口。");
+setPluginResource( "deformerEvaluator", "rCheckingDownstream", "节点 %s 受支持，但不是链的一部分。正在检查是否支持相关的下游节点。");
+setPluginResource( "deformerEvaluator", "rCheckingUpstream", "网格 %s 受支持，正在检查是否支持相关的上游节点。");
+setPluginResource( "deformerEvaluator", "rDebugPartitioningFailed", "收集调试消息时无法创建有效的解算图划分。");
+setPluginResource( "deformerEvaluator", "rDeformNormals", "GPU 覆盖发现 MAYA_OPENCL_DEFORMER_DEFORM_NORMALS=1，将尽可能进行网格法线变形。");
+setPluginResource( "deformerEvaluator", "rEMDisabled", "不支持 GPU 覆盖，因为解算管理器已禁用。");
+setPluginResource( "deformerEvaluator", "rFoundUpstreamDeformer", "找到上游变形器 %s。");
+setPluginResource( "deformerEvaluator", "rGPUOverrideNotActive", "GPU 覆盖未处于活动状态。");
+setPluginResource( "deformerEvaluator", "rGenerateNormals", "GPU 覆盖发现 MAYA_OPENCL_DEFORMER_DEFORM_NORMALS=0，将始终生成新法线。");
+setPluginResource( "deformerEvaluator", "rMeshNotAnimated", "未对网格 %s 设置动画。");
+setPluginResource( "deformerEvaluator", "rMultiParentOutputConnection", "GPU 覆盖不支持节点 %s，因为多父节点 %s 上存在连接。");
+setPluginResource( "deformerEvaluator", "rMultipleConnectedOutputs", "GPU 覆盖不支持节点 %s，因为有两个或更多已连接的输出属性(%s、%s)。");
+setPluginResource( "deformerEvaluator", "rNoInputPlugs", "GPU 覆盖不支持节点 %s，因为节点注册没有输入栓。");
+setPluginResource( "deformerEvaluator", "rNoOutputPlugs", "GPU 覆盖不支持节点 %s，因为节点注册没有输出栓。");
+setPluginResource( "deformerEvaluator", "rNoSupportedMeshes", "GPU 覆盖不支持当前场景中的任何链。有关不受支持网格的信息，请使用“deformerEvaluator -meshes”。");
+setPluginResource( "deformerEvaluator", "rNoVP2Data", "GPU 覆盖不支持包含节点 %s 的链，因为找不到 Viewport 2.0 数据。");
+setPluginResource( "deformerEvaluator", "rNodeInCycle", "GPU 覆盖不支持节点 %s，因为它是节点级别循环的一部分。");
+setPluginResource( "deformerEvaluator", "rNodeNotAnimated", "GPU 覆盖不支持节点 %s，因为它未设置动画。");
+setPluginResource( "deformerEvaluator", "rNodeStatic", "节点 %s 是 GPU 覆盖链的静态输入。无需对此节点执行操作。");
+setPluginResource( "deformerEvaluator", "rNotEnoughVertices", "GPU 不支持网格 %s，因为它的顶点太少。没有支持的变形器的网格具有 %d 个顶点。需要 %d 个或更多顶点。\n");
+setPluginResource( "deformerEvaluator", "rStatusActive", "活动");
+setPluginResource( "deformerEvaluator", "rStatusActiveOutput", "活动输出");
+setPluginResource( "deformerEvaluator", "rStatusAlreadyClaimed", "节点已由其他解算器声明");
+setPluginResource( "deformerEvaluator", "rStatusAnimatedTopology", "不支持，因为拓扑被视为已设置动画。");
+setPluginResource( "deformerEvaluator", "rStatusClusterBad", "错误的簇");
+setPluginResource( "deformerEvaluator", "rStatusClusterBuildChainsFailed", "链构建失败");
+setPluginResource( "deformerEvaluator", "rStatusClusterMeshTooSmall", "网格太小");
+setPluginResource( "deformerEvaluator", "rStatusClusterNoChains", "簇中无链");
+setPluginResource( "deformerEvaluator", "rStatusClusterNodeNotSupportedInGraph", "节点在图表中不受支持");
+setPluginResource( "deformerEvaluator", "rStatusClusterNullChainMeshTooSmall", "网格太小(无 GPU 链)");
+setPluginResource( "deformerEvaluator", "rStatusClusterRemoved", "簇已移除");
+setPluginResource( "deformerEvaluator", "rStatusClusterUnknowMeshSize", "未知网格大小");
+setPluginResource( "deformerEvaluator", "rStatusDynamicInput", "已设置动画的输入");
+setPluginResource( "deformerEvaluator", "rStatusFail", "未确定的故障");
+setPluginResource( "deformerEvaluator", "rStatusInputsNotSupported", "不支持输入");
+setPluginResource( "deformerEvaluator", "rStatusInvalidNode", "节点无效");
+setPluginResource( "deformerEvaluator", "rStatusInvalidNodeValues", "节点值无效");
+setPluginResource( "deformerEvaluator", "rStatusMeshNotAnimated", "未设置动画的网格");
+setPluginResource( "deformerEvaluator", "rStatusMultipleConnectedOutputs", "多个连接的输出");
+setPluginResource( "deformerEvaluator", "rStatusNoOutputPlugs", "无输出栓");
+setPluginResource( "deformerEvaluator", "rStatusNodeInCycle", "循环中的节点");
+setPluginResource( "deformerEvaluator", "rStatusNodeNotAnimated", "未设置动画的节点");
+setPluginResource( "deformerEvaluator", "rStatusNodeTypeNotRegistered", "未注册的节点类型");
+setPluginResource( "deformerEvaluator", "rStatusRemovedFromCluster", "已从簇中移除");
+setPluginResource( "deformerEvaluator", "rStatusStaticAndDynamicInput", "静态和已设置动画的输入");
+setPluginResource( "deformerEvaluator", "rStatusStaticInput", "静态输入");
+setPluginResource( "deformerEvaluator", "rStatusSuccess", "成功");
+setPluginResource( "deformerEvaluator", "rStatusSuccessorDifferentCluster", "不同簇中的后续项");
+setPluginResource( "deformerEvaluator", "rStatusTransformNotSupported", "不支持的变换");
+setPluginResource( "deformerEvaluator", "rStatusUnsupportedDeformedDataType", "不支持的变形数据类型");
+setPluginResource( "deformerEvaluator", "rSuccessorDifferentCluster", "GPU 覆盖不支持节点 %s，因为它在其他簇中具有后续 %s。");
+setPluginResource( "deformerEvaluator", "rTransformNotSupported", "GPU 覆盖不支持变换 %s。请尝试改为使用形变名称。");
+setPluginResource( "deformerEvaluator", "rTypeNotRegistered", "GPU 覆盖不支持节点 %s，因为 %s 不是已注册的类型。");
+setPluginResource( "deformerEvaluator", "rUnconnectedOutput", "警告: 节点 %s 的输出未连接。");
+setPluginResource( "deformerEvaluator", "rUnsupportedDeformedDataType", "GPU 覆盖不支持节点 %s，因为几何体类型不是网格。");
+setPluginResource( "deformerEvaluator", "rUpstreamNodeInAnotherCluster", "上游节点 %s 不在同一簇中，且不能位于链中。");
+setPluginResource( "deformerEvaluator", "rUsingDynamicInput", "为 %s 使用动态源网格。");
+setPluginResource( "deformerEvaluator", "rUsingStaticInput", "为 %s 创建静态源网格。");
+// 
+// --------------------------
+// Registered node resources:
+// --------------------------
+// 
+//  (Plugin has no registered nodes)
+// 

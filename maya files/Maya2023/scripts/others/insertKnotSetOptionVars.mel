@@ -1,0 +1,40 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  Mar. 14, 1997
+//
+//  Description:
+//      Global function to make sure the options for insertKnot are set.
+//
+//  Input Arguments:
+//      Force the factory setting or not.
+//
+//  Return Value:
+//      None.
+//
+
+global proc insertKnotSetOptionVars( int $forceFactorySettings )
+{
+	optionVar -init $forceFactorySettings -category "Modeling.Curves.Insert Knot"
+		// Keep Original option var.  This corresponds to the 
+		// "-rpo/-replaceOriginal" flag for insertKnot commands.
+		-iv insertKnotKeepOriginal 0
+		// -nk/-numberOfKnots int
+		-iv insertKnotNumberOfKnotsToInsert 1
+		// -add/-addKnots boolean
+		-iv insertKnotAddOrComplement 1
+		// -ib/-insertBetween boolean
+		-iv insertKnotBetween 0
+		-iv insertIsoKeepOriginal 0
+		-iv insertIsoNumberOfIsosToInsert 1
+		-iv insertIsoAddOrComplement 1
+		-iv insertIsoBetween 0
+		-iv insertKnotIsoparm 0
+		;
+}

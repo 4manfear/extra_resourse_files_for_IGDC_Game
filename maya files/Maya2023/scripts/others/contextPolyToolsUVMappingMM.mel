@@ -1,0 +1,147 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//  Procedure Name:
+//      contextPolyToolsUVMappingMM
+//
+//  Description:
+//      This procedure creates the popup/marking menu
+//      for poly UV mapping tools. 
+//
+//  Input Arguments:
+//      None
+//
+//  Return Value:
+//      None.
+
+
+global proc contextPolyToolsUVMappingMM()
+{ 
+	menuItem
+		-label (uiRes("m_contextPolyToolsUVMappingMM.kPlannar"))
+		-ecr true
+		-annotation (getRunTimeCommandAnnotation("UVPlanarProjection"))
+		-command "UVPlanarProjection;" 
+		-radialPosition "N" 
+		-image "polyPlanProj.png"
+		;
+
+	menuItem -optionBox true  
+		-ecr false 
+		-annotation (getRunTimeCommandAnnotation("UVPlanarProjectionOptions")) 
+		-command "UVPlanarProjectionOptions" 
+		-image "polyPlanProj.png"
+		;
+
+	menuItem
+		-label (uiRes("m_contextPolyToolsUVMappingMM.kNormalBased"))
+		-version 2018
+		-annotation (getRunTimeCommandAnnotation("UVNormalBasedProjection"))
+		-command "UVNormalBasedProjection" 
+		-radialPosition "NE" 
+		-image "polyNormalProj"
+		;
+
+	menuItem -optionBox true  
+		-ecr false 
+		-annotation (getRunTimeCommandAnnotation("UVNormalBasedProjectionOptions")) 
+		-command "UVNormalBasedProjectionOptions"
+		-image "polyNormalProj"
+		;
+
+	menuItem
+		-label (uiRes("m_contextPolyToolsUVMappingMM.kCameraBased"))
+		-ecr true
+		-annotation (getRunTimeCommandAnnotation("UVCameraBasedProjection"))
+		-command "UVCameraBasedProjection" 
+		-radialPosition "E" 
+		-image "polyCameraProj.png"
+		;
+
+	menuItem -optionBox true 
+		-ecr false 
+		-annotation (getRunTimeCommandAnnotation("UVCameraBasedProjectionOptions")) 
+		-command "UVCameraBasedProjectionOptions"  
+		-image "polyCameraProj.png"
+		;
+
+	menuItem
+		-ecr false
+		-label (uiRes("m_contextPolyToolsUVMappingMM.kSylindrical"))
+		-annotation (getRunTimeCommandAnnotation("UVCylindricProjection"))
+		-command "UVCylindricProjection"
+		-radialPosition "SE" 
+		-image "polyCylProj.png"
+		;
+
+	menuItem -optionBox true  
+		-ecr false 
+		-annotation (getRunTimeCommandAnnotation("UVCylindricProjectionOptions")) 
+		-command "UVCylindricProjectionOptions" 
+		-image "polyCylProj.png"
+		;
+
+	menuItem
+		-version "2018"
+		-label (uiRes("m_contextPolyToolsUVMappingMM.kBestPlaneTexturing"))
+		-ecr true
+		-annotation (getRunTimeCommandAnnotation("BestPlaneTexturingTool"))
+		-radialPosition "S"
+		-command "BestPlaneTexturingTool" 
+		-image "BestPlaneTexturingToolItem.png"
+		;
+
+	menuItem
+		-label (uiRes("m_contextPolyToolsUVMappingMM.kSpherical"))
+		-ecr true
+		-annotation (getRunTimeCommandAnnotation("UVSphericalProjection"))
+		-radialPosition "SW"
+		-command "UVSphericalProjection" 
+		-image "polySphereProj.png" 
+		;
+
+	menuItem -optionBox true  
+		-ecr false 
+		-annotation (getRunTimeCommandAnnotation("UVSphericalProjectionOptions")) 
+		-command "UVSphericalProjectionOptions" 
+		-image "polySphereProj.png" 
+		;
+	
+	menuItem
+		-version "2016"
+		-label (uiRes("m_contextPolyToolsUVMappingMM.kContourStretch"))
+		-ecr true
+		-annotation (getRunTimeCommandAnnotation("UVContourStretchProjection"))
+		-radialPosition "W" 
+		-command "UVContourStretchProjection" 
+		-image "polyContourProj.png"
+		;
+
+	menuItem -optionBox true 
+		-ecr false 
+		-annotation (uiRes("m_contextPolyToolsUVMappingMM.kContourOptionsAnnot"))   
+		-command "UVContourStretchProjectionOptions"
+		-image "polyContourProj.png"
+		;
+
+	menuItem
+		-label (uiRes("m_contextPolyToolsUVMappingMM.kAutomatic"))
+		-ecr true
+		-annotation (getRunTimeCommandAnnotation("UVAutomaticProjection"))
+		-radialPosition "NW" 
+		-command "UVAutomaticProjection" 
+		-image "polyAutoProj.png"
+		;
+
+	menuItem -optionBox true 
+		-ecr false 
+		-annotation (getRunTimeCommandAnnotation("UVAutomaticProjectionOptions")) 
+		-command "UVAutomaticProjectionOptions" 
+		-image "polyAutoProj.png"
+		; 
+}

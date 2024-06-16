@@ -1,0 +1,30 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+
+//
+//  Procedure Name:
+//      getVP2RendererDevice
+//
+//  Description:
+//		Get the current renderer device for Viewport 2.0
+//
+//  Input Arguments:
+//      string - Current editor panel
+//
+//  Return Value:
+//      string - Name of the Viewport 2.0 renderer device. If not VP2, return "";
+//
+
+global proc string getVP2RendererDevice(string $modelEditor)
+{
+	return `modelEditor -q -rendererDeviceName $modelEditor`;
+}
+
+global string $gDeviceOpenGLLegacy = "VirtualDeviceGL";
+global string $gDeviceDirectX11 = "VirtualDeviceDx11";
+global string $gDeviceOpenGLCoreProfile = "VirtualDeviceGLCore";

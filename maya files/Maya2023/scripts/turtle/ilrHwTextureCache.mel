@@ -1,0 +1,137 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+// provided at the time of installation or download, or which otherwise accompanies 
+
+//
+// Procedures for handling the hardware texture cache,
+// using the MEL command ilrHwTextureCacheCmd
+//
+
+global string $gIlrHwBakeVisualizerTextureInputs[];
+
+proc ilrCreateHwBakeVisualizerTextureInputs()
+{
+	global string $gIlrHwBakeVisualizerTextureInputs[];
+	$gIlrHwBakeVisualizerTextureInputs[0]  = "color";
+	$gIlrHwBakeVisualizerTextureInputs[1]  = "ambientColor";
+	$gIlrHwBakeVisualizerTextureInputs[2]  = "incandescence";
+	$gIlrHwBakeVisualizerTextureInputs[3]  = "lightMap";
+	$gIlrHwBakeVisualizerTextureInputs[4]  = "specularColor";
+	$gIlrHwBakeVisualizerTextureInputs[5]  = "heightMap";
+	$gIlrHwBakeVisualizerTextureInputs[6]  = "normalMap";
+	$gIlrHwBakeVisualizerTextureInputs[7]  = "lightABC";
+	$gIlrHwBakeVisualizerTextureInputs[8]  = "lightDEF";
+	$gIlrHwBakeVisualizerTextureInputs[9]  = "glightABC";
+	$gIlrHwBakeVisualizerTextureInputs[10] = "glightDEF";
+	$gIlrHwBakeVisualizerTextureInputs[11] = "blightABC";
+	$gIlrHwBakeVisualizerTextureInputs[12] = "blightDEF";
+	$gIlrHwBakeVisualizerTextureInputs[13] = "dirOccScaleValues";
+	$gIlrHwBakeVisualizerTextureInputs[14] = "rnm1";
+	$gIlrHwBakeVisualizerTextureInputs[15] = "rnm2";
+	$gIlrHwBakeVisualizerTextureInputs[16] = "rnm3";
+}
+			
+proc ilrHwTextureCacheUpdateFileNode(string $node)
+{
+	string $file = `getAttr ($node + ".fileTextureName")`;
+	if (size($file)) {
+		string $rlayer = "";
+		string $glayer = "";
+		string $blayer = "";
+		string $alayer = "";
+
+		if (`attributeQuery -exists -node $node "ilrLayerR"`) {
+			$rlayer = `getAttr ($node + ".ilrLayerR")`;
+			$glayer = `getAttr ($node + ".ilrLayerG")`;
+			$blayer = `getAttr ($node + ".ilrLayerB")`;
+			$alayer = `getAttr ($node + ".ilrLayerA")`;
+		}
+		
+		string $cmd = "ilrHwTextureCacheCmd -update -texture \"" + $file + "\"";
+		$cmd += " -rlayer \"" + $rlayer + "\"";
+		$cmd += " -glayer \"" + $glayer + "\"";
+		$cmd += " -blayer \"" + $blayer + "\"";
+		$cmd += " -alayer \"" + $alayer + "\"";
+		eval($cmd);
+	}
+}
+
+global proc ilrHwTextureCacheUpdate(string $node)
+{
+	global string $gIlrHwBakeVisualizerTextureInputs[];
+	if (size($gIlrHwBakeVisualizerTextureInputs) == 0) {
+		ilrCreateHwBakeVisualizerTextureInputs();
+	}
+
+	for ($attr in $gIlrHwBakeVisualizerTextureInputs)
+	{
+		if (`attributeExists $attr $node`)
+		{
+			string $items[] = `listConnections ($node + "." + $attr)`;
+			for ($item in $items)
+			{
+				string $type = `nodeType $item`;
+				if ($type == "file") {
+					ilrHwTextureCacheUpdateFileNode($item);
+				}
+				if ($type == "tripleShadingSwitch") {
+					string $switchInputs[] = `listConnections ($item+".input")`;
+					for($switchInput in $switchInputs) {
+						$type = `nodeType $switchInput`;
+						if ($type == "file") {
+							ilrHwTextureCacheUpdateFileNode($switchInput);						
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+global proc ilrHwTextureCacheUpdateAll()
+{
+	string $cmd = "ilrHwTextureCacheCmd -updateall";
+	eval($cmd);
+}
+
+global proc ilrHwTextureCacheClear()
+{
+	string $cmd = "ilrHwTextureCacheCmd -clear";
+	eval($cmd);
+}
+
+global proc AEilrHardwareTextureCacheNew(string $attr)
+{
+	setUITemplate -pst attributeEditorTemplate;
+	
+	columnLayout -columnAttach "both" 15 -rowSpacing 2 -columnWidth 200;
+	
+		button -label "Update Current Textures" -align "center" ilrHwTextureCacheUpdateBtn;
+		button -label "Update All Textures" -align "center" ilrHwTextureCacheUpdateAllBtn;
+		button -label "Clear All Textures" -align "center" ilrHwTextureCacheClearBtn;
+
+	setParent ..;
+	
+	setUITemplate -ppt;
+
+	AEilrHardwareTextureCacheReload($attr);
+}
+
+global proc AEilrHardwareTextureCacheReload(string $attr)
+{
+	string	$node;
+	string	$buffer[];
+	
+	tokenize($attr, ".", $buffer);
+	$node = $buffer[0];
+	
+	button -edit -command ("ilrHwTextureCacheUpdate " + $node) ilrHwTextureCacheUpdateBtn;
+	button -edit -command ("ilrHwTextureCacheUpdateAll") ilrHwTextureCacheUpdateAllBtn;
+	button -edit -command ("ilrHwTextureCacheClear") ilrHwTextureCacheClearBtn;
+}

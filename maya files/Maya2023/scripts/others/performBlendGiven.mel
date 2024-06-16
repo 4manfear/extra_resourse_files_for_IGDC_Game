@@ -1,0 +1,23 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  July 24, 1998
+//
+//  Description:
+//     Using the two selection lists, see what blend needs to do.
+//     Since everything that needs to be active is already active,
+//     just need to count how many curves in the first set.
+
+global proc string performBlendGiven( string $leftEdge[], string $rightEdge[] )
+//
+{
+	optionVar -intValue blendCurvesInFirst `size($leftEdge)`;
+	string $res = `performBlend 0 ""`;
+	return $res;
+}

@@ -1,0 +1,17 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+
+global proc string getViewportRenderer(string $modelEditor)
+{
+	return `modelEditor -query -rendererName $modelEditor`;
+}
+
+global string $gViewport2 = "vp2Renderer";
+global string $gLegacyViewport = "base_OpenGL_Renderer";
+global string $gHighQualityViewport = "hwRender_OpenGL_Renderer";
+global string $gStubRenderer = "stub_Renderer";

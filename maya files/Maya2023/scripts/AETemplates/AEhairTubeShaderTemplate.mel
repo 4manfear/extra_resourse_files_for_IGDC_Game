@@ -1,0 +1,99 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//  Procedure Name:
+//	AEhairTubeShaderTemplate
+//
+//  Description Name;
+//	Creates the attribute editor controls for the hairTubeShader Node
+//
+//  Input Value:
+//	nodeName 
+//
+//  Output Value:
+//	None
+// 
+
+
+global proc AEhairTubeBumpNew (string $attrName)
+{
+	setUITemplate -pst attributeEditorTemplate;
+
+	attrNavigationControlGrp 
+		-label (uiRes("m_AEhairTubeShaderTemplate.kBumpMapping"))
+		-at $attrName
+		-dragCallback "AEdragCallback"
+		bumpControl;
+
+	setUITemplate -ppt;
+}
+
+
+global proc AEhairTubeBumpReplace (string $attrName)
+{
+	attrNavigationControlGrp -edit
+		-at $attrName
+		bumpControl;
+}
+
+
+
+global proc AEhairTubeShaderTemplate ( string $nodeName )
+{
+	AEswatchDisplay $nodeName;
+	editorTemplate -beginScrollLayout;
+
+	editorTemplate -callCustom AEshaderTypeNew AEshaderTypeReplace "message";
+	editorTemplate -addControl "tubeDirection";
+
+	editorTemplate -beginLayout (uiRes("m_AEhairTubeShaderTemplate.kCommonMaterialAttributes")) -collapse 0;
+		editorTemplate -addControl "color";
+		AEaddRampControl ($nodeName+".colorScale");
+		editorTemplate -addControl "transparency";
+		editorTemplate -addControl "ambientColor";
+		editorTemplate -addControl "incandescence";
+		editorTemplate -callCustom "AEhairTubeBumpNew" "AEhairTubeBumpReplace"
+			 		"normalCamera";
+		editorTemplate -addControl "diffuse";
+		editorTemplate -addControl "translucence";
+		editorTemplate -addControl "translucenceDepth";
+		editorTemplate -addControl "translucenceFocus";
+	editorTemplate -endLayout;
+
+	editorTemplate -beginLayout (uiRes("m_AEhairTubeShaderTemplate.kSpecularShading")) -collapse 0;
+		editorTemplate -addControl "specularPower";
+		editorTemplate -addControl "specularShift";
+		editorTemplate -addControl "scatter";
+		editorTemplate -addControl "scatterPower";
+
+		// include/call base class/node attributes
+		AEreflectCommonSpecularShading $nodeName;
+
+	editorTemplate -endLayout;
+
+	// include/call base class/node attributes
+	AEreflectCommon $nodeName;
+    
+    if(isLegacyViewportEnabled())
+    {
+        //
+        // Add the Hardware texture section only if the user enable the legacy viewport
+        //    
+        editorTemplate -beginLayout (uiRes("m_AEhairTubeShaderTemplate.kHardwareTexturing")) -collapse true;
+            AEhardwareTextureTemplate $nodeName
+                ("color transparency ambientColor incandescence "+
+                 "normalCamera diffuse translucence");
+        editorTemplate -endLayout;
+    }
+    
+	editorTemplate -suppress "tangentUCamera";
+	editorTemplate -suppress "tangentVCamera";
+
+	editorTemplate -addExtraControls;
+	editorTemplate -endScrollLayout;
+}

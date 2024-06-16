@@ -1,0 +1,28 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  March 20 1997
+//
+//  Description:
+//      Global function to make sure the options for point curve Constraint are set.
+//
+//  Input Arguments:
+//      Force the factory setting or not.
+//
+//  Return Value:
+//      None.
+//
+global proc pointCurveConstraintSetOptionVars( int $forceFactorySettings )
+{
+	optionVar -init $forceFactorySettings -category "Deform.Point On Curve"
+		-iv pointCurveConstraintKeepOriginal 0	// Default is 0. ie replace it
+		-fv pointCurveConstraintWt 1.0			// weight for constraint.
+		;
+}
+

@@ -1,0 +1,116 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//  Creation Date: November 26, 2016
+//
+//  Procedure Name:
+//      texLinearAlignUVs
+//
+//  Description:
+//      UV workflow function used for aligning a selection of UVs to a vector
+//      that isn't necessarily the U or V axis. The vector is found by
+//      first creating a convex hull of the UV selection and then checking
+//      each hull point against every other hull point (all combinations).
+//
+//  Input Arguments
+//      None.
+//
+//  Return Value:
+//      None.
+//
+//  Notes:
+//  This script is part of the implementation of Nightshade UV Editor into
+//  Autodesk Maya.
+//
+// ===========================================================================
+
+global proc texLinearAlignUVs()
+{
+    // Validate selection
+    texCheckSelection("any");
+
+    // Get original selection
+	string $origSelection[] = `ls -selection`;
+	string $temp[] = `polyListComponentConversion -toUV`;
+    string $selection[] = `ls -flatten $temp`;
+    if (`size($selection)` <= 1) return; // Early exit
+
+    // Find center
+    float $uvBox[] = `polyEvaluate -boundingBoxComponent2d`;
+    float $center[];
+    $center[0] = 0.5 * ( $uvBox[0] + $uvBox[1] );
+    $center[1] = 0.5 * ( $uvBox[2] + $uvBox[3] );
+
+    string $extremePoints[] = texGetFurthestPoints($selection);
+    if(`size($extremePoints)` != 2) return;
+
+    // Calculate rotational angle and determine what axis to align the UVs to. Arctangent range is -90 to +90 degrees
+    float $arctangent = texCalculateAngle($extremePoints[0], $extremePoints[1]);
+    float $bork = int( texRoundOff($arctangent, 4) );
+    float $angleValue = $bork;
+    int $axis = 0;
+    int $invertVal = 0;
+    if ($angleValue == 0.0000) {
+        // Type 0 - No rotation
+        $angleValue = 0;
+        $axis = 1;
+
+    } else if (($angleValue == 90.0000) || ($angleValue == -90.0000)) {
+		  
+		$angleValue = 0;
+		$axis = 0; 
+	} else if (($angleValue >= -44.9999) && ($angleValue <= 44.9999)){
+        // Type A - Invert
+        $axis = 1;
+        $invertVal = 1;
+
+    } else if (($angleValue >= 45.0000) && ($angleValue <= 89.9999)){
+        // Type B - Subtract angle from 90
+        $angleValue = 90 - $angleValue;
+        $axis = 0;
+        $invertVal = 0;
+
+    } else if (($angleValue <= -45.0000) && ($angleValue >= -89.9999)){
+        // Type C - Add 45 degrees to angle and invert
+        $angleValue = 90 + $angleValue;
+        $axis = 0;
+        $invertVal = 1;
+
+    }
+
+    if ($invertVal == 1){
+        $angleValue = -$angleValue;
+    }
+
+    // Rotate selection by this angle
+    polyEditUV
+        -angle $angleValue
+        -pivotU $center[0]
+        -pivotV $center[1]
+        -relative true
+        $selection
+    ;
+
+    // Average UV's along the U or V axis
+    if ($axis == 0){
+        alignUV("avgU");
+    } else {
+        alignUV("avgV");
+    }
+
+    // Rotate back
+    polyEditUV
+        -angle (-$angleValue)
+        -pivotU $center[0]
+        -pivotV $center[1]
+        -relative true
+        $selection
+    ;
+    
+    select -replace $origSelection;
+}

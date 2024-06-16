@@ -1,0 +1,255 @@
+// The warm and cool colors are coming from the application.
+//#define WARM_COOL_COLOR_SOURCE_LITERAL
+
+// We use a uniform color from the application as the vertex color.
+#define VERTEX_COLOR_SOURCE_LITERAL
+
+//When LIGHT_DIR_FROM_SYSTEM is defined, use the LightDirection system semantic. 
+//Otherwise use the LightDirectionParameter semantic. 
+#define LIGHT_DIR_FROM_SYSTEM
+
+// World-view-projection transformation.
+float4x4 gWVPXf : WorldViewProjection 
+< 
+string UIWidget = "None"; 
+bool rowMajor = true;
+>;
+
+// World-view transformation
+float4x4 gWV : WorldView 
+< 
+string UIWidget = "None"; 
+bool rowMajor = true;
+>;
+
+#ifdef LIGHT_DIR_FROM_SYSTEM
+// Light direction from graphic scheme
+float3 gDir : LightDirection < string UIWidget = "None"; >;
+#else
+// Light direction specified by the application
+float3 gLightDirection : LightDirectionParameter
+<
+string UIName = "Light Direction";
+> = float3(1.0f, 0.0f, 0.0f);
+#endif
+
+// View direction. 1 for left-handed, and -1 for right-handed.
+int gHandedness : Handedness< string UIWidget = "None"; > = 1;
+
+// The specular color.
+float3  gHighlightColor : HighlightColor
+<
+string UIName = "Highlight Color";
+> = float3(1.0f, 1.0f, 1.0f);
+
+// The warm and cool colors are from the application, 
+// if WARM_COOL_COLOR_SOURCE_LITERAL is defined.
+#ifdef WARM_COOL_COLOR_SOURCE_LITERAL
+// The warm color is displayed on the faces that is lit.
+// Commonly we use red, orange or yellow as the warm color.
+float3  gWarmColor : WarmColor
+<
+string UIName = "Warm Color";
+> = float3(0.50f, 0.50f, 0.20f);
+
+// The cool color is displayed on the faces that is in the shadow.
+// Commonly we use blue, violet or green as the cool color.
+float3  gCoolColor : CoolColor
+<
+string UIName = "Cool Color";
+> = float3(0.35f, 0.40f, 0.10f);
+#endif
+
+// We use a uniform color from the application as the vertex color,
+// if VERTEX_COLOR_SOURCE_LITERAL is defined.
+#ifdef VERTEX_COLOR_SOURCE_LITERAL
+// The base color is for surface diffuse reflection, when the vertex color is not valid.
+float4  gBaseColor : BaseColor
+<
+string UIName = "Base Color";
+> = float4(0.0f, 0.0f, 0.0f, 1.0f);
+#endif
+
+// The factor that the warm color combining with the base color.
+float  gDiffuseWarm : DiffuseWarm
+<
+string UIName = "Diffuse Warm";
+string UIWidget = "Slider";
+> = 0.65f;                  
+
+// The factor that the cool color combining with the base color.
+float gDiffuseCool : DiffuseCool
+<
+string UIName = "Diffuse Cool";
+string UIWidget = "Slider";
+> = 0.10f;       
+
+// The specular power factor.
+float gShininess : Shininess
+<
+string UIName = "Shininess";
+string UIWidget = "Slider";
+> = 8.0f;       
+
+
+struct VS_INPUT
+{
+    float3 Pos  : POSITION;
+    float3 Normal  : NORMAL;
+    
+    // if VERTEX_COLOR_SOURCE_LITERAL is defined,
+    // the vertex format doesn't need the color field.
+    #ifndef VERTEX_COLOR_SOURCE_LITERAL
+        float4 Cs : COLOR;
+    #endif
+};
+
+struct VS_TO_PS
+{
+    float4 HPos       : POSITION;
+
+    // if WARM_COOL_COLOR_SOURCE_LITERAL is not defined, the warm and cool colors 
+    // are generated from vertex color, and passed to the pixel shader.
+    #ifndef WARM_COOL_COLOR_SOURCE_LITERAL
+        float3 WarmColor  : COLOR0;
+        float3 CoolColor  : COLOR1;
+    #endif
+    
+    float3 ReflectVec : TEXCOORD0;
+    float3 ViewVec    : TEXCOORD1;
+    float  NdotL      : TEXCOORD2;
+    
+    // if VERTEX_COLOR_SOURCE_LITERAL is defined,
+    // the vertex color need not passed to the pixel shader.
+    #ifndef VERTEX_COLOR_SOURCE_LITERAL
+        float4 Cs         : TEXCOORD3;
+    #endif
+};
+
+VS_TO_PS GoochVS(VS_INPUT IN)
+{
+    VS_TO_PS OUT;
+    float4 P = float4(IN.Pos, 1.0);
+
+    float3 eyeNormal  = normalize(mul(IN.Normal, (float3x3)gWV));
+    
+    #ifdef LIGHT_DIR_FROM_SYSTEM
+        float3 posToLight = normalize(gDir);
+    #else
+        float3 posToLight = normalize(gLightDirection);
+    #endif
+
+    OUT.ReflectVec    = normalize(reflect(-posToLight, eyeNormal));
+    OUT.ViewVec       = normalize(float3(0, 0, gHandedness));
+    OUT.NdotL         = ((dot(posToLight, eyeNormal) + 1.0) * 0.5);
+    OUT.HPos          = mul(P, gWVPXf);
+    
+    // if VERTEX_COLOR_SOURCE_LITERAL is defined,
+    // the vertex color need not passed to the pixel shader.
+    #ifndef VERTEX_COLOR_SOURCE_LITERAL
+        OUT.Cs            = IN.Cs;
+    #endif
+    
+    // if WARM_COOL_COLOR_SOURCE_LITERAL is not defined, the warm and cool colors 
+    // are generated from vertex color.
+    #ifndef WARM_COOL_COLOR_SOURCE_LITERAL
+        static float3 warmMap[] =
+        {
+            { 0.55F, 0.55F, 0.55F },  // 0:  0 0 0 = black
+            { 0.35F, 0.40F, 0.10F },  // 1:  0 0 1 = blue
+            { 0.45F, 0.45F, 0.20F },  // 2:  0 1 0 = green
+            { 0.50F, 0.50F, 0.00F },  // 3:  0 1 1 = cyan
+            { 0.45F, 0.45F, 0.25F },  // 4:  1 0 0 = red
+            { 0.35F, 0.30F, 0.10F },  // 5:  1 0 1 = magenta
+            { 0.50F, 0.50F, 0.20F },  // 6:  1 1 0 = yellow
+            { 0.60F, 0.60F, 0.20F },  // 7:  1 1 1 = white
+        };
+
+        static float3 coolMap[] =
+        {
+            { 0.20F, 0.20F, 0.30F },  // 0:  0 0 0 = black
+            { 0.10F, 0.50F, 0.15F },  // 1:  0 0 1 = blue
+            { 0.10F, 0.10F, 0.70F },  // 2:  0 1 0 = green
+            { 0.10F, 0.10F, 0.75F },  // 3:  0 1 1 = cyan
+            { 0.00F, 0.00F, 0.70F },  // 4:  0 1 0 = red
+            { 0.10F, 0.15F, 0.70F },  // 5:  1 0 1 = magenta
+            { 0.10F, 0.10F, 0.75F },  // 6:  1 1 0 = yellow
+            { 0.00F, 0.00F, 0.60F },  // 7:  1 1 1 = white
+        };
+
+        //
+        // Create the warm and cool colors to use as a tri-linear interpolation
+        // of the color map above, based on the surface color.
+        //
+        #ifdef VERTEX_COLOR_SOURCE_LITERAL
+            // The warm and cool colors are calculated from the literal vertex color.
+            OUT.WarmColor = lerp(
+                lerp(lerp(warmMap[0], warmMap[4], gBaseColor.r), lerp(warmMap[1], warmMap[5], gBaseColor.r), gBaseColor.b),
+                lerp(lerp(warmMap[2], warmMap[6], gBaseColor.r), lerp(warmMap[3], warmMap[7], gBaseColor.r), gBaseColor.b),
+                gBaseColor.g);
+                
+            OUT.CoolColor = lerp(
+                lerp(lerp(coolMap[0], coolMap[4], gBaseColor.r), lerp(coolMap[1], coolMap[5], gBaseColor.r), gBaseColor.b),
+                lerp(lerp(coolMap[2], coolMap[6], gBaseColor.r), lerp(coolMap[3], coolMap[7], gBaseColor.r), gBaseColor.b),
+                gBaseColor.g);
+         #else
+            // The warm and cool colors are calculated from the original vertex color.
+            OUT.WarmColor = lerp(
+                lerp(lerp(warmMap[0], warmMap[4], IN.Cs.r), lerp(warmMap[1], warmMap[5], OUT.Cs.r), IN.Cs.b),
+                lerp(lerp(warmMap[2], warmMap[6], IN.Cs.r), lerp(warmMap[3], warmMap[7], OUT.Cs.r), IN.Cs.b),
+                IN.Cs.g);
+                
+            OUT.CoolColor = lerp(
+                lerp(lerp(coolMap[0], coolMap[4], IN.Cs.r), lerp(coolMap[1], coolMap[5], OUT.Cs.r), IN.Cs.b),
+                lerp(lerp(coolMap[2], coolMap[6], IN.Cs.r), lerp(coolMap[3], coolMap[7], OUT.Cs.r), IN.Cs.b),
+                IN.Cs.g);
+         #endif
+    #endif        
+
+    return OUT;
+}
+
+float4 GoochPS(VS_TO_PS IN) : COLOR0
+{
+    #ifdef WARM_COOL_COLOR_SOURCE_LITERAL
+        float3 warmColor = gWarmColor;
+        float3 coolColor = gCoolColor;
+    #else
+        float3 warmColor = IN.WarmColor;
+        float3 coolColor = IN.CoolColor;
+    #endif
+    
+    #ifdef VERTEX_COLOR_SOURCE_LITERAL
+        float3 kwarm = min((warmColor + (gDiffuseWarm * gBaseColor)), 1.0);
+        float3 kcool = min((coolColor + (gDiffuseCool * gBaseColor)), 1.0);
+    #else
+        float3 kwarm = min((warmColor + (gDiffuseWarm * IN.Cs.rgb)), 1.0);
+        float3 kcool = min((coolColor + (gDiffuseCool * IN.Cs.rgb)), 1.0);
+    #endif        
+        
+    float3 kfinal = lerp(kcool, kwarm, IN.NdotL);
+
+    float3 nrefl  = normalize(IN.ReflectVec);
+    float3 nview  = normalize(IN.ViewVec);
+
+    float spec    = max(-dot(nrefl, nview), 1.0E-7);
+    float3 spec2  = (gHighlightColor * pow(spec, gShininess));
+
+    //If gBaseColor is set as the vertex color, we use the fourth channel as the opacity.
+    //If not, we use the fourth channel of the vertex color as the opacity.
+    #ifdef VERTEX_COLOR_SOURCE_LITERAL
+        return float4(min((kfinal + spec2), 1.0), gBaseColor.a);
+    #else
+        return float4(min((kfinal + spec2), 1.0), IN.Cs.a);
+    #endif
+}
+
+// The main technique.
+technique Gooch
+{
+    pass P0
+    {
+        VertexShader = compile glslv GoochVS();
+        PixelShader = compile glslf GoochPS();
+    }
+}

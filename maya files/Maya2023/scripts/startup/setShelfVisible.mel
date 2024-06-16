@@ -1,0 +1,23 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//	Description:
+//		Set the visibility of the Shelf.
+//
+//	Arguments:
+//		$visible - Visibility for the Shelf.
+//
+global proc setShelfVisible(int $visible)
+{
+	global int $gShelfCreated = false;
+
+	int $currentlyVisible = isUIComponentVisible("Shelf");
+
+	if ($visible && !$currentlyVisible || !$visible && $currentlyVisible) {
+		toggleUIComponentVisibility "Shelf";
+	}
+}

@@ -1,0 +1,53 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+
+global proc AEhairPhysicalShaderTemplate( string $nodeName )
+{
+
+	AEswatchDisplay $nodeName;
+	editorTemplate -beginScrollLayout;
+	
+	editorTemplate -beginLayout (uiRes("m_AEhairPhysicalShaderTemplate.kDiffuse")) -collapse 0;
+		editorTemplate -label (uiRes("m_AEhairPhysicalShaderTemplate.kRootColor")) -addControl "rootColorD";
+		editorTemplate -label (uiRes("m_AEhairPhysicalShaderTemplate.kTipColor")) -addControl "tipColorD";
+		editorTemplate -label (uiRes("m_AEhairPhysicalShaderTemplate.kDiffuseWeight")) -addControl "intensityD";
+		editorTemplate -label (uiRes("m_AEhairPhysicalShaderTemplate.kTranparency")) -addControl "transparency";
+		editorTemplate -label (uiRes("m_AEhairPhysicalShaderTemplate.kAmbientColor")) -addControl "ambientColor";
+		editorTemplate -label (uiRes("m_AEhairPhysicalShaderTemplate.kIncandescene")) -addControl "incandescence";
+	editorTemplate -endLayout;
+	editorTemplate -beginLayout (uiRes("m_AEhairPhysicalShaderTemplate.kPrimaryHighlight")) -collapse 0;
+		editorTemplate -label (uiRes("m_AEhairPhysicalShaderTemplate.kFristHighlightColor")) -addControl "colorR";
+		editorTemplate -label (uiRes("m_AEhairPhysicalShaderTemplate.kFristHighlightWeight")) -addControl "intensityR";
+		editorTemplate -label (uiRes("m_AEhairPhysicalShaderTemplate.kFristHighlightShift")) -addControl "longitudinalShiftR";
+		editorTemplate -label (uiRes("m_AEhairPhysicalShaderTemplate.kFristHighlightScatter")) -addControl "longitudinalWidthR";
+	editorTemplate -endLayout;
+	editorTemplate -beginLayout (uiRes("m_AEhairPhysicalShaderTemplate.kSecondaryHighlight")) -collapse 0;
+		editorTemplate -label (uiRes("m_AEhairPhysicalShaderTemplate.kSecondaryHighlightColor")) -addControl "colorTRT";
+		editorTemplate -label (uiRes("m_AEhairPhysicalShaderTemplate.kSecondaryHighlightWeight")) -addControl "intensityTRT";
+		editorTemplate -label (uiRes("m_AEhairPhysicalShaderTemplate.kSecondaryHighlightShift")) -addControl "longitudinalShiftTRT";
+		editorTemplate -label (uiRes("m_AEhairPhysicalShaderTemplate.kSecondaryHighlightScatter")) -addControl "longitudinalWidthTRT";
+	editorTemplate -endLayout;
+	editorTemplate -beginLayout (uiRes("m_AEhairPhysicalShaderTemplate.kGlint")) -collapse 0;
+		editorTemplate -label (uiRes("m_AEhairPhysicalShaderTemplate.kGlintColor"))-addControl "colorG";		
+		editorTemplate -label (uiRes("m_AEhairPhysicalShaderTemplate.kGlintWeight")) -addControl "intensityG";
+		editorTemplate -label (uiRes("m_AEhairPhysicalShaderTemplate.kGlintShift")) -addControl "azimuthalShiftG";
+		editorTemplate -label (uiRes("m_AEhairPhysicalShaderTemplate.kGlintScatter")) -addControl "azimuthalWidthG";
+	editorTemplate -endLayout;
+	editorTemplate -beginLayout (uiRes("m_AEhairPhysicalShaderTemplate.kTransmission")) -collapse 0;
+		editorTemplate -label (uiRes("m_AEhairPhysicalShaderTemplate.kTransmissionColor")) -addControl "colorTT";
+		editorTemplate -label (uiRes("m_AEhairPhysicalShaderTemplate.kTransmissionWeight")) -addControl "intensityTT";
+		editorTemplate -label (uiRes("m_AEhairPhysicalShaderTemplate.kTransmissionShift")) -addControl "longitudinalShiftTT";
+		editorTemplate -label (uiRes("m_AEhairPhysicalShaderTemplate.kTransmissionUScatter")) -addControl "longitudinalWidthTT";
+		editorTemplate -label (uiRes("m_AEhairPhysicalShaderTemplate.kTransmissionVScatter")) -addControl "azimuthalWidthTT";
+	editorTemplate -endLayout;
+	// include/call base class/node attributes
+	AEdependNodeTemplate $nodeName;
+	
+	editorTemplate -addExtraControls;
+	editorTemplate -endScrollLayout;
+}

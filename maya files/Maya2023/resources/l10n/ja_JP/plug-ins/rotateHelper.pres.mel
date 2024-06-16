@@ -1,0 +1,45 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+// Resources for Plug-in: rotateHelper
+// 
+// ----------------------------
+// Registered string resources:
+// ----------------------------
+// 
+//  (Plugin has no registered string resources)
+// 
+// 
+// --------------------------
+// Registered node resources:
+// --------------------------
+// 
+// Node: rotateHelper
+// 
+setNodeNiceNameResource( "rotateHelper", "回転ヘルパ" );
+setAttrNiceNameResource( "rotateHelper", "fzn", "フリーズ" );
+setAttrNiceNameResource( "rotateHelper", "u", "アップ ベクトル" );
+setAttrNiceNameResource( "rotateHelper", "ux", "アップ ベクトル X" );
+setAttrNiceNameResource( "rotateHelper", "uy", "アップ ベクトル Y" );
+setAttrNiceNameResource( "rotateHelper", "uz", "アップ ベクトル Z" );
+setAttrNiceNameResource( "rotateHelper", "f", "前方" );
+setAttrNiceNameResource( "rotateHelper", "fx", "前方 X" );
+setAttrNiceNameResource( "rotateHelper", "fy", "前方 Y" );
+setAttrNiceNameResource( "rotateHelper", "fz", "前方 Z" );
+setAttrNiceNameResource( "rotateHelper", "r", "回転" );
+setAttrNiceNameResource( "rotateHelper", "rx", "回転 X" );
+setAttrNiceNameResource( "rotateHelper", "ry", "回転 Y" );
+setAttrNiceNameResource( "rotateHelper", "rz", "回転 Z" );
+setAttrNiceNameResource( "rotateHelper", "ro", "回転順序" );
+setAttrNiceNameResource( "rotateHelper", "rm", "回転行列" );
+setAttrNiceNameResource( "rotateHelper", "fza", "フリーズの影響を受ける" );
+setAttrEnumResource( "rotateHelper", "ro", 0, "xyz" );
+setAttrEnumResource( "rotateHelper", "ro", 1, "yzx" );
+setAttrEnumResource( "rotateHelper", "ro", 2, "zxy" );
+setAttrEnumResource( "rotateHelper", "ro", 3, "xzy" );
+setAttrEnumResource( "rotateHelper", "ro", 4, "yxz" );
+setAttrEnumResource( "rotateHelper", "ro", 5, "zyx" );

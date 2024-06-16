@@ -1,0 +1,32 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+// This proc points the tool properties 
+// window to the current shadingLight context.
+
+global proc shadingLightRelValues (string $toolName) {
+
+	string $parent = (`toolPropertyWindow -q -location` + "|shadingLightRel");
+	setParent $parent;
+
+	if ( `shadingLightRelCtx -q -shadingCentric $toolName` ) {
+		radioButtonGrp -e -sl 1 shadingLightMode;
+	} else {
+		radioButtonGrp -e -sl 2 shadingLightMode;
+	}
+
+    // Set the top layout to be the current parent
+    //
+
+	string $icon = "lightLinkList32x32.xpm";
+ 	string $helpTag = "";
+	toolPropertySetCommon $toolName $icon $helpTag;
+
+	toolPropertySelect "shadingLightRel";
+}
+
+

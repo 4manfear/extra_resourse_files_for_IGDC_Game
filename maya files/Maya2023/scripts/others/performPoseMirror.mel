@@ -1,0 +1,386 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+
+
+//
+//  Description:
+//      This script provides an option box dialog for the mirror pose command.
+//
+
+ 
+
+//
+//  Procedure Name:
+//      setOptionVars
+//
+//  Description:
+//		Initialize the option values.
+//
+//  Input Arguments:
+//		Whether to set the options to default values.
+//
+//  Return Value:
+//      None.
+//
+proc setOptionVars(int $forceFactorySettings)
+{		
+	optionVar -init $forceFactorySettings -category "Pose Editor.Mirror"
+		-iv poseEditorFlipTgtSymmetryAxis 1
+		-iv poseEditorStoreSymmetrySeamEdges 1
+		;
+}
+
+//
+//  Procedure Name:
+//      poseMirrorSetup
+//
+//  Description:
+//		Update the state of the option box UI to reflect the option values.
+//
+//  Input Arguments:
+//      parent               - Top level parent layout of the option box UI.
+//                             Required so that UI object names can be 
+//                             successfully resolved.
+//
+//	forceFactorySettings - Whether the option values should be set to
+//                             default values.
+//
+//  Return Value:
+//      None.
+//
+global proc poseMirrorSetup(string $parent, int $forceFactorySettings)
+{
+	setOptionVars($forceFactorySettings);
+	setParent $parent; 
+	
+	int $axis=`optionVar -q poseEditorFlipTgtSymmetryAxis`;
+	optionMenuGrp -e -sl $axis seAxisList;
+	checkBoxGrp -e -en ($axis == 2) seSymmetryEdge;
+	int $store=`optionVar -q poseEditorStoreSymmetrySeamEdges`;
+	checkBoxGrp -e -v1 $store seSymmetryEdge;
+}
+
+//
+//  Procedure Name:
+//      poseMirrorCallback
+//
+//  Description:
+//		Update the option values with the current state of the option box UI.
+//
+//  Input Arguments:
+//      parent - Top level parent layout of the option box UI.  Required so
+//               that UI object names can be successfully resolved.
+//	    doIt   - Whether the command should execute.
+//
+//  Return Value:
+//      None.
+//
+global proc poseMirrorCallback(string $parent, int $doIt, int $selectionType)
+{
+	setParent $parent; 
+		
+	int $axis=`optionMenuGrp -q -select seAxisList`;
+	optionVar -intValue poseEditorFlipTgtSymmetryAxis $axis;
+	
+	if ($doIt)
+	{
+		performPoseMirror (2, $selectionType);
+		addToRecentCommandQueue "performPoseMirror 2" "PoseMirror";
+	}
+}
+
+//
+//  Procedure Name:
+//      poseMirrorOptions
+//
+//  Description:
+//		Construct the option box UI.  Involves accessing the standard option
+//		box and customizing the UI accordingly.
+//
+//  Return Value:
+//      None.
+//
+proc poseMirrorOptions(int $selectionType)
+{ 
+	string $callback = "poseMirrorCallback";
+	string $setup = "poseMirrorSetup";
+	string $layout = getOptionBox();
+	setParent $layout;
+	setUITemplate -pushTemplate DefaultTemplate;
+	waitCursor -state 1;
+
+	tabLayout -tabsVisible 0 -scrollable 1;
+
+	string $parent = `columnLayout -adjustableColumn 1`;
+		
+	// begin of Mirror Target Options, the follow controls are similar to the Mirror Target Options of blendShape.
+	
+	optionMenuGrp
+		-enable 1 -label (uiRes("m_performPoseMirror.kAxis"))
+		-changeCommand "checkBoxGrp -e -en (`optionMenuGrp -q -select seAxisList` == 2) seSymmetryEdge"
+		seAxisList;
+	menuItem -label (uiRes("m_performPoseMirror.kObject")); 
+	menuItem -label (uiRes("m_performPoseMirror.kTopo"));
+
+	checkBoxGrp	
+		-numberOfCheckBoxes 1
+		-label ""
+		-label1 (uiRes("m_performPoseMirror.kStoreSymmetrySeamEdges")) 
+		-v1 1
+		-en 1
+		-on1 "optionVar -intValue poseEditorStoreSymmetrySeamEdges 1"
+		-of1 "optionVar -intValue poseEditorStoreSymmetrySeamEdges 0"
+		seSymmetryEdge;
+	// end of Mirror Target Options.
+	
+	waitCursor -state 0;
+
+	setUITemplate -popTemplate;
+
+	int $execCmd = 1; 
+	string $applyCloseBtn = getOptionBoxApplyAndCloseBtn();
+	button -edit 
+		-command ($callback + " " + $parent + " " + $execCmd + " " + $selectionType)
+		$applyCloseBtn;
+
+	string $applyBtn = getOptionBoxApplyBtn();
+	button -edit 
+		-command ($callback + " " + $parent + " " + $execCmd + " " + $selectionType)
+		$applyBtn;
+	
+	$execCmd = 0;
+	string $saveBtn = getOptionBoxSaveBtn();
+	button -edit 
+		-command ($callback + " " + $parent + " " + $execCmd + " " + $selectionType + "; hideOptionBox")
+		$saveBtn;
+	
+	string $resetBtn = getOptionBoxResetBtn();
+	button -edit 
+		-command ($setup + " " + $parent + " " + 1)
+		$resetBtn;
+
+	setOptionBoxTitle (uiRes("m_performPoseMirror.kPoseMirrorOptions"));
+	setOptionBoxHelpTag( "EditPoseMirror" ); 
+	eval (($setup + " " + $parent + " " + 0));	
+	showOptionBox();
+}
+
+
+proc setMirrorSourceTargetOptionVars(int $forceFactorySettings)
+{
+	optionVar -init $forceFactorySettings -category "Pose Editor.Mirror"
+		-sv poseMirrorSearchForOptVar "R_"
+		-sv poseMirrorReplaceWithOptVar "L_"
+		;
+}
+global proc poseMirrorSourceTargetSetup(string $parent, int $forceFactorySettings)
+{
+	setMirrorSourceTargetOptionVars($forceFactorySettings);
+	setParent $parent; 
+	
+    $mirrorSource = `optionVar -query poseMirrorSearchForOptVar`;
+	textFieldGrp -edit -text $mirrorSource mirrorSourceTFGrp;
+	
+    $mirrorTarget = `optionVar -query poseMirrorReplaceWithOptVar`;
+	textFieldGrp -edit -text $mirrorTarget mirrorTargetTFGrp;
+} 
+global proc poseMirrorSourceTargetCallback(string $parent, int $doIt, int $selectionType)
+{
+	setParent $parent; 
+	
+	$mirrorSource = `textFieldGrp -q -text mirrorSourceTFGrp`;
+	optionVar -stringValue poseMirrorSearchForOptVar $mirrorSource;
+	
+	$mirrorTarget = `textFieldGrp -q -text mirrorTargetTFGrp`;
+	optionVar -stringValue poseMirrorReplaceWithOptVar $mirrorTarget;
+
+	if ($doIt)
+	{
+		performPoseMirror (0, $selectionType);
+		addToRecentCommandQueue "performPoseMirror 0" "PoseMirror";
+	}
+}
+proc poseMirrorSourceTargetOptions(int $selectionType)
+{
+	string $callback = "poseMirrorSourceTargetCallback";
+	string $setup = "poseMirrorSourceTargetSetup";
+
+	global string $gOptionBoxOptions;
+	$gOptionBoxOptions = "noApplyAndClose";
+
+	string $layout = getOptionBox();
+	setParent $layout;
+	setUITemplate -pushTemplate DefaultTemplate;
+	waitCursor -state 1;
+
+	tabLayout -tabsVisible 0 -scrollable 1;
+
+	string $parent = `columnLayout -adjustableColumn 1`;
+		
+	text -label (uiRes("m_performPoseMirror.kUsage"));  
+	text -label "";
+	textFieldGrp -label (uiRes("m_performPoseMirror.kMirrorSource"))
+		-editable true 
+		-text "R_"
+		-annotation (uiRes("m_performPoseMirror.kMirrorSourceAnnot")) 
+		mirrorSourceTFGrp;
+	
+	textFieldGrp -label (uiRes("m_performPoseMirror.kMirrorTarget"))
+		-editable true 
+		-text "L_"
+		-annotation (uiRes("m_performPoseMirror.kMirrorTargetAnnot"))
+		mirrorTargetTFGrp;
+	
+	waitCursor -state 0;
+
+	setUITemplate -popTemplate;
+
+	int $execCmd = 1; 
+	string $applyBtn = getOptionBoxApplyBtn();
+	button -edit 
+		-label (uiRes("m_performPoseMirror.kOkButton"))
+		-command ($callback + " " + $parent + " " + $execCmd + " " + $selectionType + "; hideOptionBox")
+		$applyBtn;
+	
+	$execCmd = 0;
+	string $saveBtn = getOptionBoxSaveBtn();
+	button -edit 
+		-command ($callback + " " + $parent + " " + $execCmd + " " + $selectionType + "; hideOptionBox")
+		$saveBtn;
+	
+	string $resetBtn = getOptionBoxResetBtn();
+	button -edit 
+		-command ($setup + " " + $parent + " " + 1)
+		$resetBtn;
+		
+	setOptionBoxTitle (uiRes("m_performPoseMirror.kPoseMirrorSourceTargetOptions"));
+	setOptionBoxHelpTag( "EditPoseMirrorSourceTarget" ); 
+	eval (($setup + " " + $parent + " " + 0));	
+	showOptionBox();
+} 
+
+//
+//  Procedure Name:
+//      assemblePoseMirrorCmd
+//
+//  Description:
+//		Construct the command that will apply the option box values
+//
+//  Return Value:
+//      None.
+//
+global proc string assemblePoseMirrorCmd(int $selectionType)
+{
+	setOptionVars(false);
+	setMirrorSourceTargetOptionVars(false);
+	string $cmd;
+	$cmd = "";
+
+	// get the selected poseInterpolator nodes
+	string $tpls[] = getPoseEditorTreeviewSelection(1);
+	// get the selected poses 
+	string $tplPoses[] = getPoseEditorTreeviewSelection(2);
+	
+	$mirrorSource = `optionVar -query poseMirrorSearchForOptVar`; 
+    $mirrorTarget = `optionVar -query poseMirrorReplaceWithOptVar`; 
+	 	
+	int $axis=`optionVar -q poseEditorFlipTgtSymmetryAxis`;
+	int $store=`optionVar -q poseEditorStoreSymmetrySeamEdges`;
+	
+	if ($selectionType == 0)
+	{
+		// automatically decide to mirror pi or poses.
+		if (isPoseEditorPoseMirrorEnabled())
+			$selectionType = 2;
+		else
+			$selectionType = 1;
+	}
+	
+	if ($selectionType == 1)
+	{
+		// mirror selected pose interpolators 
+		for ($tpl in $tpls)
+		{
+			string $poses[] = poseInterpolatorPoseNames($tpl);
+			// rather than invoke poseInterpolatorMirror($tpl, $poses, $mirrorSource, $mirrorTarget, 1, $axis, $store);
+			// to build the cmd string  
+			$cmd = "poseInterpolatorMirror " 
+				+ $tpl + " " ;
+			if (size($poses))
+				$cmd += "{\"" + stringArrayToString($poses, "\", \"") + "\"}";
+			else
+				$cmd += "{}";				
+			$cmd += " " + $mirrorSource + " " + $mirrorTarget + " 1 " + $axis + " " + $store ;	
+		}		
+	}
+	else if ($selectionType == 2)
+	{
+		// mirror selected poses 
+		for ($tpl in $tpls)
+		{
+			string $poses[]; 
+			for ($item in $tplPoses)
+			{
+				string $buffer[];
+				tokenize( $item, ".", $buffer );
+				if (size($buffer) != 2)
+					continue;				
+				if ($buffer[0] != $tpl)
+					continue;
+					
+				$poses[size($poses)] = poseInterpolatorPoseName($buffer[0], $buffer[1]);
+			}			
+			// rather than invoke poseInterpolatorMirror($tpl, $poses, $mirrorSource, $mirrorTarget, 1, $axis, $store);
+			// to build the cmd string  
+			$cmd = "poseInterpolatorMirror " 
+				+ $tpl + " " ;
+			if (size($poses))
+				$cmd += "{\"" + stringArrayToString($poses, "\", \"") + "\"}";
+			else
+				$cmd += "{}";				
+			$cmd += " " + $mirrorSource + " " + $mirrorTarget + " 1 " + $axis + " " + $store ;					
+		}
+	}
+	
+	return $cmd;
+}
+
+//
+//  Procedure Name:
+//      performPoseMirror
+//
+//  Description:
+//		Perform the command using the corresponding 
+//		option values.  This procedure will also show the option box
+//		window if necessary as well as construct the command string
+//		that will invoke the command with the current
+//		option box values.
+//
+//  Input Arguments:
+//      0 - Execute add target command.
+//      1 - Show editor add option box dialog. 
+//
+global proc string performPoseMirror(int $action, int $selectionType)
+{
+	string $cmd = "";
+
+	switch ($action) {
+	case 0:
+		$cmd = `assemblePoseMirrorCmd $selectionType`; 
+		evalEcho($cmd);
+		break;
+	case 1:
+		poseMirrorOptions $selectionType;
+		break;
+	case 2:
+		poseMirrorSourceTargetOptions $selectionType;
+		break; 
+	}
+	return $cmd;
+}
+

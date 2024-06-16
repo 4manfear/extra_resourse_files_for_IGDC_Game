@@ -1,0 +1,256 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+// Creation Date:  Jun 2014
+//
+//
+//  Procedure Name:
+//      DynFluidsMenu
+//
+//  Description:
+//		Create the DYNAMICS->Fluids
+//
+//  Input Arguments:
+//      parent to parent the menu to.
+//
+//  Return Value:
+//      None.
+//
+global proc FluidContentsMenu( string $parent )
+//
+// Build the Add Contents Submenu
+{
+	setParent -menu $parent;
+
+	menuItem
+		-rtc "FluidEmitter"
+		-dragMenuCommand "performFluids 2 FluidEmitter 2"
+		-dragDoubleClickCommand "FluidEmitterOptions";
+
+		menuItem -optionBox true
+			-annotation (getRunTimeCommandAnnotation("FluidEmitterOptions"))
+			-command "FluidEmitterOptions";
+
+	menuItem
+		-rtc "EmitFluidFromObject"
+		-dragMenuCommand "performFluids 0 FluidEmitFromObject 2"
+		-dragDoubleClickCommand "EmitFluidFromObjectOptions";
+
+		menuItem -optionBox true
+			-annotation (getRunTimeCommandAnnotation("EmitFluidFromObjectOptions"))
+			-command "EmitFluidFromObjectOptions";
+
+	menuItem
+		-rtc "FluidGradients"
+		-dragMenuCommand "performFluidGradients 2"
+		-dragDoubleClickCommand "FluidGradientsOptions";		
+
+		menuItem -optionBox true
+			-annotation (getRunTimeCommandAnnotation("FluidGradientsOptions"))
+			-command "FluidGradientsOptions";
+
+	menuItem 
+        -rtc "PaintFluidsTool"
+		-dragDoubleClickCommand "PaintFluidsToolOptions";
+
+		menuItem -optionBox true
+			-annotation (getRunTimeCommandAnnotation("PaintFluidsToolOptions"))
+			-command "PaintFluidsToolOptions";
+
+	menuItem
+		-rtc "SetFluidAttrFromCurve"
+		-dragDoubleClickCommand "SetFluidAttrFromCurveOptions";
+
+		menuItem -optionBox true
+			-annotation (getRunTimeCommandAnnotation("SetFluidAttrFromCurveOptions"))
+			-command "SetFluidAttrFromCurveOptions";
+
+    menuItem 
+		-rtc "InitialFluidStates";
+
+	    menuItem -optionBox true
+			-annotation (getRunTimeCommandAnnotation( "InitialFluidStatesOptions"))
+			-command "InitialFluidStatesOptions";
+
+	setParent -menu ..;
+}
+
+global proc DynFluidsMenu( string $parent )
+{
+	setParent -menu $parent;
+	if( `menu -query -numberOfItems $parent` != 0 ) {
+		//
+		//	Menu is built already - just return
+		//
+		return;
+	}
+	
+	menuItem -divider true -dividerLabel (uiRes("m_DynFluidsMenu.kFluidsCreate"));
+	
+	menuItem 
+		-rtc "Create3DContainerEmitter"
+		-dragMenuCommand "performFluids 1 3DFluidAndEmitter 2"
+		-dragDoubleClickCommand "Create3DContainerEmitterOptions";
+		menuItem -optionBox true
+			-annotation (getRunTimeCommandAnnotation("Create3DContainerEmitterOptions"))
+			-command "Create3DContainerEmitterOptions";
+	
+	menuItem
+	    -rtc "Create2DContainerEmitter"
+		-dragMenuCommand "performFluids 1 2DFluidAndEmitter 2"
+		-dragDoubleClickCommand "Create2DContainerEmitterOptions";
+		menuItem -optionBox true
+			-annotation (getRunTimeCommandAnnotation("Create2DContainerEmitterOptions"))
+			-command "Create2DContainerEmitterOptions";
+	
+	// Contents
+	string $contentsItem = `menuItem -label (uiRes("m_DynFluidsMenu.kFluidsAddEdit")) -subMenu true
+		-tearOff true -allowOptionBoxes true fluidsAddContentsItem`;
+	FluidContentsMenu $contentsItem;
+	setParent -menu ..;
+	
+	// Get Example... sub-menu
+	menuItem -label (uiRes("m_DynFluidsMenu.kFluidsGetExample")) -sm true -to true;
+		menuItem 
+			-rtc "GetFluidExample";
+
+		menuItem
+			-rtc "GetOceanPondExample";
+
+		setParent -menu ..;
+	
+	menuItem 
+		-rtc "CreateOcean"
+		-dragMenuCommand "performCreateOcean 2"
+		-dragDoubleClickCommand "CreateOceanOptions";
+		menuItem -optionBox true -image "fluidCreateOcean.png"
+			-annotation (uiRes("m_DynFluidsMenu.kFuildsCreateOceanOptionsAnnot")) 
+			-command "CreateOceanOptions";
+	
+	menuItem
+		-rtc "CreatePond"
+		-dragMenuCommand "performCreatePond 2"
+		-dragDoubleClickCommand "CreatePondOptions";
+		menuItem -optionBox true
+			-annotation (uiRes("m_DynFluidsMenu.kFuildsCreatePondOptionsAnnot")) 
+			-command "CreatePondOptions";
+			
+	menuItem -divider true -dividerLabel (uiRes("m_DynFluidsMenu.kFluidsEdit"));
+	
+	menuItem 
+		-rtc "ExtendFluid"
+		-dragMenuCommand "performFluids 1 ExtendFluid 2"
+		-dragDoubleClickCommand "ExtendFluidOptions";
+		menuItem -optionBox true
+			-annotation (getRunTimeCommandAnnotation("ExtendFluidOptions"))
+			-command "ExtendFluidOptions";
+
+	menuItem
+		-rtc "EditFluidResolution"
+		-dragMenuCommand "performFluids 1 ResampleFluid 2"
+		-dragDoubleClickCommand "EditFluidResolutionOptions";
+		menuItem -optionBox true
+			-annotation (getRunTimeCommandAnnotation("EditFluidResolutionOptions"))
+			-command "EditFluidResolutionOptions";
+			
+	menuItem 
+		-rtc "MakeFluidCollide" 
+		-dragMenuCommand "performFluids 2 MakeCollideFluid 2"
+		-dragDoubleClickCommand "MakeFluidCollideOptions";
+		menuItem -optionBox true
+			-annotation (getRunTimeCommandAnnotation("MakeFluidCollideOptions"))
+			-command "MakeFluidCollideOptions";
+
+	menuItem 
+		-rtc "MakeMotionField" ;
+
+	menuItem -divider true -dividerLabel (uiRes("m_DynFluidsMenu.kFluidsOceanPond"));
+	
+	menuItem -label (uiRes("m_DynFluidsMenu.kFluidsAddDynamicLocator")) -sm true -to true;
+		FluidOceanDynamicLocator;
+		setParent -m ..;
+		
+	menuItem
+		-rtc "AddOceanPreviewPlane";
+		
+	menuItem -label (uiRes("m_DynFluidsMenu.kFluidsCreateBoat")) -sm true -to true;
+		FluidsOceanCreateBoat;
+		setParent -m ..;
+		
+	menuItem 
+		-rtc "CreateOceanWake"
+		-dragMenuCommand "performCreateOceanWake 2"
+		-dragDoubleClickCommand "CreateOceanWakeOptions";
+		menuItem -optionBox true
+			-annotation (getRunTimeCommandAnnotation("CreateOceanWakeOptions"))
+			-command "CreateOceanWakeOptions";
+}
+
+global proc FluidOceanDynamicLocator()
+{
+	menuItem
+		-rtc "AddOceanSurfaceLocator";
+
+		menuItem
+		-rtc "AddBoatLocator"
+		-dragMenuCommand "performOceanLocator 2 3"
+		-dragDoubleClickCommand "AddBoatLocatorOptions"
+		DynLocatorBoat;
+		menuItem -optionBox true
+			-annotation (getRunTimeCommandAnnotation("AddBoatLocatorOptions"))
+			-command "AddBoatLocatorOptions"
+			DynLocatorBoatOption;
+
+	menuItem 
+		-rtc "AddOceanDynamicLocator"
+		-dragMenuCommand "performOceanLocator 2 1"
+		-dragDoubleClickCommand "AddOceanDynamicLocatorOptions"
+		DynLocatorSimple;
+		menuItem -optionBox true
+			-annotation (getRunTimeCommandAnnotation("AddOceanDynamicLocatorOptions"))
+			-command "AddOceanDynamicLocatorOptions"
+			DynLocatorSimpleOPtion;
+
+	menuItem
+		-rtc "AddDynamicBuoy"
+		-dragMenuCommand "performOceanLocator 2 2"
+		-dragDoubleClickCommand "AddDynamicBuoyOptions"
+		DynLocatorDynSurface;
+		menuItem -optionBox true
+			-annotation (getRunTimeCommandAnnotation("AddDynamicBuoyOptions"))
+			-command "AddDynamicBuoyOptions"
+			DynLocatorDynSurfaceOption;
+}
+
+global proc FluidsOceanCreateBoat()
+{
+	menuItem
+		-rtc "FloatSelectedObjects"
+		-dragMenuCommand "performOceanLocator 2 4"
+		-dragDoubleClickCommand "FloatSelectedObjectsOptions";
+		menuItem -optionBox true
+			-annotation (getRunTimeCommandAnnotation("FloatSelectedObjectsOptions"))
+			-command "FloatSelectedObjectsOptions";
+			
+	menuItem
+		-rtc "MakeBoats"
+		-dragMenuCommand "performOceanLocator 2 5"
+		-dragDoubleClickCommand "MakeBoatsOptions";
+		menuItem -optionBox true
+			-annotation (getRunTimeCommandAnnotation("MakeBoatsOptions"))
+			-command "MakeBoatsOptions";
+
+	menuItem
+		-rtc "MakeMotorBoats"
+		-dragMenuCommand "performOceanLocator 2 6"
+		-dragDoubleClickCommand "MakeMotorBoatsOptions";
+		menuItem -optionBox true
+			-annotation (getRunTimeCommandAnnotation("MakeMotorBoatsOptions"))
+			-command "MakeMotorBoatsOptions";
+}

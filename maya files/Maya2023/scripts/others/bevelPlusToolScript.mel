@@ -1,0 +1,114 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//
+//
+///////////////////////////////////////////////////////////////////////////////
+//
+//  Description:
+//  UI hooks for the Automatic mapping plug-in
+//
+///////////////////////////////////////////////////////////////////////////////
+//
+//  Procedure Name:
+//      bevelPlusToolScript
+//
+//  Description:
+//	create wrapper around the bevelPlus command
+//
+//  Input Arguments:
+//		0 ==> do the command.
+//		1 ==> show the tool/action option box
+//		2 ==> return the command
+//		3 ==> show tool/action option box
+//		4 ==> enter the tool
+//
+//  Return Value:
+//      None.
+//
+
+global proc bevelPlusToolSetup( int $forceFactorySettings, string $goToTool )
+{
+	global int $gStartWithAutoComplete;
+
+	optionVar -init $forceFactorySettings -category "Modeling.Surfaces.Bevel Plus"
+		-iv bevelPlusEuc 0
+		-iv bevelPlusLac $gStartWithAutoComplete
+		;
+
+	if( "" != $goToTool ) {
+		scriptCtx -e -euc `optionVar -q bevelPlusEuc` $goToTool;
+		scriptCtx -e -lac `optionVar -q bevelPlusLac` $goToTool;
+	}
+}
+
+global proc bevelPlusValues ( string $toolName ) 
+{
+	performBevelPlus 3 $toolName;
+	scriptCtxCommonValues( $toolName );
+}
+
+global proc bevelPlusProperties()
+{
+	scriptCtxCommonProperties;
+}
+
+proc createBevelPlusContext( string $tool )
+{
+	if( ! `scriptCtx -exists $tool` ) {
+		bevelPlusToolSetup( 0, "" );
+		scriptCtx -i1 "bevelPlus.png"
+		  -title (uiRes("m_bevelPlusToolScript.kBevelPlusTool"))
+		  -bcn "bevelPlus"
+
+		  -exitUponCompletion `optionVar -q bevelPlusEuc`
+		  -toolCursorType "edit"
+		  -totalSelectionSets 1
+		  -expandSelectionList true
+		  -fcs ("bevelPlusToolScript 0")
+
+		  -setNoSelectionPrompt (uiRes("m_bevelPlusToolScript.kSelect"))
+		  -setSelectionPrompt (uiRes("m_bevelPlusToolScript.kComputeBevelPlus"))
+
+		  -setAutoToggleSelection true
+		  -setAutoComplete `optionVar -q bevelPlusLac`
+		  -setAllowExcessCount true
+		  -showManipulators true
+
+		  -setSelectionCount 0
+		  -nurbsCurve true
+		  -isoparm true
+		  -curveOnSurface true
+		  -surfaceEdge true
+		  -polymeshEdge true
+		$tool;
+	}
+}
+
+global proc string bevelPlusToolScript( int $setToTool )
+//
+//	Description :
+//		0 ==> do the command.
+//		1 ==> show the action option box
+//		2 ==> return the command
+//		3 ==> show tool/action option box
+//		4 ==> enter the tool/do the command
+{
+	string $tool = "";
+	if( $setToTool > 2 ) {
+		if( !`optionVar -q modelWithToolBevelPlus` ) {
+			$setToTool = 4 - $setToTool;
+		}
+		else {
+			$tool = "bevelPlusContext";
+			createBevelPlusContext $tool;
+		}
+	}
+	return scriptToolScript( "performBevelPlus", $setToTool, $tool );
+}

@@ -1,0 +1,99 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//======================================================================
+// This proc is called every time a profilerPanel is made.
+// It creates the profilerTool and then parent a new popupMenu to the draw region of the tool
+// The draw region layout is ProfilerToolLayout (defined in the TprofilerTool.ui file)
+//  
+global proc addProfilerPanel(string $panelName)
+{
+	addContextHelpProc $panelName "buildProfilerHelpItems";
+
+	profilerTool -mk;
+	popupMenu -p "ProfilerToolLayout" -pmc ("updateProfilerPopupMenu()") profilerToolLayoutPopupMenu;
+}
+
+//======================================================================
+//
+// This procedure is called when context help is requested in the profiler.
+// It popups up the profiler help window.
+//
+global proc buildProfilerHelpItems(string $nameRoot, string $menuParent)
+{
+	menuItem -label (uiRes("m_profilerPanel.kProfilerHelp"))
+		-annotation (uiRes("m_profilerPanel.kProfilerHelpAnnot"))
+		-enableCommandRepeat false
+		-command "showHelp Profiler";
+}
+
+//======================================================================
+//
+// This procedure updates the menuItems in the pop up menu
+//
+global proc updateProfilerPopupMenu()
+{
+
+	popupMenu -e -deleteAllItems profilerToolLayoutPopupMenu;
+
+		menuItem -label (uiRes("m_profilerPanel.kProfilerToolHideSel"))
+				 -annotation (uiRes("m_profilerPanel.kProfilerToolHideSelAnnot"))
+				 -command "profilerTool -e -showSelectedEvents false"
+				 -parent profilerToolLayoutPopupMenu;
+
+		menuItem -label (uiRes("m_profilerPanel.kProfilerToolHideSelRep"))
+				 -annotation (uiRes("m_profilerPanel.kProfilerToolHideSelRepAnnot"))
+				 -command "profilerTool -e -showSelectedEventsRepetition false"
+				 -parent profilerToolLayoutPopupMenu;
+
+		menuItem -label (uiRes("m_profilerPanel.kProfilerToolShowSel"))
+				 -annotation (uiRes("m_profilerPanel.kProfilerToolShowSelAnnot"))
+				 -command "profilerTool -e -showSelectedEvents true"
+				 -parent profilerToolLayoutPopupMenu;
+				 	
+		menuItem -label (uiRes("m_profilerPanel.kProfilerToolShowSelRep"))
+				 -annotation (uiRes("m_profilerPanel.kProfilerToolShowSelRepAnnot"))
+				 -command "profilerTool -e -showSelectedEventsRepetition true"
+				 -parent profilerToolLayoutPopupMenu;
+
+		menuItem -label (uiRes("m_profilerPanel.kProfilerToolShowAll"))
+				 -annotation (uiRes("m_profilerPanel.kProfilerToolShowAllAnnot"))
+				 -command "profilerTool -e -showAllEvent true"
+				 -parent profilerToolLayoutPopupMenu;
+
+		menuItem -label (uiRes("m_profilerPanel.kProfilerToolCollapseSel"))
+				 -annotation (uiRes("m_profilerPanel.kProfilerToolCollapseSelAnnot"))
+				 -command "profilerTool -e -collapseSelectedEvents"
+				 -parent profilerToolLayoutPopupMenu
+				 -version 2019;
+
+		menuItem -label (uiRes("m_profilerPanel.kProfilerToolCollapseSelRep"))
+				 -annotation (uiRes("m_profilerPanel.kProfilerToolCollapseSelRepAnnot"))
+				 -command "profilerTool -e -collapseSelectedEventsRepetition"
+				 -parent profilerToolLayoutPopupMenu
+				 -version 2019;
+
+		menuItem -label (uiRes("m_profilerPanel.kProfilerToolExpandSel"))
+				 -annotation (uiRes("m_profilerPanel.kProfilerToolExpandSelAnnot"))
+				 -command "profilerTool -e -expandSelectedEvents"
+				 -parent profilerToolLayoutPopupMenu
+				 -version 2019;
+
+		menuItem -label (uiRes("m_profilerPanel.kProfilerToolExpandSelRep"))
+				 -annotation (uiRes("m_profilerPanel.kProfilerToolExpandSelRepAnnot"))
+				 -command "profilerTool -e -expandSelectedEventsRepetition"
+				 -parent profilerToolLayoutPopupMenu
+				 -version 2019;
+
+		menuItem -label (uiRes("m_profilerPanel.kProfilerToolShowCritPath"))
+				 -annotation (uiRes("m_profilerPanel.kProfilerToolShowCritPathAnnot"))
+				 -command "profilerTool -e -showCriticalPath"
+				 -parent profilerToolLayoutPopupMenu
+				 -version 2019;
+
+}
+

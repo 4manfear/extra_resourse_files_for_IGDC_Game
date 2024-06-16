@@ -1,0 +1,47 @@
+<!--
+Copyright 2016 Autodesk, Inc. All rights reserved. 
+
+Use of this software is subject to the terms of the Autodesk 
+license agreement provided at the time of installation or download, 
+or which otherwise accompanies this software in either electronic 
+or hard copy form.
+-->
+<fragment  uiName="mayaNonPECompositeScript" name="mayaNonPECompositeScript" type="sceneEffect" class="ScriptFragment" version="1.0" feature_level="30" >
+    <description>
+<![CDATA[
+Composite two color target with the NonPEPattern target]]>
+</description>
+    <properties>
+        <target  name="final" />
+        <target  name="finalDesc" />
+        <target  name="maya_ScenePostEffectFinal" />
+        <target  name="maya_SceneNormalFinal" />
+        <target  name="maya_NonPEAlphaMask" />
+    </properties>
+    <values>
+    </values>
+    <outputs>
+        <target  name="output" />
+    </outputs>
+    <parametershare>
+    </parametershare>
+    <implementation render="OGS" language="ScriptInterpreter" version="0.1" >
+        <scriptCommands>
+            <Call name="SetPassSemantic" arg0="nonPECompositePass" arg1="TRUE" />
+            <AssignTarget destName="localFinal" srcName="@final" format="@finalDesc.format" size="@finalDesc.size" relSize="1.0,1.0" msaa="false" />
+            <SetTarget index="0" value="localFinal" />
+            <SetFragmentEffect name="nonPostEffectCompose" path="maya_CompositeWithAlphaMask" />
+            <SetTexture effect="nonPostEffectCompose" name="maya_SourceTargetBuffer" value="" texture="@maya_ScenePostEffectFinal" />
+            <SetEffectParameter effect="nonPostEffectCompose" name="maya_SourceTargetBufferSampler" value="PointClamp" />
+            <SetTexture effect="nonPostEffectCompose" name="maya_DestTargetBuffer" value="" texture="@maya_SceneNormalFinal" />
+            <SetEffectParameter effect="nonPostEffectCompose" name="maya_DestTargetBufferSampler" value="PointClamp" />
+            <SetTexture effect="nonPostEffectCompose" name="maya_AlphaMaskTargetBuffer" value="" texture="@maya_NonPEAlphaMask" />
+            <SetEffectParameter effect="nonPostEffectCompose" name="maya_AlphaMaskTargetBufferSampler" value="PointClamp" />
+            <Render name="Quad" />
+            <RestoreOverrideEffect />
+            <SetParameter name="@output" value="localFinal" />
+            <Call name="SetPassSemantic" arg0="nonPECompositePass" arg1="FALSE" />
+        </scriptCommands>
+    </implementation>
+</fragment>
+

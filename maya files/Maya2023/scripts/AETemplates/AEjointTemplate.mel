@@ -1,0 +1,85 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//  Procedure Name:
+//	AEjointTemplate
+//
+//  Description:
+//	Creates the attribute editor controls for the joint Node
+//
+//  Input Value:
+//	nodeName
+//
+//  Output Value:
+//	None
+//
+
+source "jointTemplateUtils";
+
+global proc AEjointTemplate ( string $nodeName ) 
+{
+
+editorTemplate -beginScrollLayout;
+	// include/call base class/node attributes
+	AEtransformMain $nodeName;
+
+editorTemplate -beginLayout (uiRes("m_AEjointTemplate.kJoint"))  -collapse 0;
+
+	editorTemplate -addControl "drawStyle";
+
+	editorTemplate -addControl "radius";
+
+	editorTemplate -callCustom "AEjointTypeNew" "AEjointTypeReplace" 
+				"jointTypeX"
+				"jointTypeY"
+				"jointTypeZ";
+
+	editorTemplate -addControl "stiffness";
+
+	editorTemplate -addControl "preferredAngle";
+
+	editorTemplate -addControl "jointOrient";
+	editorTemplate -addControl "segmentScaleCompensate";
+
+
+	editorTemplate -beginLayout (uiRes("m_AEjointTemplate.kJointLabelling"))  -collapse 0;
+	editorTemplate -addControl "side";
+	editorTemplate -addControl "type" "checkPuppetPartOther";
+	editorTemplate -label (uiRes("m_AEjointTemplate.kOtherType"))  -addControl "otherType";
+	editorTemplate -addControl "drawLabel";
+	editorTemplate -endLayout;
+
+
+editorTemplate -endLayout;
+
+	//suppressed attributes
+	editorTemplate -suppress "inverseScale";
+	editorTemplate -suppress "bindPose";
+	editorTemplate -suppress "bindRotation";
+	editorTemplate -suppress "bindJointOrient";
+	editorTemplate -suppress "bindScale";
+	editorTemplate -suppress "bindInverseScale";	
+	editorTemplate -suppress "bindSegmentScaleCompensate";	
+	editorTemplate -suppress "jointOrientType";
+	editorTemplate -suppress "jointType";	
+	editorTemplate -suppress "dofMask";
+	editorTemplate -suppress "fkRotate";
+	editorTemplate -suppress "ikRotate";
+	editorTemplate -suppress "Character"; // dynamic attribute added by HumanIK
+
+	// include/call base class/node attributes
+	AEtransformNoScroll $nodeName;
+
+	// For joints bound to smooth skins
+	//
+	AEtransformSkinCluster $nodeName;
+
+editorTemplate -addExtraControls;
+editorTemplate -endScrollLayout;
+
+}

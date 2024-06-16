@@ -1,0 +1,231 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//  Description:
+//      This script provides an option box dialog for the add interpolator node command.
+//
+//
+//  Procedure Name:
+//      setOptionVars
+//
+//  Description:
+//		Initialize the option values.
+//
+//  Input Arguments:
+//		Whether to set the options to default values.
+//
+//  Return Value:
+//      None.
+//
+proc setOptionVars(int $forceFactorySettings)
+{
+	optionVar -init $forceFactorySettings -category "Deform.Create Pose Interpolator"
+		-iv interpolatorAddNeutralPoses 1
+		-iv interpolatorDriverTwistAxis 1
+		;
+}
+
+//
+//  Procedure Name:
+//      interpolatorAddSetup
+//
+//  Description:
+//		Update the state of the option box UI to reflect the option values.
+//
+//  Input Arguments:
+//      parent               - Top level parent layout of the option box UI.
+//                             Required so that UI object names can be 
+//                             successfully resolved.
+//
+//	forceFactorySettings - Whether the option values should be set to
+//                             default values.
+//
+//  Return Value:
+//      None.
+//
+global proc interpolatorAddSetup(string $parent, int $forceFactorySettings)
+{
+	setOptionVars($forceFactorySettings);
+	setParent $parent;
+	
+	$val = `optionVar -query interpolatorAddNeutralPoses`;
+	checkBoxGrp -edit -v1 $val interpolatorAddNeutralPosesWidget;
+	
+	$val = `optionVar -query interpolatorDriverTwistAxis`;
+	optionMenuGrp -edit -select $val interpolatorDriverTwistAxisWidget;
+}
+
+//
+//  Procedure Name:
+//      interpolatorAddCallback
+//
+//  Description:
+//		Update the option values with the current state of the option box UI.
+//
+//  Input Arguments:
+//      parent - Top level parent layout of the option box UI.  Required so
+//               that UI object names can be successfully resolved.
+//	    doIt   - Whether the command should execute.
+//
+//  Return Value:
+//      None.
+//
+global proc interpolatorAddCallback(string $parent, int $doIt)
+{
+	setParent $parent;
+
+	$val= `checkBoxGrp -q -v1 interpolatorAddNeutralPosesWidget`;
+	optionVar -intValue interpolatorAddNeutralPoses $val;
+	
+	$val= `optionMenuGrp -q -sl interpolatorDriverTwistAxisWidget`;
+	optionVar -intValue interpolatorDriverTwistAxis $val;
+	
+	if ($doIt)
+	{
+		performInterpolatorAdd (0);
+		addToRecentCommandQueue "performInterpolatorAdd 0" "InterpolatorAdd";
+	}
+}
+
+//
+//  Procedure Name:
+//      interpolatorAddOptions
+//
+//  Description:
+//		Construct the option box UI.  Involves accessing the standard option
+//		box and customizing the UI accordingly.
+//
+//  Return Value:
+//      None.
+//
+proc interpolatorAddOptions()
+{ 
+	string $callback = "interpolatorAddCallback";
+	string $setup = "interpolatorAddSetup";
+	string $layout = getOptionBox();
+	setParent $layout;
+	setUITemplate -pushTemplate DefaultTemplate;
+
+	tabLayout -tabsVisible 0 -scrollable 1;
+
+	string $parent = `columnLayout -adjustableColumn 1`;
+
+	separator;
+
+	checkBoxGrp
+		-label "" 
+		-label1 (uiRes("m_performInterpolatorAdd.kAddNeutralPoses")) 
+		-numberOfCheckBoxes 1
+		-v1 1
+		interpolatorAddNeutralPosesWidget;
+		
+	optionMenuGrp
+		-label (uiRes("m_performInterpolatorAdd.kDriverTwistAxis"))
+		interpolatorDriverTwistAxisWidget;
+		menuItem -label (uiRes("m_performInterpolatorAdd.kXAxis"));
+		menuItem -label (uiRes("m_performInterpolatorAdd.kYAxis"));
+		menuItem -label (uiRes("m_performInterpolatorAdd.kZAxis"));
+
+	setUITemplate -popTemplate;
+
+	int $execCmd = 1; 
+	string $applyCloseBtn = getOptionBoxApplyAndCloseBtn();
+	button -edit 
+		-command ($callback + " " + $parent + " " + $execCmd + "; hideOptionBox")
+		$applyCloseBtn;
+
+	string $applyBtn = getOptionBoxApplyBtn();
+	button -edit 
+		-command ($callback + " " + $parent + " " + $execCmd)
+		$applyBtn;
+	
+	$execCmd = 0;
+	string $saveBtn = getOptionBoxSaveBtn();
+	button -edit 
+		-command ($callback + " " + $parent + " " + $execCmd + "; hideOptionBox")
+		$saveBtn;
+	
+	string $resetBtn = getOptionBoxResetBtn();
+	button -edit 
+		-command ($setup + " " + $parent + " " + 1)
+		$resetBtn;
+
+	setOptionBoxTitle (uiRes("m_performInterpolatorAdd.kAddInterpolatorOptions"));
+	setOptionBoxHelpTag( "EditPoseInterpolatorAdd" ); 
+	eval (($setup + " " + $parent + " " + 0));	
+	showOptionBox();
+}
+
+
+//
+//  Procedure Name:
+//      assembleInterpolatorAddCmd
+//
+//  Description:
+//		Construct the command that will apply the option box values
+//
+//  Return Value:
+//      None.
+//
+global proc string assembleInterpolatorAddCmd()
+{
+	setOptionVars(false);
+	string $cmd;
+	$cmd = "";
+
+	string $selection[] = `ls -sl -type "transform"`;
+	if( size($selection) )
+	{
+		string $tplName = $selection[0] + "_poseInterpolator";
+		int $neutral = `optionVar -q interpolatorAddNeutralPoses`;
+		int $driverTwistAxis = `optionVar -q interpolatorDriverTwistAxis` - 1;
+		$cmd = "createPoseInterpolatorNode " + $tplName + " " + $neutral + " " + $driverTwistAxis + ";\n"; 
+		$cmd += "select -cl;";	// Don't want to leave the newly created poseInterpolator node selected
+
+		for ($selItem in $selection)
+		{
+			$cmd += "select -add " + $selItem + ";";
+		}
+	}
+	else
+	{
+		error (uiRes("m_performInterpolatorAdd.kNoTransformSelected")) ;
+	}
+	return $cmd;
+}
+
+//
+//  Procedure Name:
+//      performInterpolatorAdd
+//
+//  Description:
+//		Perform the command using the corresponding 
+//		option values.  This procedure will also show the option box
+//		window if necessary as well as construct the command string
+//		that will invoke the command with the current
+//		option box values.
+//
+//  Input Arguments:
+//      0 - Execute add target command.
+//      1 - Show editor add option box dialog. 
+//
+global proc string performInterpolatorAdd(int $action)
+{
+	string $cmd = "";
+
+	switch ($action) {
+	case 0:
+		$cmd = `assembleInterpolatorAddCmd`; 
+		eval($cmd);
+		break;
+	case 1:
+		interpolatorAddOptions;
+	}
+	return $cmd;
+}
+

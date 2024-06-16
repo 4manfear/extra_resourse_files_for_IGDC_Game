@@ -1,0 +1,21 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+// Description:
+//   Gets list of render pass names sorted for display. Currently this is
+//   just an alphabetical sort, but this procedure makes it easy to change
+//   if we want to (maybe into groups of similar passes).
+global proc string[] getSortedRenderPassTypeList(string $renderer)
+{
+	// set the renderer to be the current one if not specified
+	if ($renderer == "") {
+		$renderer = currentRenderer();
+	}
+
+	string $result[] = sort(`renderPassRegistry -renderer $renderer -supportedRenderPassNames`);
+	return $result;
+}

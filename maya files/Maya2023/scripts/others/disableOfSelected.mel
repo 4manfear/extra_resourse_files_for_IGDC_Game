@@ -1,0 +1,44 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  26 Feb 1996
+//
+//  Description:
+//      This procedure lets us define hotkeys for disableing or
+//      enableing the history or future of an object
+
+proc string needTheLead()
+{
+	string $result = "";
+	string $all[] = `ls -l -sl -tail 1 -type dagNode`;
+	if( size($all) > 0 ) {
+		$result = $all[0];
+	}
+	else {
+		$all = `ls -sl -tail 1`;
+		if( size($all) > 0 ) {
+			$result = $all[0];
+		}
+	}
+	return $result;
+}
+
+global proc disableOfSelected( int $future, int $disable )
+//
+// Disable/enable all the operations in the future/history of the lead object.
+
+{
+	string $objectsWithFormat = historyPopupFill( `needTheLead`, $future, 0 );
+	if( $disable ) {
+		disableAllListed( $objectsWithFormat );
+	}
+	else {
+		enableAllListed( $objectsWithFormat );
+	}
+}

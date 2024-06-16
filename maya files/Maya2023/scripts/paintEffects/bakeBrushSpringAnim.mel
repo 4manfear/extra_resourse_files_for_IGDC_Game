@@ -1,0 +1,39 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  1998
+//
+global proc bakeBrushSpringAnim(int $startFrame, int $endFrame)
+{
+	$brushes = getSelectedBrushes();
+	int $numBrushes = size( $brushes );
+
+	if( $numBrushes == 0 )
+	{
+		warning( (uiRes("m_bakeBrushSpringAnim.kNoBrushSelected")) );
+		return;
+	}
+	string $brushesToBake[];
+	int $bcount = 0;
+	for( $i = 0; $i < $numBrushes; $i++ )
+	{
+		string $bcon[] = `listConnections ($brushes[$i] + ".uniformForceX")`;
+		if( size( $bcon ) > 0 )
+		{
+			$brushesToBake[$bcount] = $brushes[$i];
+			$bcount++;
+		}
+	}
+	if( $bcount > 0 )
+	{
+		string $timeRange = ($startFrame + ":" + $endFrame);
+		bakeResults -simulation true -t $timeRange -sampleBy 1 -at ufx -at ufy -at ufz -disableImplicitControl true -preserveOutsideKeys true  $brushesToBake;
+
+	}
+}

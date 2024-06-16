@@ -1,0 +1,117 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc string[] performSetupLodDistance()
+//
+//	Description:
+//		This script sets up a "lod" node and connects a 
+//		camera with initial threshold values based on the current
+//		camera distance.  Threshold values are chosen such that
+//		the middle level is first displayed.
+//
+//		The user must select:
+//			1. zero or one camera. If zero, the current camera is taken
+//			2. at least 1 transform as lod Level
+//				The transforms must be selected in
+//				order: highest to lowest resolution.
+//
+{
+	if( !`exists createLodGroup` ){
+		eval("source \"lodUtils.mel\"");
+	}
+	$result = createLodGroup( false, false );
+	if( size($result) < 2 ){
+		return $result;
+	}
+	string $camera = $result[0];
+	string $lodGroup = $result[1];
+	int $isOrtho = `getAttr ($camera + ".orthographic")`;
+	float $viewVector[] = nurbsViewDirectionVector( 1 );
+	int $numTransforms = size(`listRelatives -children $lodGroup`);
+
+	if( $isOrtho ) {
+		// connect the camera's orthographic width to the lod group.
+		// The lod group takes a matrix that indicates how far away the
+		// camera is from the lod group.  In the case of an ortho camera,
+		// the matrix has a translate value that is a function of 
+		// the camera's orthographic width.
+		//
+		// The translate value is found by:
+		//  translate =  (def. camera dist)*(ortho width)/(def. ortho width);
+		//  default camera distance is 100 (along the view vector)
+		//  default orthographic width is 30
+		// So a factor of 3.3333 is applied with the "multDoubleLinear"node
+
+		string $matrixNode = `createNode fourByFourMatrix`; 
+		string $multNode = `createNode multDoubleLinear`;
+		connectAttr ($matrixNode + ".output") ($lodGroup + ".cameraMatrix");
+		setAttr ($multNode + ".input2") 3.3333;
+
+		if( ($viewVector[2] > $viewVector[0]) &&
+			($viewVector[2] > $viewVector[1])) {
+			// For front camera, whose view vector is in the Z direction,
+			// use the camera's ortho width to set the "translate Z" value
+			// in the matrix.
+			//
+			connectAttr ($multNode + ".output") ($matrixNode + ".i32");
+			connectAttr ($camera + ".orthographicWidth") 
+				($multNode + ".input1");
+
+		} else if( ($viewVector[1] > $viewVector[0]) &&
+				  ($viewVector[1] > $viewVector[2])) {
+			// For top camera, whose view vector is in the Y direction,
+			// use the camera's ortho width to set the "translate Y" value
+			// in the matrix.
+			//
+			connectAttr ($multNode + ".output") ($matrixNode + ".i31");
+			connectAttr ($camera + ".orthographicWidth") 
+				($multNode + ".input1");
+		} else {
+			// For side camera, whose view vector is in the X direction,
+			// use the camera's ortho width to set the "translate X" value
+			// in the matrix.
+			//
+			connectAttr ($multNode + ".output") ($matrixNode + ".i30");
+			connectAttr ($camera + ".orthographicWidth") 
+				($multNode + ".input1");
+		}
+
+	} else {
+		// connect camera's world space matrix to lodGroup node
+		string $cameraSh[] = `listRelatives -children $camera`;
+		connectAttr ($cameraSh[0] + ".worldMatrix") 
+			($lodGroup + ".cameraMatrix");
+	}
+
+	// Initialize the distance-based thresholds.
+	//
+	if ( $numTransforms > 1 ) {
+		int $maxThreshold = $numTransforms - 1;
+		setBaseDistanceThreshold( $maxThreshold, $lodGroup );
+
+		for( $i = 1; $i < $maxThreshold; $i++ ) {
+			setDistanceThreshold( $i, $lodGroup );
+		}
+	}
+
+	// initialize each transform's LOD lodVisibility to Off
+	for( $i = 0; $i < $numTransforms; $i ++ ) {
+		setAttr ($lodGroup + ".displayLevel[" + $i + "]") 0;
+	}
+
+	// enable worldspace setting by default so grouping the lod node
+	// will still work as expected
+	setAttr ($lodGroup + ".worldSpace") 1;
+
+	// explicitly select the threshold node and group 
+	select -r $lodGroup;
+
+	// return the group
+	string $retval[];
+	$retval[0] = $lodGroup;
+	return $retval;
+}

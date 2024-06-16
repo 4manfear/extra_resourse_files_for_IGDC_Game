@@ -1,0 +1,54 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//	Creation Date:	July 21, 2003
+//
+//<doc>
+//<name shortNameOf>
+//
+//<synopsis>
+//		string shortNameOf(string $object)
+//
+//<returns>
+//		string : Short name of $object.
+//
+//<description>
+//		This procedure returns the short name of $object.
+//		This name may not be unique.
+//
+//<examples>
+//		//	Create a sphere.
+//		//
+//		string $spheres[] = `polySphere -name "sphere1"`;
+//		string $sphere = $spheres[0];
+//
+//		shortNameOf($sphere);
+//		//	Result: sphere1 //
+//</doc>
+
+global proc string shortNameOf(string $object)
+{
+	string $shortNameOf;
+
+	//	Make sure that we've been provided with an object that exists.
+	//
+	if (($object != "") && objExists($object))
+	{
+		string $shortNames[] = `ls $object`;
+		if (size($shortNames) > 0)
+		{
+			//	Retrieve the short name. If the object is not unique,
+			//	then retrieve the first short name.
+			//
+			$shortNameOf = $shortNames[0];
+		}
+	}
+
+	return $shortNameOf;
+}

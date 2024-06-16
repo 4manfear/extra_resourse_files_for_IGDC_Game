@@ -1,0 +1,73 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  October 29, 1998
+//
+//  Description:
+//      This script which will adjust the settings for the dope sheet
+//	and graph editor after a file has been retrieved.
+//
+//  Input Arguments:
+//      None.
+//
+//  Return Value:
+//      None.
+//
+
+global proc
+animationEditorFileCallback ()
+{
+	// Find all the scripted panels
+	//
+	string $panels[] = `getPanel -type scriptedPanel`;
+	for ($panel in $panels) {
+		string $type = `scriptedPanel -query -type $panel`;
+		if ( $type == "graphEditor" )
+		{
+			// Change the selection connection to graphEditorList
+			// for the graph editor
+			//
+			if (`outlinerEditor -exists ($panel + "OutlineEd")`) {
+				outlinerEditor -edit
+					-mainListConnection graphEditorList
+					-highlightConnection keyframeList
+					($panel + "OutlineEd");
+			}
+		}
+		else if ($type == "dopeSheetPanel")
+		{
+			// Change the selection connection to animationList and change
+			// some behavioral flag settings  for the dope sheet
+			//
+			if (`outlinerEditor -exists ($panel + "OutlineEd")`) {
+				outlinerEditor -edit
+					-mainListConnection animationList
+					-highlightConnection keyframeList
+					-showAnimCurvesOnly 1				// only show animCurves
+					-autoExpand 0						// do not autoExpand
+					($panel + "OutlineEd");
+			}
+			
+		}
+	}
+	// Update the outliner
+	//
+	if (`itemFilter -exists defaultSetFilter`) {
+		$panels = `getPanel -type outlinerPanel`;
+		for ($panel in $panels) {
+			string $outlinerEditor = `outlinerPanel -query -outlinerEditor $panel`;
+			if (`outlinerEditor -query -setFilter $outlinerEditor` == "0") {
+				outlinerEditor
+					-edit
+					-setFilter defaultSetFilter
+					$outlinerEditor;
+			}
+        }
+	}
+}

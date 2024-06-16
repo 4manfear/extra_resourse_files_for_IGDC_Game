@@ -1,0 +1,902 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//  Creation Date:  01/27/2016
+//
+//  Description:
+//      Performs to export clips into file
+//
+
+
+// Current selected export format. Used to restore file format state after capture dialog closed
+global string $gTECurrentExportFormat = "";
+// Current thumbnail playblast state. Used to restore check box state after capture dialog closed
+global int $gTECurrentThumbnailPlayblastState = -1;
+
+// Current selected export format in file dialog
+global string $gTEFileDialogCurrentFileFilter = "";
+
+//
+//  Procedure Name:
+//      teExportOptions
+//
+//  Description:
+//      Construct the option box UI.  Involves accessing the standard option
+//      box and customizing the UI accordingly.
+//
+//  Input Arguments:
+//      None.
+//
+//  Return Value:
+//      None.
+//
+global proc teExportOptions()
+{
+
+	//  Name of the command for this option box.
+    //
+    string $commandName;
+   
+    $commandName = "TimeEditorExportSelection";
+	
+    //  Build the option box actions.
+    //
+    string $callback = "teExportCallback";
+    string $setup    = "teExportSetup";
+    
+    //  STEP 1:  Get the option box.
+    //  ============================
+    //
+    //  The value returned is the name of the layout to be used as
+    //  the parent for the option box UI.
+    //
+    global string $gOptionBoxOptions;
+    $gOptionBoxOptions = "noApplyAndClose";  // No Apply
+    string $layout = getOptionBox();
+    //  STEP 2:  Pass the command name to the option box.
+    //  =================================================
+    //
+    //  Any default option box behaviour based on the command name is set
+    //  up with this call. For example, updating the 'Help' menu item with
+    //  the name of the command.
+    //  TODO: Check with Doc team
+    setOptionBoxCommandName($commandName);
+    
+    
+    //  STEP 3:  Create option box contents.
+    //  ====================================
+    //
+	
+	//NOTE: File format options should always show in options box no matter single or multply export.
+    string $parent = teExportOptionsUI($layout, 1);
+    
+    //  STEP 4:  Customize the buttons.
+    //  ===============================
+    //
+    //  Provide more descriptive labels for the buttons.
+    //  Disable those buttons that are not applicable to the option box.
+    //  Attach actions to those buttons that are applicable to the option box.
+
+    // 'Export' button
+    //
+    string $applyBtn = getOptionBoxApplyBtn();
+    button -e -label (uiRes("m_performTEExport.kTEExportApplyLabel"))
+           -command ("teExportRestoreSoloState;" + $callback + " " + $parent + " 1; hideOptionBox;")
+           $applyBtn;
+
+
+    // 'Cancel' button
+    string $cancelBtn = getOptionBoxCloseBtn();
+    button -e  -label (uiRes("m_performTEExport.kTEExportCancelLabel"))
+           -command("teExportRestoreSoloState; teExportFileOptionsCancel")
+           $cancelBtn;
+		   
+	// 'Reset' button(hidden)
+    string $resetBtn = getOptionBoxResetBtn();
+    button -e -command($setup + " " + $parent + " 1")
+           $resetBtn;
+		   
+	// 'Save' button(hidden)
+    string $saveBtn = getOptionBoxSaveBtn();
+    button -e -command($callback + " " + $parent + " 0; hideOptionBox;")
+           $saveBtn;
+        
+  
+    //  STEP 5:  Set the option box title.
+    //  ==================================
+    //
+    setOptionBoxTitle((uiRes("m_performTEExport.kTEExportSelectionOpt")));
+
+    // STEP 6:  Customize the 'Help' menu item text.
+    // TODO: Check with doc team
+    //  =============================================
+    //
+    setOptionBoxHelpTag($commandName);
+
+    //  Set the current values of the option box.
+    //  =========================================
+    //
+    eval ($setup + " " + $parent + " 0");
+
+    //  Show the option box.
+    //  ====================
+    //
+    showOptionBox();
+}
+
+//
+//  Procedure Name:
+//      teExportCallback
+//
+//  Description:
+//      Update the option values and execute command
+//
+//  Input Arguments:
+//      parent - Top level parent layout of the option box UI.  Required so
+//               that UI object names can be successfully resolved.
+//
+//  	doIt   - Whether the command should execute.
+//
+//  Return Value:
+//      None.
+//
+global proc teExportCallback(string $parent, int $doIt)
+{
+    teExportSaveOptionsFromUI($parent);
+	
+    if($doIt)
+        performTEExport 0;
+}
+
+//
+//  Procedure Name:
+//      teExportSaveOptionsFromUI
+//
+//  Description:
+//      Update the option values with the current state of the option box UI.
+//
+//  Input Arguments:
+//      parent - Top level parent layout of the option box UI.  Required so
+//               that UI object names can be successfully resolved.
+//
+//  Return Value:
+//      None.
+//
+global proc teExportSaveOptionsFromUI(string $parent)
+{
+    setParent $parent;
+	
+	if(`radioCollection -q -ex teExportFormatRadio`)
+	{
+		string $val = `radioCollection -q -select teExportFormatRadio`;
+		optionVar -stringValue teExportFileFormat $val;
+	}
+	
+	int $checked = `checkBox -q -v teExportSavePlayblastCheckBox`;
+    optionVar -intValue teExportSavePlayblast $checked;
+}
+
+//
+//  Procedure Name:
+//      teExportOptionsUI
+//
+//  Description:
+//      Construct the UI for option box or file options.
+//
+//  Input Arguments:
+//      parent                   - Top level parent layout of the option box UI.
+//                                 Required so that UI object names can be 
+//                                 successfully resolved.
+//      showFormatOption         - If show file format option.
+//
+//  Return Value:
+//      Top level layout of the options UI.
+//
+global proc string teExportOptionsUI(string $parent, int $showFormatOption)
+{
+    setParent $parent;
+    //  Activate the default UI template so that the layout of this
+    //  option box is consistent with the layout of the rest of the
+    //  application.
+    //
+    setUITemplate -pushTemplate DefaultTemplate;
+    
+    // Turn on the wait cursor
+    //
+    waitCursor -state 1;
+	
+    // Create option box 
+    //
+    string $optionLayout = `scrollLayout -childResizable 1`;
+    columnLayout -adjustableColumn true;
+    
+		if($showFormatOption)
+		{
+			frameLayout -label (uiRes("m_performTEExport.kTEExportOptionsLabel")) -collapse 0; 
+			
+			//make sure teExportFormatRadio is unique
+			if(`radioCollection -q -ex teExportFormatRadio`)
+				deleteUI -ctl teExportFormatRadio;
+			radioCollection teExportFormatRadio;
+				radioButton -label (uiRes("m_performTEExport.kTEExportFileTypeFbx")) fbx;
+				radioButton -label (uiRes("m_performTEExport.kTEExportFileTypeMayaAscii")) ma;
+				radioButton -label (uiRes("m_performTEExport.kTEExportFileTypeMayaBinary")) mb;
+			setParent ..;
+		}
+
+		$singleExport = size(`timeEditor -selectedClips ""`) == 1;
+		frameLayout -label (uiRes("m_performTEExport.kTEExportPlayblastOptions")) -en $singleExport -collapse 0;   
+			rowLayout -nc 2 playblastOptions;
+				
+				columnLayout playblastControls;
+					
+					text  -label "";
+
+					checkBox    -label (uiRes("m_performTEExport.kTEExportSavePlayblast"))
+								-changeCommand "teExportSavePlayblastCheckboxClick"
+								teExportSavePlayblastCheckBox;
+					text  -label "";
+					
+					button  -label (uiRes("m_performTEExport.kTEExportCapturePlayblast")) 
+							-command ("teExportCapturePlayblastButtonClick")
+							teExportCaptureButton;
+					text -label "";
+					button  -label (uiRes("m_performTEExport.kTEExportDeletePlayblast")) 
+							-command ("teExportDeletePlayblastButtonClick")
+							-enable (`thumbnailCaptureComponent -q -capturedFrameCount` > 0)
+							deleteButton;
+					
+				setParent ..;
+				
+				columnLayout playblastImage;
+					image -image `thumbnailCaptureComponent -q -previewPath` -width 100 -height 100 previewImage;
+					
+				setParent ..;
+				
+			setParent ..;
+			
+		setParent ..;
+    // Turn off the wait cursor
+    //  
+    waitCursor -state 0;
+    
+    // Deactive the default UI template
+    setUITemplate -popTemplate;
+    
+    return $optionLayout;
+}
+
+//
+//  Procedure Name:
+//      teExportSetup
+//
+//  Description:
+//      Update the state of the option box UI to reflect the option values.
+//
+//  Input Arguments:
+//      parent               - Top level parent layout of the option box UI.
+//                             Required so that UI object names can be 
+//                             successfully resolved.
+//
+//      forceFactorySettings - Whether the option values should be set to
+//                             default values.
+//
+//  Return Value:
+//      None.
+//
+global proc teExportSetup(string $parent, int $forceFactorySettings)
+{
+    // Retrieve the option settings
+    //
+    teExportSetOptionVars ($forceFactorySettings);
+    
+    setParent $parent;
+	
+	if(`radioCollection -q -ex teExportFormatRadio`)
+	{
+		global string $gTECurrentExportFormat;
+		string $val = ($gTECurrentExportFormat != "")?$gTECurrentExportFormat:`optionVar -q teExportFileFormat`;
+		radioCollection -e -select $val teExportFormatRadio;
+		//Reset current export format
+		$gTECurrentExportFormat = "";
+	}
+	if(`button -q -ex teExportCaptureButton`)
+	{
+		global int $gTECurrentThumbnailPlayblastState;
+		int $checked = ($gTECurrentThumbnailPlayblastState != -1)?$gTECurrentThumbnailPlayblastState:`optionVar -q teExportSavePlayblast`;
+		checkBox -e -value $checked teExportSavePlayblastCheckBox;
+		button -e -enable $checked teExportCaptureButton;
+		//Reset current thumbnail play blast state
+		$gTECurrentThumbnailPlayblastState = -1;
+	}
+}
+
+//
+//  Procedure Name:
+//      teExportSetOptionVars
+//
+//  Description:
+//      Initialize the option values.
+//
+//  Input Arguments:
+//      forceFactorySettings - Whether to set the options to default values.
+//
+//  Return Value:
+//      None.
+//
+global proc teExportSetOptionVars(int $forceFactorySettings)
+{
+	optionVar -init $forceFactorySettings -category "Time Editor.Export"
+        -sv teExportFileFormat "fbx"
+        -iv teExportSavePlayblast 0
+		;
+}
+
+//
+//  Procedure Name:
+//      teSavePlayblastThumbnail
+//
+//  Description:
+//      Save captured playblast or thumbnail
+//
+//  Input Arguments:
+//      fileName              - Exported file name
+//		saveClipTypeIdentFile - if save a empty file to identify the clip type
+//
+//  Return Value:
+//      None.
+//
+global proc teSavePlayblastThumbnail(string $fileName, int $saveClipTypeIdentFile)
+{
+	int $savePlayblast = 0;
+	if(`file -q -exists $fileName`) { 
+		if(`thumbnailCaptureComponent -q -capturedFrameCount` > 0) {
+			// Save the captured file
+			if(`optionVar -q teExportSavePlayblast`) {
+				string $saveCmd = "thumbnailCaptureComponent -save \"" + $fileName + "\"";
+				if(catch(evalEcho($saveCmd)) == 0)
+					$savePlayblast = 1;
+			}
+			
+			if($saveClipTypeIdentFile)
+			{
+				// From the TE, it will be possible to export either a pose or an animation as a .FBX file.
+				// In order to easily differentiate between the two, the Content Browser should display a different icon depending on whether the exported file represents a pose or an animation.
+				// During the export process, TE will write an empty file into .mayaswatches with the filename and an additional extension (.anim/.pose) to indicate the type.
+				// e.g.
+				// MyAnimation.fbx.anim (this should display an animation icon for MyAnimation.fbx)
+				// MyPose.fbx.pose (this should display a pose icon for MyPose.fbx)
+				//
+				// Create an empty file to distinguish its animation fbx or pose fbx
+				//
+				int $selClipIds[] = `timeEditor -selectedClips ""`;
+				if(size($selClipIds) == 1) {
+					string $emptyFile = dirname($fileName) + "/.mayaSwatches/" + basename($fileName, "") + ".";
+					// An assumption is made here - If the length of the clip is 1, it's a pose animation.
+					if(`timeEditorClip -q -duration -clipId $selClipIds[0]` == 1) {
+						$emptyFile += "pose";
+					}
+					else {
+						$emptyFile += "anim";
+					}
+					
+					int $fileId = `fopen $emptyFile`;
+					if($fileId != 0)
+						fclose $fileId;     
+				}
+			}
+		}
+	}
+	if(`thumbnailCaptureComponent -q -isSessionOpened` && $savePlayblast == 0)
+		thumbnailCaptureComponent -closeCurrentSession;
+}
+
+global proc teExportRestoreSoloState()
+{
+    global string $gTESoloedTrack;
+    if($gTESoloedTrack != "")
+    {       
+        int $trackIndex = teParseTrackIndex($gTESoloedTrack);
+        string $trackNode = teParseTrackNode($gTESoloedTrack);
+        timeEditorTracks -resetSolo; 
+        timeEditorTracks -e -trackSolo false -trackIndex $trackIndex $trackNode;
+        $gTESoloedTrack = "";   
+    }
+    global int $gTEMutedClips[];
+    if(size($gTEMutedClips) > 0)
+    {
+        for($i = 0; $i < size($gTEMutedClips); $i++)
+        {           
+            timeEditorClip -e -mute false -clipId $gTEMutedClips[$i]; 
+        }
+        $gTEMutedClips = {};
+    }
+}
+
+global proc teMultiExportFileCommit(string $parent)
+{
+    teExportSaveOptionsFromUI($parent);
+}
+
+global proc teSingleExportFileCommit(string $parent, string $selectedFile)
+{
+	teExportSaveOptionsFromUI($parent);
+	
+	//For single export. save export format type here
+	string $exportFormat = "";
+	if(endString($selectedFile, 4) == ".fbx")
+		$exportFormat = "fbx";
+	else
+	if(endString($selectedFile, 3) == ".ma")
+		$exportFormat = "ma";
+	else
+	if(endString($selectedFile, 3) == ".mb")
+		$exportFormat = "mb";
+	optionVar -stringValue teExportFileFormat $exportFormat;
+}
+
+global proc teExportFileFormatChanged(string $parent, string $newFormat)
+{
+	global string $gTEFileDialogCurrentFileFilter;
+	$gTEFileDialogCurrentFileFilter = $newFormat;
+}
+
+global proc teExportFileOptionsCancel()
+{
+	global string $gTECurrentExportFormat;
+	$gTECurrentExportFormat = "";
+	global int $gTECurrentThumbnailPlayblastState;
+	$gTECurrentThumbnailPlayblastState = -1;
+    thumbnailCaptureComponent -closeCurrentSession;
+    hideOptionBox();
+}
+
+global proc teExportSavePlayblastCheckboxClick()
+{
+    int $checked = `checkBox -q -v teExportSavePlayblastCheckBox`;
+    button -e -en  $checked teExportCaptureButton;
+}
+
+// Help function to isolate the animation for the given clip
+global proc teExportSoloClip(int $targetClipId)
+{
+    // Solo the track to mute the animation from other clips
+    string $track = `timeEditorClip -q -track -clipId $targetClipId`;
+    
+    int $trackIndex = teParseTrackIndex($track);
+    string $trackNode = teParseTrackNode($track);
+    
+    if(!`timeEditorTracks -q -trackSolo -trackIndex $trackIndex $trackNode`)
+    {
+        timeEditorTracks -resetSolo; 
+        timeEditorTracks -e -trackSolo true -trackIndex $trackIndex $trackNode;
+        global string $gTESoloedTrack;
+        $gTESoloedTrack = $track;
+    }
+
+    // Mute the sibling clips
+    global int $gTEMutedClips[];    
+    $gTEMutedClips = {};
+    int $clipIds[] = `timeEditorTracks -q -allClips -trackIndex $trackIndex $trackNode`;
+    if(size($clipIds) > 1)
+    {
+        for($i = 0; $i < size($clipIds); $i++)
+        {
+            if($clipIds[$i] != $targetClipId)
+            {
+                timeEditorClip -e -mute true -clipId $clipIds[$i]; 
+                $gTEMutedClips[size($gTEMutedClips)] = $clipIds[$i];
+            }
+        }
+    }
+}
+
+global proc teExportCapturePlayblastButtonClick()
+{
+	
+	//Save Current option UI states, so they can be recovered after capture dialog closed
+	int $checked = `checkBox -q -v teExportSavePlayblastCheckBox`;
+	global int $gTECurrentThumbnailPlayblastState;
+	$gTECurrentThumbnailPlayblastState = $checked;
+	
+	global string $gTECurrentExportFormat;
+	if(`radioCollection -q -ex teExportFormatRadio`)
+	{
+		//Save export file format
+		string $format = `radioCollection -q -select teExportFormatRadio`;
+		$gTECurrentExportFormat = $format;
+	}
+	
+    // Set up the time range for the capture
+    int $selClips[] = `timeEditor -selectedClips ""`;
+    if(size($selClips) != 1)
+        return;
+
+    int $selClipId = $selClips[0];
+
+    // Solo the track and mute the sibling clips to mute the animation from other clips
+    teExportSoloClip($selClipId);
+
+    float $startTime = `timeEditorClip -q -loopStart -truncated $selClipId`;
+    float $endTime = `timeEditorClip -q -loopEnd -truncated $selClipId`;
+    
+    if($startTime > floor($startTime)) $startTime = floor($startTime + 1);
+    if($endTime > floor($endTime)) $endTime = floor($endTime + 1);
+    
+    int $startFrame = $startTime;
+    int $endFrame = $endTime;
+    
+    string $callback;
+    if(`thumbnailCaptureComponent -q -launchedFromOptionsBox`) {
+        button -e -en true deleteButton;        
+    }
+    else
+    {
+		string $currentFileSelected = `thumbnailCaptureComponent -q -selectedFileName`;
+		global string $gTEFileDialogCurrentFileFilter;
+        $callback = "teExportRestoreSoloState; fileCmdCallback; if(`thumbnailCaptureComponent -q -capturedFrameCount` == 0) {thumbnailCaptureComponent -closeCurrentSession;} ";
+		$callback += "teDoClipExport(\"" + $currentFileSelected + "\",\"" + $gTEFileDialogCurrentFileFilter + "\");" ;
+		$callback += "fileCmdRestoreCallback;";
+    }
+    thumbnailCaptureComponent -capture -startFrame $startFrame -endFrame $endFrame -fileDialogCallback $callback;
+}
+
+global proc teExportDeletePlayblastButtonClick()
+{   
+    thumbnailCaptureComponent -delete;
+    image -e -vis false previewImage;
+    button -e -en false deleteButton;
+}
+
+//
+//  Procedure Name:
+//      teMayaExportClip
+//
+//  Description:
+//		Export a single clip as a baked Anim Source to a specified file
+//
+//  Input Arguments:
+//		clipId - clip ID to export.
+//		path   - file path to export to.
+//
+//  Return Value:
+//      None.
+//
+global proc teMayaExportClip(int $clipId, string $path)
+{
+	// select given clip
+	string $clipNode = `timeEditorClip -q -clipNode $clipId`;
+	select -r ($clipNode + ".clip[0]");
+	
+	// Temporarily change blend mode for export
+	string $blendAttr = ($clipNode + ".clip[0].clipBlendMode");
+	int $additive = (`getAttr $blendAttr` == 1);
+	if ($additive) setAttr $blendAttr 0;
+
+	// bake its animation to a new anim source
+	string $clipName = `timeEditorClip -q -name $clipId`; 
+	string $animSourceName = $clipName + "_BakedAnimSource_Export";
+	$animSourceName = `timeEditorBakeClips -sampleBy 1 -keepOriginalClip 1 -bakeToAnimSource $animSourceName`;
+	
+	// export that anim source to a file
+	timeEditorAnimSource -e -export $path $animSourceName;
+	
+	// Restore clip blend mode
+	if ($additive) setAttr $blendAttr 1;
+
+	// delete baked anim source node and baked curves
+	delete $animSourceName;
+
+	teSaveClipExportsDir($path);
+}
+
+
+//
+//  Procedure Name:
+//      teMayaExportMultipleClips
+//
+//  Description:
+//		Iterate over a list of clips and export each of them into a folder with
+//		a file name generated from the name of the clip.
+//
+//  Input Arguments:
+//		clipIds	   - array of clip IDs to export
+//		folderPath - path to a folder where the exported files will be placed
+//		fileType   - export file type
+//
+//  Return Value:
+//      None.
+//
+global proc teMayaExportMultipleClips(int $clipIds[], string $folderPath, string $fileType)
+{
+	for ($clipId in $clipIds)
+	{		
+		string $clipName = `timeEditorClip -q -name $clipId`;
+		if ($clipName == "") $clipName = "clip";
+		
+		// make sure the name of the exported file is unique
+		string $path;
+		int $index = 0;
+		do
+		{
+			$path = $folderPath + "/" + $clipName + ($index > 0 ? $index : "") + "." + $fileType;
+			$index++;
+		} while(`file -q -exists $path`);
+		
+		teMayaExportClip($clipId, $path);
+	}
+}
+
+//
+//  Procedure Name:
+//      teFbxExportClips
+//
+//  Description:
+//		Export selected clips in to FBX files
+//
+//  Input Arguments:
+//		path - export path
+//
+//  Return Value:
+//      None.
+//
+global proc teFbxExportClips(string $path)
+{
+    string $exportCmd = `timeEditorClip -e -exportFbx $path`;
+
+    // Execute export command
+    evalEcho ($exportCmd);
+
+    // Remember the latest location accessed. 
+	if(endString($path, 4) != ".fbx")
+		$path += "/file.fbx"; //Change directory path to a dummy file path.
+    teSaveClipExportsDir($path);
+}
+
+//
+//  Procedure Name:
+//      teDoClipExport
+//
+//  Description:
+//		Depending on the number of selected clips, show an appropriate export dialog
+//		and perform export operation
+//
+//  Input Arguments:
+//		startPath       - initial directory in file dialog
+//      startFileFilter - initial file filter for single export
+//
+//  Return Value:
+//      None.
+//
+global proc teDoClipExport(string $startPath, string $startFileFilter)
+{
+	string $paths[];
+	int $selectedClips[] = `timeEditor -selectedClips ""`;
+	int $clipsNum = size($selectedClips);
+	string $currentSelection[] = `ls -sl`;
+	
+	global string $gTEFileDialogCurrentFileFilter;
+	$gTEFileDialogCurrentFileFilter ="";
+	
+	if($clipsNum > 1)
+	{
+		string $results[] = `fileDialog2 -fileMode 3 -hne 1 -bbo 2
+					-caption (uiRes("m_performTEExport.kTEExportMultipleCaption"))
+					-okCaption (uiRes("m_performTEExport.kTEExportSelection"))
+					-startingDirectory $startPath
+					-optionsUICreate ("teMultiExportFileOptionsUICreate")
+					-optionsUICommit ("teMultiExportFileCommit")
+					-optionsUIInit ("teExportFileOptionsUIInit")`;
+					
+		if (size($results) == 1)
+		{		
+			string $fileType = `optionVar -q teExportFileFormat`;
+			if($fileType != "fbx")
+				teMayaExportMultipleClips($selectedClips, $results[0], $fileType);
+			else
+				teFbxExportClips($results[0]);
+		}
+	}
+	else if($clipsNum == 1)
+	{
+		string $filter = "";
+		string $filterNames[];
+		int $numFilters = 0;
+		$filterNames[$numFilters] = (uiRes("m_performTEExport.kTEFbxFileType"));
+		$filter += $filterNames[$numFilters++] + " (*.fbx);;";
+		$filterNames[$numFilters] = (uiRes("m_performTEExport.kTEMayaASCIIFileType"));
+		$filter += $filterNames[$numFilters++] + " (*.ma);;";
+		$filterNames[$numFilters] = (uiRes("m_performTEExport.kTEMayaBinaryFileType"));
+		$filter += $filterNames[$numFilters++] + " (*.mb);;";
+		if($startFileFilter == "")
+		{
+			global string $gTECurrentExportFormat;
+			string $val = ($gTECurrentExportFormat != "")?$gTECurrentExportFormat:`optionVar -q teExportFileFormat`;
+			$gTECurrentExportFormat = "";
+			
+			int $filterIndex = 0; // Default is fbx
+			if($val == "ma")
+				$filterIndex = 1;
+			else if($val == "mb")
+				$filterIndex = 2;
+			$startFileFilter = $filterNames[$filterIndex];
+		}
+		$gTEFileDialogCurrentFileFilter = $startFileFilter;
+		string $results[] = `fileDialog2 -fileMode 0 
+					-caption (uiRes("m_performTEExport.kTEExportCaption")) 
+					-fileFilter $filter
+					-selectFileFilter $startFileFilter
+					-startingDirectory $startPath				
+					-okCaption (uiRes("m_performTEExport.kTEExportSelection"))
+					-optionsUICreate ("teSingleExportFileOptionsUICreate")
+                    -optionsUIInit ("teExportFileOptionsUIInit")
+					-optionsUICommit2 ("teSingleExportFileCommit")
+					-fileTypeChanged("teExportFileFormatChanged")
+                    -optionsUICancel("teExportFileOptionsCancel")`;
+					
+		if (size($results) == 1)
+		{
+			if(endString($results[0], 4) == ".fbx")
+			{
+				teFbxExportClips($results[0]);
+				teSavePlayblastThumbnail($results[0], 1);
+			}
+			else
+			{
+				teMayaExportClip($selectedClips[0], $results[0]);
+				teSavePlayblastThumbnail($results[0], 0);
+			}
+		}
+	}
+	else
+	{
+		warning( (uiRes("m_performTEExport.kTENoClipSelected")) );
+	}
+	
+	// revert selection
+	select -r $currentSelection;
+}
+
+//
+//  Procedure Name:
+//      teMultiExportFileOptionsUICreate
+//
+//  Description:
+//      Construct the file options UI.
+//
+//  Input Arguments:
+//      parent - Top level parent layout of the file options UI.
+//
+//  Return Value:
+//      None.
+//
+global proc teMultiExportFileOptionsUICreate(string $parent)
+{
+    teExportOptionsUI($parent, 1);
+}
+
+//
+//  Procedure Name:
+//      teSingleExportFileOptionsUICreate
+//
+//  Description:
+//      Construct the file options UI.
+//
+//  Input Arguments:
+//      parent - Top level parent layout of the file options UI.
+//
+//  Return Value:
+//      None.
+//
+global proc teSingleExportFileOptionsUICreate(string $parent)
+{
+    teExportOptionsUI($parent, 0);
+}
+
+//
+//  Procedure Name:
+//      teExportFileOptionsUIInit
+//
+//  Description:
+//      Update the state of the file options UI to reflect the option values.
+//
+//  Input Arguments:
+//      parent - Top level parent layout of the file options UI.
+//
+//  Return Value:
+//      None.
+//
+global proc teExportFileOptionsUIInit(string $parent, string $filterType)
+{
+    teExportSetup($parent, 0);
+}
+
+//  Procedure Name:
+//      assembleCmd
+//
+//  Description:
+//      Construct the command that will apply the option box values.
+//
+//  Input Arguments:
+//      None.
+//
+
+global proc performTEExportFbxAll()
+{
+    // Ask the user for destination folder for all exported FBX files, onefor each clip
+    string $startDir = teGetClipExportsDir();
+    string $paths[] = `fileDialog2 -fileMode 3 
+                                    -caption (uiRes("m_performTEExport.kTEExportAllFBXCaption"))
+									-okCaption (uiRes("m_performTEExport.kTEExportSelection"))
+                                    -startingDirectory $startDir`;
+    if ( size($paths) != 1 ) return;
+    
+    string $path = $paths[0];
+    string $exportCmd = `timeEditorClip -e -exportFbx $path -exportAllClips`;
+
+    // Execute export command
+    evalEcho ($exportCmd);
+
+    // Remember the latest location accessed. 
+    teSaveClipExportsDir($path);
+}
+
+proc string assembleCmd()
+{
+    teExportSetOptionVars(false);
+	$startPath = teGetClipExportsDir();
+    string $cmd = "teDoClipExport(\"" + $startPath + "\",\"\");";
+    
+    // Execute the command with the option settings
+    //
+    return $cmd;
+}
+
+//
+//  Procedure Name:
+//      performTEExport
+//
+//  Description:
+//      Export the clip(s).
+//
+//  Input Arguments:
+//      0 - Execute the command.
+//      1 - Show the option box dialog.
+//      2 - Return the command.
+//
+global proc string performTEExport(int $action)
+{
+	string $cmd = "";
+	
+	switch ($action) {
+
+		//	Execute the command.
+		//
+		case 0:
+			$cmd = assembleCmd();
+            //  Execute the command with the option settings.
+            //
+            eval($cmd);
+			break;
+
+		//	Show the option box.
+		//
+		case 1:
+			teExportOptions();
+			break;
+
+		//	Return the command string.
+		//
+		case 2:
+			//	Get the command.
+			//
+			$cmd = assembleCmd();
+			break;
+	}
+	return $cmd;
+}

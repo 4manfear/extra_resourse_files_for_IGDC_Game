@@ -1,0 +1,41 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  Dec. 6/96
+//
+//  Description:
+//      Option box dialog for 'Set Tangent' (setting of global tangent types)
+//
+//  Input Arguments:
+//      0 - Execute the command.
+//		1 - Show the option box dialog.
+//		2 - Return the command.
+//
+//  Return Value:
+//      None.
+//
+
+global proc setTangentSetup (string $parent, int $forceFactorySettings)
+{
+	obsoleteProc( "setTangentSetup", "performSetTangent.mel" );
+}
+
+global proc setTangentCallback (string $parent, int $doIt)
+{
+	obsoleteProc( "setTangentCallback", "performSetTangent.mel" );
+}
+
+global proc string performSetTangent (int $action)
+{
+	string $cmd = "";
+
+	obsoleteProc( "performSetTangent", "performSetTangent.mel" );
+
+	return $cmd;
+}

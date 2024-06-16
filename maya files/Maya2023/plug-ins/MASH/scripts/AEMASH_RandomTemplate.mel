@@ -1,0 +1,175 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+
+global proc MASHcheckRandomType ( string $nodeName )
+{
+        if ( `objExists $nodeName` == 0 )
+            return;
+
+        string $nodeAttr = $nodeName + ".normaliseRandom";
+        int $value = `getAttr $nodeAttr`;
+
+        if ($value) {
+            editorTemplate  -dimControl $nodeName "maxNumber" true;
+        } else {
+            editorTemplate  -dimControl $nodeName "maxNumber" false;
+        }
+
+        //are we using the modern connection style? Enable this attr if so.
+        string $conns[] = `listConnections -d on -s off ($nodeName+".outputPoints")`;
+        int $numConns = size($conns);
+
+        if ($numConns) {
+            editorTemplate  -dimControl $nodeName "transformationSpace" false;
+        } else {
+            editorTemplate  -dimControl $nodeName "transformationSpace" true;
+        }
+}
+
+global proc AEMASH_RandomTemplate( string $nodeName )
+{
+
+    editorTemplate -beginScrollLayout;
+    python("import MASH.nodeHeaders; MASH.nodeHeaders.addHeader('" + $nodeName + "', 'Random')")
+    editorTemplate -endLayout;
+
+    editorTemplate -callCustom "AERandomLegacyCheck" "AERandomLegacyCheckEdit" "";
+
+    editorTemplate -bn;
+    editorTemplate  -label (getPluginResource("MASH", "kUniformScale")) -addControl "uniformRandom";
+    editorTemplate  -label (getPluginResource("MASH", "kRandSeed")) -addControl "randomSeed";
+    editorTemplate  -label (getPluginResource("MASH", "kNormaliseRandom")) -addControl "normaliseRandom" "MASHcheckRandomType";
+    editorTemplate -en;
+    editorTemplate  -label (getPluginResource("MASH", "kTransformationSpace")) -addControl "transformationSpace";
+
+    editorTemplate -beginLayout (getPluginResource("MASH", "kStrength")) -collapse 0;
+    editorTemplate  -label (getPluginResource("MASH", "kStrength")) -addControl "Envelope";
+    editorTemplate  -label (getPluginResource("MASH", "kRandStrength")) -addControl "randEnvelope";
+    editorTemplate  -label (getPluginResource("MASH", "kStepStrength")) -addControl "StepEnvelope";
+    editorTemplate -addSeparator;
+    editorTemplate  -label (getPluginResource("MASH", "kStrengthMap")) -addControl "mColour";
+    editorTemplate  -label (getPluginResource("MASH", "kMapProjAxis")) -addControl "mapDirection";
+    editorTemplate -callCustom "MASHmapHelperButton" "MASHmapHelperButtonEdit" "";
+    editorTemplate -endLayout;
+
+
+    editorTemplate -beginLayout (getPluginResource("MASH", "kFalloffObject")) -collapse 1;
+    editorTemplate -callCustom "MASHfalloffButtons" "MASHfalloffButtonsEdit" "";
+    editorTemplate -endLayout;
+    editorTemplate -endLayout;
+
+    editorTemplate -suppress "inIterations";
+    editorTemplate -suppress "time";
+
+    editorTemplate -endLayout;
+    AEdependNodeTemplate $nodeName;
+    editorTemplate -addExtraControls;
+    editorTemplate -endScrollLayout;
+}
+
+//
+//  AS THIS NODE EFFECTIVLY HAS TWO SETS OF CONTROLS WE NEED TO CHECK WHICH WE SHOULD SHOW AND WHICH WE SHOULD HIDE
+//  LEGACY IS MASH 3.5 AND BELOW
+//
+global proc AERandomLegacyCheck ( string $attr )
+{
+    string $nodeName[];
+    tokenize($attr, ".", $nodeName);
+
+    //are we using the modern connection style? This determines what attributes are shown.
+    string $conns[] = `listConnections -d on -s off ($nodeName[0]+".outputArray")`;
+    int $numConns = size($conns);
+    int $newMode = 1;
+    if ($numConns) {
+        $newMode = 0; //bool needed for later inversion
+    }
+
+    // NEW CONTROLS
+    attrFieldSliderGrp -vis $newMode -label (getPluginResource("MASH", "kPositionX")) -at ($nodeName[0]+".positionX") mashRandomPosXSliderGrp;
+    attrFieldSliderGrp -vis $newMode -label (getPluginResource("MASH", "kPositionY")) -at ($nodeName[0]+".positionY") mashRandomPosYSliderGrp;
+    attrFieldSliderGrp -vis $newMode -label (getPluginResource("MASH", "kPositionZ")) -at ($nodeName[0]+".positionZ") mashRandomPosZSliderGrp;
+
+    attrFieldSliderGrp -vis $newMode -label (getPluginResource("MASH", "kRotationX")) -at ($nodeName[0]+".rotationX") mashRandomRotXSliderGrp;
+    attrFieldSliderGrp -vis $newMode -label (getPluginResource("MASH", "kRotationY")) -at ($nodeName[0]+".rotationY") mashRandomRotYSliderGrp;
+    attrFieldSliderGrp -vis $newMode -label (getPluginResource("MASH", "kRotationZ")) -at ($nodeName[0]+".rotationZ") mashRandomRotZSliderGrp;
+
+    attrFieldSliderGrp -vis $newMode -label (getPluginResource("MASH", "kScaleX")) -at ($nodeName[0]+".scaleX") mashRandomScaleXSliderGrp;
+    attrFieldSliderGrp -vis $newMode -label (getPluginResource("MASH", "kScaleY")) -at ($nodeName[0]+".scaleY") mashRandomScaleYSliderGrp;
+    attrFieldSliderGrp -vis $newMode -label (getPluginResource("MASH", "kScaleZ")) -at ($nodeName[0]+".scaleZ") mashRandomScaleZSliderGrp;
+
+    AEAddMashCheckboxControl ( ($nodeName[0]+".absoluteScale"), "mashRandomAbsoluteScaleGrp", $newMode, (getPluginResource("MASH", "kAbsoluteScale")) );
+
+    // LEGACY CONTROLS
+    AEAddMashCheckboxControl ( ($nodeName[0]+".wholeNumbers"), "mashRandomWholeNumbersGrp", (!$newMode) , (getPluginResource("MASH", "kWholeNumbers")) );
+
+    AEAddMashCheckboxControl ( ($nodeName[0]+".enableX"), "mashRandomEnableXGrp", (!$newMode) , (getPluginResource("MASH", "kEnableX")) );
+    AEAddMashCheckboxControl ( ($nodeName[0]+".enableY"), "mashRandomEnableYGrp", (!$newMode) , (getPluginResource("MASH", "kEnableY")) );
+    AEAddMashCheckboxControl ( ($nodeName[0]+".enableZ"), "mashRandomEnableZGrp", (!$newMode) , (getPluginResource("MASH", "kEnableZ")) );
+
+    attrFieldSliderGrp -vis (!$newMode) -label (getPluginResource("MASH", "kMinNum")) -at ($nodeName[0]+".minNumber") mashRandomMinSliderGrp;
+    attrFieldSliderGrp -vis (!$newMode) -label (getPluginResource("MASH", "kMaxNum")) -at ($nodeName[0]+".maxNumber") mashRandomMaxSliderGrp;
+
+    attrFieldSliderGrp -vis (!$newMode) -label (getPluginResource("MASH", "kMinNumX")) -at ($nodeName[0]+".minNumberX") mashRandomMinXSliderGrp;
+    attrFieldSliderGrp -vis (!$newMode) -label (getPluginResource("MASH", "kMaxNumX")) -at ($nodeName[0]+".maxNumberX") mashRandomMaxXSliderGrp;
+
+    attrFieldSliderGrp -vis (!$newMode) -label (getPluginResource("MASH", "kMinNumY")) -at ($nodeName[0]+".minNumberY") mashRandomMinYSliderGrp;
+    attrFieldSliderGrp -vis (!$newMode) -label (getPluginResource("MASH", "kMaxNumY")) -at ($nodeName[0]+".maxNumberY") mashRandomMaxYSliderGrp;
+
+    attrFieldSliderGrp -vis (!$newMode) -label (getPluginResource("MASH", "kMinNumZ")) -at ($nodeName[0]+".minNumberZ") mashRandomMinZSliderGrp;
+    attrFieldSliderGrp -vis (!$newMode) -label (getPluginResource("MASH", "kMaxNumZ")) -at ($nodeName[0]+".maxNumberZ") mashRandomMaxZSliderGrp;
+}
+
+global proc AERandomLegacyCheckEdit ( string $attr )
+{
+    string $nodeName[];
+    tokenize($attr, ".", $nodeName);
+
+    //are we using the modern connection style? This determines what attributes are shown.
+    string $conns[] = `listConnections -d on -s off ($nodeName[0]+".outputArray")`;
+    int $numConns = size($conns);
+    int $newMode = 1;
+    if ($numConns) {
+        $newMode = 0; //bool needed for later inversion
+    }
+
+    // NEW CONTROLS
+    attrFieldSliderGrp -e -vis $newMode  -at ($nodeName[0]+".positionX") mashRandomPosXSliderGrp;
+    attrFieldSliderGrp -e -vis $newMode  -at ($nodeName[0]+".positionY") mashRandomPosYSliderGrp;
+    attrFieldSliderGrp -e -vis $newMode -at ($nodeName[0]+".positionZ") mashRandomPosZSliderGrp;
+
+    attrFieldSliderGrp -e -vis $newMode -at ($nodeName[0]+".rotationX") mashRandomRotXSliderGrp;
+    attrFieldSliderGrp -e -vis $newMode -at ($nodeName[0]+".rotationY") mashRandomRotYSliderGrp;
+    attrFieldSliderGrp -e -vis $newMode  -at ($nodeName[0]+".rotationZ") mashRandomRotZSliderGrp;
+
+    attrFieldSliderGrp -e -vis $newMode  -at ($nodeName[0]+".scaleX") mashRandomScaleXSliderGrp;
+    attrFieldSliderGrp -e -vis $newMode  -at ($nodeName[0]+".scaleY") mashRandomScaleYSliderGrp;
+    attrFieldSliderGrp -e -vis $newMode -at ($nodeName[0]+".scaleZ") mashRandomScaleZSliderGrp;
+
+    AEAddMashCheckboxControlEdit ( ($nodeName[0]+".absoluteScale"), "mashRandomAbsoluteScaleGrp", $newMode );
+
+    // LEGACY CONTROLS
+    AEAddMashCheckboxControlEdit ( ($nodeName[0]+".wholeNumbers"), "mashRandomWholeNumbersGrp", (!$newMode) );
+
+    AEAddMashCheckboxControlEdit ( ($nodeName[0]+".enableX"), "mashRandomEnableXGrp", (!$newMode) );
+    AEAddMashCheckboxControlEdit ( ($nodeName[0]+".enableY"), "mashRandomEnableYGrp", (!$newMode) );
+    AEAddMashCheckboxControlEdit ( ($nodeName[0]+".enableZ"), "mashRandomEnableZGrp", (!$newMode) );
+
+    attrFieldSliderGrp -e -vis (!$newMode) -at ($nodeName[0]+".minNumber") mashRandomMinSliderGrp;
+    attrFieldSliderGrp -e -vis (!$newMode)  -at ($nodeName[0]+".maxNumber") mashRandomMaxSliderGrp;
+
+    attrFieldSliderGrp -e -vis (!$newMode) -at ($nodeName[0]+".minNumberX") mashRandomMinXSliderGrp;
+    attrFieldSliderGrp -e -vis (!$newMode)  -at ($nodeName[0]+".maxNumberX") mashRandomMaxXSliderGrp;
+
+    attrFieldSliderGrp -e -vis (!$newMode) -at ($nodeName[0]+".minNumberY") mashRandomMinYSliderGrp;
+    attrFieldSliderGrp -e -vis (!$newMode) -at ($nodeName[0]+".maxNumberY") mashRandomMaxYSliderGrp;
+
+    attrFieldSliderGrp -e -vis (!$newMode)  -at ($nodeName[0]+".minNumberZ") mashRandomMinZSliderGrp;
+    attrFieldSliderGrp -e -vis (!$newMode)  -at ($nodeName[0]+".maxNumberZ") mashRandomMaxZSliderGrp;
+
+}
+

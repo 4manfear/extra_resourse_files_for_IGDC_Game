@@ -1,0 +1,130 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//  Procedure Name:
+//	  uvTkBuildCreateOptions
+//
+//  Description:
+//		Build Create options for UV toolkit
+//
+//  Input Arguments:
+//	  $parentForm - Parent form
+//
+//  Return Value:
+//	  Layout to be added into form
+//
+global proc string uvTkBuildCreateOptions(string $parentForm)
+{
+	global int $gUVTkTwinBtnWth;
+	global int $gUVTkTwinBtnHgt;
+	
+	string $layout = `frameLayout -p $parentForm -collapsable true -collapse true -lv false`;
+		string $form = `formLayout`;
+		string $extraOpts = (uiRes("m_uvTkBuildCreateOptions.kExtraOps"));
+		string $lmbOpt = (uiRes("m_uvTkBuildCreateOptions.kLmbOpt"));
+		string $mmbOpt = (uiRes("m_uvTkBuildCreateOptions.kMmbOpt"));
+		string $rmbOpt = (uiRes("m_uvTkBuildCreateOptions.kRmbOpt"));
+
+			string $btnLbls[] = {(uiRes("m_uvTkBuildCreateOptions.kAutomatic")),
+								 (uiRes("m_uvTkBuildCreateOptions.kNormalBased")),
+								 (uiRes("m_uvTkBuildCreateOptions.kCylindrical")),
+								 (uiRes("m_uvTkBuildCreateOptions.kPlanar")),
+								 (uiRes("m_uvTkBuildCreateOptions.kSpherical")),
+								 (uiRes("m_uvTkBuildCreateOptions.kBestPlane")),
+								 (uiRes("m_uvTkBuildCreateOptions.kCameraBased")),
+								 (uiRes("m_uvTkBuildCreateOptions.kContourStretch"))};
+			string $btnCmds[] = {"UVAutomaticProjection",
+								 "UVNormalBasedProjection",
+								 "UVCylindricProjection",
+								 "UVPlanarProjection",
+								 "UVSphericalProjection",
+								 "BestPlaneTexturingTool",
+								 "UVCameraBasedProjection",
+								 "UVContourStretchProjection"};
+			string $btnAnns[] = {getRunTimeCommandAnnotation("UVAutomaticProjection") + "\n" + $extraOpts,
+								 getRunTimeCommandAnnotation("UVNormalBasedProjection") + "\n" + $extraOpts,
+								 getRunTimeCommandAnnotation("UVCylindricProjection") + "\n" + $extraOpts,
+								 (uiRes("m_uvTkBuildCreateOptions.kPlanarAnno")) +
+									"\n" + $lmbOpt + "\n" + $mmbOpt + "\n" + $rmbOpt + "\n" + $extraOpts,
+								 getRunTimeCommandAnnotation("UVSphericalProjection") + "\n" + $extraOpts,
+								 getRunTimeCommandAnnotation("BestPlaneTexturingTool"),
+								 getRunTimeCommandAnnotation("UVCameraBasedProjection") + "\n" + $extraOpts,
+								 getRunTimeCommandAnnotation("UVContourStretchProjection") + "\n" + $extraOpts};
+			string $btnShfs[] = {"UVAutomaticProjectionOptions",
+								 "UVNormalBasedProjectionOptions",
+								 "UVCylindricProjectionOptions",
+								 "UVPlanarProjectionOptions",
+								 "UVSphericalProjectionOptions",
+								 "",
+								 "UVCameraBasedProjectionOptions",
+								 "UVContourStretchProjectionOptions"};
+			string $btnImgs[] = {"polyAutoProj.png",
+								 "polyNormalProj.png",
+								 "polyCylProj.png",
+								 "polyPlanProj.png",
+								 "polySphereProj.png",
+								 "polyBestPlanProj.png",
+								 "polyCameraProj.png",
+								 "polyContourProj.png"};
+			string $btns[];
+			for($i = 0; $i < size($btnLbls); $i++)
+			{
+				if($btnShfs[$i] != "")
+					$btnCmds[$i] = "if(`getModifiers`%2){"+$btnShfs[$i]+";}else{evalDeferred\""+$btnCmds[$i]+"\";}";
+				$btns[size($btns)] = `iconTextButton
+									  -p $form
+									  -flat false
+									  -st "iconAndTextHorizontal"
+									  -w $gUVTkTwinBtnWth -h $gUVTkTwinBtnHgt
+									  -i $btnImgs[$i]
+									  -l $btnLbls[$i]
+									  -c $btnCmds[$i]
+									  -ann $btnAnns[$i]`;
+			}
+			popupMenu 
+				-b 2 
+				-p $btns[3] 
+				-pmc "uvTkDoPlanarProjection 2";
+			popupMenu 
+				-b 3 
+				-p $btns[3] 
+				-pmc "uvTkDoPlanarProjection 3";
+			formLayout -e
+				   -af $btns[0] top	5
+				   -af $btns[0] left   5
+				   -af $btns[1] top	5
+				   -ac $btns[1] left   1 $btns[0]
+				   -ac $btns[2] top	1 $btns[0]
+				   -af $btns[2] left   5
+				   -ac $btns[3] top	1 $btns[1]
+				   -ac $btns[3] left   1 $btns[2]
+				   -ac $btns[4] top	1 $btns[2]
+				   -af $btns[4] left   5
+				   -ac $btns[5] top	1 $btns[3]
+				   -ac $btns[5] left   1 $btns[4]
+				   -ac $btns[6] top	1 $btns[4]
+				   -af $btns[6] left   5
+				   -af $btns[6] bottom 5
+				   -ac $btns[7] top	1 $btns[5]
+				   -ac $btns[7] left   1 $btns[6]
+				   -af $btns[7] bottom 5
+				   $form;
+			setParent ..;
+		setParent ..;
+	return $layout;
+}
+
+global proc uvTkDoPlanarProjection(int $dir)
+{
+	int $planarProjDirectionOld = 1;
+	if (`optionVar -exists polyProjectionMappingDirectionPlanar`)
+		$planarProjDirectionOld = `optionVar -q polyProjectionMappingDirectionPlanar`;
+
+	optionVar -intValue polyProjectionMappingDirectionPlanar $dir;
+	UVPlanarProjection;
+	optionVar -intValue polyProjectionMappingDirectionPlanar $planarProjDirectionOld;
+}

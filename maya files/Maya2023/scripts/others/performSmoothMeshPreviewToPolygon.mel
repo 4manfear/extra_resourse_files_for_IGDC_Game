@@ -1,0 +1,65 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+// Description:
+// Takes all poly objects selected that are in smooth mesh preview mode and performs a poly
+// smooth on them so that the smoothed object matches the smooth preview.
+//
+global proc performSmoothMeshPreviewToPolygon()
+{
+	string $polyObjects[] = `filterExpand -expand true -fullPath true -selectionMask 12`;
+	if (0 != `size $polyObjects`)
+	{
+		int $convertedAtLeastOne = false;
+
+		for ($poly in $polyObjects)
+		{
+			int $displayStyle = `getAttr ($poly + ".displaySmoothMesh")`;
+			if (0 == $displayStyle)
+				continue;
+
+			int $smoothLevel = `getAttr ($poly + ".smoothLevel")`;
+			float $continuity = `getAttr ($poly + ".continuity")`;
+			int $smoothUVs = `getAttr ($poly + ".smoothUVs")`;
+			int $keepBorder = `getAttr ($poly + ".keepBorder")`;
+			int $keepHardEdge = `getAttr ($poly + ".keepHardEdge")`;
+			int $keepMapBorders = `getAttr ($poly + ".keepMapBorders")`;
+			int $constructionHistory = `constructionHistory -q -tgl`;
+			int $boundaryRule = `getAttr ($poly + ".boundaryRule")`; 
+			int $subdivisionType = `getAttr ($poly + ".smoothDrawType")`; 
+			
+			setAttr ($poly + ".displaySmoothMesh") 0;
+			setAttr ($poly + ".smoothLevel") 2;
+
+			polySmooth  -method 0 
+						-sdt $subdivisionType
+						-bnr $boundaryRule 
+						-dv $smoothLevel 
+						-c $continuity 
+						-kb $keepBorder 
+						-khe $keepHardEdge 
+						-kmb $keepMapBorders
+						-suv $smoothUVs
+						-ch $constructionHistory
+						$poly;
+
+			$convertedAtLeastOne = true;
+		}
+
+		if (!$convertedAtLeastOne)
+		{
+			string $warn = (uiRes("m_performSmoothMeshPreviewToPolygon.kNoConversionsMade"));
+			warning($warn);
+		}
+	}
+	else
+	{
+		string $warn = (uiRes("m_performSmoothMeshPreviewToPolygon.kNoSelectedPolys"));
+		warning($warn);
+	}
+}

@@ -1,0 +1,93 @@
+<!--
+===========================================================================
+Copyright 2015 Autodesk, Inc. All rights reserved.
+
+Use of this software is subject to the terms of the Autodesk license
+agreement provided at the time of installation or download, or which
+otherwise accompanies this software in either electronic or hard copy form.
+===========================================================================
+
+Top level fragment graph for color correct shader plugin
+-->
+
+<fragment_graph name="colorCorrect" ref="colorCorrect" class="FragmentGraph" version="1.0">
+	<fragments>
+        <fragment_ref name="mayaTextureOutput" ref="mayaTextureOutput" />
+		<fragment_ref name="combineMayaTextureOutput" ref="combineMayaTextureOutput" />
+		<fragment_ref name="colorCorrectBase" ref="colorCorrectBase" />
+		<fragment_ref name="floatCorrect" ref="floatCorrect" />
+		<fragment_ref name="premult" ref="premultiply" />
+		<fragment_ref name="unpremult" ref="unpremultiply" />
+		<fragment_ref name="colorGammaCorrect" ref="mayaGammaCorrect" />
+		<fragment_ref name="colorClamp" ref="mayaClampColor" />
+		<fragment_ref name="clampColorCondition" ref="colorConditionBase" />
+		<fragment_ref name="unpremultColorCondition" ref="colorConditionBase" />
+		<fragment_ref name="premultColorCondition" ref="colorConditionBase" />
+	 	<fragment_ref name="inColorPassThrough" ref="mayafloat3PassThrough" />
+		<fragment_ref name="inAlphaPassThrough" ref="floatPassThrough" />
+	</fragments>
+	<connections>
+        <connect from="combineMayaTextureOutput.output" to="mayaTextureOutput.mayaTextureOutput" name="mayaTextureOutput" />
+        <connect from="premultColorCondition.outColor" to="combineMayaTextureOutput.base" name="combineBase" />
+        <connect from="floatCorrect.outFloat" to="combineMayaTextureOutput.alpha" name="combineAlpha" />
+		<connect from="clampColorCondition.outColor" to="premultColorCondition.colorB" name="premultCondColorB" />
+		<connect from="premult.outColor" to="premultColorCondition.colorA" name="premultCondColorA" />
+        <connect from="floatCorrect.outFloat" to="premult.inAlpha" name="premultAlpha" />
+		<connect from="clampColorCondition.outColor" to="premult.inColor" name="premultColor" />
+		<connect from="colorGammaCorrect.outValue" to="clampColorCondition.colorB" name="clampColorCondColorB" />
+		<connect from="colorClamp.output" to="clampColorCondition.colorA" name="clampColorCondColorA" />
+		<connect from="colorGammaCorrect.outValue" to="colorClamp.input" name="colorClampInput" />
+        <connect from="colorCorrectBase.outColor" to="colorGammaCorrect.value" name="colorGammaCorrectValue" />
+        <connect from="unpremultColorCondition.outColor" to="colorCorrectBase.inColor" name="colorCorrectColor" />
+		<connect from="unpremult.outColor" to="unpremultColorCondition.colorA" name="unpremultCondColorA" />
+		<connect from="inColorPassThrough.mayafloat3PassThrough" to="unpremultColorCondition.colorB" name="unpremultCondColorB" />
+        <connect from="inColorPassThrough.mayafloat3PassThrough" to="unpremult.inColor" name="unpremultColor" />
+        <connect from="inAlphaPassThrough.floatPassThrough" to="floatCorrect.inFloat" name="floatCorrectFloat" />
+        <connect from="inAlphaPassThrough.floatPassThrough" to="unpremult.inAlpha" name="unpremultAlpha" />
+</connections>
+	<properties>
+		<float3 name="inColor" ref="inColorPassThrough.input" />
+		<float name="inAlpha" ref="inAlphaPassThrough.input" />
+		<bool name="unpremultiplyInput" ref="unpremultColorCondition.condition" />
+		<bool name="premultiplyResult" ref="premultColorCondition.condition" />
+		<float name="hueShift" ref="colorCorrectBase.hueShift" />
+		<float name="satGain" ref="colorCorrectBase.satGain" />
+		<float name="valGain" ref="colorCorrectBase.valGain" />
+		<float3 name="colGain" ref="colorCorrectBase.colGain" />
+		<float3 name="colOffset" ref="colorCorrectBase.colOffset" />
+		<float3 name="colGamma" ref="colorGammaCorrect.gamma" />
+		<bool name="colClamp" ref="clampColorCondition.condition" />
+		<float3 name="colClampMin" ref="colorClamp.min" />
+		<float3 name="colClampMax" ref="colorClamp.max" />
+		<float name="alphaGain" ref="floatCorrect.gain" />
+		<float name="alphaOffset" ref="floatCorrect.offset" />
+		<float name="alphaGamma" ref="floatCorrect.gammaScale" />
+		<bool name="alphaClamp" ref="floatCorrect.clampOutput" />
+		<float name="alphaClampMin" ref="floatCorrect.clampMin" />
+		<float name="alphaClampMax" ref="floatCorrect.clampMax" />
+</properties>
+	<values>
+		<float3 name="inColor" value="0.3,0.3,0.3" />
+		<float name="inAlpha" value="0.0" />
+		<bool name="unpremultiplyInput" value="false" />
+		<bool name="premultiplyResult" value="false" />
+		<float name="hueShift" value="0.0" />
+		<float name="satGain" value="1.0" />
+		<float name="valGain" value="1.0" />
+		<float3 name="colGain" value="1.0,1.0,1.0" />
+		<float3 name="colOffset" value="0.0,0.0,0.0" />
+		<float3 name="colGamma" value="1.0,1.0,1.0" />
+		<bool name="colClamp" value="false" />
+		<float3 name="colClampMin" value="0.0,0.0,0.0" />
+		<float3 name="colClampMax" value="1.0,1.0,1.0" />
+		<float name="alphaGain" value="1.0" />
+		<float name="alphaOffset" value="0.0" />
+		<float name="alphaGamma" value="1.0" />
+		<bool name="alphaClamp" value="false" />
+		<float name="alphaClampMin" value="0.0" />
+		<float name="alphaClampMax" value="1.0" />
+	</values>
+	<outputs>
+        <struct name="mayaTextureOutput" ref="mayaTextureOutput.mayaTextureOutput" />
+	</outputs>
+</fragment_graph>

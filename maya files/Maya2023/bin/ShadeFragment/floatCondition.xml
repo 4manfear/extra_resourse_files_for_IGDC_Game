@@ -1,0 +1,67 @@
+<!--
+===========================================================================
+Copyright 2015 Autodesk, Inc. All rights reserved.
+
+Use of this software is subject to the terms of the Autodesk license
+agreement provided at the time of installation or download, or which
+otherwise accompanies this software in either electronic or hard copy form.
+===========================================================================
+-->
+
+<fragment uiName="floatCondition" name="floatCondition" type="plumbing" class="ShadeFragment" version="1.0">
+	<description><![CDATA[Float condition shade fragment]]></description>
+	<properties>
+		<float name="floatA" />
+		<float name="floatB" />
+		<bool name="condition" />
+	</properties>
+	<values>
+		<float name="floatA" value="1.0" />
+		<float name="floatB" value="0.0" />
+		<bool name="condition" value="true" />
+	</values>
+	<outputs>
+		<float  name="outFloat" />
+	</outputs>
+	<implementation>
+	<implementation render="OGSRenderer" language="Cg" lang_version="2.1">
+		<function_name val="floatCondition" />
+		<source>
+		<![CDATA[
+float floatCondition(float floatA, float floatB, bool condition)
+{
+	float retFloat = condition ? floatA : floatB;
+
+	return retFloat;
+}
+		]]>
+		</source>
+	</implementation>
+	<implementation render="OGSRenderer" language="HLSL" lang_version="11.0">
+		<function_name val="floatCondition" />
+		<source>
+		<![CDATA[
+float floatCondition(float floatA, float floatB, bool condition)
+{
+	float retFloat = condition ? floatA : floatB;
+
+	return retFloat;
+}
+		]]>
+		</source>
+	</implementation>
+	<implementation render="OGSRenderer" language="GLSL" lang_version="3.0">
+		<function_name val="floatCondition" />
+		<source>
+		<![CDATA[
+float floatCondition(float floatA, float floatB, bool condition)
+{
+	float retFloat = condition ? floatA : floatB;
+
+	return retFloat;
+}
+		]]>
+		</source>
+	</implementation>
+	</implementation>
+</fragment>

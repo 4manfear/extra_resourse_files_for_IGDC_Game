@@ -1,0 +1,509 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global string $gTeEditorAnimSourceRootNS = ":(root)";
+
+//  Description:
+//		Resizes the namespace grid when the window is resized
+//
+//  Return Value:
+//      None.
+//
+global proc teAnimSourceNamespaceResizeGrid(string $scrollLayout, string $gridLayout)
+{
+    int $width = `scrollLayout -q -width $scrollLayout`;
+    gridLayout -e -cellWidthHeight ($width/2 - 3) 20 $gridLayout;
+}
+
+//  Description:
+//		Extracts the namespace string from an object name string
+//
+//  Return Value:
+//      The string containing the namespace.
+//
+global proc string teGetNamespaceFromName(string $name)
+{
+	global string $gTeEditorAnimSourceRootNS;
+	string $tok[];
+	int $tokens = tokenize($name, ":", $tok);
+	string $ns = "";
+	if ($tokens < 2)
+	{
+		$ns = $gTeEditorAnimSourceRootNS;
+	}
+	else
+	{      
+		for ($t = 0; $t < $tokens - 1; $t++)
+		{
+			$ns = $ns + $tok[$t];
+			if ($t != $tokens - 2)
+				$ns = $ns + ":";
+		}            
+	}
+	return $ns;
+}
+
+
+//  Description:
+//		Extracts the base name string from an object name string
+//
+//  Return Value:
+//      The string containing the namespace.
+//
+global proc string teGetBaseNameFromName(string $name)
+{
+	string $tok[];
+	int $tokens = tokenize($name, ":", $tok);
+	string $ns = "";
+	if ($tokens < 2) return $name;
+	return $tok[ $tokens-1 ];
+}
+
+
+//  Description:
+//		Find an object with a given name in the current scene and return
+//		its namespace
+//
+//  Return Value:
+//      Namespace name or ""
+//
+proc string findNamespaceOfObjectInScene(string $obj)
+{
+	string $results[] = `ls -r true $obj`;
+	if (size($results) == 0) return "";
+	return teGetNamespaceFromName($results[0]);
+}
+
+
+
+//  Description:
+//  Make sure tempIncompingDefault do not contains any dup
+//  Start by keeping exact match from incoming, otherwise keep the first occurence
+//  Return Value:
+//      None.
+//
+proc teMakeDefaultNamespaceUnique(string $tempIncoming[], string $tempIncomingDefaults[])
+{
+	for ($i = 0; $i < size($tempIncomingDefaults); ++$i) 
+	{
+		if($tempIncomingDefaults[$i] ==  $tempIncoming[$i]) //perfect name Match, remove all others that match this one
+		{
+			for($j = 0; $j < size($tempIncomingDefaults); ++$j)
+			{
+				if($j != $i && $tempIncomingDefaults[$j] == $tempIncomingDefaults[$i])
+				{
+					$tempIncomingDefaults[$j] = "";
+				}
+			}
+		}
+	}
+	
+	for ($i = 0; $i < size($tempIncomingDefaults); ++$i) 
+	{
+		int $index = stringArrayFind($tempIncomingDefaults[$i], 0, $tempIncomingDefaults);
+		if($index != $i) //find a previous default suggestion, make it unique
+		{
+			$tempIncomingDefaults[$i] = "";
+		}
+
+	}
+}
+
+//  Description:
+//		Scans the input animation source and the scene for namespaces and fills up
+//		the $incoming[] and $scene[] arrays with the results.
+//
+//  Return Value:
+//      None.
+//
+global proc teAnimSourceNamespaceGetNamespaces(string $sources[], string $incoming[], string $scene[], string $incomingDefaults[])
+{
+	global string $gTeEditorAnimSourceRootNS = ":(root)";
+	string $tempIncoming[]; //all namespaces available in various source 
+	string $tempScene[]; //all namespaces available  in the scene
+	string $tempIncomingDefaults[]; //default namespace that match in the current scene (relates to $tempIncoming)
+	
+	for ($source in $sources)
+	{
+		string $targets[] = `timeEditorAnimSource -q -targets $source`;
+		
+		for ($trg = 0; $trg < size($targets); $trg++)
+		{
+			string $ns = teGetNamespaceFromName($targets[$trg]);
+			string $baseName = teGetBaseNameFromName($targets[$trg]);
+		
+			if ($ns != "" && !stringArrayContains($ns, $tempIncoming))
+			{
+					int $index = size($tempIncoming);
+					$tempIncoming[$index] = $ns;
+					$tempIncomingDefaults[$index] = findNamespaceOfObjectInScene($baseName);
+			} 
+		}
+	}
+
+	
+	teMakeDefaultNamespaceUnique($tempIncoming, $tempIncomingDefaults);
+
+    // Remember the previous namespace
+    string $prevNamespace = `namespaceInfo -currentNamespace`;
+    // Change to the default namespace
+    namespace -setNamespace ":";
+    // List all namespaces
+    string $sceneNs[] = `namespaceInfo -listOnlyNamespaces -r`;
+    $tempScene[size($tempScene)] = $gTeEditorAnimSourceRootNS;
+    for ($i = 0; $i < size($sceneNs); $i++)
+    {
+        if ($sceneNs[$i] == "UI" || $sceneNs[$i] == "shared")
+            continue;
+        $tempScene[size($tempScene)] = $sceneNs[$i];
+    }
+    // Switch back to the previous namespace
+    namespace -setNamespace $prevNamespace;
+	
+	// Make sure both lists are sorted so parent namespaces come first before their children
+	$incoming = sort($tempIncoming);
+	$scene = sort($tempScene);
+	
+	// Create defaults array for now sorted list of incoming namespaces
+	for ($i = 0; $i < size($incoming); $i++)
+	{
+		int $index = stringArrayFind($incoming[$i], 0, $tempIncoming);		
+		$incomingDefaults[$i] = $index == -1 ? "" : $tempIncomingDefaults[$i];	
+	}
+}
+
+global proc teAnimSourcePerformChangeNamespace(string $animSource, string $oldNS[], string $newNS[])
+{
+	global string $gTeEditorAnimSourceRootNS;
+	
+    if (size($oldNS) != size($newNS))
+        return;
+	
+	string $animAttr = ($animSource + ".animation");
+	
+	// Loop through all the anim source targets
+	int $indices[] = `getAttr -multiIndices $animAttr`;
+	for ($i = 0; $i < size($indices); $i++)
+	{
+		int $curIndex = $indices[$i];
+		string $attr = ($animSource + ".animation[" + $curIndex + "].target");
+		string $val = `getAttr $attr`;
+		
+		// Check if this target's namespace needs to be changed
+		for ($j = 0; $j < size($oldNS); $j++)
+		{
+			// skip namespaces that we don't remapping for
+			if ($newNS[$j] == "") continue;
+		
+			string $from = $oldNS[$j] != $gTeEditorAnimSourceRootNS ? ($oldNS[$j] + ":") : "";
+			if ($from != "" && !startsWith($val, $from))
+				continue;
+
+			// Remove the old namespace and replace it with the new one
+			string $newName = stringRemovePrefix($val, $from);
+			if ($newNS[$j] != $gTeEditorAnimSourceRootNS)
+				$newName = stringAddPrefix($newName, ($newNS[$j] + ":"));
+			setAttr -type "string" $attr $newName;
+		}
+	}	
+}
+
+//	Description:
+//		Apply the requested namespace mapping, and re-run the createClipsCmd
+//
+//	Return Value:
+//      None.
+//
+global proc doChangeNamespaces( string $animSources[]
+							  , string $oldNS[]
+							  , string $newNS[]
+							  , string $createClipsCmd
+							  )
+{
+    if (size($oldNS) != size($newNS))
+        return;
+	
+	// For each anim source
+	for ($curSource = 0; $curSource < size($animSources); $curSource++)
+	{
+		string $animSource = $animSources[$curSource];
+		teAnimSourcePerformChangeNamespace($animSource, $oldNS, $newNS);
+	}
+	
+	string $errString = (uiRes("m_teAnimSourceNamespace.kCTENoClipsCreated"));
+	
+	int $result[] = evalEcho($createClipsCmd);
+	if (size($result) == 0 || $result[0] <= 0)
+	{
+		warning $errString; 
+	}
+}
+
+//  Description:
+//		Changes the target namespaces within the Anim Source with the 
+//		new selected namespaces in the UI
+//
+//  Return Value:
+//      None.
+//
+global proc teAnimSourceChangeNamespace()
+{
+    global string $gTeEditorAnimSourceOldNsControls[];
+    global string $gTeEditorAnimSourceNewNsControls[];
+    global string $gTeEditorAnimSources[];
+    global string $gTeEditorAnimSourcesCreateClipCmd;
+	global string $gTeEditorAnimSourceRootNS;
+	
+    string $oldNS[];
+    string $newNS[];
+	int $j = 0;
+    
+    // Fill up our arrays with the correct data
+    for ($i = 0; $i < size($gTeEditorAnimSourceOldNsControls); $i++)
+    {		
+		$oldNS[$i] = `textField -q -text $gTeEditorAnimSourceOldNsControls[$i]`;
+        $newNS[$i] = (`optionMenu -q -select $gTeEditorAnimSourceNewNsControls[$i]` == 1) ? 
+			"" : 		// first option means "do not remap", so skip it
+			`optionMenu -q -value $gTeEditorAnimSourceNewNsControls[$i]`;
+    }
+	doChangeNamespaces( $gTeEditorAnimSources, $oldNS, $newNS, $gTeEditorAnimSourcesCreateClipCmd );
+    
+}
+
+//  Description:
+//		Adjust the other option menus based on the new selected namespace
+//
+//  Return Value:
+//      None.
+//
+global proc teAnimSourceRemapSelectNamespace(int $index)
+{
+    global string $gTeEditorAnimSourceOldNsControls[];
+    global string $gTeEditorAnimSourceNewNsControls[];
+	global string $gTeEditorAnimSourceRootNS;
+	global int $gTeEditorAnimSourceMuteSelectCallback;
+	
+	// Ignore this callback if we are already auto-changing the namespaces
+	if ($gTeEditorAnimSourceMuteSelectCallback)
+		return;
+	
+	$gTeEditorAnimSourceMuteSelectCallback = true;
+	
+	string $animSourceNS = `textField -q -text $gTeEditorAnimSourceOldNsControls[$index]`;
+	string $selectedNS = `optionMenu -q -value $gTeEditorAnimSourceNewNsControls[$index]`;
+	
+	if ($animSourceNS == $gTeEditorAnimSourceRootNS)
+		$animSourceNS = "";
+
+	if ($selectedNS == $gTeEditorAnimSourceRootNS)
+		$selectedNS = "";
+	
+	// Find the control index of the changed option menu
+	for ($i = 0; $i < size($gTeEditorAnimSourceOldNsControls); $i++)
+	{
+		// Skip the item that has just been changed
+		if ($i == $index)
+			continue;
+		
+		string $curAnimSourceNS = `textField -q -text $gTeEditorAnimSourceOldNsControls[$i]`;
+
+		// Is this item a child of the selected NS?
+		if ($animSourceNS == "" || startsWith($curAnimSourceNS, $animSourceNS))
+		{
+			// Get the remaining namespace string in relation to its parent
+			string $remainingNS = stringRemovePrefix($curAnimSourceNS, $animSourceNS);
+			
+			string $items[] = `optionMenu -q -itemListShort $gTeEditorAnimSourceNewNsControls[$i]`;
+			int $numItems = size($items);
+			
+			// Check the option menu's items for a proper match
+			for ($j = 0; $j < $numItems; $j++)
+			{
+				string $curItemNS = `menuItem -q -label $items[$j]`;
+				if ($curItemNS == $gTeEditorAnimSourceRootNS)
+					$curItemNS = "";
+
+				if (startsWith($curItemNS, $selectedNS))
+				{					
+					string $curRemainingNS = stringRemovePrefix($curItemNS, $selectedNS);
+					if ($curRemainingNS == $remainingNS)
+					{
+						optionMenu -e -select ($j + 1) $gTeEditorAnimSourceNewNsControls[$i];
+						break;
+					}
+				}
+			}
+		}
+	}
+	
+	$gTeEditorAnimSourceMuteSelectCallback = false;
+}
+
+//	Description:
+//		Valide the list of animation sources
+//
+//	Return Value:\
+//		List of valid sources, if valid, else an empty array
+//
+proc string[] validateSources( string $animSources )
+{
+	string $sourceList[];
+	tokenize($animSources, ";", $sourceList);
+	if (size($sourceList) == 0)
+	{
+		error (uiRes("m_teAnimSourceNamespace.kCTENoAnimSource"));
+	}
+	
+    // Check if all inputs are anim sources
+	for ($i = 0; $i < size($sourceList); $i++)
+	{
+		if (`nodeType $sourceList[$i]` != "timeEditorAnimSource")
+		{
+			error (uiRes("m_teAnimSourceNamespace.kCTENotAnimSource"));
+			clear $sourceList;
+		}
+	}
+	return $sourceList;
+}
+
+//  Description:
+//		Perform the requested remapping
+//
+//  Return Value:
+//      None.
+//
+global proc teAnimSourceRemapNamespaces(string $animSources, string $createClipsCmd, string $oldNS[], string $newNS[] )
+{
+	string $sourceList[] = validateSources( $animSources );
+	if (size($sourceList) == 0){
+		return;
+	}
+	doChangeNamespaces( $sourceList, $oldNS, $newNS, $createClipsCmd );
+} 
+
+//  Description:
+//		Show the Anim Source Rename Namespaces window
+//
+//  Return Value:
+//      None.
+//
+global proc teAnimSourceRemapNamespacesWindow(string $animSources, string $createClipsCmd, int $deleteSourcesOnCancel )
+{
+    string $windowName = "teAnimSourceRemapNamespacesWindow";
+
+    global string $gTeEditorAnimSourceOldNsControls[];
+    global string $gTeEditorAnimSourceNewNsControls[];    
+    global string $gTeEditorAnimSources[];
+	global string $gTeEditorAnimSourcesCreateClipCmd;
+	global string $gTeEditorAnimSourceRootNS;
+	
+    // Don't have more than one window
+    if (`window -q -exists $windowName`)
+    {
+        deleteUI -window $windowName;
+    }
+	string $sourceList[] = validateSources( $animSources );
+	if (size($sourceList) == 0)
+	{
+        return;    
+	}
+	
+    clear($gTeEditorAnimSourceOldNsControls);
+    clear($gTeEditorAnimSourceNewNsControls);
+    $gTeEditorAnimSources = $sourceList;
+	$gTeEditorAnimSourcesCreateClipCmd = $createClipsCmd;
+    
+    // Get the list of incoming namespaces and the scene namespaces
+    string $incomingNS[];
+    string $sceneNS[];
+	string $defaultSceneNS[];
+    teAnimSourceNamespaceGetNamespaces($sourceList, $incomingNS, $sceneNS, $defaultSceneNS);
+    if (size($incomingNS) == 0 || size($sceneNS) == 0)
+    {
+		error (uiRes("m_teAnimSourceNamespace.kCTENoNamespaces"));
+		return;
+    }   
+    
+    window -width 500 -height 300 -title (uiRes("m_teAnimSourceNamespace.kCTEAnimSourceRemapNamespaces")) $windowName;
+    string $form = `formLayout -numberOfDivisions 100`;
+    
+    string $scroll = `scrollLayout -childResizable true -backgroundColor 0.2 0.2 0.2`;
+        string $grid = `gridLayout -nc 2`;
+            text -label (uiRes("m_teAnimSourceNamespace.kCTEAnimSourceNamespace"));
+            text -label (uiRes("m_teAnimSourceNamespace.kCTESceneNamespace"));
+            for ($nsIndex = 0; $nsIndex < size($incomingNS); $nsIndex++)
+            {
+                $gTeEditorAnimSourceOldNsControls[size($gTeEditorAnimSourceOldNsControls)] = 
+                    `textField -ed false -text $incomingNS[$nsIndex]`;
+                    
+                string $menu = `optionMenu -label ""`;
+				optionMenu -e -changeCommand ("teAnimSourceRemapSelectNamespace(" + $nsIndex + ")") $menu;
+                
+                $gTeEditorAnimSourceNewNsControls[size($gTeEditorAnimSourceNewNsControls)] =
+                    $menu;
+				
+				// default option for not remapping
+				menuItem -parent $menu -label (uiRes("m_teAnimSourceNamespace.kCTEAnimSourceRemapNamespacesDoNotRename"));
+                    
+                int $selectIndex = -1;
+                for ($sceneIndex  = 0; $sceneIndex < size($sceneNS); $sceneIndex++)
+                {
+					if ($defaultSceneNS[$nsIndex] == $sceneNS[$sceneIndex]) $selectIndex = $sceneIndex;
+                    menuItem -parent $menu -label $sceneNS[$sceneIndex];
+                }
+				
+				if ($selectIndex != -1)
+					optionMenu -e -select ($selectIndex+2) $menu;
+            }
+        setParent ..;
+    setParent ..;
+	int $buttonHeight = 26;	
+    string $btnLayout = `formLayout`;
+        button -label (uiRes("m_teAnimSourceNamespace.kCTEAnimSourceNamespaceApplyAndClose")) -recomputeSize 0 -height $buttonHeight -command ("teAnimSourceChangeNamespace;deleteUI " + $windowName) btnOk;
+		if( $deleteSourcesOnCancel )
+		{
+			button -label (uiRes("m_teAnimSourceNamespace.kCTEAnimSourceNamespaceCancelDelete")) -recomputeSize 0 -height $buttonHeight -command ("delete $gTeEditorAnimSources; deleteUI " + $windowName) UIbtnCancel;    
+		}
+		else
+		{
+			button -label (uiRes("m_teAnimSourceNamespace.kCTEAnimSourceNamespaceCancel")) -recomputeSize 0 -height $buttonHeight -command ("deleteUI " + $windowName) UIbtnCancel;    
+		}
+		
+		//	Apply attachments to the buttons so that they appear centred 
+		//	in the window.
+		//
+		int $space = 4; // Space between buttons.
+		formLayout -edit
+			-numberOfDivisions 100
+
+			-attachForm     btnOk         "top"    	0
+			-attachForm     btnOk         "left"	0
+			-attachForm     btnOk         "bottom" 	0
+			-attachPosition btnOk         "right"  ($space/2) 50
+
+			-attachForm     UIbtnCancel         "top"    0
+			-attachPosition UIbtnCancel         "left"   ($space/2) 50
+			-attachForm     UIbtnCancel         "bottom" 0
+			-attachForm     UIbtnCancel         "right"  0
+			$btnLayout;
+    setParent ..;
+	
+    formLayout -edit
+        -attachForm        $btnLayout "right" 5
+        -attachForm        $btnLayout "left" 5 
+        -attachForm        $btnLayout "bottom" 5         
+
+        -attachForm     $scroll     "top"    5
+        -attachForm     $scroll     "left"   5
+        -attachControl  $scroll     "bottom" 5 $btnLayout
+        -attachForm     $scroll     "right"  5
+    $form;
+    string $resizeCommand = ("teAnimSourceNamespaceResizeGrid(\""+$scroll+"\",\"" + $grid + "\")");
+    scrollLayout -e -resizeCommand $resizeCommand $scroll;
+    eval($resizeCommand);
+    showWindow $windowName;
+} 

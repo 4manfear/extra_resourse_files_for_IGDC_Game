@@ -1,0 +1,161 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:	June 3, 1997
+//
+//  Procedure Name:
+//	AEpolyBevel3Template
+//
+//  Description Name;
+//	Creates the attribute editor controls for the polyBevel3 Node
+//
+//  Input Value:
+//	nodeName 
+//
+//  Output Value:
+//	None
+// 
+
+
+global proc checkPolyBevelAutoFit ( string $nodeName )
+{
+		if ( `objExists $nodeName` == 0 )
+			return;
+        string $nodeAttr = $nodeName + ".autoFit";
+        int $value = `getAttr $nodeAttr`;
+
+        if ( $value ) {
+                editorTemplate -dimControl $nodeName "roundness" true;
+        } else {
+                editorTemplate -dimControl $nodeName "roundness" false;
+        }
+}
+
+global proc checkPolyBevelChamfer ( string $nodeName )
+{
+		if ( `objExists $nodeName` == 0 )
+			return;
+        string $nodeAttr = $nodeName + ".chamfer";
+        int $value = `getAttr $nodeAttr`;
+
+        if ( $value ) {
+                editorTemplate -dimControl $nodeName "depth" false;
+        } else {
+                editorTemplate -dimControl $nodeName "depth" true;
+        }
+}
+
+global proc checkPolyBevelMitering ( string $nodeName )
+{
+		if ( `objExists $nodeName` == 0 )
+			return;
+        string $nodeAttr = $nodeName + ".mitering";
+        int $value = `getAttr $nodeAttr`;
+		if ( $value == 4 ) {
+				editorTemplate -dimControl $nodeName "miterAlong" true;
+		} else {
+				editorTemplate -dimControl $nodeName "miterAlong" false;
+		}
+}
+
+global proc checkPolyBevelOffsetAsFraction ( string $nodeName )
+{
+		if ( `objExists $nodeName` == 0 )
+			return;
+        string $nodeAttr = $nodeName + ".offsetAsFraction";
+        int $value = `getAttr $nodeAttr`;
+
+        if ( $value ) {
+                editorTemplate -dimControl $nodeName "offset" true;
+                editorTemplate -dimControl $nodeName "fraction" false;
+        } else {
+                editorTemplate -dimControl $nodeName "fraction" true;
+                editorTemplate -dimControl $nodeName "offset" false;
+        }
+}
+
+global proc checkPolyBevelMergeVertices ( string $nodeName )
+{
+		if ( `objExists $nodeName` == 0 )
+			return;
+        string $nodeAttr = $nodeName + ".mergeVertices";
+        int $value = `getAttr $nodeAttr`;
+
+        if ( $value ) {
+                editorTemplate -dimControl $nodeName "mergeVertexTolerance" false;
+        } else {
+                editorTemplate -dimControl $nodeName "mergeVertexTolerance" true;
+        }
+}
+
+global proc AEpolyBevel3Template ( string $nodeName )
+{
+	editorTemplate -beginScrollLayout;
+
+		string $compAttr = $nodeName + ".maya2016SP3";
+		int $comp = `getAttr $compAttr`;
+
+		// basic bevel controls
+		editorTemplate -beginLayout (uiRes("m_AEpolyBevel3Template.kPolyBevelHistory")) -collapse 0;
+
+			editorTemplate -addControl "offsetAsFraction" "checkPolyBevelOffsetAsFraction";
+
+			// include base class/node attribute (world space) here
+			editorTemplate -addControl "worldSpace";
+
+			editorTemplate -addControl "offset";
+			editorTemplate -addControl "fraction";
+			editorTemplate -addControl "segments";
+
+			if ( $comp )
+			{
+				editorTemplate -addControl "depth";
+				editorTemplate -addControl "mitering" "checkPolyBevelMitering";
+				editorTemplate -addControl "miterAlong";
+				editorTemplate -addControl "chamfer" "checkPolyBevelChamfer";
+				editorTemplate -suppress "autoFit";
+				editorTemplate -suppress "roundness";
+			}
+			else
+			{
+				editorTemplate -suppress "depth";
+				editorTemplate -suppress "mitering";
+				editorTemplate -suppress "miterAlong";
+				editorTemplate -suppress "chamfer";
+				editorTemplate -addControl "autoFit" "checkPolyBevelAutoFit";
+				editorTemplate -addControl "roundness";
+			}
+			editorTemplate -addControl "smoothingAngle";
+			editorTemplate -addControl "forceParallel";
+			editorTemplate -suppress "maya2016SP3";
+
+		editorTemplate -endLayout;
+
+		// merge vertex tab
+		editorTemplate -beginLayout (uiRes("m_AEpolyBevel3Template.kCleanup")) -collapse 1;
+
+			editorTemplate -label (uiRes("m_AEpolyBevel3Template.kSubdivideNgons")) -addControl "subdivideNgons";
+
+			editorTemplate -suppress "miteringAngle";
+
+			editorTemplate -addControl "angleTolerance";
+	
+			editorTemplate -addControl "mergeVertices" "checkPolyBevelMergeVertices";
+			editorTemplate -label (uiRes("m_AEpolyBevel3Template.kMergeTolerance")) -addControl "mergeVertexTolerance";
+
+		editorTemplate -endLayout;
+
+		editorTemplate -suppress "maya2015";
+
+		// include/call base class/node attributes		
+		AEpolyModifierInclude $nodeName;
+
+	editorTemplate -addExtraControls;
+	editorTemplate -endScrollLayout;
+}

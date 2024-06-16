@@ -1,0 +1,100 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc selectUVOverlappingComponents(int $overlapping, int $perObject)
+//
+//  Description:
+//		Select all UV overlapping/non-overlapping components based on current selection mask in UV Editor.
+//		
+//  Input Arguments:
+//      overlapping - overlapping or non-overlapping
+//		perObject   - only check overlapping within one mesh.
+//
+//  Return Value:
+//      None
+//
+{
+    string $hilites[] = `ls -hl -dag -s -ni`;
+	string $objs[];
+	for($hilite in $hilites)
+	{
+        if(`nodeType $hilite` == "mesh")
+            $objs[size($objs)] = $hilite;
+	}
+    if(size($objs) == 0)
+        return;
+    string $mask = getComponentMask();
+    int $maskIndex = 0; 
+    string $maskAttr = ""; 
+    if($mask == "polymeshUV")
+    {
+        $maskIndex = 35; 
+        $maskAttr = ".map[*]";
+    }
+    else if($mask == "vertex")
+    {
+        $maskIndex = 31; 
+        $maskAttr = ".vtx[*]";
+    }
+    else if($mask == "edge")
+    {
+        $maskIndex = 32; 
+        $maskAttr = ".e[*]";
+    }
+    else if($mask == "facet" || $mask == "meshUVShell")
+    {
+        $maskIndex = 34; 
+        $maskAttr = ".f[*]";
+    }
+    else
+		return;
+	
+	string $toSelect[];
+	if($perObject)
+	{
+	    select -cl;
+		for($obj in $objs)
+		{
+			string $comps[] = eval("filterExpand -ex false -sm " + $maskIndex + "\"" + $obj + $maskAttr + "\"");
+			string $result[];
+			if($overlapping || $mask == "meshUVShell")
+				$result = `polyUVOverlap -oc $comps`;
+			else
+				$result = `polyUVOverlap -noc $comps`;
+			$toSelect = stringArrayCatenate($toSelect, $result);
+		}
+	}
+	else
+	{
+		$cmd = "filterExpand -ex false -sm " + $maskIndex;
+		for($obj in $objs)
+			$cmd += " \"" + $obj + $maskAttr + "\" ";
+		string $comps[] = eval($cmd);
+		if($overlapping || $mask == "meshUVShell")
+				$toSelect = `polyUVOverlap -oc $comps`;
+			else
+				$toSelect = `polyUVOverlap -noc $comps`;
+
+	}
+	if($mask == "meshUVShell") // Especially handle uv shell
+	{
+		$uvShell = `polyListComponentConversion -tuv -uvs $toSelect`;
+		$uvShellFaces = `polyListComponentConversion -tf $uvShell`;
+		if($overlapping)
+			select -r $uvShellFaces;
+		else
+		{
+			$cmd = "select -r ";
+			for($obj in $objs)
+				$cmd += ("\"" + $obj + ".f[*]\" ");
+			eval($cmd);
+			select -tgl $uvShellFaces;
+		}
+	}
+	else
+		select -r $toSelect;
+}

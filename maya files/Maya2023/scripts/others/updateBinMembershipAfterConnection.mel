@@ -1,0 +1,67 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc updateBinMembershipAfterConnectionImp(string $node)
+{
+    // List the downstream shading nodes.
+    //
+    string $downstreamShaderNodes[] = `hyperShade -listDownstreamShaderNodes $node`;
+    binMembership -inheritBinsFromNodes $node $downstreamShaderNodes;
+    binMembership -notifyChanged;
+}
+
+// Description:  This procedure is called after we connect a 
+//  node to a shading network.  We want the source node
+//  to inherit the bins from all its downstream shading nodes.
+// 
+global proc updateBinMembershipAfterConnection(string $node)
+{
+    if (`about -batch`)
+    {
+        // We do not copy the bin list during batch mode.
+        // Currently the bin assignment should only be used through
+        // the interactive UI.
+        //
+        return;
+    }
+
+    // Make sure the node exists.
+    //
+    string $res[] = `ls $node`;
+    if (size($res)!=1 || $res[0] != $node) 
+    {
+        // This node does not exist any more.
+        //
+        return;
+    }
+
+    // If the hyper shade panel does not exist, don't update anything.
+    //
+    string $hyperShadePanel; 
+    if (catch($hyperShadePanel = hyperShadePanelName()))
+    {
+        // Cannot recover hyperShadePanel name.  Do nothing.
+        //
+        return;
+    }
+    
+    if (`layout -q -exists $hyperShadePanel` == 0)
+    {
+        // Hyper shade panel UI has not been created yet.
+        //
+        return; 
+    }
+
+	// Don't put the binMembership changes on the undo queue since it
+	// messes up undo. Since it gets notified when connections are made,
+	// it does not need to be on the undo queue.
+	//
+	int $undoState = `undoInfo -q -stateWithoutFlush`;
+	undoInfo -stateWithoutFlush 0;
+	catch(updateBinMembershipAfterConnectionImp($node));
+	undoInfo -stateWithoutFlush $undoState;
+}

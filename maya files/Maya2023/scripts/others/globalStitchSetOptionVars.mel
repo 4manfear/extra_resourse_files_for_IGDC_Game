@@ -1,0 +1,39 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  October 1998
+//
+//  Description:
+//      Global function to ensure the options for bevel are set.
+//
+//  Input Arguments:
+//      Force the factory setting or not.
+//
+//  Return Value:
+//      None.
+//
+
+global proc globalStitchSetOptionVars( 
+	int $forceFactorySettings )
+//
+//
+//
+{
+    optionVar -init $forceFactorySettings -category "Modeling.Surfaces.Stitch.Global Stitch"
+        -iv globalStitchKeepOriginal 0
+        -iv globalStitchCorners 1
+        -iv globalStitchEdges 1
+        -iv globalStitchSmoothness 0
+        -iv globalStitchCheckInteriors 0
+        -fv globalStitchMaxSeparation 0.1
+        -fv globalStitchModificationResistance 0.01
+        -iv globalStitchSampling 1
+        ;
+}
+

@@ -1,0 +1,29 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+ // Description:  This procedure is called to find out if specified
+ //  bake set type is suitable for the $item.
+ //
+ global proc int bakeSetTypeSuitableForItem(string $type, string $item)
+ {
+     // List all the valid types.
+     //
+     string $validTypes[] = bakeSetTypesSuitableFor($item);
+
+     string $validType;
+     for ($validType in $validTypes)
+     {
+         if ($type == $validType)
+         {
+             // The specified type is a suitable type of bake set
+             // for the item.
+             //
+             return true;
+         }
+     }
+     return false;
+ }

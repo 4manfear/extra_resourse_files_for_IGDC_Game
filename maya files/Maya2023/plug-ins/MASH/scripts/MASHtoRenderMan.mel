@@ -1,0 +1,92 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc MASHtoRenderMan() {
+    string $allWaiterNodes[] = `ls -et "MASH_Waiter"`;
+
+    for ($waiter in $allWaiterNodes) {
+        //get the arrays
+        float $frame = `currentTime -q`;
+
+        vector $positions[] = `getAttr -time $frame ($waiter+".inArray")`;
+        vector $rotations[] = `getAttr -time $frame ($waiter+".inRotationPP")`;
+        vector $scales[] = `getAttr -time $frame ($waiter+".inScalePP")`;
+        vector $visibility[] = `getAttr -time $frame ($waiter+".inVisibilityPP")`;
+        vector $id[] = `getAttr -time $frame ($waiter+".inIdPP")`;
+
+        for ($n = 0; $n < size($positions); $n++) {
+            //get position
+            vector $currentPos = $positions[$n];
+
+
+            int $currentVisibility = 1; //vis defaults to on
+            int $currentId = 0; //vis defaults to on
+            int $useArchive = 0;
+            string $ribString;
+            string $idRibStringBuffer[];
+
+            //is the rib arrtibte present
+            if (`objExists ($waiter+".ribArchives")`) {
+                //get it
+                $ribString = `getAttr ($waiter+".ribArchives")`;
+                //does it have any length
+                if (size($ribString) > 0) {
+                    //good, lets ese it
+                    $useArchive = 1;
+                    //and tolkenise the string
+                    tokenize $ribString "," $idRibStringBuffer;
+                }
+            } else {
+                warning "No RIB archives found on Waiter.\n";
+            }
+
+            //first get visibility - if available
+            if (size($visibility) > $n) {
+                $currentVisibility = $visibility[$n];
+            }
+
+            //if the object is visible
+            if ($currentVisibility) {
+                RiTransformBegin();
+
+
+                //translate first
+                RiTranslate($currentPos.x, $currentPos.y,$currentPos.z);
+
+                //if we have rotations
+                if (size($rotations) > $n) {
+                    vector $currentRotation = $rotations[$n];
+                    //add rotations backwards (z y x) as RenderMan will read the transform list backwards.
+                    RiRotate($currentRotation.z, 0.0, 0, 1.0);
+                    RiRotate($currentRotation.y, 0.0, 1.0, 0);
+                    RiRotate($currentRotation.x, 1.0, 0, 0);
+                }
+
+                //if we have scale
+                if (size($scales) > $n) {
+                    vector $currentScale = $scales[$n];
+                    RiScale($currentScale.x, $currentScale.y,$currentScale.z);
+                }
+
+
+                //read the archive
+                if ($useArchive) {
+                    //if we have scale
+                    if (size($id) > $n) {
+                        vector $idTemp = $id[$n]; //id stored in vector at this point
+                        int $currentId = $idTemp.x;
+                    }
+                    RiReadArchive($idRibStringBuffer[$currentId]);
+                } else {
+                    RiSphere(1, -1, 1, 360);
+                }
+                RiTransformEnd();
+            }
+        }
+    }
+
+}

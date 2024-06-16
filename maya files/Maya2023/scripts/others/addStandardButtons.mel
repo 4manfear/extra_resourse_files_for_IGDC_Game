@@ -1,0 +1,68 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  November 6, 1996
+//
+//  Description:
+//      This script defines the standard buttons used within all
+//	option box dialogs
+//
+//  Input Arguments:
+//		string commandName	Name of the command
+//		string applyTitle	Title to be used for the applyButton
+//      string formLayout	Name of the form to which the buttons
+//							are attached
+//		string tabLayout	Name of the tabLayout within the form
+//		string $options			Options for these buttons
+//								Option words are specified within the
+//								the string, with each option seperated
+//								by a space (e.g. "needSelection otherOption")
+//
+//			Current options:
+//				noOptions		A nice "do nothing" string to pass
+//				needSelection	Something must be selected in order for
+//								the command to work (i.e. the applyButton
+//								will be dimmed if nothing is selected)
+//
+//  Return Value:
+//      string[] where:
+//			[0]		Name of the applyButton
+//			[1]		Name of the resetButton
+//			[2]		Name of the closeButton
+//			[3]		Name of the saveButton
+//			[4]		Name of the helpButton
+//		Note: add new button names below here
+//
+global proc string[]
+addStandardButtons (string $commandName, string $applyTitle, string $formLayout, string $tabLayout, string $options)
+{
+	int $dimWhenNoSelect = 0;
+	string $buttonList[5];
+
+	setParent $formLayout;
+
+	// Create buttons in standard SGI order
+	//
+	$buttonList[0] = getOptionBoxApplyBtn();
+	button -edit
+		-label $applyTitle
+		$buttonList[0];
+	// See whether or not we need a dimming button
+	//
+	if (match ("needSelection", $options) != "" && $dimWhenNoSelect) {
+		dimWhen -false "SomethingSelected" $buttonList[0];
+	}
+	$buttonList[1] = getOptionBoxResetBtn();
+	$buttonList[2] = getOptionBoxCloseBtn();
+	$buttonList[3] = getOptionBoxSaveBtn();
+	// $buttonList[4] = `button -width 80 -label "Help" helpButton`;
+	// $buttonList[4] = `button -edit -command ("help -showDoc " + $commandName) $buttonList[4]`;
+
+	return ($buttonList);
+}

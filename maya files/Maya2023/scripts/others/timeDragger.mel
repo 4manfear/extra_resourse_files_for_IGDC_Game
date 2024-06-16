@@ -1,0 +1,37 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  November 20, 1996
+//
+//  Description:
+//      dragger script for 3D time slider.
+//
+//  Input Arguments:
+//      None.
+//
+//  Return Value:
+//      None.
+//
+
+global proc timeDragger() 
+{
+	// Create a super context so that the time dragger "tool" is available
+	// in all panels
+	//
+	superCtx TimeDragger;
+
+	modelCurrentTimeCtx modelViewTimeDragger;
+	superCtx -edit -attach modelViewTimeDragger TimeDragger;
+	currentTimeCtx currentTimeContext;
+	superCtx -edit -attach currentTimeContext TimeDragger;
+	keyframeRegionCurrentTimeCtx keyframeRegionCurrentTimeContext;
+	superCtx -edit -attach keyframeRegionCurrentTimeContext TimeDragger;
+	clipEditorCurrentTimeCtx clipEditorCurrentTimeContext;
+	superCtx -edit -attach clipEditorCurrentTimeContext TimeDragger;
+}

@@ -1,0 +1,246 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//  Procedure Name:
+//	  uvTkBuildUnfoldOptions
+//
+//  Description:
+//		Build Unfold options for UV toolkit
+//
+//  Input Arguments:
+//	  $parentForm - Parent form
+//
+//  Return Value:
+//	  Layout to be added into form
+//
+global proc string uvTkBuildUnfoldOptions(string $parentForm)
+{
+	global int $gUVTkTwinBtnWth;
+	global int $gUVTkTwinBtnHgt;
+	
+	uvTkSetUnfoldOptionVars(0);
+	string $layout = `frameLayout -p $parentForm -collapsable true -collapse true -lv false`;
+		string $form = `formLayout`;
+		string $extraOpts = (uiRes("m_uvTkBuildUnfoldOptions.kExtraOpts"));
+		string $extraSettings = (uiRes("m_uvTkBuildUnfoldOptions.kExtraSettings"));
+			string $btnLbls[] = {(uiRes("m_uvTkBuildUnfoldOptions.kOptimize")),                 // 0
+								 (uiRes("m_uvTkBuildUnfoldOptions.kOptimizeTool")),        // 1
+								 (uiRes("m_uvTkBuildUnfoldOptions.kUnfoldUV")),                   // 2
+								 (uiRes("m_uvTkBuildUnfoldOptions.kUnfoldTool")),            // 3
+								 (uiRes("m_uvTkBuildUnfoldOptions.kUnfoldAlong")),          // 4
+								 (uiRes("m_uvTkBuildUnfoldOptions.kStraightenUVs")),      // 5
+								 (uiRes("m_uvTkBuildUnfoldOptions.kStraightenShell"))}; // 6
+			string $btnCmds[] = {"performPolyOptimizeUV 0",
+								 "Unfold3DContext -e -optimize -i1 \\\"UV_Optimize_BrushLarge.png\\\" texUnfoldUVContext;setToolTo texUnfoldUVContext;",
+								 "UnfoldUV",
+								 "Unfold3DContext -e -unfold -i1 \\\"UV_Unfold_BrushLarge.png\\\" texUnfoldUVContext;setToolTo texUnfoldUVContext;",
+								 "uvTkDoUnfoldAlong(0)",
+								 "uvTkDoStraightenUVs",
+								 "uvTkDoStraightenShell"};
+			string $btnAnns[] = {(uiRes("m_uvTkBuildUnfoldOptions.kOptimizeAnnot")) + "\n" + $extraOpts,
+								 (uiRes("m_uvTkBuildUnfoldOptions.kOptimizeToolAnnot")) + "\n" + $extraSettings,
+								 (uiRes("m_uvTkBuildUnfoldOptions.kUnfoldAnnot")) + "\n" + $extraOpts ,
+								 (uiRes("m_uvTkBuildUnfoldOptions.kUnfoldToolAnnot")) + "\n" + $extraSettings,
+								 (uiRes("m_uvTkBuildUnfoldOptions.kUnfoldAlongAnnot")),
+								 getRunTimeCommandAnnotation("UVStraighten"),
+								 (uiRes("m_uvTkBuildUnfoldOptions.kStraightenShellAnnot"))};
+			string $btnShfs[] = {"performPolyOptimizeUV 1",
+								 "Unfold3DContext -e -optimize -i1 \"UV_Optimize_BrushLarge.png\" texUnfoldUVContext;setToolTo texUnfoldUVContext;toolPropertyWindow;",
+								 "UnfoldUVOptions",
+								 "Unfold3DContext -e -unfold -i1 \"UV_Unfold_BrushLarge.png\" texUnfoldUVContext;setToolTo texUnfoldUVContext;toolPropertyWindow;",
+								 "",
+								 "",
+								 ""};
+			string $btnImgs[] = {"polyOptimizeUV.png",
+								 "optimizeUVTool.png",
+								 "polyUnfoldUV.png",
+								 "unfoldUVTool.png",
+								 "polyUnfoldUV.png",
+								 "polyStraightenUV.png",
+								 "polyStraightenUVShell.png"};
+			string $btns[] =	{"OptimizeUVBtn",
+								 "OptimizeUVToolBtn",
+								 "UnfoldUVBtn",
+								 "UnfoldUVToolBtn",
+								 "UnfoldUVAlongBtn",
+								 "StraightenUVBtn",
+								 "StraightenUVShellBtn"};
+			for($i = 0; $i < size($btnLbls); $i++)
+			{
+				if($btnShfs[$i] != "")
+					$btnCmds[$i] = "if(`getModifiers`%2){"+$btnShfs[$i]+";}else{evalDeferred\""+$btnCmds[$i]+"\";}";
+				iconTextButton
+					  -p $form
+					  -flat false
+					  -st "iconAndTextHorizontal"
+					  -w $gUVTkTwinBtnWth -h $gUVTkTwinBtnHgt
+					  -i $btnImgs[$i]
+					  -l $btnLbls[$i]
+					  -c $btnCmds[$i]
+					  -rpt 1
+					  -ann $btnAnns[$i]
+					  $btns[$i];
+			}
+
+			iconTextRadioCollection;
+			iconTextRadioButton
+				-ebg 1
+				-nbg 0
+				-st "textOnly"
+				-label (uiRes("m_uvTkBuildUnfoldOptions.kUnfoldU"))
+				-w ($gUVTkTwinBtnWth/4) -h $gUVTkTwinBtnHgt
+				-ann (uiRes("m_uvTkBuildUnfoldOptions.kUnfoldUAnnot"))
+				-onc "optionVar -intValue uvTkUnfoldDirection 2"
+				uvTkUnfoldAlongUBtn;
+				
+			iconTextRadioButton
+				-ebg 1
+				-nbg 0
+				-st "textOnly"
+				-label (uiRes("m_uvTkBuildUnfoldOptions.kUnfoldV"))
+				-w ($gUVTkTwinBtnWth/4) -h $gUVTkTwinBtnHgt
+				-ann (uiRes("m_uvTkBuildUnfoldOptions.kUnfoldVAnnot"))
+				-onc "optionVar -intValue uvTkUnfoldDirection 1"
+				uvTkUnfoldAlongVBtn;
+			
+			floatField -w ($gUVTkTwinBtnWth/2) 
+					   -h $gUVTkTwinBtnHgt 
+					   -cc "uvTkUpdateStraightenTolerance" 
+					   -pre 2 
+					   -ann (uiRes("m_uvTkBuildUnfoldOptions.kStraightenUVToleranceFieldAnnot"))
+					   uvTkStraightenUVToleranceField;
+			
+			iconTextCheckBox -p $form
+							 -ebg 1
+							 -st "textOnly"
+							 -w ($gUVTkTwinBtnWth/4) -h $gUVTkTwinBtnHgt
+							 -l (uiRes("m_uvTkBuildUnfoldOptions.kStraightenU"))
+							 -onc "uvTkToggleStraightenDirection(\"U\", 1);"
+							 -ofc "uvTkToggleStraightenDirection(\"U\", 0);"
+							 -ann (uiRes("m_uvTkBuildUnfoldOptions.kStraightenUBtnAnnot")) 
+							 uvTkStraightenUBtn;
+						   
+			iconTextCheckBox -p $form
+							 -ebg 1
+							 -st "textOnly"
+							 -w ($gUVTkTwinBtnWth/4) -h $gUVTkTwinBtnHgt
+							 -l (uiRes("m_uvTkBuildUnfoldOptions.kStraightenV"))
+							 -onc "uvTkToggleStraightenDirection(\"V\", 1);"
+							 -ofc "uvTkToggleStraightenDirection(\"V\", 0);"
+							 -ann (uiRes("m_uvTkBuildUnfoldOptions.kStraightenVBtnAnnot")) 
+							 uvTkStraightenVBtn;
+			formLayout -e
+					   -af $btns[0] top		5
+					   -af $btns[0] left	5
+					   -af $btns[1] top		5
+					   -ac $btns[1] left	1 $btns[0]
+					   -ac $btns[2] top		1 $btns[0]
+					   -af $btns[2] left	5
+					   -ac $btns[3] top		1 $btns[0]
+					   -ac $btns[3] left	1 $btns[2]
+					   -ac $btns[4] top		1 $btns[3]
+					   -af $btns[4] left	5
+					   -ac uvTkUnfoldAlongUBtn top  1 $btns[3]
+					   -ac uvTkUnfoldAlongUBtn left 1 $btns[4]
+					   -ac uvTkUnfoldAlongVBtn top  1 $btns[3]
+					   -ac uvTkUnfoldAlongVBtn left 1 uvTkUnfoldAlongUBtn
+					   -ac $btns[5] top		5 $btns[4]
+					   -af $btns[5] left	5
+					   -ac $btns[6] top		1 $btns[5]
+					   -af $btns[6] left	5
+					   -af $btns[6] bottom	5
+					   -ac uvTkStraightenUVToleranceField top  5 $btns[4]
+					   -ac uvTkStraightenUVToleranceField left 1 $btns[5]
+					   -ac uvTkStraightenUBtn top  5 $btns[4]
+					   -ac uvTkStraightenUBtn left 1 uvTkStraightenUVToleranceField
+					   -ac uvTkStraightenVBtn top  5 $btns[4]
+					   -ac uvTkStraightenVBtn left 1 uvTkStraightenUBtn
+				   $form;
+			setParent ..;
+		setParent ..;
+	uvTkUpdateUnfoldOptions();
+	return $layout;
+}
+
+global proc uvTkSetUnfoldOptionVars(int $forceFactorySettings)
+{
+	optionVar -init $forceFactorySettings -category "UV Editor.Unfold"
+		-iv uvTkUnfoldDirection 2
+		-fv uvTkStraightenTolerance 30
+		-iv uvTkStraightenDirection 0
+		;
+}
+
+global proc uvTkUpdateUnfoldOptions()
+{	
+    int $uvTkUnfoldDirection = `optionVar -q uvTkUnfoldDirection`;
+	if($uvTkUnfoldDirection == 2 &&`iconTextRadioButton -q -ex uvTkUnfoldAlongUBtn`)
+		iconTextRadioButton -e -select uvTkUnfoldAlongUBtn;
+	if($uvTkUnfoldDirection == 1 &&`iconTextRadioButton -q -ex uvTkUnfoldAlongVBtn`)
+	    iconTextRadioButton -e -select uvTkUnfoldAlongVBtn;
+	
+	float $uvTkStraightenTolerance = `optionVar -q uvTkStraightenTolerance`;
+	if(`floatField -q -ex uvTkStraightenUVToleranceField`)
+		floatField -e -v $uvTkStraightenTolerance uvTkStraightenUVToleranceField;
+	
+	int $uvTkStraightenDirection = `optionVar -q uvTkStraightenDirection`;
+	if(`iconTextCheckBox -q -ex uvTkStraightenUBtn`) 
+		iconTextCheckBox -e -v ($uvTkStraightenDirection == 0 || $uvTkStraightenDirection == 1) uvTkStraightenUBtn;
+	if(`iconTextCheckBox -q -ex uvTkStraightenVBtn`) 
+		iconTextCheckBox -e -v ($uvTkStraightenDirection == 0 || $uvTkStraightenDirection == 2) uvTkStraightenVBtn;
+}
+
+global proc uvTkToggleStraightenDirection(string $direction, int $status)
+{
+	uvTkSetUnfoldOptionVars(0);
+	if($status)
+		optionVar -iv uvTkStraightenDirection 0;
+	else
+		optionVar -iv uvTkStraightenDirection ($direction == "U" ? 2 : 1);
+	uvTkUpdateUnfoldOptions();
+}
+
+global proc uvTkUpdateStraightenTolerance()
+{
+	if(`floatField -q -ex uvTkStraightenUVToleranceField`)
+		optionVar -fv uvTkStraightenTolerance `floatField -q -v uvTkStraightenUVToleranceField`;
+}
+
+global proc uvTkDoUnfoldAlong(int $direction)
+{
+	if ($direction != 1 && $direction != 2)
+		$direction = `optionVar - q uvTkUnfoldDirection`;
+		$sel = `ls - sl`;
+		$selUVs = `polyListComponentConversion - tuv $sel`;
+		if (size($selUVs) == 0)
+			return;
+	$cmd = "unfold -i 5000 -ss 0.001 -gb 0 -gmb 0.5 -pub 0 -ps 0 -oa " + $direction + " -us off ";
+	for ($selUV in $selUVs)
+		$cmd += $selUV + " ";
+	evalEcho($cmd);
+}
+
+global proc uvTkDoStraightenUVs()
+{
+	uvTkSetUnfoldOptionVars(0);
+	uvTkUpdateStraightenTolerance();
+	string $cmd = "texStraightenUVs ";
+	int $dir = `optionVar -q uvTkStraightenDirection`;
+	if($dir == 1)
+		$cmd += "\"U\" ";
+	else if($dir == 2)
+		$cmd += "\"V\" ";
+	else
+		$cmd += "\"UV\" ";
+	$cmd += (`optionVar -q uvTkStraightenTolerance`);
+	evalEcho($cmd);
+}
+
+global proc uvTkDoStraightenShell()
+{
+	evalEcho("texStraightenShell");
+}

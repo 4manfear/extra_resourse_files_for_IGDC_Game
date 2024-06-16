@@ -1,0 +1,115 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc int blendShapeDeleteTargetGroup( string $bsn, int $inTgtGrp )
+{
+    string $attr;
+	
+	// Skip if the target group to be deleted are locked
+	$attr = $bsn + ".weight[" + $inTgtGrp + "]";
+	if(`getAttr -l $attr`)
+	{
+		warning (uiRes("m_blendShapeDeleteTargetGroup.kCannotRemoveLockedTarget")) ;
+		return 0;
+	}
+    
+	//Remove combination shape if there is any
+	$source = eval("connectionInfo -sourceFromDestination \""+$bsn+".w["+$inTgtGrp+"]\"");
+	$sourceStrings = stringToStringArray($source, ".");
+	if(size($sourceStrings) == 2)
+	{
+		if(nodeType($sourceStrings[0]) == "combinationShape")
+			delete $sourceStrings[0];
+	}
+
+ 	// Remember the next target of this target.
+	// This must be done before removing the weight, since it will cause 
+	// itself removed from the midLayer.
+	$attr = $bsn + ".parentDirectory[" + $inTgtGrp + "]";
+	int $parentDirectory = `getAttr $attr`;
+	if ($parentDirectory > 0)
+	{
+		$attr = $bsn + ".targetDirectory[" + $parentDirectory + "].childIndices";
+		int $childIndices[] = `getAttr $attr`;
+		int $location = intArrayFind($inTgtGrp, 0, $childIndices);
+		if ( $location != -1 && $location + 1 < size($childIndices) )
+		{
+			$attr = $bsn + ".nextTarget[" + $inTgtGrp + "]";
+			setAttr $attr $childIndices[$location + 1];
+		}
+	}
+
+    // Remove the element in the weight array. This has to happen first.
+    $attr = $bsn + ".weight[" + $inTgtGrp + "]";
+    removeMultiInstance -b true $attr;
+    $attr = $bsn + ".parentDirectory[" + $inTgtGrp + "]";
+    removeMultiInstance -b true $attr;
+    $attr = $bsn + ".nextTarget[" + $inTgtGrp + "]";
+    removeMultiInstance -b true $attr;
+    $attr = $bsn + ".targetVisibility[" + $inTgtGrp + "]";
+    removeMultiInstance -b true $attr;
+    $attr = $bsn + ".targetParentVisibility[" + $inTgtGrp + "]";
+    removeMultiInstance -b true $attr;
+	
+    $attr = $bsn + ".inputTarget";
+    int $nbInTgt = `getAttr -size $attr`;
+    int $inTgtIndices[] = `getAttr -multiIndices $attr`;
+
+    int $needsReset = 0;
+    for( $i = 0; $i < $nbInTgt; $i++ )
+    {
+		int $index = $inTgtIndices[$i];
+
+		string $targetIndex = $bsn + ".inputTarget[" + $index + "].sculptTargetIndex";
+		if( `getAttr $targetIndex` == $inTgtGrp )
+			$needsReset = 1; 
+    }
+    // we will deleted the target group that is being sculpted on
+    if( $needsReset == 1 )
+    {
+		sculptTarget -e -target -1 $bsn;
+    }
+
+    for( $i = 0; $i < $nbInTgt; $i++ )
+    {
+		int $index = $inTgtIndices[$i];
+
+		// remove each input target item within the group
+		// we have to do this first before deleting the inputTargetGroup
+		// otherwise on undo, the inputTargetItems aren't restored for some reason.
+		$attr = $bsn + ".inputTarget[" + $index + "].inputTargetGroup[" + $inTgtGrp + "].inputTargetItem";
+
+		int $nbInItems = `getAttr -size $attr`;
+		int $inItemIndices[] = `getAttr -multiIndices $attr`;
+		for( $j = 0; $j < $nbInItems; $j++ )
+		{
+			blendShapeDeleteInBetweenTarget($bsn, $inTgtGrp, $inItemIndices[$j]);
+		}
+
+		// remove each target weights within the group
+		// we have to do this first before deleting the inputTargetGroup
+		// otherwise on undo, the targetWeights aren't restored for some reason.
+		$attr = $bsn + ".inputTarget[" + $index + "].inputTargetGroup[" + $inTgtGrp + "].targetWeights";
+
+		removeMultiInstance -b true -all true $attr;
+
+		// remove the entire target group
+		$attr = $bsn + ".inputTarget[" + $index + "].inputTargetGroup[" + $inTgtGrp + "]";
+		removeMultiInstance -b true $attr;
+    }
+	
+	//Remove alias if there is one
+
+	$attr = $bsn + ".weight[" + $inTgtGrp + "]";
+	string $alias = `aliasAttr -q $attr`;
+	if($alias != "")
+	{
+		$attr = $bsn + "." + $alias;
+		aliasAttr -rm $attr;
+	}
+	return 1;
+}

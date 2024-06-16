@@ -1,0 +1,91 @@
+#ifndef _COMMON_OGSFH_
+#define _COMMON_OGSFH_
+uniform mat4 gWVPXf : WorldViewProjection;
+uniform vec2 gScreenSize : ViewportPixelSize;
+attribute VS_INPUT_ScreenQuad
+{
+vec3 Pos : POSITION;
+vec2 UV : TEXCOORD0;
+}
+attribute VS_TO_PS_ScreenQuad
+{
+vec2 VSUV : TEXCOORD0;
+}
+GLSLShader VS_ScreenQuad
+{
+void main() {
+VSUV = UV;
+gl_Position=gWVPXf*vec4(Pos,1.0);
+}
+}
+#endif // _COMMON_OGSFH_
+#ifndef BLUR_AMOUNT
+#define BLUR_AMOUNT 5
+#endif
+uniform texture2D gSourceTex;
+uniform sampler2D gSourceSamp = sampler_state
+{
+texture = <gSourceTex>;
+};
+attribute pixelOut {
+vec4 colorOut:COLOR0;
+}
+GLSLShader {
+precision mediump float;
+}
+GLSLShader PS_BlurHoriz
+{
+void main()
+{
+vec2 offset = vec2( 1.0 / gScreenSize.x, 0.0 );
+int gNumSamples = BLUR_AMOUNT * 2 + 1;
+vec2 oUV = VSUV - offset * float(gNumSamples - 1) * 0.5;
+vec4 sum = vec4(0.0,0.0,0.0,0.0);
+for (int i = 0; i < gNumSamples; i++)
+{
+sum += texture2D(gSourceSamp, oUV);
+oUV += offset;
+}
+#if GL_ES && SHADER_VERSION == 2
+gl_FragColor = vec4(sum / float(gNumSamples));
+#else
+colorOut = vec4(sum / float(gNumSamples));
+#endif
+}
+}
+GLSLShader PS_BlurVert
+{
+void main()
+{
+vec2 offset = vec2( 0.0, 1.0 / gScreenSize.y );
+int gNumSamples = BLUR_AMOUNT * 2 + 1;
+vec2 oUV = VSUV - offset * float(gNumSamples - 1) * 0.5;
+vec4 sum = vec4(0.0,0.0,0.0,0.0);
+for (int i = 0; i < gNumSamples; i++)
+{
+sum += texture2D(gSourceSamp, oUV);
+oUV += offset;
+}
+#if GL_ES && SHADER_VERSION == 2
+gl_FragColor = vec4(sum / float(gNumSamples));
+#else
+colorOut = vec4(sum / float(gNumSamples));
+#endif
+}
+}
+technique BlurHoriz
+{
+pass p0
+{
+VertexShader (in VS_INPUT_ScreenQuad, out VS_TO_PS_ScreenQuad) = VS_ScreenQuad;
+PixelShader (in VS_TO_PS_ScreenQuad, out pixelOut) = PS_BlurHoriz;
+}
+}
+technique BlurVert
+{
+pass p0
+{
+VertexShader (in VS_INPUT_ScreenQuad, out VS_TO_PS_ScreenQuad) = VS_ScreenQuad;
+PixelShader (in VS_TO_PS_ScreenQuad, out pixelOut) = PS_BlurVert;
+}
+}

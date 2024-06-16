@@ -1,0 +1,59 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc AEcolorCorrectTemplate(string $node)
+{
+    AEswatchDisplay $node;
+    editorTemplate -beginScrollLayout;
+    editorTemplate -beginNoOptimize;
+
+    editorTemplate -beginLayout (uiRes("m_AEcolorCorrectTemplate.kInputs")) -collapse 0;
+    editorTemplate -label (uiRes("m_AEcolorCorrectTemplate.kColor")) -addControl "inColor";
+    editorTemplate -label (uiRes("m_AEcolorCorrectTemplate.kAlpha")) -addControl "inAlpha";
+    editorTemplate -endLayout;
+
+    editorTemplate -beginLayout (uiRes("m_AEcolorCorrectTemplate.kColorCorrect")) -collapse 0;
+    editorTemplate -addControl "hueShift";
+    editorTemplate -label (uiRes("m_AEcolorCorrectTemplate.kSaturation")) -addControl "satGain";
+    editorTemplate -label (uiRes("m_AEcolorCorrectTemplate.kValue")) -addControl "valGain";
+    editorTemplate -addSeparator;
+    editorTemplate -label (uiRes("m_AEcolorCorrectTemplate.kColorGain")) -addControl "colGain";
+    editorTemplate -label (uiRes("m_AEcolorCorrectTemplate.kColorOffset")) -addControl "colOffset";
+    editorTemplate -addSeparator;
+    editorTemplate -label (uiRes("m_AEcolorCorrectTemplate.kGamma")) -addControl "colGamma";
+    editorTemplate -endLayout;
+
+    editorTemplate -beginLayout (uiRes("m_AEcolorCorrectTemplate.kAlphaCorrect")) -collapse 0;
+    editorTemplate -label (uiRes("m_AEcolorCorrectTemplate.kAlphaGain")) -addControl "alphaGain";
+    editorTemplate -label (uiRes("m_AEcolorCorrectTemplate.kAlphaOffset")) -addControl "alphaOffset";
+    editorTemplate -addSeparator;
+    editorTemplate -label (uiRes("m_AEcolorCorrectTemplate.kAlphaGamma")) -addControl "alphaGamma";
+    editorTemplate -endLayout;
+
+    editorTemplate -beginLayout (uiRes("m_AEcolorCorrectTemplate.kClampOuput")) -collapse 0;
+    editorTemplate -label (uiRes("m_AEcolorCorrectTemplate.kClampColor")) -addControl "colClamp";
+    editorTemplate -label (uiRes("m_AEcolorCorrectTemplate.kMinColor")) -addControl "colClampMin";
+    editorTemplate -label (uiRes("m_AEcolorCorrectTemplate.kMaxColor")) -addControl "colClampMax";
+    editorTemplate -addSeparator;
+    editorTemplate -label (uiRes("m_AEcolorCorrectTemplate.kClampAlpha")) -addControl "alphaClamp";
+    editorTemplate -label (uiRes("m_AEcolorCorrectTemplate.kMinAlpha")) -addControl "alphaClampMin";
+    editorTemplate -label (uiRes("m_AEcolorCorrectTemplate.kMaxAlpha")) -addControl "alphaClampMax";
+    editorTemplate -endLayout;
+
+    editorTemplate -beginLayout (uiRes("m_AEcolorCorrectTemplate.kPremultiply")) -collapse 0;
+    editorTemplate -addControl "unpremultiplyInput";
+    editorTemplate -addControl "premultiplyResult";
+    editorTemplate -endLayout;
+
+    editorTemplate -addExtraControls;
+
+    editorTemplate -suppress "caching";
+    editorTemplate -suppress "nodeState";
+
+    editorTemplate -endNoOptimize;
+    editorTemplate -endScrollLayout;
+}

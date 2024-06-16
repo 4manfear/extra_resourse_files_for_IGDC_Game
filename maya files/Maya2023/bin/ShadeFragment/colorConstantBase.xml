@@ -1,0 +1,57 @@
+<!--
+===========================================================================
+Copyright 2015 Autodesk, Inc. All rights reserved.
+
+Use of this software is subject to the terms of the Autodesk license
+agreement provided at the time of installation or download, or which
+otherwise accompanies this software in either electronic or hard copy form.
+===========================================================================
+-->
+
+<fragment uiName="colorConstantBase" name="colorConstantBase" type="plumbing" class="ShadeFragment" version="1.0">
+	<description><![CDATA[Constant color texture fragment]]></description>
+	<properties>
+		<float3 name="inColor" />
+	</properties>
+	<values>
+		<float3 name="inColor" value="0.3,0.3,0.3" />
+	</values>
+	<outputs>
+		<float3 name="outColor" />
+	</outputs>
+	<implementation>
+	<implementation render="OGSRenderer" language="Cg" lang_version="2.1">
+		<function_name val="colorConstantBase" />
+		<source>
+		<![CDATA[
+float3 colorConstantBase(float3 inColor)
+{
+	return inColor;
+}
+		]]>
+		</source>
+	</implementation>
+	<implementation render="OGSRenderer" language="HLSL" lang_version="11.0">
+		<function_name val="colorConstantBase" />
+		<source>
+		<![CDATA[
+float3 colorConstantBase(float3 inColor)
+{
+	return inColor;
+}
+		]]>
+		</source>
+		</implementation>
+		<implementation render="OGSRenderer" language="GLSL" lang_version="3.0">
+			<function_name val="colorConstantBase" />
+			<source>
+				<![CDATA[
+vec3 colorConstantBase(vec3 inColor)
+{
+	return inColor;
+}
+		]]>
+		</source>
+	</implementation>
+	</implementation>
+</fragment>

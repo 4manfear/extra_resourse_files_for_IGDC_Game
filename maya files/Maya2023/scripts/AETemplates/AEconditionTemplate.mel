@@ -1,0 +1,44 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:	July 30, 1997
+//
+//  Procedure Name:
+//	AEconditionTemplate
+//
+//  Description:
+//	Creates the attribute editor controls for the condition node
+//
+//  Input Value:
+//	nodeName
+//
+//  Output Value:
+//	None
+//
+
+
+global proc AEconditionTemplate ( string $nodeName )
+{
+	AEswatchDisplay $nodeName;
+	editorTemplate -beginScrollLayout;
+
+		editorTemplate -beginLayout (uiRes("m_AEconditionTemplate.kConditionAttr")) -collapse 0;
+			editorTemplate -addControl "firstTerm";
+			editorTemplate -addControl "secondTerm";
+			editorTemplate -addControl "operation";
+			editorTemplate -addControl "colorIfTrue";
+			editorTemplate -addControl "colorIfFalse";
+		editorTemplate -endLayout;
+
+	// include/call base class/node attributes
+	AEdependNodeTemplate $nodeName;
+
+	editorTemplate -addExtraControls;
+	editorTemplate -endScrollLayout;
+}

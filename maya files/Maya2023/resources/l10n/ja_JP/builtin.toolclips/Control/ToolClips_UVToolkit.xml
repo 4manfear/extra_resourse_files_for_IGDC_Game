@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<toolclips ui="ui/ToolClipUI.qml" simple="ui/SimpleTooltip.qml" locale="ja_JP">
+    <toolclip key="uvTkSymLabel" title="シンメトリ" help="TC-Symmetry">
+        <text>シンメトリをアクティブ化します。</text>
+        <expanded>
+            <resourcelist>
+                <video location="Symmetry_ActivateTopo.webm">トポロジ シンメトリをアクティブ化する</video>
+                <link location="TC-Symmetrical-editing">シンメトリ編集</link>
+                <link location="TC-Activate-or-deactivate-symmetry">シンメトリをアクティブ化/非アクティブ化</link>
+                <link location="TC-Edit-multiple-shells-with-topological-symmetry">トポロジ シンメトリで複数のシェルを編集する</link>
+                <link location="TC-Edit-a-mesh-with-topological-symmetry">トポロジ シンメトリでメッシュを編集する</link>
+            </resourcelist>
+        </expanded>
+    </toolclip>
+    <toolclip key="uvTkSymPopupButton" title="シンメトリ" help="TC-nexSymPopupButton">
+        <text>シンメトリをアクティブ化します。</text>
+        <expanded>
+            <resourcelist>
+                <video location="Symmetry_ActivateTopo.webm">トポロジ シンメトリをアクティブ化する</video>
+                <link location="TC-Symmetrical-editing">シンメトリ編集</link>
+                <link location="TC-Activate-or-deactivate-symmetry">シンメトリをアクティブ化/非アクティブ化</link>
+                <link location="TC-Edit-multiple-shells-with-topological-symmetry">トポロジ シンメトリで複数のシェルを編集する</link>
+                <link location="TC-Edit-a-mesh-with-topological-symmetry">トポロジ シンメトリでメッシュを編集する</link>
+            </resourcelist>
+        </expanded>
+    </toolclip>
+    <toolclip key="uvTkSymmetryTextField" title="シンメトリ" help="TC-nexSymTextField">
+        <text>シンメトリをアクティブ化します。</text>
+        <expanded>
+            <resourcelist>
+                <video location="Symmetry_ActivateTopo.webm">トポロジ シンメトリをアクティブ化する</video>
+                <link location="TC-Symmetrical-editing">シンメトリ編集</link>
+                <link location="TC-Activate-or-deactivate-symmetry">シンメトリをアクティブ化/非アクティブ化</link>
+                <link location="TC-Edit-multiple-shells-with-topological-symmetry">トポロジ シンメトリで複数のシェルを編集する</link>
+                <link location="TC-Edit-a-mesh-with-topological-symmetry">トポロジ シンメトリでメッシュを編集する</link>
+            </resourcelist>
+        </expanded>
+    </toolclip>
+    <toolclip key="SymmetrizeBtn" title="シンメトリ化" help="TC-SymmetrizeUVs">
+        <text>選択した UV レイアウトを軸に沿ってミラーします。
+[Shift]+左マウス ボタン: オプションを表示</text>
+        <expanded>
+            <default-resource index="1"/>
+            <resourcelist>
+                <video location="UV_Symmetrize_command.webm">シンメトリ化 UV</video>
+                <link location="TC-SymmetrizeUVs">シンメトリ化 UV</link>
+                <link location="TC-ModifyMenu">修正 &gt; シンメトリ化(Modify &gt; Symmetrize)</link>
+            </resourcelist>
+        </expanded>
+    </toolclip>
+    <toolclip key="uvTkSelConstLabel" title="UV 選択のコンストレイント" help="TC-Select_Tool">
+         <text>UV エディタで実行できる選択操作を制限します。</text>
+         <expanded>
+             <default-resource index="1"/>
+             <resourcelist>
+                 <video location="uv_selection_constraints.webm">UV 選択のコンストレイント</video>
+                 <link location="TC-Select_Tool">選択ツール &gt; 選択コンストレイント(Select Tool &gt; Selection Constraint)</link>
+             </resourcelist>
+         </expanded>
+    </toolclip>
+    <toolclip key="uvTkSelConstPopupButton" title="UV 選択のコンストレイント" help="TC-Select_Tool">
+         <text>UV エディタで実行できる選択操作を制限します。</text>
+         <expanded>
+             <default-resource index="1"/>
+             <resourcelist>
+                 <video location="uv_selection_constraints.webm">UV 選択のコンストレイント</video>
+                 <link location="TC-Select_Tool">選択ツール &gt; 選択コンストレイント(Select Tool &gt; Selection Constraint)</link>
+             </resourcelist>
+         </expanded>
+    </toolclip>
+    <toolclip key="uvTkSelConstTextField" title="UV 選択のコンストレイント" help="TC-Select_Tool">
+         <text>UV エディタで実行できる選択操作を制限します。</text>
+         <expanded>
+             <default-resource index="1"/>
+             <resourcelist>
+                 <video location="uv_selection_constraints.webm">UV 選択のコンストレイント</video>
+                 <link location="TC-Select_Tool">選択ツール &gt; 選択コンストレイント(Select Tool &gt; Selection Constraint)</link>
+             </resourcelist>
+         </expanded>
+    </toolclip>
+  <toolclip key="uvTkTranConstLabel" title="トランスフォーム コンストレイント" help="TC-nextranConstLabel">
+    <text>トランスフォームを選択したメッシュのエッジに制限します。UV の移動/回転/スケール ツールを使用するときに一時的にエッジに制限するには、[Ctrl]+[Shift]を押しながら操作します。</text>
+  </toolclip>
+  <toolclip key="uvTkTranConstPopupButton" title="トランスフォーム コンストレイント" help="TC-nextranConstPopupButton">
+    <text>トランスフォームを選択したメッシュのエッジに制限します。UV の移動/回転/スケール ツールを使用するときに一時的にエッジに制限するには、[Ctrl]+[Shift]を押しながら操作します。</text>
+  </toolclip>
+  <toolclip key="uvTkTranConstTextField" title="トランスフォーム コンストレイント" help="TC-nextranConstTextField">
+    <text>トランスフォームを選択したメッシュのエッジに制限します。UV の移動/回転/スケール ツールを使用するときに一時的にエッジに制限するには、[Ctrl]+[Shift]を押しながら操作します。</text>
+  </toolclip>
+  <toolclip key="uvTkPinFrame" title="固定ツール" help="PinUVTool">
+        <text>影響を受ける頂点を変更できないようにロックします。</text>
+        <expanded>
+            <default-resource index="1"/>
+            <resourcelist>
+                <video location="UV_PinTool.webm">UV を固定</video>
+                <link location="PinUVTool">UV の固定ツール(Pin UV Tool)</link>
+            </resourcelist>
+        </expanded>
+    </toolclip>
+    <toolclip key="uvTkTransformFrame" title="トランスフォーム" help="UVToolkit">
+             <text>領域内で UV をトランスフォーム</text>
+      
+             <expanded>
+                 <default-resource index="1"/>
+                 <resourcelist>
+                     <video location="uv_distribute.webm">配分</video>
+                     <video location="uv_texel_density.webm">テクセル密度</video>
+                 </resourcelist>
+             </expanded>
+    </toolclip>  
+    <toolclip key="uvTkMoveToolsFrame" title="UV のトランスフォーム ツール" help="UVToolkit">
+         <text>領域内で UV をドラッグしてトランスフォームします。</text>
+  
+         <expanded>
+             <default-resource index="1"/>
+             <resourcelist>
+                 <video location="UV_grab.webm">UV グラブ</video>
+                 <video location="uv_lattice_tool.webm">UV をピンチ</video>
+                 <video location="UV_pinch.webm">UV をピンチ</video>
+                 <video location="uv_smear_tool.webm">UV 塗り付けツール</video>
+                 <video location="uv_symmetrize_tool.webm">シンメトリ化 UV</video>
+                 <link location="GrabUVTool">UV グラブ ツール</link>
+                 <link location="TC-Modify_UV_Lattice">UV ラティス ツール(UV Lattice Tool)を使用して UV を修正する</link>
+                 <link location="PinchUVTool">UV ピンチ ツール</link>
+                 <link location="SmearUVTool">UV 塗り付けツール</link>
+                 <link location="TC-SymmetrizeUVs">シンメトリ化 UV</link>
+                <link location="SymmetrizeUVTool">シンメトリ化 UV ツール</link>
+             </resourcelist>
+         </expanded>
+    </toolclip>
+     <toolclip key="uvTkCutSewFrame" title="UV のカットと縫合" help="UVToolkit">
+          <text>UV の縫い目を作成または結合します。</text>
+   
+        <expanded>
+            <default-resource index="1"/>
+            <resourcelist>
+                <video location="uv_cut_tool.webm">カット ツール</video>
+                <video location="uv_sew_tool.webm">縫合ツール</video>
+                <video location="uv_stitch_together.webm">一緒にステッチ</video>
+                <link location="TC-Separate_Attach_UVs">UV の分離とアタッチ</link>                      
+                <link location="CutUVTool">カット ツール</link>
+                <link location="SewUVTool">縫合ツール</link>
+            </resourcelist>
+        </expanded>
+     </toolclip>
+     <toolclip key="uvTkUnfoldFrame" title="展開" help="UVToolkit">
+          <text>UV のもつれを解き、広げます。</text>
+   
+          <expanded>
+              <default-resource index="1"/>
+              <resourcelist>
+                  <video location="uv_optimize.webm">最適化</video>
+                  <video location="uv_optimize_tool.webm">最適化ツール</video>
+                  <video location="uv_unfold.webm">展開</video>
+                  <video location="uv_unfold_tool.webm">展開ツール</video>
+                  <video location="uv_straighten.webm">UV の直線化</video>
+                  <video location="uv_straighten_shell.webm">シェルの直線化</video>
+                  <link location="TC-Optimize_UV_Spacing">UV を最適化する</link>
+                  <link location="TC-Unfolding_UV_Mesh">UV メッシュを展開する</link>
+                  <link location="UnfoldBrush">UV 展開ツール(Unfold UV Tool)と UV 最適化ツール(Optimize UV Tool)</link>
+                  <link location="TC-Straighten_UVs">UV の直線化</link>
+        
+              </resourcelist>
+          </expanded>
+     </toolclip>
+     <toolclip key="uvTkAlignSnapFrame" title="位置合わせしてスナップ" help="UVToolkit">
+          <text>UV とシェルを互いを基準にして位置合わせします。</text>
+   
+          <expanded>
+              <default-resource index="1"/>
+              <resourcelist>
+                  <video location="uv_left_justify.webm">左位置合わせ</video>
+                  <video location="uv_mid_U_justify.webm">中央位置合わせ(水平)</video>
+                  <video location="uv_right_justify.webm">右位置合わせ</video>
+                  <video location="uv_top_justify.webm">上位置合わせ</video>
+                  <video location="uv_mid_V_justify.webm">中央位置合わせ(垂直)</video>
+                  <video location="uv_bottom_justify.webm">下位置合わせ</video>
+                  <video location="uv_snap_together.webm">一緒にスナップ</video>
+                  <video location="uv_snap_stack.webm">スナップしてスタック</video>
+                  <video location="uv_match_grid.webm">グリッドの一致</video>
+                  <video location="uv_normalize.webm">UV の正規化</video>
+                  <link location="PolyGridUV">グリッドの一致オプション</link>
+                  <link location="NormalizeUVs">UV の正規化オプション</link>
+              </resourcelist>
+          </expanded>
+     </toolclip>
+     <toolclip key="uvTkArrangeLayoutFrame" title="配置してレイアウト" help="UVToolkit">
+          <text>UV シェルを配置して、UV 空間を最大限に使用します。</text>
+   
+          <expanded>
+              <default-resource index="1"/>
+              <resourcelist>
+                  
+                  <video location="uv_orient.webm">シェルの方向を合わせる</video>
+                  <video location="uv_stack_shells.webm">シェルをスタック</video>
+                  <video location="uv_stack_orient.webm">シェルをスタックして方向を合わせる</video>
+                  <video location="uv_unstack_shells.webm">シェルのスタックを解除</video>
+                  <video location="uv_gather.webm">シェルをギャザー</video>
+                  <video location="uv_randomize.webm">シェルをランダム化</video>
+                  <video location="uv_measure.webm">計測</video>
+                  <video location="uv_layout_shells.webm">シェルをレイアウト</video>
+                   <video location="uv_layout_along.webm">次に沿ってレイアウト</video>
+                  <link location="LayoutUVs">UV レイアウト オプション</link>
+              </resourcelist>
+          </expanded>
+     </toolclip>
+</toolclips>

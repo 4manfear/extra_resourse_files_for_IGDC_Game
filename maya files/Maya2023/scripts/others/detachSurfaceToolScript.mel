@@ -1,0 +1,106 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+// Creation Date:  14 January 1999
+//
+//
+//  Procedure Name:
+//      detachSurfaceToolScript
+//
+//  Description:
+//	create wrapper around the detachSurface command
+//
+//  Input Arguments:
+//		0 ==> do the command.
+//		1 ==> show the action option box
+//		2 ==> return the command
+//		3 ==> show tool option box
+//		4 ==> enter the tool
+//
+//  Return Value:
+//      None.
+//
+
+global proc detachSurfaceToolSetup( int $forceFactorySettings,
+									string $goToTool )
+{
+	optionVar -init $forceFactorySettings -category "Modeling.Surfaces.Detach"
+		-iv detachSurfaceEuc 0
+		-iv detachSurfaceLac 1
+		;
+
+	if( "" != $goToTool ) {
+		scriptCtx -e -euc `optionVar -q detachSurfaceEuc` $goToTool;
+		scriptCtx -e -lac `optionVar -q detachSurfaceLac` $goToTool;
+	}
+}
+
+global proc detachSurfaceValues ( string $toolName ) 
+{
+	performDetach 3 "Surface" $toolName;
+	scriptCtxCommonValues( $toolName );
+}
+
+global proc detachSurfaceProperties()
+{
+	scriptCtxCommonProperties;
+}
+
+proc createDetachSurfaceContext( string $tool )
+{
+	if( ! `scriptCtx -exists $tool` ) {
+		detachSurfaceToolSetup( 0, "" );
+		scriptCtx -i1 "detach.png"
+		  -title (uiRes("m_detachSurfaceToolScript.kDetachSurfaceTool"))
+		  -bcn "detachSurface"
+
+		  -exitUponCompletion `optionVar -q detachSurfaceEuc`
+		  -totalSelectionSets 1
+		  -expandSelectionList true
+		  -fcs ("detachSurfaceToolScript 0")
+
+		  -setNoSelectionPrompt ((uiRes("m_detachSurfaceToolScript.kSelectIsoparmsForDetaching")) )
+		  -setSelectionPrompt ((uiRes("m_detachSurfaceToolScript.kSelectAnotherIsoparm")) )
+
+		  -setAutoToggleSelection true
+		  -setAutoComplete `optionVar -q detachSurfaceLac`
+		  -showManipulators true
+		  -setSelectionCount 0
+		  -isoparm true
+		$tool;
+	}
+}
+
+global proc string performDetachSurface( int $action,
+									 string $goToTool )
+{
+	return performDetach( $action, "Surface", $goToTool );
+}
+
+global proc string detachSurfaceToolScript( int $setToTool )
+//
+//	Description :
+//		0 ==> do the command.
+//		1 ==> show the action option box
+//		2 ==> return the command
+//		3 ==> show tool/action option box
+//		4 ==> enter the tool/do the command
+{
+	string $tool = "";
+	if( $setToTool > 2 ) {
+		if( !`optionVar -q modelWithToolDetachSurface` ) {
+			$setToTool = 4 - $setToTool;
+		}
+		else {
+			$tool = "detachSurfaceContext";
+			createDetachSurfaceContext $tool;
+		}
+	}
+	return scriptToolScript( "performDetachSurface", $setToTool, $tool );
+}

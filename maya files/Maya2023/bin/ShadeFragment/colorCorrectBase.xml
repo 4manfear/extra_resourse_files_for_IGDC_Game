@@ -1,0 +1,306 @@
+<!--
+===========================================================================
+Copyright 2015 Autodesk, Inc. All rights reserved.
+
+Use of this software is subject to the terms of the Autodesk license
+agreement provided at the time of installation or download, or which
+otherwise accompanies this software in either electronic or hard copy form.
+===========================================================================
+-->
+
+<fragment uiName="colorCorrectBase" name="colorCorrectBase" type="plumbing" class="ShadeFragment" version="1.0">
+	<description><![CDATA[Constant color texture fragment]]></description>
+	<properties>
+		<float3 name="inColor" />
+		<float name="inAlpha" />
+		<float name="hueShift" />
+		<float name="satGain" />
+		<float name="valGain" />
+		<float3 name="colGain" />
+		<float3 name="colOffset" />
+	</properties>
+	<values>
+		<float3 name="inColor" value="0.3,0.3,0.3" />
+		<float name="inAlpha" value="0.0" />
+		<float name="hueShift" value="0.0" />
+		<float name="satGain" value="1.0" />
+		<float name="valGain" value="1.0" />
+		<float3 name="colGain" value="1.0,1.0,1.0" />
+		<float3 name="colOffset" value="0.0,0.0,0.0" />
+	</values>
+	<outputs>
+		<float3  name="outColor" />
+	</outputs>
+	<implementation>
+	<implementation render="OGSRenderer" language="Cg" lang_version="2.1">
+		<function_name val="colorCorrectBase" />
+		<source>
+		<![CDATA[
+float3 rgb2Hsv(float3 rgbInput)
+{
+	float3	retHsv = float3(0.0f, 0.0f, 0.0f);
+	float	maxChannel, minChannel;
+	float	delta;
+	float	hue;
+	float3	rgb_s;
+	maxChannel = max(max(rgbInput.x, rgbInput.y), rgbInput.z);
+	minChannel = min(min(rgbInput.x, rgbInput.y), rgbInput.z);
+	delta = maxChannel - minChannel;
+	retHsv.y = (maxChannel > 0.0f) ? (delta / maxChannel) : 0.0f;
+	retHsv.z = maxChannel;
+	if (delta == 0.0f)
+	{
+		return retHsv;
+	}
+	rgb_s = (float3(maxChannel, maxChannel, maxChannel) - rgbInput.xyz) / delta;
+	hue = (maxChannel == rgbInput.x) ?
+		(minChannel == rgbInput.y  ? (5.0f+rgb_s.z) : (1.0f - rgb_s.y))
+		: ((maxChannel == rgbInput.y) ?
+			(minChannel == rgbInput.z ? (1.0f+rgb_s.x) : (3.0f-rgb_s.z))
+			: (minChannel == rgbInput.x ? (3.0f+rgb_s.y) : (5.0f-rgb_s.x))
+		) ;
+	hue = (hue == 6.0f ? 0.0f : hue) * 60.0f;
+	retHsv.x = hue;
+	return retHsv;
+}
+float3 hsv2Rgb(float3 hsvInput)
+{
+	int	i;
+	float	h, f;
+	float4	pqtv;
+	if (hsvInput.y == 0.0f)
+	{
+		return hsvInput.zzz;
+	}
+	else
+	{
+		h = (hsvInput.x == 360.0f ? 0.0f : (hsvInput.x / 360.0f));
+		h -= floor(h);
+		h *= 6.0f;
+
+		i = int(floor(h));
+		f = h - i;
+
+		float saturated_s = saturate(hsvInput.y);
+		pqtv = hsvInput.z * (float4(1.0f, 1.0f, 1.0f, 1.0f) - float4(1.0f, f, 1.0f-f, 0.0f) * float4(saturated_s,saturated_s,saturated_s,saturated_s));
+		if (i == 0) return pqtv.wzx;
+		if (i == 1) return pqtv.ywx;
+		if (i == 2) return pqtv.xwz;
+		if (i == 3) return pqtv.xyw;
+		if (i == 4) return pqtv.zxw;
+		return pqtv.wxy;
+	}
+}
+float3 colorCorrectBase(float3 inColor, float inAlpha, float hueShift, float satGain, float valGain, float3 colGain, float3 colOffset)
+{
+	float3 retColor = inColor;
+
+	if ( hueShift != 0.0 || satGain != 1.0 || valGain != 1.0 )
+	{
+		retColor = rgb2Hsv(retColor);
+
+		retColor.x += hueShift;
+		retColor.y *= satGain;
+		retColor.z *= valGain;
+
+		retColor = hsv2Rgb(retColor);
+	}
+
+	float3 deltaGain = colGain - float3(1.0, 1.0, 1.0);
+
+	if ( any(deltaGain) )
+	{
+		retColor *= colGain;
+	}
+
+	if ( any(colOffset) )
+	{
+		retColor += colOffset;
+	}
+
+	return retColor;
+}
+		]]>
+		</source>
+	</implementation>
+	<implementation render="OGSRenderer" language="HLSL" lang_version="11.0">
+		<function_name val="colorCorrectBase" />
+		<source>
+		<![CDATA[
+float3 rgb2Hsv(float3 rgbInput)
+{
+	float3	retHsv = float3(0.0f, 0.0f, 0.0f);
+	float	maxChannel, minChannel;
+	float	delta;
+	float	hue;
+	float3	rgb_s;
+	maxChannel = max(max(rgbInput.x, rgbInput.y), rgbInput.z);
+	minChannel = min(min(rgbInput.x, rgbInput.y), rgbInput.z);
+	delta = maxChannel - minChannel;
+	retHsv.y = (maxChannel > 0.0f) ? (delta / maxChannel) : 0.0f;
+	retHsv.z = maxChannel;
+	if (delta == 0.0f)
+	{
+		return retHsv;
+	}
+	rgb_s = (float3(maxChannel, maxChannel, maxChannel) - rgbInput.xyz) / delta;
+	hue = (maxChannel == rgbInput.x) ?
+		(minChannel == rgbInput.y  ? (5.0f+rgb_s.z) : (1.0f - rgb_s.y))
+		: ((maxChannel == rgbInput.y) ?
+			(minChannel == rgbInput.z ? (1.0f+rgb_s.x) : (3.0f-rgb_s.z))
+			: (minChannel == rgbInput.x ? (3.0f+rgb_s.y) : (5.0f-rgb_s.x))
+		) ;
+	hue = (hue == 6.0f ? 0.0f : hue) * 60.0f;
+	retHsv.x = hue;
+	return retHsv;
+}
+float3 hsv2Rgb(float3 hsvInput)
+{
+	int	i;
+	float	h, f;
+	float4	pqtv;
+	if (hsvInput.y == 0.0f)
+	{
+		return hsvInput.zzz;
+	}
+	else
+	{
+		h = (hsvInput.x == 360.0f ? 0.0f : (hsvInput.x / 360.0f));
+		h -= floor(h);
+		h *= 6.0f;
+
+		i = int(floor(h));
+		f = h - i;
+
+		float saturated_s = saturate(hsvInput.y);
+		pqtv = hsvInput.z * (float4(1.0f, 1.0f, 1.0f, 1.0f) - float4(1.0f, f, 1.0f-f, 0.0f) * float4(saturated_s,saturated_s,saturated_s,saturated_s));
+		if (i == 0) return pqtv.wzx;
+		if (i == 1) return pqtv.ywx;
+		if (i == 2) return pqtv.xwz;
+		if (i == 3) return pqtv.xyw;
+		if (i == 4) return pqtv.zxw;
+		return pqtv.wxy;
+	}
+}
+float3 colorCorrectBase(float3 inColor, float inAlpha, float hueShift, float satGain, float valGain, float3 colGain, float3 colOffset)
+{
+	float3 retColor = inColor;
+
+	if ( hueShift != 0.0 || satGain != 1.0 || valGain != 1.0 )
+	{
+		retColor = rgb2Hsv(retColor);
+
+		retColor.x += hueShift;
+		retColor.y *= satGain;
+		retColor.z *= valGain;
+
+		retColor = hsv2Rgb(retColor);
+	}
+
+	float3 deltaGain = colGain - float3(1.0, 1.0, 1.0);
+
+	if ( any(deltaGain) )
+	{
+		retColor *= colGain;
+	}
+
+	if ( any(colOffset) )
+	{
+		retColor += colOffset;
+	}
+
+	return retColor;
+}
+		]]>
+		</source>
+		</implementation>
+		<implementation render="OGSRenderer" language="GLSL" lang_version="3.0">
+			<function_name val="colorCorrectBase" />
+			<source>
+				<![CDATA[
+vec3 rgb2Hsv(vec3 rgbInput)
+{
+	vec3	retHsv = vec3(0.0f, 0.0f, 0.0f);
+	float	maxChannel, minChannel;
+	float	delta;
+	float	hue;
+	vec3	rgb_s;
+	maxChannel = max(max(rgbInput.x, rgbInput.y), rgbInput.z);
+	minChannel = min(min(rgbInput.x, rgbInput.y), rgbInput.z);
+	delta = maxChannel - minChannel;
+	retHsv.y = (maxChannel > 0.0f) ? (delta / maxChannel) : 0.0f;
+	retHsv.z = maxChannel;
+	if (delta == 0.0f)
+	{
+		return retHsv;
+	}
+	rgb_s = (vec3(maxChannel, maxChannel, maxChannel) - rgbInput.xyz) / delta;
+	hue = (maxChannel == rgbInput.x) ?
+		(minChannel == rgbInput.y  ? (5.0f+rgb_s.z) : (1.0f - rgb_s.y))
+		: ((maxChannel == rgbInput.y) ?
+			(minChannel == rgbInput.z ? (1.0f+rgb_s.x) : (3.0f-rgb_s.z))
+			: (minChannel == rgbInput.x ? (3.0f+rgb_s.y) : (5.0f-rgb_s.x))
+		) ;
+	hue = (hue == 6.0f ? 0.0f : hue) * 60.0f;
+	retHsv.x = hue;
+	return retHsv;
+}
+vec3 hsv2Rgb(vec3 hsvInput)
+{
+	int	i;
+	float	h, f;
+	vec4	pqtv;
+	if (hsvInput.y == 0.0f)
+	{
+		return hsvInput.zzz;
+	}
+	else
+	{
+		h = (hsvInput.x == 360.0f) ? 0.0f : (hsvInput.x / 360.0f);
+		h -= floor(h);
+		h *= 6.0f;
+
+		i = int(floor(h));
+		f = h - i;
+
+		float saturated_s = clamp(hsvInput.y, 0.0, 1.0);
+		pqtv = hsvInput.z * (vec4(1.0f, 1.0f, 1.0f, 1.0f) - vec4(1.0f, f, 1.0f-f, 0.0f) * vec4(saturated_s,saturated_s,saturated_s,saturated_s));
+		if (i == 0) return pqtv.wzx;
+		if (i == 1) return pqtv.ywx;
+		if (i == 2) return pqtv.xwz;
+		if (i == 3) return pqtv.xyw;
+		if (i == 4) return pqtv.zxw;
+
+		return pqtv.wxy;
+	}
+}
+vec3 colorCorrectBase(vec3 inColor, float inAlpha, float hueShift, float satGain, float valGain, vec3 colGain, vec3 colOffset)
+{
+	vec3 retColor = inColor;
+
+	if ( hueShift != 0.0 || satGain != 1.0 || valGain != 1.0f )
+	{
+		retColor = rgb2Hsv(retColor);
+		retColor.x += hueShift;
+		retColor.y *= satGain;
+		retColor.z *= valGain;
+		retColor = hsv2Rgb(retColor);
+	}
+
+	if ( colGain != vec3(1.0, 1.0, 1.0) )
+	{
+		retColor *= colGain;
+	}
+
+	if ( colOffset != vec3(0.0, 0.0, 0.0) )
+	{
+		retColor += colOffset;
+	}
+
+	return retColor;
+}
+		]]>
+		</source>
+	</implementation>
+	</implementation>
+</fragment>

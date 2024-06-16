@@ -1,0 +1,54 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//	Procedure Name:
+//	AEnurbsToSubdivTemplate
+//
+//	Description Name;
+//	Creates the attribute editor controls for the nurbsToSubdiv node
+//
+//	Input Value:
+//	nodeName
+//
+//	Output Value:
+//	None
+//
+
+global proc AEnurbsToSubdivTemplate( string $nodeName )
+{
+	
+	editorTemplate -beginScrollLayout;
+	
+	string $inputSurface = (uiRes("m_AEnurbsToSubdivTemplate.kInputSurface"));
+	editorTemplate -beginLayout (uiRes("m_AEnurbsToSubdivTemplate.kNurbsToSubDivHistory")) -collapse false;
+
+	editorTemplate -callCustom ("AEinputNew \""+$inputSurface+"\"")
+					("AEinputReplace \""+$inputSurface+"\"")
+					"inputSurface";
+
+	editorTemplate -beginLayout (uiRes("m_AEnurbsToSubdivTemplate.kOptions"));
+  	    editorTemplate
+			-label (uiRes("m_AEnurbsToSubdivTemplate.kMaxBaseMeshFace"))
+			-addControl "maxPolyCount";
+
+	editorTemplate -endLayout;
+
+	editorTemplate -endLayout;
+
+	// include/call base class/node attributes
+	AEabstractBaseCreateTemplate $nodeName;
+
+	//suppressed attributes
+	editorTemplate -suppress "outputSubd";
+	editorTemplate -suppress "reverseNormal";
+	editorTemplate -suppress "matchPeriodic";
+
+	editorTemplate -addExtraControls;
+	editorTemplate -endScrollLayout;
+}
+

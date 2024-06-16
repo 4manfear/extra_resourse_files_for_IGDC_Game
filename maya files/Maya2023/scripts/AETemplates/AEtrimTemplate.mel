@@ -1,0 +1,47 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//	Procedure Name:
+//	AEtrimTemplate
+//
+//	Description Name;
+//	Creates the attribute editor controls for the trim node
+//
+//	Input Value:
+//	nodeName
+//
+//	Output Value:
+//	None
+//
+
+global proc AEtrimTemplate( string $nodeName )
+{
+	string $inputSurface = (uiRes("m_AEtrimTemplate.kInputSurface"));
+	editorTemplate -beginScrollLayout;
+	
+	editorTemplate -beginLayout (uiRes("m_AEtrimTemplate.kTrimHistory")) -collapse false;
+		editorTemplate -callCustom ("AEinputNew \""+$inputSurface+"\"")
+				("AEinputReplace \""+$inputSurface+"\"")
+				"inputSurface";
+
+		editorTemplate -addControl "selected";
+		editorTemplate -addControl "shrink";
+		editorTemplate -addControl "tolerance";
+		editorTemplate -addControl "locatorU";
+		editorTemplate -addControl "locatorV";
+	editorTemplate -endLayout;
+
+	// include/call base class/node attributes
+	AEabstractBaseCreateTemplate $nodeName;
+
+	editorTemplate -addExtraControls;
+
+	editorTemplate -endScrollLayout;
+	
+	editorTemplate -suppress "inputCurve";
+}

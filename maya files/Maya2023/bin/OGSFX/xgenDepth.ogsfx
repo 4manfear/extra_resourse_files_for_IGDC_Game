@@ -1,0 +1,100 @@
+//**************************************************************************/
+// Copyright 2014 Autodesk, Inc.  
+// All rights reserved.
+// Use of this software is subject to the terms of the Autodesk license 
+// agreement provided at the time of installation or download, or which 
+// otherwise accompanies this software in either electronic or hard copy form.   
+//**************************************************************************/
+//
+// Sample shader useful for rendering a "depth" pass.
+//
+// World-view-projection transformation.
+uniform mat4 gWVPXf : WorldViewProjection;
+
+// Depth priority, which shifts the model a bit forward in the z-buffer
+uniform float gDepthPriority : DepthPriority = 0.0;
+
+// Vertex shader input structure.
+attribute VS_INPUT
+{
+    vec3 Pos : POSITION;
+    float width : TEXCOORD0; 
+    vec3 curveVec : TEXCOORD1; 
+    float offsetFlag : TEXCOORD2; 
+}
+
+// Vertex shader output structure.
+attribute VS_TO_PS
+{
+}
+
+//  Globals 
+uniform mat4 World : world; 
+uniform vec3 cameraDirection : viewdirection; 
+uniform vec3 cameraPosition : worldcameraposition; 
+uniform bool camIsOrtho : isorthographic; 
+
+// Vertex shader.
+GLSLShader VS_Depth
+{
+
+vec3 xgenVSWidthVec(vec3 Pm, float width, vec3 curveVec, mat4 world, vec3 viewDirection, vec3 worldCameraPosition, bool camIsOrtho)
+{
+    vec3 viewVec = viewDirection;
+    if (!camIsOrtho) {
+    vec3 pw = (world * vec4(Pm, 1.0f)).xyz;
+        viewVec = pw - worldCameraPosition;
+    }
+
+    return normalize(cross(viewVec, curveVec)) * width;
+}
+
+vec3 xgenVSOffset(vec3 Pm, float offsetFlag, vec3 widthVecFinal)
+{
+    return Pm + offsetFlag * widthVecFinal;
+}
+
+// Vertex shader.
+//VS_TO_PS VS_Depth(VS_INPUT In)
+void main()
+{
+    vec3 widthVecFinal = xgenVSWidthVec( Pos, width, curveVec, World, cameraDirection, cameraPosition, camIsOrtho ); 
+    vec4 pm4 = vec4(xgenVSOffset( Pos, offsetFlag, widthVecFinal ), 1.0); 
+    
+    // Transform the position from object space to clip space for output.
+    vec4 HPos = gWVPXf * pm4;
+    
+    // modify the HPos a bit by biasing the Z a bit forward, based on depth priority
+    HPos.z -= HPos.w * gDepthPriority;
+
+    gl_Position = HPos;
+}
+
+}
+
+attribute pixelOut 
+{
+    vec4 colorOut: COLOR0;
+}
+
+GLSLShader PS_Depth
+{
+
+// Pixel shader.
+//float4 PS_Depth(VS_TO_PS In) : COLOR0
+void main()
+{
+    colorOut =  vec4(0.0, 0.0, 0.0, 0.0);
+}
+}
+
+/////////////////////// Techniques ///////
+
+technique main
+{
+    pass P0
+    {
+        VertexShader (in VS_INPUT, out VS_TO_PS) = VS_Depth;
+        PixelShader (in VS_TO_PS, out pixelOut) = PS_Depth;
+    }
+}

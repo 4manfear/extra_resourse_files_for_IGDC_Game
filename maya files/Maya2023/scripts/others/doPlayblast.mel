@@ -1,0 +1,50 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  Nov. 24/97
+//
+//  Description:
+//		doPlayblast is the actual proc that is executed from the
+//	Windows->Playblast option box or menu
+//
+//  Input Arguments:
+//
+//  Return Value:
+//		none
+//
+
+// This proc will generate a confirmation box.  It is used when
+// a playblast file is about to be overwritten.
+//
+global proc doPlayblast(string $saveIt,
+						string $movie,
+						int $isViewer,
+						string $format,
+						int $showOrnaments,
+						float $scale,
+						string $compression,
+						int $displaySource,
+						int $displayWidth,
+						int $displayHeight)
+{
+	string $args[] = {(string)
+		$saveIt, 
+		$movie, 
+		$isViewer, 
+		$format,
+		$showOrnaments,
+		$scale,
+		$compression,
+		$displaySource,
+		$displayWidth,
+		$displayHeight
+	};
+
+	doPlayblastArgList( "1", $args );
+}

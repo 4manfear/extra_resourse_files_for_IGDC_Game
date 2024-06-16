@@ -1,0 +1,280 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//  Description:
+//      This script defines the option box for the LOD Group menu item.
+//
+
+
+//
+//  Procedure Name:
+//      setOptionVars
+//
+//  Description:
+//		Initialize the option values.
+//
+//  Input Arguments:
+//		Whether to set the options to default values.
+//
+//  Return Value:
+//      None.
+//
+proc setOptionVars(int $forceFactorySettings)
+{
+	optionVar -init $forceFactorySettings -category "Edit.Level of Detail.Create LOD Group"
+		-iv lodThresholdType 1
+		;
+}
+
+//
+//  Procedure Name:
+//      setupLodSetup
+//
+//  Description:
+//		Update the state of the option box UI to reflect the option values.
+//
+//  Input Arguments:
+//      parent               - Top level parent layout of the option box UI.
+//                             Required so that UI object names can be 
+//                             successfully resolved.
+//
+//		forceFactorySettings - Whether the option values should be set to
+//                             default values.
+//
+//  Return Value:
+//      None.
+//
+
+global proc setupLodSetup( string $parent,
+						   int $forceFactorySettings)
+{
+	//	Retrieve the option settings
+	//
+	setOptionVars( $forceFactorySettings );
+
+	setParent $parent;
+
+	// Query the optionVar's and set the values into the controls
+	//
+	int $thresholdType = `optionVar -query lodThresholdType`;
+
+	// Set the controls
+	//
+	radioButtonGrp -edit -select ($thresholdType+1) thresholdTypeRadio;
+}
+
+//
+//  Procedure Name:
+//      setupLodCallback
+//
+//  Description:
+//		Update the option values with the current state of the option box UI.
+//
+//  Input Arguments:
+//      parent - Top level parent layout of the option box UI.  Required so
+//               that UI object names can be successfully resolved.
+//
+//		doIt   - Whether the command should execute.
+//
+//  Return Value:
+//      None.
+//
+
+global proc setupLodCallback(string $parent, int $doIt)
+{
+	optionVar -intValue lodThresholdType (`radioButtonGrp -q -select thresholdTypeRadio` - 1);
+	if( 1 == $doIt ) {
+		performSetupLod( 0 ); 
+		string $tmpCmd = "performSetupLod(0)";
+		addToRecentCommandQueue $tmpCmd "LOD Group";
+	}
+}
+
+//
+//  Procedure Name:
+//      setupLodOptions
+//
+//  Description:
+//		Construct the option box UI.  Involves accessing the standard option
+//		box and customizing the UI accordingly.
+//
+//  Input Arguments:
+//      None.
+//
+//  Return Value:
+//      None.
+//
+
+proc setupLodOptions()
+{
+	//	Name of the command for this option box.
+	//
+	string $commandName = "setupLod";
+
+	//	Build the option box actions.
+	//
+	string $callback = ($commandName + "Callback");
+	string $setup = ($commandName + "Setup");
+
+	//	Step 1:  Get the option box.
+	//	============================
+
+	string $layout = getOptionBox();
+	setParent $layout;
+	
+	//	Step 2:  Pass the command name to the option box.
+	//	=================================================
+	setOptionBoxCommandName($commandName);
+	
+	//	Step 3:  Activate the default UI template.
+	//	==========================================
+	setUITemplate -pushTemplate DefaultTemplate;
+
+	//	Step 4: Create option box contents.
+	//	===================================
+	
+	//	Turn on the wait cursor.
+	//
+	waitCursor -state 1;
+
+	tabLayout -scr true -tv false;
+	
+	string $parent = `columnLayout -adjustableColumn 1`;
+
+	radioButtonGrp
+		-numberOfRadioButtons 2
+		-label (uiRes("m_performSetupLod.kThresholdType"))  
+		-label1 (uiRes("m_performSetupLod.kDistance")) 
+		-label2 (uiRes("m_performSetupLod.kScreenHeightPercentage")) 
+		thresholdTypeRadio;
+		
+	//	Turn off the wait cursor.
+	//
+	waitCursor -state 0;
+	
+	//	Step 5: Deactivate the default UI template.
+	//  ===========================================
+	//
+	setUITemplate -popTemplate;
+
+	//	Step 6: Customize the buttons.  
+	//	==============================
+
+	//	'Apply' button.
+	//
+	string $applyBtn = getOptionBoxApplyBtn();
+	button -edit -label (uiRes("m_performSetupLod.kSetupLod")) 
+	  -command ($callback + " " + $parent + " 1 ")
+	  $applyBtn;
+
+	//	'Save' button.
+	//
+	string $saveBtn = getOptionBoxSaveBtn();
+	button -edit 
+		-command ($callback + " " + $parent + " 0; hideOptionBox")
+		$saveBtn;
+
+	//	'Reset' button.
+	//
+	string $resetBtn = getOptionBoxResetBtn();
+	button -edit 
+		-command ($setup + " " + $parent + " 1 ")
+		$resetBtn;
+
+	//	Step 7: Set the option box title.
+	//	=================================
+	//
+	setOptionBoxTitle (uiRes("m_performSetupLod.kSetupLodOptions"));
+
+	//	Step 8: Customize the 'Help' menu item text.
+	//	============================================
+	//
+	setOptionBoxHelpTag( "SetupLod" );
+
+	//	Step 9: Set the current values of the option box.
+	//	=================================================
+	//
+	eval ($setup + " " + $parent + " 0 ");	
+	
+	//	Step 10: Show the option box.
+	//	=============================
+	//
+	showOptionBox();
+}
+
+//
+//  Procedure Name:
+//      assembleCmd
+//
+//  Description:
+//		Construct the command that will apply the option box values.
+//
+//  Input Arguments:
+//      None.
+//
+//  Return Value:
+//      None.
+//
+proc string assembleCmd()
+{
+	string $cmd = "doPerformSetupLod";
+
+	setOptionVars(false);
+
+	int $thresholdType = `optionVar -q lodThresholdType`;
+
+	$cmd = $cmd + "(";
+	$cmd = $cmd + "\"1\"" + ",";
+	$cmd = $cmd + "{\"" + $thresholdType + "\"";
+	$cmd = $cmd + "} )";
+
+	return $cmd;
+}
+
+//
+//  Procedure Name:
+//      performSetupLod
+//
+//  Description:
+//		Perform the lod setup command using the corresponding 
+//		option values.  This procedure will also show the option box
+//		window if necessary as well as construct the command string
+//		that will invoke the lod setup command with the current
+//		option box values.
+//
+//  Input Arguments:
+//      0 - Execute the command.
+//      1 - Show the option box dialog.
+//      2 - Return the command.
+//
+//  Return Value:
+//      None.
+//
+
+global proc string performSetupLod(int $action)
+{
+	string $cmd = "";
+	switch ($action) {
+	  case 0:
+		setOptionVars(false);
+		$cmd = `assembleCmd`;
+		eval($cmd);
+		break;
+	  case 1:
+		setupLodOptions();
+		break;
+
+	  case 2:
+	  default:
+		setOptionVars (false);
+		$cmd = `assembleCmd`;
+		break;
+	}
+	return $cmd;
+}
+

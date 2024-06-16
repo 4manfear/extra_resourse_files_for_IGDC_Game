@@ -1,0 +1,124 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+
+global proc string[] uvSculptToolModes()
+{
+	string $modes[] = {
+		"Grab", 
+		"Pinch", 
+		"Smear",
+		"Freeze"
+	};
+
+	return $modes;
+}
+
+global proc setUVSculptToolOptVars( string $tool, int $forceSet )
+{
+	// Create an option var for each brush mode we want to save.
+	// Store the per-mode settings inside each option var.
+	// Restores the per-mode settings if the option var exists already.
+
+	if( ! `texSculptCacheContext -exists $tool` ) 
+	{
+		return;
+	}
+	
+	string $currentMode = `texSculptCacheContext -q -mode $tool`;
+
+	string $modes[] = uvSculptToolModes();
+
+	int $sz = size($modes);
+	int $i = 0;
+	for($i = 0; $i < $sz; ++$i) 
+	{
+		string $optVarName = "uvSculpt" + $modes[$i] + "ToolSettings" ;
+		int $optVarExists = `optionVar -exists $optVarName`;
+		if( !$optVarExists || $forceSet )
+		{
+			texSculptCacheContext -e -mode $modes[$i] $tool;
+			float $strength     = `texSculptCacheContext -q -strength $tool`;
+			float $size         = `texSculptCacheContext -q -size $tool`;
+			int   $direction    = `texSculptCacheContext -q -direction $tool`; 
+			int   $inverted     = `texSculptCacheContext -q -inverted $tool`;			  
+			int	  $twist			= `texSculptCacheContext -q -grabTwist $tool`; 
+			int   $falloff			= `texSculptCacheContext -q -falloffType $tool`;
+			string $falloffCurve	= `texSculptCacheContext -q -sculptFalloffCurve $tool`;	
+
+			string $optVarValue = "-strength " + $strength +
+				" -size " + $size + 
+				" -direction " + $direction + 
+				" -inverted " + $inverted +
+				" -grabTwist " + $twist + 
+				" -falloffType " + $falloff +
+				" -sculptFalloffCurve \"" + $falloffCurve + "\"" ;
+		
+			string $category = "Modeling.Mesh Tools.UV Sculpting Tools";
+			if ($optVarExists) {
+				// Save current values
+				optionVar -category $category -sv $optVarName $optVarValue;
+			} else {
+				// Initialize default values
+				optionVar -default -category $category -sv $optVarName $optVarValue;
+			}
+		}
+		else
+		{
+			string $optVarValue = `optionVar -q $optVarName`;
+			texSculptCacheContext -e -mode $modes[$i] $tool;
+			string $str = "texSculptCacheContext -e " + $optVarValue + " " + $tool;
+			eval( $str );
+		}
+	}
+
+	texSculptCacheContext -e -mode $currentMode $tool;
+}
+
+global proc initUVSculptTool()
+{
+	string $tool = "texSculptCacheContextObj";
+	
+	// if the ctx object exists, do nothing and return,  
+	// since `texSculptCacheContext $tool` fail in this case.
+	if( `texSculptCacheContext -exists $tool` ) 
+		return;
+
+	rememberCtxSettings `texSculptCacheContext $tool`;
+	
+	string $curvesArray[];
+	if ( `optionVar -exists "optionvarCustomCurves"` )
+	{
+		$curvesArray = `optionVar -q "optionvarCustomCurves"`;
+	}
+
+	string $modes[] = uvSculptToolModes();
+
+	// for each brush, 
+	// set all of the brush settings to their initial values.
+	int $sz = size($modes);
+	int $i = 0;
+	for($i = 0; $i < $sz; ++$i) 
+	{
+		texSculptCacheContext -e -mode $modes[ $i ] $tool;
+		texSculptCacheContextValues_ResetTool $tool ;
+	}
+
+	// Now, load the brush values from their option vars, if they exist
+	setUVSculptToolOptVars( $tool, false );
+
+	if ( `optionVar -exists "optionvarCustomCurves"` )
+	{
+		optionVar -ca "optionvarCustomCurves";
+		for($i = 0; $i < size($curvesArray); $i++)
+		{
+			optionVar -sva "optionvarCustomCurves" $curvesArray[$i];
+		}
+	}		
+}
+
+

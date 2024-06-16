@@ -1,0 +1,1050 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//==================================================================
+// Vector Renderer Tab
+//==================================================================
+
+// Description: Utility procedure used by other procedures in this file.
+//		Must be used to account for multiple instances of the same tab.
+//
+global proc setParentToVectorTab()
+{
+	// First set the parent to the correct tab layout.
+	// Account for the special "all renderers" master layer layout
+	// when we are using render layers
+	global string $gMasterLayerRendererName;
+	string $renderer = isDisplayingAllRendererTabs() ? $gMasterLayerRendererName : `currentRenderer`;
+	string $tabLayout = rendererTabLayoutName($renderer);
+	setParent $tabLayout;
+
+	// Now set the parent to the correct column layout
+	setParent vectorTabColumn;
+}
+
+
+// updateMayaVectorGlobalsUI
+//
+// Updates the Vector Render Globals UI based on changes in the vector format
+//
+global proc updateMayaVectorGlobalsUI()
+{
+	string $vectorGlobals = vrGetRenderGlobalsNode();
+	string $prefix = vrGetPrefix();
+	string $imageFormat = vrGetImageFormat();
+	
+	// Based on File Format we must redraw the entire Vector Formats frame
+	createMayaImageFormatFrame( $vectorGlobals, "vrMayaVectorFormatFrame", $imageFormat );
+	createMayaVectorFillStyleControl();
+	updateMayaVectorFillStyleUI();
+}
+
+
+// enableMayaVectorHighlightControl
+//
+// This callback function is called when there is a change in the highlight and
+// or fill style options.  It enables/disables the highlight controls 
+// accordingly.
+//
+global proc enableMayaVectorHighlightControl() 
+{
+	string $oldParent = `setParent -query`;
+	setParentToVectorTab();
+
+	string $vectorGlobals = vrGetRenderGlobalsNode();
+	int $fillStyle = `getAttr ($vectorGlobals + ".fillStyle")`;
+
+	// The highlight level controls depend on three factors:
+	// 1.  whether fills are turned on
+	// 2.  whether the appropriate fill is selected
+	// 3.  whether the highlights checkbox is on
+	// If 'fill objects' is on, and an appropriate fill is selected, then 
+	// the highlight layout is enabled.  If the highlights checkbox is on, then
+	// the highlight level control is also enabled.
+	//
+	//
+	// The fill styles for which highlights can be enabled are:
+	// 1 - SingleColor
+	// 5 - AverageColor
+	// 6 - AreaGradient
+	//
+	int $layoutState = `getAttr ($vectorGlobals + ".fillObjects")` && 
+						( 1 == $fillStyle || 5 == $fillStyle || 6 == $fillStyle );
+
+	int $highlightState = $layoutState &&
+						  `getAttr ($vectorGlobals + ".highlights")`;
+
+	string $prefix = vrGetPrefix();
+	layout -edit -enable $layoutState ($prefix + "HighlightOptions");
+
+	// Disable/Enable the Highlight Level conrol
+	attrControlGrp -edit -enable $highlightState vrMayaVectorHighlightControl;
+
+	setParent $oldParent;
+}
+
+
+// enableMayaVectorReflectionControl
+//
+// This callback function is called when the Reflection checkbox is switched
+// on or off.
+//
+global proc enableMayaVectorReflectionControl() 
+{
+	string $oldParent = `setParent -query`;
+	setParentToVectorTab();
+
+	string $vectorGlobals = vrGetRenderGlobalsNode();
+
+	int $reflectionState = `getAttr ($vectorGlobals + ".fillObjects")` && 
+						   `getAttr ($vectorGlobals + ".reflections")`;
+
+	// Disable/Enable the Highlight conrol
+	attrControlGrp -edit -enable $reflectionState vrMayaVectorReflectionControl;
+
+	setParent $oldParent;
+}
+
+
+// enableMayaVectorHighlightAndReflectionControl
+//
+// This callback function is called when the Fill option is switched.
+//
+global proc enableMayaVectorHighlightAndReflectionControl() 
+{
+	enableMayaVectorHighlightControl(); 
+	enableMayaVectorReflectionControl(); 
+}
+
+// updateMayaVectorFillStyle
+// 
+// This callback updates the fillStyle attribute 
+// on the vectorRenderGlobals node when the 
+// corresponding UI changes.
+//
+global proc updateMayaVectorFillStyle( int $style ) {
+	string $vectorGlobals = vrGetRenderGlobalsNode();
+	setAttr ($vectorGlobals + ".fillStyle") $style;
+}
+
+
+// updateMayaVectorEdgeWeight
+// 
+// This callback updates the edgeWeight attribute 
+// on the vectorRenderGlobals node when the corresponding
+// UI changes.
+//
+global proc updateMayaVectorEdgeWeight() {
+
+	string $oldParent = `setParent -query`;
+	setParentToVectorTab();
+
+	string $prefix 		  = vrGetPrefix();
+	string $vectorGlobals = vrGetRenderGlobalsNode();
+
+	// Get the current selection for the weight.
+	string $menuName = ($prefix + "EdgeWeight"); 
+	int    $selection = `optionMenuGrp -q -select $menuName`;
+
+	// Set the attribute.
+	float $weight = -1.0;
+	if      (  1 == $selection ) { $weight =  0.0; }
+	else if (  2 == $selection ) { $weight =  0.5; }
+	else if (  3 == $selection ) { $weight =  1.0; }
+	else if (  4 == $selection ) { $weight =  1.5; }
+	else if (  5 == $selection ) { $weight =  2.0; }
+	else if (  6 == $selection ) { $weight =  3.0; }
+	else if (  7 == $selection ) { $weight =  4.0; }
+	else if (  8 == $selection ) { $weight =  5.0; }
+	else if (  9 == $selection ) { $weight =  6.0; }
+	else if ( 10 == $selection ) { $weight =  7.0; }
+	else if ( 11 == $selection ) { $weight =  8.0; }
+	else if ( 12 == $selection ) { $weight =  9.0; }
+	else if ( 13 == $selection ) { $weight = 10.0; }
+
+	if ( -1.0 != $weight ) {
+		setAttr ($vectorGlobals + ".edgeWeight") $weight;
+	}
+
+	setParent $oldParent;
+}
+
+
+// updateMayaVectorEdgeWeightUI
+//
+// This callback updates the Edge Weight option menu drop down
+// based on the edgeWeight attribute value
+//
+global proc updateMayaVectorEdgeWeightUI() {
+
+	string $oldParent = `setParent -query`;
+	setParentToVectorTab();
+
+	string $prefix = vrGetPrefix();
+	string $vectorGlobals = vrGetRenderGlobalsNode();
+	string $menuName = ($prefix + "EdgeWeight"); 
+
+	float $weight = `getAttr ($vectorGlobals + ".edgeWeight")`;
+	int $selection = 0;
+	if 	(    0 == $weight ) { $selection =  1; }
+	else if (  0.5 == $weight ) { $selection =  2; }
+	else if (  1.0 == $weight ) { $selection =  3; }
+	else if (  1.5 == $weight ) { $selection =  4; }
+	else if (  2.0 == $weight ) { $selection =  5; }
+	else if (  3.0 == $weight ) { $selection =  6; }
+	else if (  4.0 == $weight ) { $selection =  7; }
+	else if (  5.0 == $weight ) { $selection =  8; }
+	else if (  6.0 == $weight ) { $selection =  9; }
+	else if (  7.0 == $weight ) { $selection = 10; }
+	else if (  8.0 == $weight ) { $selection = 11; }
+	else if (  9.0 == $weight ) { $selection = 12; }
+	else if ( 10.0 == $weight ) { $selection = 13; }
+	else			    { $selection = 14; }
+
+	optionMenuGrp -edit -select $selection $menuName;
+
+	setParent $oldParent;
+}
+
+//updateMayaVectorEdgeStyle 
+// This callback updates the Edge Detail option. EdgeDetail will be enabled only for Outlines. 
+global proc updateMayaVectorEdgeStyle() {
+
+	string $vectorGlobals = vrGetRenderGlobalsNode();
+
+	string $attrName = $vectorGlobals + ".edgeStyle";
+	int $state = `getAttr $attrName`;
+
+	if ($state != 1){		
+		// Edge Style is not set to Outlines. Set the edge detail to false.
+		string $attrNameEdgeDetail = $vectorGlobals + ".edgeDetail";
+		setAttr $attrNameEdgeDetail false;
+	}
+
+	// Update values
+	enableMayaVectorEdgeOptions();
+}
+
+// updateMayaVectorDetailLevel
+// 
+// This callback updates the detailLevel attribute 
+// on the vectorRenderGlobals node when the corresponding
+// UI changes.
+//
+global proc updateMayaVectorDetailLevel() {
+
+	string $oldParent = `setParent -query`;
+	setParentToVectorTab();
+
+	string $prefix 		  = vrGetPrefix();
+	string $vectorGlobals = vrGetRenderGlobalsNode();
+
+	// Get the current selection for the weight.
+	string $menuName = ($prefix + "DetailLevel"); 
+	int    $selection = `optionMenuGrp -q -select $menuName`;
+	int    $level = -1;
+	// Set the attribute - no need to do it for the Custom setting (5)
+	// since a control is already connected to the attribute.
+	if 	( 1 == $selection ) { $level = 0; }
+	else if ( 2 == $selection ) { $level = 10; }
+	else if ( 3 == $selection ) { $level = 20; }
+	else if ( 4 == $selection ) { $level = 30; }
+
+	if ( -1 != $level ) {
+		setAttr ($vectorGlobals + ".detailLevel") $level;
+	}
+
+	setParent $oldParent;
+}
+
+
+// updateMayaVectorDetailLevelUI
+//
+// This callback updates the Detail Level option menu drop down
+// based on the detailLevel attribute value
+//
+global proc updateMayaVectorDetailLevelUI() {
+
+	string $oldParent = `setParent -query`;
+	setParentToVectorTab();
+
+	string $prefix = vrGetPrefix();
+	string $vectorGlobals = vrGetRenderGlobalsNode();
+	string $menuName = ($prefix + "DetailLevel"); 
+
+	int $level = `getAttr ($vectorGlobals + ".detailLevel")`;
+	int $selection; 
+	if 	(  0 == $level ) { $selection = 1; }
+	else if ( 10 == $level ) { $selection = 2; }
+	else if ( 20 == $level ) { $selection = 3; }
+	else if ( 30 == $level ) { $selection = 4; }
+	else			 { $selection = 5; }
+
+	optionMenuGrp -edit -select $selection $menuName;
+
+	setParent $oldParent;
+}
+
+// createMayaVectorFillStyleControl
+//
+// Creates the fill style control for the Fill Style frame
+//
+global proc createMayaVectorFillStyleControl() {
+
+	setParentToVectorTab();
+	setParent vrMayaVectorFillStyleLayout;
+
+	string $prefix 		  = vrGetPrefix();
+	string $vectorGlobals = vrGetRenderGlobalsNode();
+
+	// File Format options
+	string $imageFormat    = vrGetImageFormat();
+
+	// Must update the Fill Style drop down of the Fill Options
+	string $fullPathLayout = `setParent -q` + "|vrMayaVectorFillStyleSelection";
+	if (`layout -exists $fullPathLayout`) {
+		deleteUI $fullPathLayout;
+	}
+	string $fullPathText = `setParent -q` + "|vrMayaVectorFillStyleLabel";
+	if (`text -exists $fullPathText`) {
+		deleteUI $fullPathText;
+	}
+
+	text 
+		-align "right"
+		-label (uiRes("m_createVectorGlobalsTab.kFillStyle"))
+		vrMayaVectorFillStyleLabel;
+
+	columnLayout 
+		vrMayaVectorFillStyleSelection;
+
+	// Fill Style - We need to recreate it based on file format.
+	string $buttonCmd = "updateMayaVectorFillStyle";
+
+	// Must ensure each radio collection has a unique partial name.
+	string $fillStyleRadioName = isDisplayingAllRendererTabs() ? 
+		$prefix + "fsMasterLayer" : $prefix + "fs";
+
+	radioCollection 
+		-parent $fullPathLayout
+		$fillStyleRadioName;
+	radioButton -label (uiRes("m_createVectorGlobalsTab.kSingleColor"))
+				-data 1
+			    -changeCommand ( $buttonCmd + " 1 " ) SingleColor;
+	radioButton -label (uiRes("m_createVectorGlobalsTab.kTwoColor"))		
+				-data 2
+			    -changeCommand ( $buttonCmd + " 2 " ) TwoColor;
+	radioButton -label (uiRes("m_createVectorGlobalsTab.kFourColor")) 	
+				-data 3
+			    -changeCommand ( $buttonCmd + " 3 " ) FourColor;
+	radioButton -label (uiRes("m_createVectorGlobalsTab.kFullColor"))	
+				-data 4
+			    -changeCommand ( $buttonCmd + " 4 " ) FullColor;
+	radioButton -label (uiRes("m_createVectorGlobalsTab.kAverageColor"))	
+				-data 5
+			    -changeCommand ( $buttonCmd + " 5 " ) AverageColor;
+
+	if ( !vrIsVectorFormat( $imageFormat ) || "swf" == $imageFormat || "svg" == $imageFormat ) {
+		radioButton -label (uiRes("m_createVectorGlobalsTab.kAreaGradient"))		
+			-data 6
+			-changeCommand ( $buttonCmd + " 6 " ) AreaGradient;
+		radioButton -label (uiRes("m_createVectorGlobalsTab.kMeshGradient"))		
+			-data 7
+			 -changeCommand ( $buttonCmd + " 7 " ) MeshGradient;
+	}
+	// end columnLayout
+	setParent ..;
+
+	string $attr = $vectorGlobals + ".fillStyle";
+	connectControl vrMayaVectorFillStyleLabel $attr;
+	connectControl $fillStyleRadioName $attr;
+}
+
+
+// updateMayaVectorFillStyleUI
+//
+// This callback updates the Fill Style control based on the 
+// fillStyle value
+//
+global proc updateMayaVectorFillStyleUI() {
+
+	string $oldParent = `setParent -query`;
+	setParentToVectorTab();
+
+	string $vectorGlobals = vrGetRenderGlobalsNode();
+	string $prefix = vrGetPrefix();
+
+	// Update the fill style radioButtons - mark the one which is chosen.
+	int    $fillStyle           = `getAttr ($vectorGlobals + ".fillStyle" )`;
+	string $radioCollectionName = isDisplayingAllRendererTabs() ? 
+		$prefix + "fsMasterLayer" : $prefix + "fs";
+	string $radioButtonName     = "";
+	if      ( 1 == $fillStyle ) { $radioButtonName = "SingleColor"; }
+	else if ( 2 == $fillStyle ) { $radioButtonName = "TwoColor"; }
+	else if ( 3 == $fillStyle ) { $radioButtonName = "FourColor"; }
+	else if ( 4 == $fillStyle ) { $radioButtonName = "FullColor"; }
+	else if ( 5 == $fillStyle ) { $radioButtonName = "AverageColor"; }
+	else if ( 6 == $fillStyle ) { $radioButtonName = "AreaGradient"; }
+	else if ( 7 == $fillStyle ) { $radioButtonName = "MeshGradient"; }
+
+	if ( `radioCollection -exists $radioCollectionName` ){
+		if( ("" != $radioButtonName) && (`radioButton -exists $radioButtonName`) ) {
+
+			radioButton -edit -select $radioButtonName;
+		} else {
+			string $choices[] = 
+				`radioCollection -query -collectionItemArray $radioCollectionName`;
+			radioButton -edit -select $choices[0];
+		}
+	}
+
+	setParent $oldParent;
+}
+
+
+// enableMayaVectorFillStyleUI
+//
+// This callback enables the Fill Style layouts and controls based on the 
+// fillStyle and fillObjects attributes' values
+//
+global proc enableMayaVectorFillStyleUI() {
+	string $prefix 		  = vrGetPrefix();
+	string $vectorGlobals = vrGetRenderGlobalsNode();
+
+	string $layoutName = $prefix + "FillOptions";
+	string $attrName   = $vectorGlobals + ".fillObjects";
+
+	enableMayaVectorLayout( $attrName, $layoutName, false);
+	enableMayaVectorHighlightControl();
+	enableMayaVectorReflectionControl();
+}
+
+
+// createMayaVectorFormatFrame
+//
+// Creates the vector format frame layout for the Vector tab of the Vector 
+// Render Globals
+//
+global proc createMayaImageFormatFrame( string $vectorGlobals, string $parent, string $imageFormat )
+{
+	// Set the parent to the correct frame layout
+	//
+	setUITemplate -pushTemplate attributeEditorTemplate;
+	setParentToVectorTab();
+	setParent $parent;
+
+	// Update the label to reflect the current image format
+	//
+	string $fullPathParent = `setParent -q`;
+	string $imageFormatOptions = (uiRes("m_createVectorGlobalsTab.kImageFormatOptions"));
+	string $imageFormatDisp = `format -s $imageFormat $imageFormatOptions`;
+	frameLayout -edit -label $imageFormatDisp $fullPathParent;
+
+	// Delete and then recreate the Image Format Options section each time
+	//
+	string $fullPath = $fullPathParent + "|vrMayaImageFormatOptions";
+	if (`layout -exists $fullPath`) {
+		deleteUI $fullPath;
+	}
+
+	columnLayout vrMayaImageFormatOptions;
+
+		if ("swf" == $imageFormat || "svg" == $imageFormat) {
+			// Frame Rate
+			attrControlGrp -label (uiRes("m_createVectorGlobalsTab.kFrameRate")) -attribute ($vectorGlobals +".frameRate");
+
+			if ("swf" == $imageFormat) {
+				// SWF Flash Version
+				attrControlGrp -label (uiRes("m_createVectorGlobalsTab.kFlashVersion")) -attribute ($vectorGlobals + ".flashVersion");
+
+				// SWF Open in Browser
+				attrControlGrp -label (uiRes("m_createVectorGlobalsTab.kOpenInBrowser"))
+					-attribute ($vectorGlobals + ".browserView");
+
+				// SWF Combine Fills and Edges
+				attrControlGrp -label (uiRes("m_createVectorGlobalsTab.kCombineFillsAndEdges"))
+					-attribute ($vectorGlobals + ".combineFillsEdges");
+
+			} else if ( "svg" == $imageFormat ) {
+				// SVG Animation Option
+				attrControlGrp -label (uiRes("m_createVectorGlobalsTab.kSvgAnimation")) -attribute ($vectorGlobals + ".svgAnimation");
+
+				// SVG File Compression
+				attrControlGrp -label (uiRes("m_createVectorGlobalsTab.kCompress"))
+					 -attribute ($vectorGlobals + ".svgCompression");
+			}
+		} 
+	// end columnLayout
+	setParent ..;
+
+	setUITemplate -popTemplate;
+}
+
+
+// createMayaVectorAppearanceFrame
+//
+// Creates the edge frame layout for the Vector tab of the Vector Render Globals
+//
+proc createMayaVectorAppearanceFrame( string $vectorGlobals, string $parent ) {
+
+	setUITemplate -pushTemplate attributeEditorTemplate;
+	setParentToVectorTab();
+	setParent $parent;
+
+	string $prefix = vrGetPrefix();
+
+	columnLayout;
+
+		// Curve Tolerance
+		attrControlGrp -label (uiRes("m_createVectorGlobalsTab.kCurveTolerance")) -attribute ($vectorGlobals + ".curveTolerance");
+		
+		// Secondary curve fitting
+		attrControlGrp -label (uiRes("m_createVectorGlobalsTab.kSecondaryCurveFitting")) -attribute ($vectorGlobals + ".secondaryCF");
+
+		// Detail Level
+		string $fullControlName = `optionMenuGrp -label (uiRes("m_createVectorGlobalsTab.kDetailLevelPreset"))
+			-changeCommand "updateMayaVectorDetailLevel" ($prefix + "DetailLevel")`;
+
+			menuItem -label (uiRes("m_createVectorGlobalsTab.kAutomatic")) "Automatic";
+			menuItem -label (uiRes("m_createVectorGlobalsTab.kLow")) "Low";
+			menuItem -label (uiRes("m_createVectorGlobalsTab.kMedium")) "Medium";
+			menuItem -label (uiRes("m_createVectorGlobalsTab.kHigh")) "High";
+			menuItem -label (uiRes("m_createVectorGlobalsTab.kCustomPreset")) "Custom";
+
+		scriptJob -parent $fullControlName 
+			-attributeChange ($vectorGlobals + ".detailLevel") 
+			"updateMayaVectorDetailLevelUI";
+
+		scriptJob -parent vrVectorGlobalsTab 
+			-attributeChange "defaultRenderGlobals.imageFormat"
+			"updateMayaVectorGlobalsUI";
+
+		attrControlGrp -label (uiRes("m_createVectorGlobalsTab.kDetailLevel")) -attribute ($vectorGlobals + ".detailLevel") vrMayaVectorDetailLevel;
+
+	// end columnLayout
+	setParent ..;
+
+	setUITemplate -popTemplate;
+}
+
+
+// createMayaVectorFillFrame
+//
+// Creates the fill frame layout for the Vector tab of the Vector Render Globals
+//
+proc createMayaVectorFillFrame( string $vectorGlobals, string $parent, string $imageFormat ) {
+
+	string $prefix = vrGetPrefix();
+
+	setUITemplate -pushTemplate attributeEditorTemplate;
+	setParentToVectorTab();
+	setParent $parent;
+
+	columnLayout;
+		// This checkbox enables/disables the fill options
+		attrControlGrp 
+			-label (uiRes("m_createVectorGlobalsTab.kFillObjects")) 
+			-attribute ($vectorGlobals + ".fillObjects")
+			-changeCommand "enableMayaVectorFillStyleUI";
+
+		columnLayout ($prefix + "FillOptions");
+
+			rowColumnLayout -numberOfColumns 3
+			    -columnWidth   1 128
+				-columnAlign   1 "right"
+				-columnSpacing 2 5
+				-columnWidth   2 290 
+				-columnWidth   3 100
+				-rowAttach     1 "top" 0
+				vrMayaVectorFillStyleLayout;
+
+				createMayaVectorFillStyleControl();
+
+				// This script job is for updating the fill style UI whenever 
+				// the fillStyle attribute is changed manually.
+				//
+				scriptJob 
+					-attributeChange ($vectorGlobals + ".fillStyle") "updateMayaVectorFillStyleUI"
+					-parent vrMayaVectorFillStyleLayout; 
+
+			// end rowColumnLayout
+			setParent ..;	
+
+			separator -style none -height 10;
+
+			// Show Back Faces option
+			attrControlGrp -label (uiRes("m_createVectorGlobalsTab.kShowBackFaces"))
+				-attribute ($vectorGlobals + ".showBackFaces");
+
+			// Shadows
+			attrControlGrp -label (uiRes("m_createVectorGlobalsTab.kShadows"))
+				-attribute ($vectorGlobals + ".shadows");
+
+			separator -style none -height 10;
+
+			columnLayout ($prefix + "HighlightOptions");
+				// Specular Highlights
+				attrControlGrp -label (uiRes("m_createVectorGlobalsTab.kHighlights"))
+					-attribute ($vectorGlobals + ".highlights")
+					-changeCommand "enableMayaVectorHighlightControl";
+
+				// Specular Level
+				attrControlGrp -label (uiRes("m_createVectorGlobalsTab.kHighlightLevel"))
+					-attribute ($vectorGlobals + ".highlightLevel") vrMayaVectorHighlightControl;
+
+			// end columnLayout
+			setParent ..;
+
+			// This script job is for watching the fillStyle attribute and 
+			// updating the highlight option accordingly.
+			//
+			scriptJob 
+				-attributeChange ($vectorGlobals + ".fillStyle") "enableMayaVectorHighlightControl"
+				-parent ($prefix + "HighlightOptions"); 
+
+			separator -style none -height 10;
+
+			// Reflection 
+			attrControlGrp -label (uiRes("m_createVectorGlobalsTab.kReflections"))
+				-attribute ($vectorGlobals + ".reflections")
+				-changeCommand "enableMayaVectorReflectionControl";
+
+			// Reflection Depth 
+			attrControlGrp -label (uiRes("m_createVectorGlobalsTab.kReflectionDepth"))
+				-attribute ($vectorGlobals + ".reflectionDepth") vrMayaVectorReflectionControl;
+
+		// end columnLayout
+	    setParent ..;
+
+	// end columnLayout
+	setParent ..;
+	setUITemplate -popTemplate;
+}
+
+
+// createMayaVectorEdgeFrame
+//
+// Creates the edge frame layout for the Vector tab of the Vector Render Globals
+//
+proc createMayaVectorEdgeFrame( string $vectorGlobals, string $parent ) {
+
+	string $prefix = vrGetPrefix();
+
+	setUITemplate -pushTemplate attributeEditorTemplate;
+	setParentToVectorTab();
+	setParent $parent;
+	
+ 	columnLayout;
+ 							
+		// Include Edges option
+		// This checkbox enables/disables all of the edge options
+		attrControlGrp -label (uiRes("m_createVectorGlobalsTab.kIncludeEdges")) -attribute ($vectorGlobals + ".includeEdges")
+					   -changeCommand "enableMayaVectorEdgeOptions";
+
+		columnLayout ($prefix + "EdgeOptions");
+
+			// Edge Weight
+			string $fullControlName = `optionMenuGrp -label (uiRes("m_createVectorGlobalsTab.kEdgeWeightPreset"))
+				-changeCommand "updateMayaVectorEdgeWeight" ($prefix + "EdgeWeight")`;
+
+				menuItem -label (uiRes("m_createVectorGlobalsTab.kHairline")) "Hairline";
+				menuItem -label (uiRes("m_createVectorGlobalsTab.kPt05")) "0.5pt";
+				menuItem -label (uiRes("m_createVectorGlobalsTab.kPt1")) "1.0pt";
+				menuItem -label (uiRes("m_createVectorGlobalsTab.kPt15")) "1.5pt";
+				menuItem -label (uiRes("m_createVectorGlobalsTab.kPt2")) "2.0pt";
+				menuItem -label (uiRes("m_createVectorGlobalsTab.kPt3")) "3.0pt";
+				menuItem -label (uiRes("m_createVectorGlobalsTab.kPt4")) "4.0pt";
+				menuItem -label (uiRes("m_createVectorGlobalsTab.kPt5")) "5.0pt";
+				menuItem -label (uiRes("m_createVectorGlobalsTab.kPt6")) "6.0pt";
+				menuItem -label (uiRes("m_createVectorGlobalsTab.kPt7")) "7.0pt";
+				menuItem -label (uiRes("m_createVectorGlobalsTab.kPt8")) "8.0pt";
+				menuItem -label (uiRes("m_createVectorGlobalsTab.kPt9")) "9.0pt";
+				menuItem -label (uiRes("m_createVectorGlobalsTab.kPt10")) "10.0pt";
+				menuItem -label (uiRes("m_createVectorGlobalsTab.kCustom")) "Custom";
+
+			scriptJob -parent $fullControlName 
+				-attributeChange ($vectorGlobals + ".edgeWeight") 
+				"updateMayaVectorEdgeWeightUI";
+
+			attrFieldSliderGrp 
+				-label (uiRes("m_createVectorGlobalsTab.kEdgeWeight"))
+				-sliderMinValue 0.0 -sliderMaxValue 30.0 
+				-fieldMinValue 0.0 -fieldMaxValue 1000.0 
+				-attribute ($vectorGlobals + ".edgeWeight") 
+				
+				vrMayaVectorEdgeWeight;
+
+			// Edge Style
+			attrControlGrp -label (uiRes("m_createVectorGlobalsTab.kEdgeStyle")) -attribute ($vectorGlobals + ".edgeStyle");
+			
+			scriptJob 
+				  -attributeChange ($vectorGlobals + ".edgeStyle")
+				  "updateMayaVectorEdgeStyle";
+
+			// Edge Color
+			attrColorSliderGrp 
+				-label (uiRes("m_createVectorGlobalsTab.kEdgeColor"))
+				-showButton false
+				-attribute ($vectorGlobals + ".edgeColor");
+
+			// Hidden Edges
+			attrControlGrp -label (uiRes("m_createVectorGlobalsTab.kHiddenEdges")) -attribute ($vectorGlobals + ".hiddenEdges");
+
+			// Edge Detail
+			attrControlGrp -label (uiRes("m_createVectorGlobalsTab.kEdgeDetail")) -attribute ($vectorGlobals + ".edgeDetail")
+						   -changeCommand "enableMayaVectorEdgeOptions"
+						   ($prefix + "ed");
+
+			// Outlines at intersections.
+			attrControlGrp -label (uiRes("m_createVectorGlobalsTab.kOutlinesAtIntersections")) 
+			    -attribute ($vectorGlobals + ".outlinesAtIntersections"); 
+			// Detail Edge Angle
+			attrControlGrp -label (uiRes("m_createVectorGlobalsTab.kMinEdgeAngle")) 
+			    -attribute ($vectorGlobals + ".minEdgeAngle") ($prefix+"mea");
+
+		// end columnLayout;
+		setParent ..;
+
+	// end columnLayout
+	setParent ..;
+
+	setUITemplate -popTemplate;
+}
+
+proc string renderOptimization_melToUI (string $mel)
+{
+    string $result     = $mel;
+    
+    string $safe       = (uiRes("m_createVectorGlobalsTab.kSafe"));
+    string $good       = (uiRes("m_createVectorGlobalsTab.kGood"));
+    string $aggressive = (uiRes("m_createVectorGlobalsTab.kAggressive"));
+
+	if ( $mel == "Safe") {
+	    $result = $safe;
+	}
+	else if( $mel == "Good"){
+	    $result = $good;
+	}
+	else if( $mel == "Aggressive"){
+	    $result = $aggressive;
+	}
+	else{
+		uiToMelMsg( "renderOptimization_melToUI", $mel, 1 );
+	}
+
+	return $result;
+}
+
+proc string renderOptimization_uiToMel (string $ui)
+{
+    string $result = $ui;
+    
+   	if ( $ui == (uiRes("m_createVectorGlobalsTab.kSafe")) ) {
+	    $result = "Safe";
+	}
+	else if( $ui == (uiRes("m_createVectorGlobalsTab.kGood")) ){
+	    $result = "Good";
+	}
+	else if( $ui == (uiRes("m_createVectorGlobalsTab.kAggressive")) ){
+	    $result = "Aggressive";
+	}
+	else{
+		uiToMelMsg( "renderOptimization_uiToMel", $ui, 1 );
+	}
+
+	return $result;
+}
+
+// updateMayaVectorRenderOptimization
+// 
+// This callback updates the render optimization attribute 
+// on the vectorRenderGlobals node when the corresponding
+// UI changes.
+//
+global proc updateMayaVectorRenderOptimization() {
+
+	string $oldParent = `setParent -query`;
+	setParentToVectorTab();
+
+	string $prefix 		  = vrGetPrefix();
+	string $vectorGlobals = vrGetRenderGlobalsNode();
+
+	// Get the current selection for the weight.
+	string $menuName = ($prefix + "RenderOptimization"); 
+	string $uiselection = `optionMenuGrp -q -value $menuName`;
+	string $selection = renderOptimization_uiToMel($uiselection);
+
+	setAttr -type "string" ($vectorGlobals + ".renderOptimization") $selection;
+
+	setParent $oldParent;
+}
+
+
+// updateMayaVectorRenderOptimizationUI
+//
+// This callback updates the Render Optimization option menu drop down
+// based on the renderOptimization attribute value
+//
+global proc updateMayaVectorRenderOptimizationUI() {
+
+	string $oldParent = `setParent -query`;
+	setParentToVectorTab();
+
+	string $prefix = vrGetPrefix();
+	string $vectorGlobals = vrGetRenderGlobalsNode();
+	string $menuName = ($prefix + "RenderOptimization"); 
+	string $melopt = `getAttr ($vectorGlobals + ".renderOptimization")`;
+	string $opt = renderOptimization_melToUI($melopt);
+
+	optionMenuGrp -edit -value $opt $menuName;
+
+	setParent $oldParent;
+}
+
+
+// createMayaVectorRenderFrameOptimization
+//
+// Creates Render Optimization layout for the Vector tab of the Vector Render Globals
+//
+proc createMayaVectorRenderFrameOptimization(string $vectorGlobals, string $parent)
+{
+	string $prefix = vrGetPrefix();
+
+	setUITemplate -pushTemplate attributeEditorTemplate;
+	setParentToVectorTab();
+	setParent $parent;
+	
+	columnLayout;
+		string $fullControlName = `optionMenuGrp 
+													 -label (uiRes("m_createVectorGlobalsTab.kRenderOptimizationOptions"))
+													 -changeCommand "updateMayaVectorRenderOptimization"
+													 ($prefix + "RenderOptimization")`;
+													 
+							menuItem -label		(uiRes("m_createVectorGlobalsTab.kSafe"));
+							menuItem -label 	(uiRes("m_createVectorGlobalsTab.kGood"));
+							menuItem -label 	(uiRes("m_createVectorGlobalsTab.kAggressive"));
+		
+	setParent ..;
+	scriptJob -parent $fullControlName 
+				-attributeChange ($vectorGlobals + ".renderOptimization") 
+				"updateMayaVectorRenderOptimizationUI";
+}
+
+// enableMayaVectorLayout
+//
+// This callback function can be called when a checkBoxGrp checkbox 
+// controls the enabled state of a layout.  
+//
+// Parameters:
+// $attrName        - a string representing a boolean attribute 
+// $layoutAffected	- a string which is the name of the layout controlled by the
+//					  passed attribute
+// $invert			- false if the attribute disables the layout when 
+//					  it is set to false; true if the attribute disables
+//					  the layout when it is set to true
+//
+global proc enableMayaVectorLayout(
+	string $attrName, 
+	string $layoutAffected, 
+	int    $invert) 
+{
+	string $oldParent = `setParent -query`;
+	setParentToVectorTab();
+
+	// Get the value of the attribute.
+	int $state = `getAttr $attrName`;
+
+	if ( $invert ) {
+		$state = !$state;
+	}
+
+	// Disable/Enable the given layout based on the value.
+	layout -edit -enable $state $layoutAffected;
+
+	setParent $oldParent;
+}
+
+
+// enableMayaVectorEdgeOptions
+//
+// This callback function is called when the Include Edge checkbox is switched
+// on or off, and when we update the tab. It updates the Edge Option controls.
+//
+global proc enableMayaVectorEdgeOptions() 
+{
+	string $oldParent = `setParent -query`;
+	setParentToVectorTab();
+
+	string $prefix 		  = vrGetPrefix();
+	string $vectorGlobals = vrGetRenderGlobalsNode();
+
+	// This will enable all UI elements in the Edge Options group
+	//
+	string $attrName = $vectorGlobals + ".includeEdges";
+	string $layoutName = $prefix + "EdgeOptions";
+	enableMayaVectorLayout( $attrName, $layoutName, false );
+
+	// Update Edge Detail independently. It may need to be dimmed
+	// based on the Edge Style.
+	//
+	string $edgeStyle = $vectorGlobals + ".edgeStyle";
+	int $edgeStyleState = `getAttr $edgeStyle`;
+	int $edgeStyleIsOutline = ($edgeStyleState == 1);  // Edge Style == "Outlines"
+
+	string $edgeDetailControl = $prefix + "ed";
+	attrControlGrp -edit -enable $edgeStyleIsOutline $edgeDetailControl;
+
+	// Update Min Edge Angle independently. It may need to be dimmed
+	// based on the Edge Detail.
+	//
+	int $includeEdgesState  = `getAttr $attrName`;
+	int $edgeDetailState    = false;
+	if ( $includeEdgesState && $edgeStyleIsOutline ) {
+		$attrName = $vectorGlobals + ".edgeDetail"; 
+		$edgeDetailState = `getAttr $attrName`;
+	}
+	string $controlName = $prefix + "mea";
+	attrControlGrp -edit -enable $edgeDetailState $controlName;
+
+	setParent $oldParent;
+}
+
+
+// initializeUI
+//
+// This function initilize the parts of UI which are 
+// created manually and which needs to be updated manually.
+//
+proc initializeUI() 
+{
+	string $prefix 		  = vrGetPrefix();
+	string $vectorGlobals = vrGetRenderGlobalsNode();
+
+	// Update the Edge Weight option
+	updateMayaVectorEdgeWeightUI();
+
+	// Enable/Disable the Edge Option Menu.
+	$layoutName = $prefix + "EdgeOptions";
+	$command  = "enableMayaVectorEdgeOptions ";
+	eval $command;
+
+	// Enable/Disable the Detail Level slider
+	updateMayaVectorDetailLevelUI();
+
+	// Enable/Disable the Fill Options and select the correct value 
+	// for the Fill Style
+	updateMayaVectorFillStyleUI();
+	enableMayaVectorFillStyleUI();
+}
+
+
+// createVectorGlobalsTab
+//
+// Creates the Vector tab of the Vector Render Globals
+//
+global proc createVectorGlobalsTab()
+{
+	string $prefix = vrGetPrefix();
+
+	string $imageFormat = vrGetImageFormat();
+
+	// Create the render globals node.
+	string $vectorGlobals = vrGetRenderGlobalsNode();
+
+	string $parentForm = `setParent -query`;
+	setParent $parentForm;
+
+	scrollLayout -horizontalScrollBarThickness 0 -childResizable true vrVectorGlobalsTab;
+		columnLayout -adjustableColumn true vectorTabColumn;
+
+			// File Format options
+
+			// Appearance options
+			frameLayout -label (uiRes("m_createVectorGlobalsTab.kVectorFormatOptions"))
+				-collapsable  true 
+				-collapse 0
+				vrMayaVectorFormatFrame;
+
+				createMayaImageFormatFrame( $vectorGlobals, "vrMayaVectorFormatFrame", $imageFormat ); 
+
+			setParent ..; 
+
+			// Appearance options
+			frameLayout -label (uiRes("m_createVectorGlobalsTab.kAppearanceOptions"))
+				-collapsable  true 
+				-collapse 0
+				vrMayaVectorAppearanceFrame;
+
+				createMayaVectorAppearanceFrame( $vectorGlobals, "vrMayaVectorAppearanceFrame"); 
+
+			setParent ..; 
+
+			// Fill Options
+			frameLayout -label (uiRes("m_createVectorGlobalsTab.kFillOptions"))
+				-collapsable  true 
+				-collapse 0
+				vrMayaVectorFillFrame;
+
+				createMayaVectorFillFrame( $vectorGlobals, "vrMayaVectorFillFrame", $imageFormat ); 
+
+			setParent ..; 
+
+			// Edge Options
+			frameLayout -label (uiRes("m_createVectorGlobalsTab.kEdgeOptions"))
+				-collapsable  true 
+				-collapse 0
+				vrMayaVectorEdgeFrame;
+
+				createMayaVectorEdgeFrame( $vectorGlobals, "vrMayaVectorEdgeFrame" ); 
+
+			setParent ..; 
+
+			frameLayout -label (uiRes("m_createVectorGlobalsTab.kRenderOptimizations"))
+				-collapsable true
+				-collapse 0
+				vrMayaVectorRenderOptimization ;
+
+				createMayaVectorRenderFrameOptimization($vectorGlobals, "vrMayaVectorRenderOptimization");
+			setParent ..;
+
+		setParent ..;
+
+	setParent $parentForm;
+
+	formLayout
+		-edit
+		-af vrVectorGlobalsTab "top" 0
+		-af vrVectorGlobalsTab "bottom" 0
+		-af vrVectorGlobalsTab "left" 0
+		-af vrVectorGlobalsTab "right" 0
+		$parentForm;
+
+	// We need to monitor these attributes to warn the user if nothing will be rendered
+	scriptJob
+		-attributeChange ($vectorGlobals + ".fillObjects") "vrCheckNoRender"
+		-parent vrVectorGlobalsTab;
+
+	scriptJob
+		-attributeChange ($vectorGlobals + ".includeEdges") "vrCheckNoRender"
+		-parent vrVectorGlobalsTab;
+
+	initializeUI();
+}
+
+
+// vrCheckNoRender
+//
+// Prints a warning message if both the Fill Objects and Include Objects
+// are deselected, indicating that nothing will be rendered.
+//
+global proc vrCheckNoRender() {
+	string $vectorGlobals = vrGetRenderGlobalsNode();
+	if ( 0 == `getAttr ($vectorGlobals + ".fillObjects")` &&
+		 0 == `getAttr ($vectorGlobals + ".includeEdges")` ) {
+		 warning (uiRes("m_createVectorGlobalsTab.kBlackImageWillBeRendered"));
+	}
+}

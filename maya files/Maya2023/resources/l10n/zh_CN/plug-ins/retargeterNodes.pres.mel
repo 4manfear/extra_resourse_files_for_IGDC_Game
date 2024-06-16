@@ -1,0 +1,48 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+// Resources for Plug-in: retargeterNodes
+// 
+// ----------------------------
+// Registered string resources:
+// ----------------------------
+setPluginResource( "retargeterNodes", "rDeregisterNodeError", "注销 ^1s 节点失败: ^2s。");
+setPluginResource( "retargeterNodes", "rRegisterNodeError", "注册 ^1s 节点失败: ^2s。");
+setPluginResource( "retargeterNodes", "rRegisterUIStringError", "无法注册 ^1s。");
+// 
+// --------------------------
+// Registered node resources:
+// --------------------------
+// 
+// Node: CustomRigDefaultMappingNode
+// 
+setNodeNiceNameResource( "CustomRigDefaultMappingNode", "自定义绑定默认映射节点" );
+setAttrNiceNameResource( "CustomRigDefaultMappingNode", "fzn", "冻结" );
+setAttrNiceNameResource( "CustomRigDefaultMappingNode", "t", "类型" );
+setAttrNiceNameResource( "CustomRigDefaultMappingNode", "o", "偏移" );
+setAttrNiceNameResource( "CustomRigDefaultMappingNode", "ox", "偏移 X" );
+setAttrNiceNameResource( "CustomRigDefaultMappingNode", "oy", "偏移 Y" );
+setAttrNiceNameResource( "CustomRigDefaultMappingNode", "oz", "偏移 Z" );
+setAttrNiceNameResource( "CustomRigDefaultMappingNode", "ms", "矩阵源" );
+setAttrNiceNameResource( "CustomRigDefaultMappingNode", "dr", "目标绑定" );
+setAttrNiceNameResource( "CustomRigDefaultMappingNode", "ds", "目标骨架" );
+setAttrNiceNameResource( "CustomRigDefaultMappingNode", "id", "标识符" );
+setAttrNiceNameResource( "CustomRigDefaultMappingNode", "bp", "身体部位" );
+setAttrNiceNameResource( "CustomRigDefaultMappingNode", "fza", "已冻结受影响对象" );
+setAttrEnumResource( "CustomRigDefaultMappingNode", "t", 0, "T" );
+setAttrEnumResource( "CustomRigDefaultMappingNode", "t", 1, "R" );
+// 
+// Node: CustomRigRetargeterNode
+// 
+setNodeNiceNameResource( "CustomRigRetargeterNode", "自定义绑定重定目标工具节点" );
+setAttrNiceNameResource( "CustomRigRetargeterNode", "fzn", "冻结" );
+setAttrNiceNameResource( "CustomRigRetargeterNode", "c", "已连接" );
+setAttrNiceNameResource( "CustomRigRetargeterNode", "s", "源" );
+setAttrNiceNameResource( "CustomRigRetargeterNode", "d", "目标" );
+setAttrNiceNameResource( "CustomRigRetargeterNode", "ms", "映射" );
+setAttrNiceNameResource( "CustomRigRetargeterNode", "pv", "Python Var" );
+setAttrNiceNameResource( "CustomRigRetargeterNode", "fza", "已冻结受影响对象" );

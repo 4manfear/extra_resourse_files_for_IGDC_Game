@@ -1,0 +1,267 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc xgmUnfreezeAll()
+{
+	xgmFreezeBrushContext -e -unfreezeAll xgmFreezeBrushTool;
+}
+
+global proc xgmToggleFreezePreselectionHighlight()
+{
+	int $newPreselectionHighlight = !`xgmFreezeBrushContext -q -ps xgmFreezeBrushTool`;
+	xgmFreezeBrushContext -e -ps $newPreselectionHighlight xgmFreezeBrushTool;
+}
+
+global proc xgmInvertFrozen()
+{
+	xgmFreezeBrushContext -e -invertFrozen xgmFreezeBrushTool;
+}
+
+global proc xgmToggleFreezeShowFrozen()
+{
+	int $newShowFrozen = !`xgmFreezeBrushContext -q -sf xgmFreezeBrushTool`;
+	xgmFreezeBrushContext -e -sf $newShowFrozen xgmFreezeBrushTool;
+}
+
+global proc xgmToggleFreezeUnfreeze()
+{
+	int $newLockFreeze = !`xgmFreezeBrushContext -q -unfreeze xgmFreezeBrushTool`;
+	xgmFreezeBrushContext -e -unfreeze $newLockFreeze xgmFreezeBrushTool;
+}
+
+global proc xgmSwitchFreezeBrushMode(int $newBrushMode)
+{
+	xgmFreezeBrushContext -e -globalSelection $newBrushMode xgmFreezeBrushTool;
+}
+
+global proc xgmSwitchFreezeOperation(int $newOperation)
+{
+	xgmFreezeBrushContext -e -operation $newOperation xgmFreezeBrushTool;
+}
+
+global proc xgmToggleFreezeFilterBackfaces()
+{
+	int $newFilterBackfaces = !`xgmFreezeBrushContext -q -fb xgmFreezeBrushTool`;
+	xgmFreezeBrushContext -e -fb $newFilterBackfaces xgmFreezeBrushTool;
+}
+
+global proc xgmSwitchFreezeFallOffType(string $falloffType) 
+{
+	xgmFreezeBrushContext -e -brushFalloffType $falloffType xgmFreezeBrushTool;
+}
+
+global proc contextXGenFreezeToolMM()
+{
+
+	int $currentUnfreeze = `xgmFreezeBrushContext -q -unfreeze xgmFreezeBrushTool`;
+	menuItem
+		-label (uiRes("m_contextXGenFreezeToolMM.kUnfreeze"))
+		-command xgmToggleFreezeUnfreeze 
+		-checkBox $currentUnfreeze
+		-radialPosition "N" 
+		-enableCommandRepeat 1
+		;
+
+	menuItem
+		-label (uiRes("m_contextXGenFreezeToolMM.kUnfreezeAll"))
+		-command "xgmUnfreezeAll"
+		-radialPosition "NE" 
+		-enableCommandRepeat 1
+		;
+
+	int $currentPreselectionHighlight = `xgmFreezeBrushContext -q -ps xgmFreezeBrushTool`;
+	menuItem
+		-label (uiRes("m_contextXGenFreezeToolMM.kPreselectionHighlight"))
+		-command xgmToggleFreezePreselectionHighlight 
+		-checkBox $currentPreselectionHighlight
+		-radialPosition "E"
+		-enableCommandRepeat 1
+		;
+
+	int $currentShowFrozen = `xgmFreezeBrushContext -q -sf xgmFreezeBrushTool`;
+	menuItem
+		-label (uiRes("m_contextXGenFreezeToolMM.kShowFrozen"))
+		-command xgmToggleFreezeShowFrozen 
+		-checkBox $currentShowFrozen
+		-radialPosition "SE" 
+		-enableCommandRepeat 1
+		;
+		
+	menuItem
+		-label (uiRes("m_contextXGenFreezeToolMM.kInvertFrozen"))
+		-command "xgmInvertFrozen" 
+		-radialPosition "S"
+		-enableCommandRepeat 1
+		;
+		
+	menuItem
+		-label (uiRes("m_contextXGenFreezeToolMM.kFreezeBrushMode"))
+		-radialPosition "SW"
+		-subMenu 1
+		-enableCommandRepeat 1
+		;
+		
+		radioMenuItemCollection;
+		int $currentBrushMode = `xgmFreezeBrushContext -q -globalSelection xgmFreezeBrushTool`;
+		menuItem
+			-label (uiRes("m_contextXGenFreezeToolMM.kFreezeGlobal"))
+			-command "xgmSwitchFreezeBrushMode(1)"
+			-radialPosition "W"
+			-radioButton ($currentBrushMode == 1)
+			-enableCommandRepeat 1
+			;
+			
+		menuItem
+			-label (uiRes("m_contextXGenFreezeToolMM.kFreezeLocal"))
+			-command "xgmSwitchFreezeBrushMode(0)"
+			-radioButton ($currentBrushMode == 0)
+			-radialPosition "S"
+			-enableCommandRepeat 1
+			;
+			
+		setParent -m ..;
+
+	menuItem
+		-label (uiRes("m_contextXGenFreezeToolMM.kOperation"))
+		-subMenu 1
+		-radialPosition "W" 
+		-enableCommandRepeat 1
+		;
+		
+		radioMenuItemCollection;
+		int $currentOperation = `xgmFreezeBrushContext -q -operation xgmFreezeBrushTool`;
+		menuItem
+			-label (uiRes("m_contextXGenFreezeToolMM.kPaint"))
+			-command "xgmSwitchFreezeOperation(0)"
+			-radioButton ($currentOperation == 0)
+			-radialPosition "W" 
+			-enableCommandRepeat 1
+			;
+			
+		menuItem
+			-label (uiRes("m_contextXGenFreezeToolMM.kSmooth"))
+			-command "xgmSwitchFreezeOperation(1)"
+			-radioButton ($currentOperation == 1)
+			-radialPosition "S" 
+			-enableCommandRepeat 1
+			;
+			
+		setParent -m ..;
+
+	int $currentFilterBackFaces = `xgmFreezeBrushContext -q -fb xgmFreezeBrushTool`;
+	menuItem
+		-label (uiRes("m_contextXGenFreezeToolMM.kFilterBackFaces"))
+		-command xgmToggleFreezeFilterBackfaces
+		-checkBox $currentFilterBackFaces
+		-radialPosition "NW" 
+		-enableCommandRepeat 1
+		;
+		
+	menuItem
+		-label (uiRes("m_contextXGenFreezeToolMM.kFalloffType"))
+		-subMenu 1
+		-enableCommandRepeat 1
+		;
+		
+		radioMenuItemCollection;
+		string $currentFallOffType = `xgmFreezeBrushContext -q -bft xgmFreezeBrushTool`;
+		menuItem
+			-label (uiRes("m_contextXGenFreezeToolMM.kScreen"))
+			-command "xgmSwitchFreezeFallOffType(\"screen\")"
+			-radioButton ($currentFallOffType == "screen")
+			-enableCommandRepeat 1
+			;
+			
+		menuItem
+			-label (uiRes("m_contextXGenFreezeToolMM.kVolume"))
+			-command "xgmSwitchFreezeFallOffType(\"volume\")"
+			-radioButton ($currentFallOffType == "volume")
+			-enableCommandRepeat 1
+			;
+			
+		menuItem
+			-label (uiRes("m_contextXGenFreezeToolMM.kSurface"))
+			-command "xgmSwitchFreezeFallOffType(\"surface\")"
+			-radioButton ($currentFallOffType == "surface")
+			-enable $currentBrushMode
+			-enableCommandRepeat 1
+			;
+		setParent -m ..;
+
+	string $brushCmd = "xgmFreezeBrushContext";
+	string $tool = "xgmFreezeBrushTool";
+	string $flag = "-brushFalloffCurve";
+	string $defaultValFlag = "-defaultBrushFalloffCurve";
+	string $param = $brushCmd + "\", \"" + $tool + "\", \"" + $flag + "\", \"" + $defaultValFlag;
+	menuItem
+		-label (uiRes("m_contextXGenFreezeToolMM.kAdjustBrushFalloffCurve"))
+		-command ("xgmMarkingMenuAdjustFalloffCurve( \"" + $param + "\" )")
+		-enableCommandRepeat 1
+		;
+		
+	
+	menuItem
+		-label (uiRes("m_contextXGenFreezeToolMM.kSymmetry"))
+		-subMenu 1
+		-enableCommandRepeat 1
+		;
+		
+		radioMenuItemCollection;
+		string $currentSymmetryType = `xgmFreezeBrushContext -q -brushSymmetryType xgmFreezeBrushTool`;
+		menuItem
+			-label (uiRes("m_contextXGenFreezeToolMM.kOff"))
+			-command "xgmSwitchSymmetryType(\"xgmFreezeBrushContext\", \"xgmFreezeBrushTool\", 0)"
+			-radioButton ($currentSymmetryType == 0)
+			-enableCommandRepeat 1
+			;
+			
+		menuItem
+			-label (uiRes("m_contextXGenFreezeToolMM.kObjectX"))
+			-command "xgmSwitchSymmetryType(\"xgmFreezeBrushContext\", \"xgmFreezeBrushTool\", 1)"
+			-radioButton ($currentSymmetryType == 1)
+			-enableCommandRepeat 1
+			;
+
+		menuItem
+			-label (uiRes("m_contextXGenFreezeToolMM.kObjectY"))
+			-command "xgmSwitchSymmetryType(\"xgmFreezeBrushContext\", \"xgmFreezeBrushTool\", 2)"
+			-radioButton ($currentSymmetryType == 2)
+			-enableCommandRepeat 1
+			;
+			
+		menuItem
+			-label (uiRes("m_contextXGenFreezeToolMM.kObjectZ"))
+			-command "xgmSwitchSymmetryType(\"xgmFreezeBrushContext\", \"xgmFreezeBrushTool\", 3)"
+			-radioButton ($currentSymmetryType == 3)
+			-enableCommandRepeat 1
+			;
+			
+		menuItem
+			-label (uiRes("m_contextXGenFreezeToolMM.kWorldX"))
+			-command "xgmSwitchSymmetryType(\"xgmFreezeBrushContext\", \"xgmFreezeBrushTool\", 4)"
+			-radioButton ($currentSymmetryType == 4)
+			-enableCommandRepeat 1
+			;
+
+		menuItem
+			-label (uiRes("m_contextXGenFreezeToolMM.kWorldY"))
+			-command "xgmSwitchSymmetryType(\"xgmFreezeBrushContext\", \"xgmFreezeBrushTool\", 5)"
+			-radioButton ($currentSymmetryType == 5)
+			-enableCommandRepeat 1
+			;
+			
+		menuItem
+			-label (uiRes("m_contextXGenFreezeToolMM.kWorldZ"))
+			-command "xgmSwitchSymmetryType(\"xgmFreezeBrushContext\", \"xgmFreezeBrushTool\", 6)"
+			-radioButton ($currentSymmetryType == 6)
+			-enableCommandRepeat 1
+			;
+
+	setParent -m ..;
+	
+	setParent -menu ..;
+}

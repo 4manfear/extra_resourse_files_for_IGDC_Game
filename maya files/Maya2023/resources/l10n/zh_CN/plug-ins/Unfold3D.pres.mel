@@ -1,0 +1,60 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+// Resources for Plug-in: Unfold3D
+// 
+// ----------------------------
+// Registered string resources:
+// ----------------------------
+// 
+//  (Plugin has no registered string resources)
+// 
+// 
+// --------------------------
+// Registered node resources:
+// --------------------------
+// 
+// Node: Unfold3DUnfold
+// 
+setNodeNiceNameResource( "Unfold3DUnfold", "展开 3DUnfold" );
+setAttrNiceNameResource( "Unfold3DUnfold", "fzn", "冻结" );
+setAttrNiceNameResource( "Unfold3DUnfold", "im", "输入网格" );
+setAttrNiceNameResource( "Unfold3DUnfold", "om", "输出网格" );
+setAttrNiceNameResource( "Unfold3DUnfold", "ite", "迭代次数" );
+setAttrNiceNameResource( "Unfold3DUnfold", "bi", "边界相交" );
+setAttrNiceNameResource( "Unfold3DUnfold", "trif", "三角形翻转" );
+setAttrNiceNameResource( "Unfold3DUnfold", "msiz", "贴图大小" );
+setAttrNiceNameResource( "Unfold3DUnfold", "pack", "紧缩" );
+setAttrNiceNameResource( "Unfold3DUnfold", "rspac", "房间空间" );
+setAttrNiceNameResource( "Unfold3DUnfold", "mdp", "网格 DAG 路径" );
+setAttrNiceNameResource( "Unfold3DUnfold", "uvl", "选定 UV 列表" );
+setAttrNiceNameResource( "Unfold3DUnfold", "usn", "UV 集名称" );
+setAttrNiceNameResource( "Unfold3DUnfold", "mue", "Memusexported" );
+setAttrNiceNameResource( "Unfold3DUnfold", "mve", "Memvsexported" );
+setAttrNiceNameResource( "Unfold3DUnfold", "miee", "Memisevereval" );
+setAttrNiceNameResource( "Unfold3DUnfold", "fza", "已冻结受影响对象" );
+// 
+// Node: Unfold3DOptimize
+// 
+setNodeNiceNameResource( "Unfold3DOptimize", "展开 3DOptimize" );
+setAttrNiceNameResource( "Unfold3DOptimize", "fzn", "冻结" );
+setAttrNiceNameResource( "Unfold3DOptimize", "im", "输入网格" );
+setAttrNiceNameResource( "Unfold3DOptimize", "om", "输出网格" );
+setAttrNiceNameResource( "Unfold3DOptimize", "ite", "迭代次数" );
+setAttrNiceNameResource( "Unfold3DOptimize", "bi", "边界相交" );
+setAttrNiceNameResource( "Unfold3DOptimize", "trif", "三角形翻转" );
+setAttrNiceNameResource( "Unfold3DOptimize", "msiz", "贴图大小" );
+setAttrNiceNameResource( "Unfold3DOptimize", "rspac", "房间空间" );
+setAttrNiceNameResource( "Unfold3DOptimize", "sa", "曲面角度" );
+setAttrNiceNameResource( "Unfold3DOptimize", "pow", "幂" );
+setAttrNiceNameResource( "Unfold3DOptimize", "mdp", "网格 DAG 路径" );
+setAttrNiceNameResource( "Unfold3DOptimize", "uvl", "选定 UV 列表" );
+setAttrNiceNameResource( "Unfold3DOptimize", "usn", "UV 集名称" );
+setAttrNiceNameResource( "Unfold3DOptimize", "mue", "Memusexported" );
+setAttrNiceNameResource( "Unfold3DOptimize", "mve", "Memvsexported" );
+setAttrNiceNameResource( "Unfold3DOptimize", "miee", "Memisevereval" );
+setAttrNiceNameResource( "Unfold3DOptimize", "fza", "已冻结受影响对象" );

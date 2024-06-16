@@ -1,0 +1,92 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//	Procedure: 	selectUVFaceOrientationComponents(string $polys[], int $type, int $orientation, int $doSelect)
+//
+//	Description:        
+//
+//		Select components associated with specified UV orientation faces
+//
+//  Input arguments
+//      $polys       - Input polys, use high light list if empty
+//
+//		$type        - 0 : current component select type
+//                     1 : face
+//                     2 : edge
+//                     3 : vertex
+//                     4 : uv
+//
+//      $orientation - 1 : front
+//                     2 : back
+//
+//      $doSelect    - 0 : only return selection result
+//                     1 : change current selection
+//	Return value
+//		Result components list
+//
+global proc string[] selectUVFaceOrientationComponents(string $polys[], int $type, int $orientation, int $doSelect)
+{
+	if($orientation != 1 && $orientation != 2)
+        return {}; // Unexpected input
+	
+    if($type == 0)
+    {
+		string $mask = getComponentMask();
+		if($mask == "facet" || $mask == "meshUVShell")
+			$type = 1;
+		else if($mask == "edge")
+		    $type = 2;
+		else if($mask == "vertex")
+			$type = 3;
+		else if($mask == "polymeshUV")
+			$type = 4;
+		else 
+			return {}; // Not support
+    }
+
+	// Use highlight list if no input polys
+	if(size($polys) == 0)
+	    $polys = `ls -hilite -dag -s -ni`;
+	string $components = "";
+    for($poly in $polys)
+    {
+		if(`nodeType $poly` != "mesh")
+			continue;
+        $components += "\"";
+		$components += $poly;
+        if($type == 1)//face
+            $components += ".f[*]\" ";
+        else if($type == 2)//edge
+            $components += ".e[*]\" ";
+        else if($type == 3)//vertex
+            $components += ".vtx[*]\" ";
+        else if($type == 4)//uv
+             $components += ".map[*]\" ";
+    }
+	if($components == "")
+		return {}; // No components to select
+	
+	$sel = `ls -sl`;
+	eval("select -r " + $components);
+	
+	int $t[] = `polySelectConstraint -q -t`;
+	int $bo  = `polySelectConstraint -uvc 1 -q -bo`;
+	int $uv  = `polySelectConstraint -uvc 1 -q -uv`;
+	int $ulp = `polySelectConstraint -uvc 1 -q -ulp`;
+	int $urp = `polySelectConstraint -uvc 1 -q -urp`;
+	int $ubs = `polySelectConstraint -uvc 1 -q -ubs`;
+	int $ufo[] = `polySelectConstraint -uvc 1 -q -ufo`;
+    polySelectConstraint -t 0 -bo false -uv false -ulp false -urp false -ubs false -ufo $orientation -uvc true -m 2;
+	polySelectConstraint -t $t[0] -bo $bo -uv $uv -ulp $ulp -urp $urp -ubs $ubs -ufo $ufo[0] -m 1 -uvc true; 
+	
+	$newSel = `ls -sl`;
+	if(!$doSelect)
+	    select -r $sel;
+	else
+		select -r $newSel;
+	return $newSel;
+}

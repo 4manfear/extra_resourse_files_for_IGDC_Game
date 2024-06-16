@@ -1,0 +1,45 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  April 29 1997
+//
+//  Description:
+//      Global function to ensure the options for circularFillet are set.
+//
+//  Input Arguments:
+//      Force the factory setting or not.
+//
+//  Return Value:
+//      None.
+//
+
+global proc circularFilletSetOptionVars( 
+	int $forceFactorySettings )
+//
+//
+//
+{
+    optionVar -init $forceFactorySettings -category "Modeling.Surfaces.Surface Fillet.Circular Fillet"
+        // primary Radius.
+        -fv circularFilletRadius 1.0
+        // generate cos.
+        -iv circularFilletGenerateCoS 0
+        // reverse primary surface.
+        -iv circularFilletReversePrimary 0
+        // reverse secondary surface.
+        -iv circularFilletReverseSecondary 0
+        // Tolerances - To use global Vs local tolerances.
+        // tolerance (boolean), local positional tolerance (float),
+        // local tangent Tolerance (float).
+        -iv circularFilletUseUseGlobalTolerance 1
+        -fv circularFilletLocalPositionalTolerance 0.01
+        -fv circularFilletLocalTangentTolerance 0.1
+        ;
+}
+

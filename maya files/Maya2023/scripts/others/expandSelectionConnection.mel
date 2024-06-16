@@ -1,0 +1,78 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  October 13, 1998
+//
+//  Description:
+//		This is a helper proc which will return a string which explicitly
+//	lists the members of the selection connection.  It is intended to be used
+//	by option box scripts that may be called with selection connections.
+//
+//  Input Arguments:
+//		string $selectionConnection		The name of the selection connection
+//										to expand.
+//										If $selectionConnection is not a valid
+//										selection, then an empty string is
+//										returned
+//
+//  Return Value:
+//		A string (which looks like an array) of all the members of the
+//	selection connection.
+//
+
+global proc string
+expandSelectionConnection (string $selectionConnection)
+{
+	if ($selectionConnection == "") {
+		return ("");
+	}
+	if (!`selectionConnection -exists $selectionConnection`) {
+		return ("");
+	}
+	string $members = "{";
+	string $objects[] = expandSelectionConnectionAsArray($selectionConnection);
+	int $count = 0;
+	for ($item in $objects) {
+		if ($count != 0) {
+			$members = $members + ", ";
+		}
+		$members = $members + "\"" + $item + "\"";
+		$count++;
+	}
+	$members = $members + "}";
+	return ($members);
+}
+
+global proc string[] 
+expandSelectionConnectionAsArray (string $selectionConnection)
+{
+
+	string $mem[];
+
+	if(( $selectionConnection != "" )
+	&&   `selectionConnection -exists $selectionConnection` )
+	{
+		$mem = `selectionConnection -query -object $selectionConnection`;
+	}
+
+	// filter out any summary objects
+	int $count = 0;
+	string $members[] = {};
+	for ($m in $mem) {
+		if (match(uiRes("s_TdopeSheetEditorStrings.rDopesheetSummary"), $m) == ""  && 
+			match(uiRes("s_TdopeSheetEditorStrings.rSceneSummary"), $m) == "") 
+		{ 
+			$members[$count] = $m;
+			$count++;
+		}
+	}
+
+	return $members;
+}
+

@@ -1,0 +1,43 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+
+global proc artAttrSkinWeightPaste()
+{
+    global string $gSkinWeightCopyInfluences[];
+    global float $gSkinWeightCopyWeights[];
+    
+    if((size($gSkinWeightCopyWeights) != size($gSkinWeightCopyInfluences)) || size($gSkinWeightCopyWeights) < 1) {
+        error((uiRes("m_artAttrSkinWeightPaste.kArtAttrSkinPasteWeightFailed")));		
+        return;
+    }
+    
+    string $sel[] = `ls -sl`;
+    if(size($sel) < 1) {
+        error((uiRes("m_artAttrSkinWeightPaste.kArtAttrSkinPasteWeightNoVertsSelected")));		
+		return;
+    }
+        
+    string $skinCluster = findSkinClusterFromSelectedComponent($sel[0]);
+    if($skinCluster == "")
+        return;
+                
+    string $cmd = "skinPercent -normalize false -zeroRemainingInfluences true";
+    int $ii;
+    for($ii=0;$ii<size($gSkinWeightCopyInfluences);$ii++) {
+        $cmd += " -transformValue ";
+        $cmd += $gSkinWeightCopyInfluences[$ii];
+        $cmd += " ";
+        $cmd += $gSkinWeightCopyWeights[$ii];
+    }   
+    
+    $cmd += " ";
+    $cmd += $skinCluster;
+     
+    evalEcho($cmd);    
+    
+}

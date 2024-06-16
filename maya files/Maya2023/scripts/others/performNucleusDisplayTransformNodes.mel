@@ -1,0 +1,26 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//	Description:
+//		Toggles the display of transforms in the AE.
+//
+global proc performNucleusDisplayTransformNodes()
+{
+	optionVar -intValue nucleusShowTransformNodes (!`optionVar -query nucleusShowTransformNodes`);
+	global string $gAEFocusNode;
+	if( $gAEFocusNode != "" ){
+		updateAE $gAEFocusNode;
+	}
+	global string $gNClothDisplayMenu;
+	if( $gNClothDisplayMenu != "" && `menu -exists $gNClothDisplayMenu` ){
+		string $oldParent = `setParent -menu -query`;
+		setParent -menu $gNClothDisplayMenu;
+		menuItem -edit -checkBox `optionVar -query nucleusShowTransformNodes` transformNodesItem;
+		setParent -menu $oldParent;
+	}
+}

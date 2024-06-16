@@ -1,0 +1,29 @@
+
+<?xml version='1.0' encoding='UTF-8'?>
+<templates>
+	<using package='maya'/>
+	<template name='NEpickMatrix'>
+		<attribute name='outputMatrix' type='maya.matrix'>
+			<label>Output Matrix</label>
+		</attribute>
+		<attribute name='inputMatrix' type='maya.matrix'>
+			<label>Input Matrix</label>
+		</attribute>
+		<attribute name='useTranslate' type='maya.bool'>
+			<label>useTranslate</label>
+		</attribute>
+		<attribute name='useRotate' type='maya.bool'>
+			<label>useRotate</label>
+		</attribute>
+		<attribute name='useScale' type='maya.bool'>
+			<label>useScale</label>
+		</attribute>
+	</template>
+	<view name='NEDefault' template='NEblendMatrix'>
+		<property name='outputMatrix'/>
+		<property name='inputMatrix'/>
+		<property name='useTranslate'/>
+		<property name='useRotate'/>
+		<property name='useScale'/>
+	</view>
+</templates>

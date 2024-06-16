@@ -1,0 +1,113 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date: Jan 30, 1996
+//
+//  Description:
+//      These procs create the controls for a script tool property sheet.
+//      See also scriptToolValues.mel for procs that set the state of the
+//      property sheet.
+//
+//  Input Arguments:
+//      None.
+//
+//  Return Value:
+//      None.
+//
+
+proc scriptToolSetCallbacks( string $parent )
+//
+//  Description:
+//      Set the callbacks for all of the controls in the dialog.
+//      Modifying the context will force scriptToolValues() to be called
+//
+//
+{
+    setParent $parent;
+
+	checkBoxGrp -e
+		-on1 "scriptCtx -e -cumulativeLists true `currentCtx`"
+		-of1 "scriptCtx -e -cumulativeLists false `currentCtx`"
+		cumulativeListsWidget;
+
+	checkBoxGrp -e
+		-on1 "scriptCtx -e -expandSelectionList true `currentCtx`"
+		-of1 "scriptCtx -e -expandSelectionList false `currentCtx`"
+		expandSelectionListWidget;
+
+	checkBoxGrp -e
+		-on1 "scriptCtx -e -showManipulators true `currentCtx`"
+		-of1 "scriptCtx -e -showManipulators false `currentCtx`"
+		showManipulatorsWidget;
+
+	checkBoxGrp -e
+		-on1 "scriptCtx -e -exitUponCompletion true `currentCtx`"
+		-of1 "scriptCtx -e -exitUponCompletion false `currentCtx`"
+		exitUponCompletionWidget;
+
+	checkBoxGrp -e
+		-on1 "scriptCtx -e -enableRootSelection true `currentCtx`"
+		-of1 "scriptCtx -e -enableRootSelection false `currentCtx`"
+		showRootSelectWidget;
+
+    textFieldGrp -e
+        -cc "scriptCtx -e -title \"#1\" `currentCtx`"
+        titleWidget;
+
+    textFieldGrp -e
+        -cc "scriptCtx -e -finalCommandScript \"#1\" `currentCtx`"
+        finalCommandScriptWidget;
+}
+
+global proc scriptToolProperties()
+//
+//  Description:
+//      This procedure builds the property sheet and assigns callbacks to
+//      its controls.  The state of the controls are set in scriptToolValues().
+//
+//
+{
+	string $parent = `toolPropertyWindow -q -location`;
+	setParent $parent;
+
+	setUITemplate -pushTemplate OptionsTemplate;
+	columnLayout scriptTool;
+		frameLayout -collapsable true -collapse true -label (uiRes("m_scriptToolProperties.kScriptToolSettings")) scriptToolFrame;
+			columnLayout;
+				$parent = `setParent -query`;
+				//separator -style "none";
+
+				textFieldGrp -label (uiRes("m_scriptToolProperties.kTitle"))  titleWidget;
+	 			textFieldGrp -label (uiRes("m_scriptToolProperties.kFinalCommandScript"))  finalCommandScriptWidget;
+	
+				checkBoxGrp -ncb 1
+					-label1 (uiRes("m_scriptToolProperties.kKeepActive")) 
+					-v1 on
+					cumulativeListsWidget;
+				checkBoxGrp -ncb 1
+					-label1 (uiRes("m_scriptToolProperties.kExpandSelection")) 
+					-v1 on
+					expandSelectionListWidget;
+				checkBoxGrp -ncb 1
+					-label1 (uiRes("m_scriptToolProperties.kHierarchySelection")) 
+					-v1 on
+					showRootSelectWidget;
+				checkBoxGrp -ncb 1
+					-label1 (uiRes("m_scriptToolProperties.kShowManipulators")) 
+					-v1 on
+					showManipulatorsWidget;
+				checkBoxGrp -ncb 1 -label1 (uiRes("m_scriptToolProperties.kExitUponCompletion"))  -v1 on
+					exitUponCompletionWidget;
+	
+				setParent ..;
+			setParent ..;
+    	setParent ..;
+	setUITemplate -popTemplate;
+	scriptToolSetCallbacks( $parent );
+}

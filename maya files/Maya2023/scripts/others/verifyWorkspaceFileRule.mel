@@ -1,0 +1,32 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Cloning Date:  April 2002
+//
+//  Description:
+//		If the passed-in fileRule/location combination
+//		is not part of the current workspace's fileRuleList,
+//		add it.  Then, save the workspace so the new rule is
+//		available in the project the next time Maya is
+//		started.  (If the workspace is NOT saved, file->open
+//		maya not know where to look for certain types of files
+//		it requires.)
+//		
+//		Note if the fileRule already exists with a different
+//		location, calling this method will NOT override the
+//		exsting rule.
+//		
+global proc verifyWorkspaceFileRule( string $fileRule, string $location )
+{
+	string $ruleLocation = `workspace -fileRuleEntry $fileRule`;
+	if( size( $ruleLocation ) == 0 ) {
+		workspace -fileRule $fileRule $location;
+		workspace -saveWorkspace;
+	}
+}

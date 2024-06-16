@@ -1,0 +1,52 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  Oct. 31/97
+//
+//  Description:
+//		doPasteKey is the actual proc that is executed from the
+//	Edit->Keys->Paste Keys option box or menu
+//
+//  Input Arguments:
+//
+//  Return Value:
+//      The number of curves to which keys were pasted.
+//
+global proc int doPasteKey( string $timeRange,
+							int    $copies,
+							int    $whichTime,
+							string $option,
+							int    $connect,
+							string $selectionConnection )
+{
+	string $args[] = {(string)
+		$timeRange,
+		$copies,
+		$whichTime,
+		$option,
+		$connect,
+		$selectionConnection
+	};
+
+	return doPasteKeyArgList( "1", $args );
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+

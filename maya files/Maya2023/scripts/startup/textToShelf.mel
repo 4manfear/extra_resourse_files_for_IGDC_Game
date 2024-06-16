@@ -1,0 +1,39 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  17 October 2000
+//
+//
+//<doc>
+//<name textToShelf>
+//
+//<synopsis>
+//	textToShelf (string $label, string $script)
+//
+//<returns>
+//  None.
+//
+//<description>
+//  Creates a shelf item on the currently active shelf that will
+//	execute the given MEL script.
+//
+//<flags>
+//	string $label The label to give the new shelf item.
+//	string $script The script to be executed when the shelf item is clicked.
+//
+//<examples>
+//  textToShelf ("Sel", "select -all");
+//	textToShelf ("Time", "toggleUIComponentVisibility \"Time Slider\"");
+//
+//</doc>
+
+global proc textToShelf (string $label, string $script) {
+
+	scriptToShelf($label, $script, true);
+}

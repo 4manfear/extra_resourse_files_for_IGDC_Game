@@ -1,0 +1,57 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc string commandScrollFieldPromptForFile (string $caption, string $dir, int $save, string $lang)
+{
+    string $melFilter = (uiRes("m_commandScrollFieldPromptForFile.kMelFiles"));
+    string $allFilter = (uiRes("m_commandScrollFieldPromptForFile.kAllFiles"));
+	string $filter;
+	string $pythonFilter = (uiRes("m_commandScrollFieldPromptForFile.kPythonFiles"));
+	$filter += ($pythonFilter + " (*.py);;");    
+	$filter += ($melFilter  + " (*.mel);;" + $allFilter + " (*)");
+	
+	int $mode;
+	if ($save)
+	{
+		$mode = 0;
+	}
+	else
+	{
+		$mode = 1;
+	}
+
+	string $selectedFilter;
+
+	if ("mel" == $lang)
+	{
+		$selectedFilter = $melFilter;
+	}
+    else if ("python" == $lang)
+	{
+		$selectedFilter = $pythonFilter;
+	}
+	else
+	{
+		$selectedFilter = $allFilter;
+	}
+
+	string $cmd = ("fileDialog2 -caption \"" + $caption + "\"");
+	$cmd += (" -fileMode " + $mode);
+	$cmd += (" -fileFilter \"" + $filter + "\"");
+	$cmd += (" -selectFileFilter \"" + $selectedFilter + "\"");
+	$cmd += (" -startingDirectory \"" + $dir + "\"");
+
+	string $path;
+	string $file[] = `eval $cmd`;
+	
+    if( size($file) > 0 && $file[0] != "" )
+    {
+		$path = fromNativePath($file[0]);
+    }
+
+	return $path;
+}

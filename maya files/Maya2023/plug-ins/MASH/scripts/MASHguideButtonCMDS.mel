@@ -1,0 +1,25 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc MASHguideButtonCMDS (string $attr, int $whichCMD) {
+    string $nodeName[];
+    tokenize($attr, ".", $nodeName);
+    if ($whichCMD == 1)
+    {
+        int $index = getNextFreeMultiIndex( ($nodeName[0]+".guideMatrices"), 0 );
+        string $toAttr = ($nodeName[0] + ".guideMatrices[" + $index +"]");
+
+        string $obj[] = `spaceLocator -n ($nodeName[0]+"_loc")`;
+        setAttr ($obj[0]+".overrideColor") 9;
+        setAttr ($obj[0]+".overrideEnabled") 1;
+
+        connectAttr ($obj[0]+".worldMatrix[0]") $toAttr;
+
+        select -cl;
+        select $nodeName[0];
+    }
+}

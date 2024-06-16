@@ -1,0 +1,61 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc AEfloatCompositeOperationNew(string $attr)
+{
+    columnLayout;
+
+    attrEnumOptionMenuGrp -l (uiRes("m_AEfloatCompositeTemplate.kOperation"))
+        -enumeratedItem 0 (uiRes("m_AEfloatCompositeTemplate.kAdd"))
+        -enumeratedItem 1 (uiRes("m_AEfloatCompositeTemplate.kSubtract"))
+        -enumeratedItem 2 (uiRes("m_AEfloatCompositeTemplate.kMix"))
+        -enumeratedItem 3 (uiRes("m_AEfloatCompositeTemplate.kMultiply"))
+        -enumeratedItem 4 (uiRes("m_AEfloatCompositeTemplate.kScreen"))
+        -enumeratedItem 5 (uiRes("m_AEfloatCompositeTemplate.kOverlay"))
+        -enumeratedItem 6 (uiRes("m_AEfloatCompositeTemplate.kDifference"))
+        -enumeratedItem 7 (uiRes("m_AEfloatCompositeTemplate.kDodge"))
+        -enumeratedItem 8 (uiRes("m_AEfloatCompositeTemplate.kBurn"))
+        operation;
+
+    setParent ..;
+
+    AEfloatCompositeOperationReplace($attr);
+}
+
+global proc AEfloatCompositeOperationReplace(string $attr)
+{
+    attrEnumOptionMenuGrp -e -at $attr operation;
+}
+
+global proc AEfloatCompositeTemplate(string $node)
+{
+    AEswatchDisplay $node;
+    editorTemplate -beginScrollLayout;
+    editorTemplate -beginNoOptimize;
+
+    editorTemplate -beginLayout (uiRes("m_AEfloatCompositeTemplate.kInputLayers")) -collapse 0;
+    editorTemplate -label (uiRes("m_AEfloatCompositeTemplate.kFloatA")) -addControl "floatA";
+    editorTemplate -label (uiRes("m_AEfloatCompositeTemplate.kFloatB")) -addControl "floatB";
+    editorTemplate -endLayout;
+
+    editorTemplate -beginLayout (uiRes("m_AEfloatCompositeTemplate.kLayerOperation")) -collapse 0;
+    editorTemplate -ccu 
+        "AEfloatCompositeOperationNew"
+        "AEfloatCompositeOperationReplace"
+        "operation";
+    editorTemplate -addControl "factor";
+    editorTemplate -endLayout;
+
+    editorTemplate -addExtraControls;
+
+    editorTemplate -suppress "operation";
+    editorTemplate -suppress "caching";
+    editorTemplate -suppress "nodeState";
+
+    editorTemplate -endNoOptimize;
+    editorTemplate -endScrollLayout;
+}

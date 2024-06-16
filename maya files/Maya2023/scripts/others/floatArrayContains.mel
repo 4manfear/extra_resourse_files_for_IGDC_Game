@@ -1,0 +1,50 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//<doc>
+//<name floatArrayContains>
+//
+//<synopsis>
+//		float floatArrayContains(float $item, float[] $list)
+//
+//<description>
+//		Return true if array contains the item.
+//		
+//		The array may contain more than one occurrence of the item.
+//		This procedure will return true as soon as it finds one
+//		occurrence.
+//
+//<flags>
+//		float $item    The float item to search for in the float array.
+//		float[] $list  A list of float values.
+//
+//<returns>
+//		float : True if the float array contains the item.
+//
+//<examples>
+//  float $list[] = { 1., 2., 3. };
+//  // ,Result:, 1 2 3 // 
+//  int $found = floatArrayContains( 1.0, $list );
+//  // Result: 1 //
+//  $found = floatArrayContains( 2.0, $list );
+//  // Result: 1 //
+//  $found = floatArrayContains( 0.0, $list );
+//  // Result: 0 //
+//
+//</doc>
+//
+
+global proc int floatArrayContains(float $item, float $list[])
+{
+	float $listItem;
+	for ($listItem in $list) {
+		if ($item == $listItem)
+			return true;
+	}
+	return false;
+}

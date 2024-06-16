@@ -1,0 +1,38 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//  Procedure Name:
+//  AEccString
+//
+//  Description Name;
+//  Updates a string changedCommand
+//
+//  Input Value:
+//  plugname, control, changedCommand
+//
+//  Output Value:
+//
+
+global proc AEccString( string $plugName,
+						string $control,
+						string $changedCommand)
+{
+	// get the user-typed value in the textField
+	string $value = `textFieldGrp -q -tx $control`;
+
+	// set the attribute
+	evalEcho("setAttr -type \"string\" \""+$plugName+"\" \""+$value + "\";");
+
+	// execute the changeCommand	
+    if ($changedCommand != "") {
+        string $buffer[];
+        tokenize($plugName,".",$buffer);
+		eval($changedCommand+" \""+$buffer[0]+"\"");
+	}
+}
+

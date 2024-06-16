@@ -1,0 +1,129 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date: Jan 2000
+//
+//  Description:
+//      This script updates optionVar prefs before writing to disk.
+//		This script will be called in batch mode. 
+// 
+
+global proc syncGlobalOptVars() 
+{
+	global string $gCommandLine;
+
+	// Workspace
+	string $curWS = `workspace -fn`;
+	if ("" != $curWS) {
+		optionVar -category "Files/Projects" -sv lastLocalWS $curWS;
+	}
+
+	// Command Line
+	int $fieldDimensions[] = `paneLayout -q -ps $gCommandLine`;
+	optionVar -category "Interface"
+		-iv commandLineInputFieldWidth $fieldDimensions[0]
+		-iv commandLineNumHistoryLines `commandLine -q -numberOfHistoryLines $gCommandLine`;
+
+	//	Hotbox
+	optionVar
+		-sv hotBoxDisplayStyle `hotBox -q -displayStyle`
+		-iv hotBoxTransparencyLevel `hotBox -q -tr`;
+
+	optionVar
+		-intValue isHotBoxRiggingRowVisible      `hotBox -q -rgt`
+		-intValue isHotBoxModelingRowVisible     `hotBox -q -mdt`
+		-intValue isHotBoxAnimationRowVisible    `hotBox -q -at`
+		-intValue isHotBoxPolygonsRowVisible     `hotBox -q -plt`
+		-intValue isHotBoxSurfacesRowVisible     `hotBox -q -st`
+		-intValue isHotBoxDynamicsRowVisible     `hotBox -q -dt`
+		-intValue isHotBoxRenderingRowVisible    `hotBox -q -rt`
+		-intValue isHotBoxClothRowVisible		 `hotBox -q -clt`
+		-intValue isHotBoxLiveRowVisible		 `hotBox -q -lt`
+		-intValue isHotBoxCommonRowVisible       `hotBox -q -ct`
+		-intValue isHotBoxPaneSpecificRowVisible `hotBox -q -pt`
+		-intValue isHotBoxRmbPopupsOn            `hotBox -q -rmb`
+		-intValue isHotBoxShowAll		 		 `hotBox -q -a`
+		-intValue showCustomMenuSetsMenusInHotBox `hotBox -q -customMenuSetsToggleMenus`;
+
+	//  MEL
+	optionVar 
+		-iv stackTraceIsOn `stackTrace -q -state`
+		-iv showLineNumbersIsOn `commandEcho -q -lineNumbers`
+		-iv melDuplicateVariableWarnings `melOptions -q -dvw`;
+
+	// Display
+	global int $gRefreshMode;
+	optionVar -iv refreshMode $gRefreshMode;
+
+	// Display Layers
+	optionVar 
+		-iv currentDisplayLayerActive `editDisplayLayerGlobals -q -uc`;
+		
+	// Shelves
+	global string $gShelfTopLevel;
+	if (`optionVar -q isShelfSave`) {
+		if (`tabLayout -exists $gShelfTopLevel`) {
+			saveAllShelves $gShelfTopLevel;		
+		}
+	}
+
+	//
+	// Animation Preferences
+	//
+    global string $gPlayBackSlider;
+	optionVar -iv timeSliderAnimLayerWeight `timeControl -q -animLayerShowWeight $gPlayBackSlider`;
+	
+	//Symmetric Modelling Settings
+	optionVar -iv symmetricModellingOption `symmetricModelling -q -symmetry`;	
+	optionVar -sv symmetricModellingSpaceOption `symmetricModelling -q -about`;
+	optionVar -sv symmetricModellingAxisOption `symmetricModelling -q -axis`;	
+	optionVar -fv symmetricModellingToleranceValue `symmetricModelling -q -tolerance`;
+	optionVar -iv symmetricModellingSeamOption `symmetricModelling -q -preserveSeam`;
+	optionVar -sv symmetricModellingSeamFalloffCurve `symmetricModelling -q -seamFalloffCurve`;
+	optionVar -fv symmetricModellingSeamTolerance `symmetricModelling -q -seamTolerance`;
+	optionVar -iv symmetricModellingAllowPartial `symmetricModelling -q -allowPartial`;
+
+	string $hypershadePanel = hyperShadePanelName();
+	if (`panel -exists $hypershadePanel` && `scriptedPanel -q -control $hypershadePanel` != "") {
+		saveHyperShadePaneSizes($hypershadePanel);
+	}
+
+    // ADSK_CLR_MGT_BEGIN
+    colorManagementFileRules -save;
+    // ADSK_CLR_MGT_END
+
+	optionVar -iv trsManipsPreserveUvs `manipMoveContext -q -preserveUV Move`;
+	optionVar -iv trsManipsPinPivot `manipMoveContext -q -pinPivot Move`;
+	optionVar -sv trsManipsXformConstraint `manipMoveContext -q -xformConstraint Move`;
+	optionVar -iv trsManipsXformConstraintAlongNormal `manipMoveContext -q -constrainAlongNormal Move`;
+	optionVar -iv trsManipsSnapPivotPos `manipMoveContext -q -snapPivotPos Move`;
+	optionVar -iv trsManipsSnapPivotOri `manipMoveContext -q -snapPivotOri Move`;
+	optionVar -iv trsManipsBakePivotOri `manipMoveContext -q -bakePivotOri Move`;
+	optionVar -iv trsManipsPreserveChildPosition `manipMoveContext -q -preserveChildPosition Move`;
+	optionVar -iv trsManipsTweakMode `manipMoveContext -q -tweakMode Move`;
+
+	int $manipOpt[] = `manipOptions -q -showExtrudeSliders`;
+	optionVar -iv ShowExtrudeAttributeViewportSliders $manipOpt[0];
+
+	optionVar -iv manipSmartExtrude `manipOptions -q -enableSmartExtrude`;
+	optionVar -iv manipSmartDuplicate `manipOptions -q -enableSmartDuplicate`;
+	optionVar -iv manipSmartDuplicateType `manipOptions -q -smartDuplicateType`;
+
+	optionVar -iv TrackSelectionOrder `selectPref -q -trackSelectionOrder`;
+
+	setMeshSculptToolOptVars( "sculptMeshCacheContext", true );
+	setUVSculptToolOptVars( "texSculptCacheContextObj", true );
+
+	// Hotkey Set
+	optionVar -sv currentHotkeySet `hotkeySet -q -current`;
+
+	if (`pluginInfo -q -loaded "modelingToolkit"` && `exists mtk_saveToolOptions`) {
+		mtk_saveToolOptions;
+	}
+}

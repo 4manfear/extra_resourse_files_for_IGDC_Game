@@ -1,0 +1,28 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+{
+	global int $gFilterUICusomFiltersLoaded;
+
+	// TODO: figure out if we still need to do any of this on file open/new
+	// since default nodes are now not going to be removed by a delete all
+	initDefaultFilters;
+
+	//
+	//  Load in scene objects saved in prefs directory.
+	//
+	
+	if (!`filterUICustomFiltersLoaded`) {
+		// Even if we do not get anything from prefs, we still consider the file loaded.
+		$gFilterUICusomFiltersLoaded = 1;
+		if (!`loadPrefObjects` ) {
+			warning (uiRes("m_buildDefaultSceneObjects.kLoadingOfPreferenceObjectsFailed"));
+		}
+		filterUIUpdateCustomFilters;
+	}
+}
+

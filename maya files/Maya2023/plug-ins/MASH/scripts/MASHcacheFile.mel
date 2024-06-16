@@ -1,0 +1,33 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//  Procedure Name:
+//  MASHcacheFile
+//
+//  Description;
+//  Wrapper for the cacheFile command.
+//  @param: Node name
+//  @param: The attribute to be cached.
+//  @param: The attribute to connect the resulting cache to.
+//  @param: Start frame.
+//  @param: End frame.
+//
+global proc MASHcacheFile (string $nodeName, string $attrToCache, string $attrToConnect, int $start, int $end) {
+
+    string $cacheNode[];
+    tokenize($nodeName, ".", $cacheNode);
+
+    string $cacheFiles[] = `cacheFile -fm "OneFile" -f ($cacheNode[0]+"_"+$attrToConnect) -r -outAttr ($cacheNode[0]+"."+$attrToCache) -st $start -et $end`;
+    string $source = `connectionInfo -sfd ($cacheNode[0]+"."+$attrToConnect)`;
+    if (size($source) > 0) {
+        disconnectAttr $source ($cacheNode[0]+"."+$attrToConnect);
+    }
+
+    cacheFile -attachFile -f $cacheFiles[0] -ia ($cacheNode[0]+"."+$attrToConnect);
+
+}

@@ -1,0 +1,311 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+
+proc string[] connectedShapes(string $tpl)
+{
+	string $bsArray[] = poseInterpolatorConnectedShapeDeformers($tpl);
+	string $bases[];
+	for ($bs in $bsArray)
+	{
+		$temp = `blendShape -q -g $bs`;
+		$bases = stringArrayCatenate($temp, $bases);
+	}
+	$bases = stringArrayRemoveDuplicates($bases);
+	return $bases;
+}
+proc string closestVertexFromShapes(string $joint, string $shapes[])
+{
+	vector $jPos = `joint -q -p -a $joint`; // world position
+	float $lenMin = 99999999;
+	string $vClosest;
+	for ($shape in $shapes)
+	{	
+		int $vCount[] = `polyEvaluate -vertex $shape`;
+		for ($i = 0; $i < $vCount[0]; ++$i)
+		{
+			string $vName = $shape + ".vtx[" + $i + "]";
+			vector $vPos = `pointPosition -world $vName`;
+			
+			vector $vDis = $vPos - $jPos;
+			float $len = mag($vDis);  
+			if ($len < $lenMin)
+			{
+				$lenMin = $len;
+				$vClosest = $shape + "." + $i;
+			}
+		}
+	}
+	return $vClosest;
+} 
+
+proc string getObjectSymmetryAxisFromJointPair(string $tpl, string $searchFor, string $replaceWith)
+{
+	// get joints
+	string $joints[] = poseInterpolatorDrivers($tpl);
+	if (size($joints) == 0)
+		return "";
+	
+	string $jointOri = $joints[0];
+	string $jointMir = `substitute $searchFor $jointOri $replaceWith`;
+	if (objExists($jointMir) == 0)
+		return "";
+		
+	// there are chances that this joint pair are at different meshes.
+	
+	string $shapes[] = connectedShapes($tpl);
+	string $vShape = closestVertexFromShapes($jointOri, $shapes);
+	string $array[] = stringToStringArray($vShape, ".");
+	if (size($array) != 2)
+		return "";
+	string $shapeOri = $array[0];
+	string $vertexOri = $array[1];
+	$vShape = closestVertexFromShapes($jointMir, $shapes);
+	$array = stringToStringArray($vShape, ".");
+	string $shapeMir = $array[0];
+	string $vertexMir = $array[1];
+	
+	string $temp1 = $shapeOri + ".vtx[" + $vertexOri + "]";
+	string $temp2 = $shapeMir + ".vtx[" + $vertexMir + "]";
+	vector $v1 = `pointPosition -local $temp1`; // local position 
+	vector $v2 = `pointPosition -local $temp2`; 
+	vector $vDis = $v1 - $v2;
+	float $x = $vDis.x > 0 ? $vDis.x : -$vDis.x;
+	float $y = $vDis.y > 0 ? $vDis.y : -$vDis.y;
+	float $z = $vDis.z > 0 ? $vDis.z : -$vDis.z;
+	if ($x >= $y && $x >= $z)
+		return "x";
+	if ($y >= $x && $y >= $z)
+		return "y";
+	if ($z >= $x && $z >= $y)
+		return "z";
+	
+}
+
+proc int getConnectedPoseIndex(string $bsTarget, string $tpl)
+{
+	string $buffer[] = stringToStringArray($bsTarget, ".");
+	if (size($buffer) != 2)
+		return -1;
+	
+	string $bs = $buffer[0];
+	int $tgtIdx = (int)$buffer[1];
+	if ($tgtIdx < 0)
+		return -1;
+	
+	// get the connected attr
+	$tempAttr = $bs + ".w[" + $tgtIdx + "]";
+	string $connectedSources = `connectionInfo -sfd $tempAttr`;
+	if ($connectedSources == "")
+		return -1;
+		 	
+	string $buffer2[] = stringToStringArray($connectedSources, ".");
+	string $connectedTpl = $buffer2[0];
+	string $connectedOutput = $buffer2[1];
+	
+	string $connectedTplTransform = poseInterpolatorTransform($connectedTpl);
+	if ($connectedTpl != $tpl && $connectedTplTransform != $tpl)
+		return -1;
+
+	// get the pose name 
+	int $connectedPoseIndex = (int)`match "[0-9]+" $connectedOutput`;
+	string $connectedPose = poseInterpolatorPoseName($tpl, $connectedPoseIndex);
+	if ($connectedPose == "")
+		return -1;
+		
+	return $connectedPoseIndex;
+}
+ 
+global proc string poseInterpolatorMirror(
+	string $tpl, string $poses[], string $searchFor, string $replaceWith,
+	int $shape, int $symmetryAxis, int $storeSymmetryEdge
+)
+// Description:
+//     To mirror the poses, using the $searchFor and $replaceWith to find drivers/joints pairs.
+//     If $shape is positive, connected blendShape targets of these poses are duplicated and flipped
+//     to add the mirrorred the target delta to the mirrored poses.
+// 
+// Input Arguments:
+//     $shape:             to mirror the connected blendShape targets or not
+//     $symmetryAxis:      used for flipping blendShape target
+//     $storeSymmetryEdge: used for flipping blendShape target 
+{	
+	// Mirror the poseInterpolator node
+	string $cmd = "poseInterpolator -edit ";
+	string $posesToMirror;
+	for ($p in $poses)
+	{
+		$posesToMirror += "-mirror \"" + $p + "\" ";
+	}
+	$cmd += $posesToMirror;
+	$cmd += "-searchAndReplace " + $searchFor + " " + $replaceWith + " ";
+	$cmd += $tpl;
+		
+	string $tplMirror = "";
+	string $resultMirror[] = eval($cmd);
+	// this eval($cmd) could fail from the poseInterpolator cmd
+	// in that case this script stops running, and no blendShape target change.
+	if (size($resultMirror))
+	{
+		$tplMirror = $resultMirror[0];
+	}
+	
+	if ($tplMirror == "")
+		return ""; // mirror pose fail.
+		
+	if ($shape)
+	{
+		string $bsOldTargets[];
+		string $bsTargets[];
+		
+		string $blendShapes[] = poseInterpolatorConnectedShapeDeformers($tpl);
+			
+		for ($bs in $blendShapes)
+		{
+			// get the targets should be mirrored
+			string $targetsToMirror[];
+			int $targetIdxToMirror[];
+			for ($p in $poses)
+			{
+				int $tgtIdx = blendShapeTargetIndexFromName($bs, $p);
+				if ($tgtIdx == -1)
+					continue;
+				$targetsToMirror[size($targetsToMirror)] = $p;
+				$targetIdxToMirror[size($targetIdxToMirror)] = $tgtIdx;
+			} 
+			
+			string $newTargetAliasArray[];
+			for ($i = 0; $i < size($targetsToMirror); ++$i)
+			{
+				string $fromAlias = $targetsToMirror[$i];
+				$newAlias = substituteAllString($fromAlias, $searchFor, $replaceWith);
+				
+				// it is possible that the $newAlias == $fromAlias, but blendShape targets
+				// not allow same alias, so we need to make sure $newAlias is unique. 
+				$newUniqueAlias = $newAlias;
+				if ($newAlias == $fromAlias)
+				{
+					$newUniqueAlias = $fromAlias + "_Mirror";
+					$newUniqueAlias = blendShapeUniqueWeighName($bs, $newUniqueAlias);
+				}
+				else
+				{
+					// delete the targets with the same alias of mirror targets,
+					// since we have confirmed that the mirror pose could success
+					// so there is no chances that we need to undo these deletions.
+					
+					int $existTgt = blendShapeTargetIndexFromName($bs, $newAlias);
+					if ($existTgt != -1)
+					{
+						blendShapeDeleteTargetGroup($bs, $existTgt);
+					}
+				}
+				$newTargetAliasArray[size($newTargetAliasArray)] = $newUniqueAlias;
+			}
+			
+			// duplicate targets.
+			int $newTargetIndices[];
+			for ($i = 0; $i < size($targetsToMirror); ++$i)
+			{
+				int $newTargetIndex = blendShapeDuplicateTarget($bs, $targetIdxToMirror[$i]);
+				$newTargetIndices[size($newTargetIndices)] = $newTargetIndex;
+			}
+			
+			// rename the new targets 
+			for ($i = 0; $i < size($targetsToMirror); ++$i)
+			{	
+				int $newTargetIndex = $newTargetIndices[$i];
+				string $newUniqueAlias = $newTargetAliasArray[$i];
+				
+				if ($newTargetIndex > -1)
+				{		 
+					blendShapeRenameTargetAlias($bs, $newTargetIndex, $newUniqueAlias);
+				}				
+			}
+			
+			// manually connect the new mirror targets to the mirror poses.
+			for ($i = 0; $i < size($targetsToMirror); ++$i)
+			{				
+				int $newTargetIndex = $newTargetIndices[$i];
+				if ($newTargetIndex == -1)
+					continue;
+								
+				string $fromAlias = $targetsToMirror[$i];
+				$newAlias = substituteAllString($fromAlias, $searchFor, $replaceWith);
+				int $tplMirrorPoseIdx = poseInterpolatorPoseIndex($tplMirror, $newAlias);
+				string $sourcePlug = $tplMirror + ".output[" + $tplMirrorPoseIdx + "]";
+				
+				string $newUniqueAlias = $newTargetAliasArray[$i];
+				string $destPlug = $bs + "." + $newUniqueAlias;
+				
+				string $connectedSources = `connectionInfo -sfd $destPlug`;
+				if ($connectedSources != $sourcePlug)
+				{
+					catch(`connectAttr -force $sourcePlug $destPlug`);
+				}
+			}
+			
+			// build encoded targets for flipping procedure
+			for ($newTargetIndex in $newTargetIndices)
+			{
+				string $encodedTarget = $bs + "." + $newTargetIndex;
+				$bsTargets[size($bsTargets)] = $encodedTarget;
+			}
+			for ($oldTargetIndex in $targetIdxToMirror)
+			{
+				$bsOldTargets[size($bsOldTargets)] = $bs + "." + $oldTargetIndex; 
+			}
+		} // end of for all blendShape nodes. 
+		
+		// flip all the new targets, without change the target indices and alias. 		 
+		int $axis = 1;
+		if ($symmetryAxis == 2)
+		{
+			int $axis = 4;  // topology
+			doBlendShapeFlipTarget($axis, $storeSymmetryEdge, $bsTargets);
+		}
+		else if ($symmetryAxis == 1)
+		{
+			// symmetry is about object space,
+			// still need to find out it is about object X or object Y or object Z.
+			
+			string $strObjAxis = getObjectSymmetryAxisFromJointPair($tpl, $searchFor, $replaceWith);
+			if ($strObjAxis == "x")
+				$axis = 1;
+			if ($strObjAxis == "y")
+				$axis = 2;
+			if ($strObjAxis == "z")
+				$axis = 3;	
+					
+			// 
+			for ($i = 0; $i < size($bsTargets); ++$i)
+			{
+				int $tplPoseIdx = getConnectedPoseIndex($bsOldTargets[$i], $tpl);
+				int $tplMirrorPoseIdx = getConnectedPoseIndex($bsTargets[$i], $tplMirror);
+				if ($tplPoseIdx == -1 || $tplMirrorPoseIdx == -1)
+					continue;
+				
+				// get the pose names 
+				string $connectedPose = poseInterpolatorPoseName($tpl, $tplPoseIdx);
+				string $connectedMirrorPose = poseInterpolatorPoseName($tplMirror, $tplMirrorPoseIdx);
+				if ($connectedPose == "" || $connectedMirrorPose == "")
+					continue;
+					
+				// go to poses mirrored at both side hopefully this will help flipping targets.
+				poseInterpolatorGoToPose($tpl, $connectedPose);			
+				poseInterpolatorGoToPose($tplMirror, $connectedMirrorPose);
+				
+				string $toFlipTargets[];
+				$toFlipTargets[size($toFlipTargets)] = $bsTargets[$i];
+				
+				doBlendShapeFlipTarget($axis, $storeSymmetryEdge, $toFlipTargets);
+			}					
+		}
+	} // end of if (shape)	 
+	
+	return $tplMirror;
+}  

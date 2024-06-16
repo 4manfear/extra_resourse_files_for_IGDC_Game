@@ -1,0 +1,44 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  December 2005
+//
+//  Description:
+//      Option tool callbacks for cacheFile paint tool.
+//
+
+global
+proc artAttrCacheCallback(string	$artCommand)
+{
+	source "artisanCallback.mel";
+	source "artAttrCallback.mel";
+
+	string $currContext = `currentCtx`;
+	string $currTool	= `contextInfo -c $currContext`;
+
+	// Basic Brush frameLayout.
+	artisanBrushCallback( $artCommand, $currTool );
+
+	// //////////////////////////////////////////// 
+	
+	// Define the common callbacks.
+	artAttrCommonCallback( $artCommand, $currTool );
+	
+	// Stroke frameLayout.
+	artisanStrokeCallback( $artCommand, $currTool );
+
+	// Pressure frameLayout.
+	artisanPressureCallback( $artCommand, $currTool );
+
+	// Attribute Maps frameLayout.
+	artisanAttrMapCallback( $artCommand, $currTool );
+
+	// Display frameLayout.
+	artisanDisplayCallback( $artCommand, $currTool );	
+}

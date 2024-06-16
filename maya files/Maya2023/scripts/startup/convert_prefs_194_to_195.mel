@@ -1,0 +1,34 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date: March 17, 1999
+//
+//
+// Description:
+//  Converts version 1.94 preferences to version 1.95.
+//		- remove multiLister optionVars due to change in builtin 
+//		  filter names.
+//
+//
+{
+
+	catch (
+		`optionVar
+			-remove multiListerPanel1TopListerNames
+			-remove multiListerPanel1TopListerCount
+			-remove multiListerPanel1TopListerLabels
+			-remove multiListerPanel1TopListerCmds
+			-remove multiListerPanel1BottomListerNames
+			-remove multiListerPanel1BottomListerCount
+			-remove multiListerPanel1BottomListerLabels
+			-remove multiListerPanel1BottomListerCmds
+			`
+	);
+}
+

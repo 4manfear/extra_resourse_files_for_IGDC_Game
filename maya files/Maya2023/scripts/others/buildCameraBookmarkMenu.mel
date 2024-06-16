@@ -1,0 +1,90 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+
+//
+//  Procedure Name:
+//      buildCameraBookmarkMenu
+//
+//  Description:
+//      Create a menu item for each the bookmark views associated with
+//      the current camera. New bookmarks can be created with or
+//      without a description.
+//
+global proc buildCameraBookmarkMenu( string $parent, string $panel )
+{
+	int $RevertToLegacyCameraMenus = 1;
+
+    setParent -m $parent;
+
+    menu -e -deleteAllItems $parent;
+
+	// Update the values in the menu based on the current camera
+	//
+    string $camera = "";
+	string $editor = `modelPanel -q -modelEditor $panel`;
+
+	string $customEditor = `getCustomViewEditorFromPanel( $panel )`;
+	if (size($customEditor))
+	{
+		$editor = $customEditor;
+		$camera = `modelEditor -q -camera $customEditor`;		
+	}
+	else
+		$camera = `modelPanel -q -camera $panel`;
+
+
+	if (0 == $RevertToLegacyCameraMenus)
+	{
+		// Add pre-defined bookmarks first
+		menuItem -divider true -dividerLabel (uiRes("m_buildCameraBookmarkMenu.kPredefinedBookmarks"));
+		menuItem -ecr 0 -label (uiRes("m_buildCameraBookmarkMenu.kDefaultPerspective"))
+			-command ("viewSet -p `modelEditor -q -camera "+$editor+"`;");
+		menuItem -ecr 0 -label (uiRes("m_buildCameraBookmarkMenu.kBack"))
+			-command ("viewSet -b `modelEditor -q -camera "+$editor+"`;");
+		menuItem -ecr 0 -label (uiRes("m_buildCameraBookmarkMenu.kBottom"))
+			-command ("viewSet -bo `modelEditor -q -camera "+$editor+"`;");
+		menuItem -ecr 0 -label (uiRes("m_buildCameraBookmarkMenu.kFront"))
+			-command ("viewSet -f `modelEditor -q -camera "+$editor+"`;");
+		menuItem -ecr 0 -label (uiRes("m_buildCameraBookmarkMenu.kLeftSide"))
+			-command ("viewSet -ls `modelEditor -q -camera "+$editor+"`;");
+		menuItem -ecr 0 -label (uiRes("m_buildCameraBookmarkMenu.kRightSide"))
+			-command ("viewSet -rs `modelEditor -q -camera "+$editor+"`;");
+		menuItem -ecr 0 -label (uiRes("m_buildCameraBookmarkMenu.kTop"))
+			-command ("viewSet -t `modelEditor -q -camera "+$editor+"`;");
+
+		menuItem -divider true;
+	}
+
+    // Create a menu item for each bookmark
+
+	
+
+    string $bookmarks[] = `listConnections ($camera+".bookmarks")`;
+    string $bookmarks3D[] = {};
+    string $bookmarks2D[] = {};
+    for ( $item in $bookmarks) {
+        $viewType = `getAttr ($item + ".viewType")`;
+        if ($viewType == 0)
+            $bookmarks3D[size($bookmarks3D)] = $item;
+        else if ($viewType == 1)
+            $bookmarks2D[size($bookmarks2D)] = $item;
+    }
+
+    for ( $item in $bookmarks3D) {
+        menuItem -label $item
+            -c ("cameraView -e -animate (`optionVar -q animateRollGotoBookmark`) -camera "+$camera+" -setCamera "+$item);
+    }
+
+    for ( $item in $bookmarks2D) {
+        menuItem -label ($item + (uiRes("m_buildCameraBookmarkMenu.kPanZoom")))
+            -c ("cameraView -e -animate (`optionVar -q animateRollGotoBookmark`) -camera "+$camera+" -setCamera "+$item);
+    }
+    menuItem -divider true;
+
+    menuItem -label (uiRes("m_buildCameraBookmarkMenu.kEditBookmarks")) -c ("cameraBookmarkEditor "+$camera);
+}

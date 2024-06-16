@@ -1,0 +1,129 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  June 2000
+//
+//  Description:
+//      Option tool property window for Artisan tools
+//
+//
+//  Procedure Name:
+//      artSelectValues
+//
+//  Description:
+//      Initialize the option values.
+//
+//  Input Arguments:
+//
+//  Return Value:
+//      None.
+//
+
+global string $gAartSkinCurrentInfluence = "";
+
+global proc artSkinPaintValues( 
+	string 	$artCommand,
+	string	$currTool
+)
+//
+//	Paint Skin Weights tool values.
+//
+{
+	// RSE Moved the call to artSkinProperties as fix for bug 157707 and 187493
+	// Moved the callback setting up code to artSkinCallback.mel for skinPaintSortRadio
+
+	// Common Attribute Paint UI.
+	artAttrCommonValues( $artCommand, $currTool );
+}
+
+// =======================================================
+// Main callback procedure for Paint Selecion tool.
+// =======================================================
+global proc artAttrSkinValues(
+	string 	$toolName
+)
+{
+	source "artisanCallback.mel";
+    source "artisanValues.mel";
+
+    source "artAttrValues.mel";
+	
+	// If faces or edges are selected convert the selection to vertices
+	string $edges[] = `filterExpand -sm 32`;
+	string $faces[] = `filterExpand -sm 34`;
+	string $polyComps[] = stringArrayCatenate($edges, $faces); 
+	if (size($polyComps) > 0)
+	{
+		changeSelectMode -component;
+		PolySelectConvert 3;
+	}
+
+	string 	$artCommand	 = "artAttrSkinPaintCtx";
+	string	$currContext = `currentCtx`;
+	string	$currTool	 = `contextInfo -c $currContext`;
+
+	// Correctly initialize the Select/Paint control
+	int $paintMode = `eval( $artCommand + " -q -skinPaintMode "+$currContext )`;
+
+    if($paintMode == 0) //marquee select
+    {
+        radioButtonGrp -e
+		    -select 2
+	    artAttrSkinPaintModeRadioButton;
+	}
+	else if($paintMode == 1) //paint skin weights
+	{
+	    radioButtonGrp -e
+		    -select 1
+	    artAttrSkinPaintModeRadioButton;
+    }
+    else if($paintMode == 2) //paint select
+	{
+	    radioButtonGrp -e
+		    -select 3
+	    artAttrSkinPaintModeRadioButton;
+    }
+	
+	
+	if( !($paintMode==1) )
+	{
+		// Since the tool is not really reactivated (select mode) we must for a reinitialisation of the joint lists here
+		artAttrSkinJointMenu( $currTool, $artCommand );
+	}
+	
+
+	// Provide a different icon for different attribute tools.
+	string $icon	= "paintSkinWeights.png";
+	string $helpTag = "PaintSkinWeightsTool";
+
+	string $parent = (`toolPropertyWindow -q -location` + "|artAttrSkin");
+	setParent $parent;
+
+	toolPropertySetCommon $toolName $icon $helpTag;
+
+	// Brush frameLayout values.
+	artisanBrushValues( $artCommand, $currTool );
+
+	// Skin Paint Weights frameLayout values.
+   	artSkinPaintValues( $artCommand, $currTool );
+
+	// Stroke frameLayout values.
+	artisanStrokeValues( $artCommand, $currTool );
+
+	// Stylus Pressure frameLayout values.
+	artisanPressureValues( $artCommand, $currTool );
+
+	// Display frameLayout values.
+	artisanDisplayValues( $artCommand, $currTool );
+
+	toolPropertySelect artAttrSkin;
+
+	// Update Ramp section values	
+	artisanRampCallback( $artCommand );
+}

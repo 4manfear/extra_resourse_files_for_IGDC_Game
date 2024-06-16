@@ -1,0 +1,61 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc denormalizeCurves (string $animCurveEd, int $removeNormalizer)
+{
+	string $selection[] = `ls -selection`;
+
+	string $curves[] = `keyframe -query -name`;
+	if (size($curves) == 0)
+	{
+		$curves = `animCurveEditor -query -curvesShown $animCurveEd`;
+	}
+	
+	string $curve;
+
+	float $selectedKeys[] = `keyframe -query -selected`;
+	string $keysOnCurves[];
+		
+	if (size($selectedKeys) > 0)
+	{
+		for ($curve in $curves)
+		{	
+			float $keys[] = `keyframe -query -selected $curve`;
+			
+			if (size($keys) > 0)
+			{
+				string $keySelection = "";
+
+				float $key;
+				for ($key in $keys)
+				{
+					$keySelection += " -t ";
+					$keySelection += $key;
+				}
+				
+				$keySelection += (" " + $curve);
+
+				$keysOnCurves[size($keysOnCurves)] = $keySelection;
+			}
+		}
+	}
+	
+	for ($curve in $curves)
+	{
+		denormalizeCurve($removeNormalizer, $curve); 
+	}
+
+	select -replace $selection;
+	
+	string $keysOnCurve;
+	
+	for ($keysOnCurve in $keysOnCurves)
+	{
+		string $cmd = ("selectKey -add " + $keysOnCurve);	
+		eval($cmd);
+	}
+}

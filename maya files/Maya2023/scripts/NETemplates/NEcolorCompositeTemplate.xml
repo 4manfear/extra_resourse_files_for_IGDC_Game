@@ -1,0 +1,43 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<templates>
+	<using package='maya'/>
+	<template name='NEcolorComposite'>
+		<attribute name='outColor' type='maya.float3'>
+			<label>Out Color</label>
+		</attribute>
+		<attribute name='outAlpha' type='maya.float'>
+			<label>Out Alpha</label>
+		</attribute>
+		<attribute name='colorA' type='maya.float3'>
+			<label>Color A</label>
+		</attribute>
+		<attribute name='alphaA' type='maya.float'>
+			<label>Alpha A</label>
+		</attribute>
+		<attribute name='colorB' type='maya.float3'>
+			<label>Color B</label>
+		</attribute>
+		<attribute name='alphaB' type='maya.float'>
+			<label>Alpha B</label>
+		</attribute>
+		<attribute name='operation' type='maya.short'>
+			<label>Operation</label>
+		</attribute>
+		<attribute name='factor' type='maya.float'>
+			<label>Factor</label>
+		</attribute>
+	</template>
+	<view name='NEDefault' template='NEcolorComposite'>
+		<property name='outColor'/>
+		<property name='outAlpha'/>
+		<property name='colorA'/>
+		<property name='alphaA'/>
+		<property name='colorB'/>
+		<property name='alphaB'/>
+		<property name='operation'/>
+		<property name='factor'/>
+	</view>
+	<view name='NEDefaultSoloOutput' template='NEcolorComposite'>
+		<property name='outColor'/>
+	</view>
+</templates>

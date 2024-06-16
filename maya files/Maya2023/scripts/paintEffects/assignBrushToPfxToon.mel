@@ -1,0 +1,43 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date: 2005 
+//
+//
+//
+//  Description:
+//      This implements the assignBrushToPfxToon proc
+//
+//
+//  Input Arguments:
+//      None.
+//
+//  Return Value:
+//      None.
+//
+
+global proc assignBrushToPfxToon()
+{
+	string $pfxToons[] = getSelectedToons();
+	if( size( $pfxToons ) > 0 ){
+		$brush = getDefaultBrush();
+		string $newBrush[] = `duplicate -ic $brush`;
+		connectAttr time1.outTime ($newBrush[0] + ".time");
+		string $pfxToon;	
+		for( $pfxToon in $pfxToons ){
+			string $oldBrush = sourceNodeNameFromConnection( $pfxToon + ".brush" );
+			if( size($oldBrush) > 0 ){
+				disconnectAttr ( $oldBrush + ".outBrush" ) ( $pfxToon + ".brush" );
+			}
+			brushStartSetup( $newBrush[0], 1 );
+			connectAttr ($newBrush[0] + ".outBrush") ($pfxToon + ".brush");
+		}
+	}
+
+}

@@ -1,0 +1,705 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+// Round a float to the nearest integer
+proc int round(float $f)
+{
+	return `floor ($f + 0.5)`;
+}
+
+proc string getParent(string $contextName)
+{
+	return `toolPropertyWindow -q -location` + "|" + $contextName;
+}
+
+proc string setContextParent(string $contextName)
+{
+	string $oldParent = `setParent -q`;
+	string $parent = getParent($contextName);
+
+	setParent $parent;
+	return $oldParent;
+}
+
+proc updateCollapsedStateCmdDefault(string $layoutName, string $extraCmd, int $default)
+{
+	string $varName = $layoutName + "Collapsed";
+	int $collapsed = `optionVar -exists $varName` ? 
+		`optionVar -q $varName` :
+		$default;
+
+	frameLayout -e 
+		-cl $collapsed
+		-cc ("optionVar -iv " + $varName + " 1;")
+		-ec ($extraCmd + "; optionVar -iv " + $varName + " 0;")
+		$layoutName;
+}
+
+proc updateCollapsedStateCmd(string $layoutName, string $extraCmd)
+{
+	updateCollapsedStateCmdDefault($layoutName, $extraCmd, 0);
+}
+
+proc updateCollapsedStateDefault(string $layoutName, int $default)
+{
+	updateCollapsedStateCmdDefault($layoutName, "", $default);
+}
+
+proc updateCollapsedState(string $layoutName)
+{
+	updateCollapsedStateCmd($layoutName, "");
+}
+
+
+// Update Pencil tool options based on UI input
+global proc bpUpdatePencilOptions(string $contextName)
+{
+	string $oldParent = setContextParent($contextName);
+
+	int $size = `intSliderGrp -q -v bpPencilSize`;
+	int $opacity = `intSliderGrp -q -v bpPencilOpacity`;
+	int $tabletOpacity = `checkBoxGrp -q -v1 bpPencilEnableTabletPressureOpacityChkBox`;
+	int $tabletSize = `checkBoxGrp -q -v1 bpPencilEnableTabletPressureSizeChkBox`;
+
+	bluePencilUtil -pencilOptions $size $opacity $tabletOpacity $tabletSize;
+
+	setParent $oldParent;
+}
+
+// Update Brush tool options based on UI input
+global proc bpUpdateBrushOptions(string $contextName)
+{
+	string $oldParent = setContextParent($contextName);
+	int $size = `intSliderGrp -q -v bpBrushSize`;
+	int $opacity = `intSliderGrp -q -v bpBrushOpacity`;
+	int $hardness = `intSliderGrp -q -v bpBrushHardness`;
+	int $tabletOpacity = `checkBoxGrp -q -v1 bpBrushEnableTabletPressureOpacityChkBox`;
+	int $tabletSize = `checkBoxGrp -q -v1 bpBrushEnableTabletPressureSizeChkBox`;
+
+	bluePencilUtil -brushOptions $size $opacity $hardness $tabletOpacity $tabletSize;
+
+	setParent $oldParent;
+}
+
+// Update Eraser tool options based on UI input
+global proc bpUpdateEraserOptions(string $contextName)
+{
+	string $oldParent = setContextParent($contextName);
+	int $size = `intSliderGrp -q -v bpEraserSize`;
+	int $vals[] = `bluePencilUtil -q -eraserOptions`;
+	int $opacity = $vals[1]; // unsupported
+	int $hardness = $vals[2]; // unsupported
+	int $tabletOpacity = $vals[3]; // unsupported
+	int $tabletSize = `checkBoxGrp -q -v1 bpEraserEnableTabletPressureSizeChkBox`;
+
+	bluePencilUtil -eraserOptions $size $opacity $hardness $tabletOpacity $tabletSize;
+
+	setParent $oldParent;
+}
+
+// Update Text tool options based on UI input
+global proc bpUpdateTextOptions(string $contextName)
+{
+	string $oldParent = setContextParent($contextName);
+	int $size = `intSliderGrp -q -v bpTextSize`;
+	int $opacity = `intSliderGrp -q -v bpTextOpacity`;
+	string $font = `bluePencilUtil -q -textFontFamily`; //TODO - Add UI support
+
+	bluePencilUtil -textOptions $size $opacity $font;
+
+	setParent $oldParent;
+}
+
+// Update Line tool options based on UI input
+global proc bpUpdateLineOptions(string $contextName)
+{
+	string $oldParent = setContextParent($contextName);
+	int $size = `intSliderGrp -q -v bpLineSize`;
+	int $opacity = `intSliderGrp -q -v bpLineOpacity`;
+
+	bluePencilUtil -lineOptions $size $opacity;
+
+	setParent $oldParent;
+}
+
+// Update Arrow tool options based on UI input
+global proc bpUpdateArrowOptions(string $contextName)
+{
+	string $oldParent = setContextParent($contextName);
+	int $size = `intSliderGrp -q -v bpArrowSize`;
+	int $opacity = `intSliderGrp -q -v bpArrowOpacity`;
+
+	bluePencilUtil -arrowOptions $size $opacity;
+
+	setParent $oldParent;
+}
+
+// Update Draw Color based on UI input
+global proc bpUpdateDrawColor(string $contextName)
+{
+	string $oldParent = setContextParent($contextName);
+	float $color[] = `colorSliderGrp -q -rgb -useDisplaySpace bpDrawColorPicker`;
+
+	// Convert to integer format.
+	int $r = round(`clamp 0 255 ($color[0] * 255)`);
+	int $g = round(`clamp 0 255 ($color[1] * 255)`);
+	int $b = round(`clamp 0 255 ($color[2] * 255)`);
+
+	bluePencilUtil -e -drawColor $r $g $b;
+
+	setParent $oldParent;
+}
+
+// Update Ellipse tool options based on UI input
+global proc bpUpdateEllipseOptions(string $contextName)
+{
+	string $oldParent = setContextParent($contextName);
+	int $size = `intSliderGrp -q -v bpEllipseSize`;
+	int $opacity = `intSliderGrp -q -v bpEllipseOpacity`;
+
+	bluePencilUtil -ellipseOptions $size $opacity;
+
+	setParent $oldParent;
+}
+
+// Update Rectangle tool options based on UI input
+global proc bpUpdateRectangleOptions(string $contextName)
+{
+	string $oldParent = setContextParent($contextName);
+	int $size = `intSliderGrp -q -v bpRectangleSize`;
+	int $opacity = `intSliderGrp -q -v bpRectangleOpacity`;
+
+	bluePencilUtil -rectangleOptions $size $opacity;
+
+	setParent $oldParent;
+}
+
+// Initialize or update Pencil tool options section
+proc bpPencilToolValues(int $toolEnabled, string $contextName)
+{
+	frameLayout -e -vis $toolEnabled bpPencilOptions;
+
+	updateCollapsedState("bpPencilOptions");
+
+	int $vals[] = `bluePencilUtil -q -pencilOptions`;
+	int $size = $vals[0];
+	int $opacity = $vals[1];
+	int $tabletOpacity = $vals[2];
+	int $tabletSize = $vals[3];
+
+	string $changeCmd = "bpUpdatePencilOptions(\"" + $contextName + "\");";
+	intSliderGrp -e -v $size
+		-changeCommand ($changeCmd)
+		bpPencilSize;
+
+	intSliderGrp -e -v $opacity
+		-changeCommand ($changeCmd)
+		bpPencilOpacity;
+
+	checkBoxGrp -e -v1 $tabletOpacity
+		-changeCommand1 ($changeCmd)
+		bpPencilEnableTabletPressureOpacityChkBox;
+
+	checkBoxGrp -e -v1 $tabletSize
+		-changeCommand1 ($changeCmd)
+		bpPencilEnableTabletPressureSizeChkBox;
+}
+
+// Initialize or update Brush tool options section
+proc bpBrushToolValues(int $toolEnabled, string $contextName)
+{
+	frameLayout -e -vis $toolEnabled bpBrushOptions;
+
+	updateCollapsedState("bpBrushOptions");
+
+	int $vals[] = `bluePencilUtil -q -brushOptions`;
+	int $size = $vals[0];
+	int $opacity = $vals[1];
+	int $hardness = $vals[2];
+	int $tabletOpacity = $vals[3];
+	int $tabletSize = $vals[4];
+
+	string $changeCmd = "bpUpdateBrushOptions(\"" + $contextName + "\");";
+	intSliderGrp -e -v $size
+		-changeCommand ($changeCmd)
+		bpBrushSize;
+
+	intSliderGrp -e -v $opacity
+		-changeCommand ($changeCmd)
+		bpBrushOpacity;
+
+	intSliderGrp -e -v $hardness
+		-changeCommand ($changeCmd)
+		bpBrushHardness;
+
+	checkBoxGrp -e -v1 $tabletOpacity
+		-changeCommand1 ($changeCmd)
+		bpBrushEnableTabletPressureOpacityChkBox;
+
+	checkBoxGrp -e -v1 $tabletSize
+		-changeCommand1 ($changeCmd)
+		bpBrushEnableTabletPressureSizeChkBox;
+}
+
+// Initialize or update Eraser tool options section
+proc bpEraserToolValues(int $toolEnabled, string $contextName)
+{
+	frameLayout -e -vis $toolEnabled bpEraserOptions;
+
+	updateCollapsedState("bpEraserOptions");
+
+	int $vals[] = `bluePencilUtil -q -eraserOptions`;
+	int $size = $vals[0];
+	int $opacity = $vals[1]; // unused
+	int $hardness = $vals[2]; //unused
+	int $tabletOpacity = $vals[3]; //unused
+	int $tabletSize = $vals[4];
+
+	string $changeCmd = "bpUpdateEraserOptions(\"" + $contextName + "\");";
+	intSliderGrp -e -v $size
+		-changeCommand ($changeCmd)
+		bpEraserSize;
+
+	checkBoxGrp -e -v1 $tabletSize
+		-changeCommand1 ($changeCmd)
+		bpEraserEnableTabletPressureSizeChkBox;
+}
+
+// Initialize or update Text tool options section
+proc bpTextToolValues(int $toolEnabled, string $contextName)
+{
+	frameLayout -e -vis $toolEnabled bpTextOptions;
+
+	updateCollapsedState("bpTextOptions");
+
+	string $font = `bluePencilUtil -q -textFontFamily`;
+	int $vals[] = `bluePencilUtil -q -textOptions`;
+	int $size = $vals[0];
+	int $opacity = $vals[1];
+
+	python("from maya.plugin.bluepencil.bluePencilFontSelectWidget import update_bp_font_select_widget");
+	python("update_bp_font_select_widget('bpTextFontSelectLayout', '" + $font + "')");
+
+	string $changeCmd = "bpUpdateTextOptions(\"" + $contextName + "\");";
+	intSliderGrp -e -v $size
+		-changeCommand ($changeCmd)
+		bpTextSize;
+
+	intSliderGrp -e -v $opacity
+		-changeCommand ($changeCmd)
+		bpTextOpacity;
+}
+
+// Initialize or update Line tool options section
+proc bpLineToolValues(int $toolEnabled, string $contextName)
+{
+	frameLayout -e -vis $toolEnabled bpLineOptions;
+
+	updateCollapsedState("bpLineOptions");
+
+	int $vals[] = `bluePencilUtil -q -lineOptions`;
+	int $size = $vals[0];
+	int $opacity = $vals[1];
+
+	string $changeCmd = "bpUpdateLineOptions(\"" + $contextName + "\");";
+	intSliderGrp -e -v $size
+		-changeCommand ($changeCmd)
+		bpLineSize;
+
+	intSliderGrp -e -v $opacity
+		-changeCommand ($changeCmd)
+		bpLineOpacity;
+}
+
+// Initialize or update Arrow tool options section
+proc bpArrowToolValues(int $toolEnabled, string $contextName)
+{
+	frameLayout -e -vis $toolEnabled bpArrowOptions;
+
+	updateCollapsedState("bpArrowOptions");
+
+	int $vals[] = `bluePencilUtil -q -arrowOptions`;
+	int $size = $vals[0];
+	int $opacity = $vals[1];
+
+	string $changeCmd = "bpUpdateArrowOptions(\"" + $contextName + "\");";
+	intSliderGrp -e -v $size
+		-changeCommand ($changeCmd)
+		bpArrowSize;
+
+	intSliderGrp -e -v $opacity
+		-changeCommand ($changeCmd)
+		bpArrowOpacity;
+}
+
+// Initialize or update Ellipse tool options section
+proc bpEllipseToolValues(int $toolEnabled, string $contextName)
+{
+	frameLayout -e -vis $toolEnabled bpEllipseOptions;
+
+	updateCollapsedState("bpEllipseOptions");
+
+	int $vals[] = `bluePencilUtil -q -ellipseOptions`;
+	int $size = $vals[0];
+	int $opacity = $vals[1];
+
+	string $changeCmd = "bpUpdateEllipseOptions(\"" + $contextName + "\");";
+	intSliderGrp -e -v $size
+		-changeCommand ($changeCmd)
+		bpEllipseSize;
+
+	intSliderGrp -e -v $opacity
+		-changeCommand ($changeCmd)
+		bpEllipseOpacity;
+}
+
+// Initialize or update Rectangle tool options section
+proc bpRectangleToolValues(int $toolEnabled, string $contextName)
+{
+	frameLayout -e -vis $toolEnabled bpRectangleOptions;
+
+	updateCollapsedState("bpRectangleOptions");
+
+	int $vals[] = `bluePencilUtil -q -rectangleOptions`;
+	int $size = $vals[0];
+	int $opacity = $vals[1];
+
+	string $changeCmd = "bpUpdateRectangleOptions(\"" + $contextName + "\");";
+	intSliderGrp -e -v $size
+		-changeCommand ($changeCmd)
+		bpRectangleSize;
+
+	intSliderGrp -e -v $opacity
+		-changeCommand ($changeCmd)
+		bpRectangleOpacity;
+}
+
+global proc bpCurrentToolValues(string $contextName)
+{
+	int $toolEnabled;
+	int $inDraw = `bluePencilUtil -q -draw`;
+	int $inEraser = 0;
+
+	// Pencil
+	$toolEnabled = `bluePencilUtil -q -pencilTool`;
+	symbolCheckBox -e
+		-changeCommand ("bluePencilUtil -pencilTool;")
+		-v ($toolEnabled && $inDraw)
+		bpPencilChBx;
+	bpPencilToolValues($toolEnabled, $contextName);
+
+	// Brush
+	$toolEnabled = `bluePencilUtil -q -brushTool`;
+	symbolCheckBox -e
+		-changeCommand ("bluePencilUtil -brushTool;")
+		-v ($toolEnabled && $inDraw)
+		bpBrushChBx;
+	bpBrushToolValues($toolEnabled, $contextName);
+
+	// Eraser
+	$toolEnabled = `bluePencilUtil -q -eraserTool`;
+	$inEraser = $toolEnabled;
+	symbolCheckBox -e
+		-changeCommand ("bluePencilUtil -eraserTool;")
+		-v ($toolEnabled && $inDraw)
+		bpEraserChBx;
+	bpEraserToolValues($toolEnabled, $contextName);
+
+	// Text
+	$toolEnabled = `bluePencilUtil -q -textTool`;
+	symbolCheckBox -e
+		-changeCommand ("bluePencilUtil -textTool;")
+		-v ($toolEnabled && $inDraw)
+		bpTextChBx;
+	bpTextToolValues($toolEnabled, $contextName);
+
+	// Line
+	$toolEnabled = `bluePencilUtil -q -lineTool`;
+	symbolCheckBox -e
+		-changeCommand ("bluePencilUtil -lineTool;")
+		-v ($toolEnabled && $inDraw)
+		bpLineChBx;
+	bpLineToolValues($toolEnabled, $contextName);
+
+	// Arrow
+	$toolEnabled = `bluePencilUtil -q -arrowTool`;
+	symbolCheckBox -e
+		-changeCommand ("bluePencilUtil -arrowTool;")
+		-v ($toolEnabled && $inDraw)
+		bpArrowChBx;
+	bpArrowToolValues($toolEnabled, $contextName);
+
+	// Ellipse
+	$toolEnabled = `bluePencilUtil -q -ellipseTool`;
+	symbolCheckBox -e
+		-changeCommand ("bluePencilUtil -ellipseTool;")
+		-v ($toolEnabled && $inDraw)
+		bpEllipseChBx;
+	bpEllipseToolValues($toolEnabled, $contextName);
+
+	// Rectangle
+	$toolEnabled = `bluePencilUtil -q -rectangleTool`;
+	symbolCheckBox -e
+		-changeCommand ("bluePencilUtil -rectangleTool;")
+		-v ($toolEnabled && $inDraw)
+		bpRectangleChBx;
+	bpRectangleToolValues($toolEnabled, $contextName);
+
+	// Draw Color
+	int $dc[] = `bluePencilUtil -q -drawColor`;
+	float $r = $dc[0] / 255.0;
+	float $g = $dc[1] / 255.0;
+	float $b = $dc[2] / 255.0;
+	colorSliderGrp -e
+		-rgb $r $g $b
+		-changeCommand ("bpUpdateDrawColor(\"" + $contextName + "\");")
+		-useDisplaySpace 1
+		-useVpColorPicker 0
+		-vis (!$inEraser)
+	bpDrawColorPicker;
+}
+
+// Update Ghost Previous option based on UI input
+global proc bpUpdateGhostPreviousEnabled(string $contextName)
+{
+	string $oldParent = setContextParent($contextName);
+	int $ghostPrev = `checkBoxGrp -q -v1 bpGhostingEnabledChkBox`;
+	bluePencilUtil -e -ghostPrevious $ghostPrev;
+	setParent $oldParent;
+}
+
+// Update Ghost Next option based on UI input
+global proc bpUpdateGhostNextEnabled(string $contextName)
+{
+	string $oldParent = setContextParent($contextName);
+	int $ghostNext = `checkBoxGrp -q -v2 bpGhostingEnabledChkBox`;
+	bluePencilUtil -e -ghostNext $ghostNext;
+	setParent $oldParent;
+}
+
+// Update Ghosted pre frame count based on UI input
+global proc bpUpdateGhostPreFrames(string $contextName)
+{
+	string $oldParent = setContextParent($contextName);
+	int $ghostPreFrames = `intSliderGrp -q -v bpPreFrames`;
+	bluePencilUtil -e -ghostPreviousCount $ghostPreFrames;
+	setParent $oldParent;
+}
+
+// Update Ghosted post frame count based on UI input
+global proc bpUpdateGhostPostFrames(string $contextName)
+{
+	string $oldParent = setContextParent($contextName);
+	int $ghostPostFrames = `intSliderGrp -q -v bpPostFrames`;
+	bluePencilUtil -e -ghostNextCount $ghostPostFrames;
+	setParent $oldParent;
+}
+
+// Update Ghost Color Override option based on UI input
+global proc bpUpdateGhostColorOverride(string $contextName)
+{
+	string $oldParent = setContextParent($contextName);
+	int $override = `checkBoxGrp -q -v1 bpGhostColorOverrideChkBox`;
+	bluePencilUtil -e -ghostColorOverride $override;
+	setParent $oldParent;
+}
+
+// Update Pre Frame override color based on UI input
+global proc bpUpdateGhostPreColor(string $contextName)
+{
+	string $oldParent = setContextParent($contextName);
+	float $color[] = `colorSliderGrp -q -rgb -useDisplaySpace bpPreFramesColorPicker`;
+
+	// Convert to integer format.
+	int $r = round(`clamp 0 255 ($color[0] * 255)`);
+	int $g = round(`clamp 0 255 ($color[1] * 255)`);
+	int $b = round(`clamp 0 255 ($color[2] * 255)`);
+
+	bluePencilUtil -e -ghostColorPrevious $r $g $b;
+	setParent $oldParent;
+}
+
+// Update Post Frame override color based on UI input
+global proc bpUpdateGhostPostColor(string $contextName)
+{
+	string $oldParent = setContextParent($contextName);
+	float $color[] = `colorSliderGrp -q -rgb -useDisplaySpace bpPostFramesColorPicker`;
+
+	// Convert to integer format.
+	int $r = round(`clamp 0 255 ($color[0] * 255)`);
+	int $g = round(`clamp 0 255 ($color[1] * 255)`);
+	int $b = round(`clamp 0 255 ($color[2] * 255)`);
+
+	bluePencilUtil -e -ghostColorNext $r $g $b;
+	setParent $oldParent;
+}
+
+proc bpGhostingValues(string $contextName)
+{
+	updateCollapsedStateDefault("bpGhostingDisplayColor", 1);
+	updateCollapsedStateDefault("bpGhostingOptions", 1);
+
+	// Ghost Previous/Next checkboxes
+	int $ghostPrev = `bluePencilUtil -q -ghostPrevious`;
+	int $ghostNext = `bluePencilUtil -q -ghostNext`;
+	checkBoxGrp -e -v1 $ghostPrev -v2 $ghostNext
+			-cc1 ("bpUpdateGhostPreviousEnabled(\"" + $contextName + "\")")
+			-cc2 ("bpUpdateGhostNextEnabled(\"" + $contextName + "\")")
+			bpGhostingEnabledChkBox;
+
+	// Ghost Pre Frames
+	intSliderGrp -e -v `bluePencilUtil -q -ghostPreviousCount`
+			-changeCommand ("bpUpdateGhostPreFrames(\"" + $contextName + "\")")
+			bpPreFrames;
+
+	// Ghost Post Frames
+	intSliderGrp -e -v `bluePencilUtil -q -ghostNextCount`
+			-changeCommand ("bpUpdateGhostPostFrames(\"" + $contextName + "\")")
+			bpPostFrames;
+
+	// Ghost Color Override
+	checkBoxGrp -e -v1 `bluePencilUtil -q -ghostColorOverride`
+		-changeCommand1 ("bpUpdateGhostColorOverride(\"" + $contextName + "\")")
+		bpGhostColorOverrideChkBox;
+
+	int $color[];
+	float $r, $g, $b;
+
+	// Pre Frames Color
+	$color = `bluePencilUtil -q -ghostColorPrevious`;
+	$r = $color[0] / 255.0;
+	$g = $color[1] / 255.0;
+	$b = $color[2] / 255.0;
+	colorSliderGrp -e
+		-rgb $r $g $b
+		-changeCommand ("bpUpdateGhostPreColor(\"" + $contextName + "\");")
+		-useDisplaySpace 1
+		-useVpColorPicker 0
+	bpPreFramesColorPicker;
+
+	// Pre Frames Color
+	$color = `bluePencilUtil -q -ghostColorNext`;
+	$r = $color[0] / 255.0;
+	$g = $color[1] / 255.0;
+	$b = $color[2] / 255.0;
+	colorSliderGrp -e
+		-rgb $r $g $b
+		-changeCommand ("bpUpdateGhostPostColor(\"" + $contextName + "\");")
+		-useDisplaySpace 1
+		-useVpColorPicker 0
+	bpPostFramesColorPicker;
+}
+
+global proc bpRetimeBackward()
+{
+	int $move = 0;
+	if (`optionVar -exists bluePencilRetimeMoveToNextFrame`)
+		$move = `optionVar -q bluePencilRetimeMoveToNextFrame`;
+
+	int $frameCount = 1;
+	if (`optionVar -exists bluePencilRetimeFrameRange`)
+		$frameCount = `optionVar -q bluePencilRetimeFrameRange`;
+
+	if ($move)
+		bluePencilFrame -relative -moveToNext -retime (-$frameCount);
+	else
+		bluePencilFrame -relative -retime (-$frameCount);
+}
+
+global proc bpRetimeForward()
+{
+	int $move = 0;
+	if (`optionVar -exists "bluePencilRetimeMoveToNextFrame"`)
+		$move = `optionVar -q "bluePencilRetimeMoveToNextFrame"`;
+
+	int $frameCount = 1;
+	if (`optionVar -exists bluePencilRetimeFrameRange`)
+		$frameCount = `optionVar -q bluePencilRetimeFrameRange`;
+
+	if ($move)
+		bluePencilFrame -relative -moveToNext -retime $frameCount;
+	else
+		bluePencilFrame -relative -retime $frameCount;
+}
+
+global proc bpUpdateRetimeFrameRange(string $contextName)
+{
+	string $oldParent = setContextParent($contextName);
+	int $range =  `intField -q -v bpRetimingFrameRange`;
+	optionVar -iv "bluePencilRetimeFrameRange" $range;
+	setParent $oldParent;
+}
+
+global proc bpUpdateMoveToNextFrame(string $contextName)
+{
+	string $oldParent = setContextParent($contextName);
+	int $move = `checkBoxGrp -q -v1 bpMoveToNextFrameChkBox`;
+	optionVar -iv "bluePencilRetimeMoveToNextFrame" $move;
+	setParent $oldParent;
+}
+
+proc bpRetimingValues(string $contextName)
+{
+	// Retime buttons
+	iconTextButton -e -c ("bpRetimeBackward") bpRetimeBackwardBtn;
+	iconTextButton -e -c ("bpRetimeForward") bpRetimeForwardBtn;
+
+	// Retiming range
+	int $frameCount = 1;
+	if (`optionVar -exists bluePencilRetimeFrameRange`)
+		$frameCount = `optionVar -q bluePencilRetimeFrameRange`;
+	intField -e -v $frameCount
+		-changeCommand ("bpUpdateRetimeFrameRange(\"" + $contextName + "\")")
+		bpRetimingFrameRange;
+
+	// Move to Next Frame
+	int $move = 0;
+	if (`optionVar -exists "bluePencilRetimeMoveToNextFrame"`)
+		$move = `optionVar -q "bluePencilRetimeMoveToNextFrame"`;
+	checkBoxGrp -e -v1 $move
+		-changeCommand1 ("bpUpdateMoveToNextFrame(\"" + $contextName + "\")")
+		bpMoveToNextFrameChkBox;
+}
+
+global proc bpUpdateCurrentToolVisibility(string $contextName)
+{
+	string $oldParent = setContextParent($contextName);
+	bpCurrentToolValues($contextName);
+	setParent $oldParent;
+}
+
+global proc bpUpdateValues(string $contextName, string $toolName)
+{
+	if (!`columnLayout -exists $contextName`)
+		return;
+
+	string $oldParent = setContextParent($contextName);
+
+	// Refresh tool values if the Drawing frame is closed and reopened
+	updateCollapsedStateCmd("bpDrawSettings", "bpUpdateCurrentToolVisibility(\"" + $contextName + "\")");
+	updateCollapsedState("bpDrawLayers");
+	updateCollapsedState("bpDrawGhosting");
+	updateCollapsedState("bpDrawRetiming");
+	updateCollapsedState("bpDrawFrame");
+
+	python("from maya.plugin.bluepencil.bluePencilUtil import insertLayerManagerInLayout");
+	python("insertLayerManagerInLayout('bpDrawLayersContent')");
+
+	bpCurrentToolValues($contextName);
+	bpGhostingValues($contextName);
+	bpRetimingValues($contextName);
+
+	string $helpTag = "BluePencilDrawTool";
+
+	toolPropertySetCommon $toolName `contextInfo -query -image1 $toolName` $helpTag;
+	toolPropertySelect $contextName;
+
+	string $reset = `toolPropertyWindow -query -resetButton`;
+	button -edit -enable true -command ("bluePencilUtil -resetTool") $reset;
+
+	setParent $oldParent;
+}

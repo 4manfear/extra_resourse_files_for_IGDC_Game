@@ -1,0 +1,289 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+proc setOptionVars( int $forceFactorySettings )
+{
+	optionVar -init $forceFactorySettings -category "Modeling.Edit Mesh.Circularize"
+		-fv polyCircularizeRadialOffset 0
+		-iv polyCircularizeAlignment 0
+		-iv polyCircularizeNormalOrientation 0
+		-fv polyCircularizeSmoothingAngle 30
+		-fv polyCircularizeNormalOffset 0
+		-iv polyCircularizeEvenlyDistribute 1
+		-iv polyCircularizeDivisions 0
+		-iv polyCircularizeSupportingEdges 0
+		-fv polyCircularizeTwist 0
+		-fv polyCircularizeRelaxInterior 1
+		;
+}
+
+global proc polyCircularizeSetup( string $parent, int $forceFactorySettings )
+{
+	setOptionVars( $forceFactorySettings );
+	setParent $parent;
+
+	floatFieldGrp -e -value1 `optionVar -q polyCircularizeRadialOffset` polyCircularizeRadialOffset;
+
+	floatFieldGrp -e -value1 `optionVar -q polyCircularizeNormalOffset` polyCircularizeNormalOffset;
+
+	optionMenuGrp -e -select (`optionVar -q polyCircularizeAlignment` + 1) polyCircularizeAlignment;
+
+	optionMenuGrp -e -select (`optionVar -q polyCircularizeNormalOrientation` + 1) polyCircularizeNormalOrientation;
+
+	floatFieldGrp -e -value1 `optionVar -q polyCircularizeSmoothingAngle` polyCircularizeSmoothingAngle;
+
+	checkBoxGrp -e -value1 `optionVar -q polyCircularizeEvenlyDistribute` polyCircularizeEvenlyDistribute;
+
+	int $dv = `optionVar -q polyCircularizeDivisions`;
+	intSliderGrp -e -v $dv polyCircularizeDivisions;
+
+	optionMenuGrp -e -select (`optionVar -q polyCircularizeSupportingEdges` + 1) -enable ($dv>0) polyCircularizeSupportingEdges;
+
+	floatFieldGrp -e -value1 `optionVar -q polyCircularizeTwist` polyCircularizeTwist;
+
+	floatFieldGrp -e -value1 `optionVar -q polyCircularizeRelaxInterior` polyCircularizeRelaxInterior;
+}
+
+global proc polyCircularizeCallback( string $parent, int $doIt )
+{
+	setParent $parent;
+
+	optionVar -floatValue polyCircularizeRadialOffset `floatFieldGrp -q -value1 polyCircularizeRadialOffset`;
+
+	optionVar -floatValue polyCircularizeNormalOffset `floatFieldGrp -q -value1 polyCircularizeNormalOffset`;
+
+	optionVar -intValue polyCircularizeAlignment (`optionMenuGrp -query -sl polyCircularizeAlignment` - 1);
+
+	optionVar -intValue polyCircularizeNormalOrientation (`optionMenuGrp -query -sl polyCircularizeNormalOrientation` - 1);
+
+	optionVar -floatValue polyCircularizeSmoothingAngle `floatFieldGrp -q -value1 polyCircularizeSmoothingAngle`;
+
+	optionVar -intValue polyCircularizeEvenlyDistribute `checkBoxGrp -q -value1 polyCircularizeEvenlyDistribute`;
+
+	optionVar -intValue polyCircularizeDivisions `intSliderGrp -query -v polyCircularizeDivisions`;
+
+	optionVar -intValue polyCircularizeSupportingEdges (`optionMenuGrp -q -sl polyCircularizeSupportingEdges` - 1);
+
+	optionVar -floatValue polyCircularizeTwist `floatFieldGrp -q -value1 polyCircularizeTwist`;
+
+	optionVar -floatValue polyCircularizeRelaxInterior `floatFieldGrp -q -value1 polyCircularizeRelaxInterior`;
+
+	if ($doIt) {
+		performPolyCircularize 0;
+		addToRecentCommandQueue "performPolyCircularize 0" "PolyCircularize";
+	}
+}
+
+proc polyCircularizeOptions()
+{
+	global int $gOptionBoxTemplateFrameSpacing;
+
+	string $commandName = "polyCircularize";
+	string $callback = ($commandName + "Callback");
+	string $setup = ($commandName + "Setup");
+	   
+	string $layout = getOptionBox();
+	setParent $layout;
+
+	setUITemplate -pushTemplate OptionBoxTemplate;
+	waitCursor -state 1;
+	
+	setOptionBoxCommandName( $commandName );
+
+	string $parent = `formLayout polyCircularizeOptionsLayout`;
+
+		string $settingsFrame = `frameLayout -label (uiRes("m_performPolyCircularize.kSettingsFrame"))`;
+
+			columnLayout;
+
+                optionMenuGrp
+					-visible false
+                    -label (uiRes("m_performPolyCircularize.kCircularizeNormalOrientation"))
+                    polyCircularizeNormalOrientation;
+
+                    menuItem -label (uiRes("m_performPolyCircularize.kOrientationFace"));
+					menuItem -label (uiRes("m_performPolyCircularize.kOrientationEdge"));
+
+				floatFieldGrp 
+					-label (uiRes("m_performPolyCircularize.kCircularizeNormalOffset"))
+					polyCircularizeNormalOffset;
+
+				floatFieldGrp 
+					-label (uiRes("m_performPolyCircularize.kCircularizeRadialOffset"))
+					polyCircularizeRadialOffset;
+
+				floatFieldGrp 
+					-label (uiRes("m_performPolyCircularize.kCircularizeTwist"))
+					polyCircularizeTwist;
+
+				floatFieldGrp 
+					-label (uiRes("m_performPolyCircularize.kCircularizeRelaxInterior"))
+					polyCircularizeRelaxInterior;
+
+                optionMenuGrp
+                    -label (uiRes("m_performPolyCircularize.kCircularizeAlignment"))
+                    polyCircularizeAlignment;
+
+                    menuItem -label (uiRes("m_performPolyCircularize.kAlignmentAutomatic"));
+                    menuItem -label (uiRes("m_performPolyCircularize.kAlignmentSurfaceVertex"));
+                    menuItem -label (uiRes("m_performPolyCircularize.kAlignmentSurfaceAverage"));
+
+				floatFieldGrp 
+					-label (uiRes("m_performPolyCircularize.kCircularizeSmoothingAngle"))
+					polyCircularizeSmoothingAngle;
+
+				checkBoxGrp
+					-ncb 1 
+					-label (uiRes("m_performPolyCircularize.kCircularizeEvenlyDistribute"))
+					polyCircularizeEvenlyDistribute;
+
+				intSliderGrp
+					-label (uiRes("m_performPolyCircularize.kCircularizeDivisions"))
+					-min 0
+					-field true
+					-cc ("optionMenuGrp -e -enable (#1>0) polyCircularizeSupportingEdges")
+					polyCircularizeDivisions;
+
+				optionMenuGrp
+					-label (uiRes("m_performPolyCircularize.kCircularizeSupportingEdges"))
+					polyCircularizeSupportingEdges;
+
+					menuItem -label (uiRes("m_performPolyCircularize.kSupportingOff"));
+					menuItem -label (uiRes("m_performPolyCircularize.kSupportingExterior"));
+					menuItem -label (uiRes("m_performPolyCircularize.kSupportingInterior"));
+					menuItem -label (uiRes("m_performPolyCircularize.kSupportingBoth"));
+
+			setParent ..; // columnLayout
+
+		setParent $parent; // frameLayout
+
+	setParent ..; // formLayout
+
+	formLayout -e
+		-af $settingsFrame "top" $gOptionBoxTemplateFrameSpacing
+		-af $settingsFrame "left" $gOptionBoxTemplateFrameSpacing
+		-af $settingsFrame "right" $gOptionBoxTemplateFrameSpacing
+		-an $settingsFrame "bottom"
+	$parent;
+
+	waitCursor -state 0;
+	setUITemplate -popTemplate;
+	   
+	string $applyBtn = getOptionBoxApplyBtn();
+	button -edit -label (uiRes("m_performPolyCircularize.kCircularizeButton"))
+	       -command ($callback + " " + $parent + " " + 1)
+		$applyBtn;
+	string $saveBtn = getOptionBoxSaveBtn();
+	button -edit 
+		-command ($callback + " " + $parent + " " + 0 + "; hideOptionBox")
+		$saveBtn;
+	string $resetBtn = getOptionBoxResetBtn();
+	button -edit 
+		-command ($setup + " " + $parent + " " + 1)
+		$resetBtn;
+
+	setOptionBoxTitle( (uiRes("m_performPolyCircularize.kCircularizeOptions")));
+
+	setOptionBoxHelpTag( "PolyCircularize" );
+
+	eval (($setup + " " + $parent + " " + 0));      
+	showOptionBox();
+}
+
+proc string assembleCmd( int $mode )
+{
+	setOptionVars(0);						// Without this the option vars don't exist and the parameters are not initialized if we run the command without opening the options window.
+	
+	string $res = "polyCircularize";
+	if( $mode == 1 )
+		$res += "Edge";
+	if( $mode == 2 )
+		$res += "Face";
+
+	// history flag
+	int $doHistory = `constructionHistory -query -toggle`;
+
+	$res += (" -constructionHistory " + $doHistory);
+	$res += " -alignment " + (`optionVar -q polyCircularizeAlignment`);
+	$res += " -radialOffset " + (`optionVar -q polyCircularizeRadialOffset`);
+	$res += " -normalOffset " + (`optionVar -q polyCircularizeNormalOffset`);
+	$res += " -normalOrientation " + (`optionVar -q polyCircularizeNormalOrientation`);
+	$res += " -smoothingAngle " + (`optionVar -q polyCircularizeSmoothingAngle`);
+	$res += " -evenlyDistribute " + (`optionVar -q polyCircularizeEvenlyDistribute`);
+	$res += " -divisions " + (`optionVar -q polyCircularizeDivisions`);
+	$res += " -supportingEdges " + (`optionVar -q polyCircularizeSupportingEdges`);
+	$res += " -twist " + (`optionVar -q polyCircularizeTwist`);
+	$res += " -relaxInterior " + (`optionVar -q polyCircularizeRelaxInterior`);
+
+	return $res;
+}
+
+global proc string performPolyCircularize(int $option)
+{
+	string $cmd = "";
+	string $sel[];
+
+	switch ($option) {
+		case 0:
+            // Merge instances that refer to the same object/component
+            if (`filterInstances -q -shapes`) select -r `filterInstances -shapes`;
+
+			int $mode = 0;
+
+			string $edges[] = `filterExpand -ex true -sm 32`;
+			if( 0 < size($edges) )
+			{
+				if( size($edges) < 2 )
+				{
+					error( (uiRes("m_performPolyCircularize.kCircularizeWrongEdgeSelection")) );
+					break;
+				}
+				$mode = 1;
+			}
+
+			string $faces[] = `filterExpand -ex true -sm 34`;
+			if( 0 < size($faces) )
+			{
+				if( $mode == 1 )
+					$mode = 0;
+				else
+					$mode = 2;
+			}
+
+			string $verts[] = `filterExpand -ex true -sm 31`;
+
+			if( size($verts) > 0 )
+			{
+				if( size($verts) <= 2 )
+				{
+					error( (uiRes("m_performPolyCircularize.kCircularizeWrongVertexSelection")) );
+					break;
+				}
+				$mode = 0;
+			}
+
+			$cmd = `assembleCmd $mode`;
+			string $res[] = `evalEcho $cmd`;
+
+			if (size($res) > 0)
+				select -add $res;
+
+			setToolTo ShowManips;
+
+			break;
+
+		case 1: 
+			polyCircularizeOptions;
+			break;
+
+		case 2:
+			$cmd = "performPolyCircularize 0";
+			break;
+	}
+	
+	return $cmd;
+}

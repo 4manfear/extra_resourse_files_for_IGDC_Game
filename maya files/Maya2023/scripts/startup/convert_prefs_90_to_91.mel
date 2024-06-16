@@ -1,0 +1,45 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+// Description:
+//  Converts version 0.90 preference file to version 0.91 for beta7
+//
+{
+	// Replace usage of old setEditorPanel command with scripted panel version
+
+	string $panelConfigs[] = `getPanel -allConfigs`;
+	int $i, $nPanelConfig;
+	$nPanelConfig = size($panelConfigs);
+	for ($i = 0; $i < $nPanelConfig; $i++)
+	{
+		string $labels[] = `panelConfiguration -query -labelStrings $panelConfigs[$i]`;
+		string $types[] = `panelConfiguration -query -typeStrings $panelConfigs[$i]`;
+		int $j, $nTypes;
+		$nTypes = size($types);
+		for ($j = 0; $j < $nTypes; $j++)
+		{
+			if ($types[$j] == "setEditorPanel")
+			{
+				string $config = $panelConfigs[$i];
+//				print ("Deleting panel configuration "+$config+"\n");
+//				deleteUI $config;
+				//UI strings for versions of Maya earlier than 8.5 should remain unlocalized.
+				print ("Replacing usage of setEditorPanel command in configuration: " +$config+"\n");
+				panelConfiguration -edit -replaceTypeString ($j+1)
+					"scriptedPanel"
+					$config;
+				panelConfiguration -edit -replaceCreateString ($j+1)
+					("{global int $gUseMenusInPanels; scriptedPanel -mbv $gUseMenusInPanels -type setEditor -unParent -l \""+$labels[$j]+"\";}")
+					$config;
+				panelConfiguration -edit -replaceEditString ($j+1)
+					("scriptedPanel -edit -l \""+$labels[$j]+"\" $panelName")
+					$config;
+			}
+		}
+	}
+}

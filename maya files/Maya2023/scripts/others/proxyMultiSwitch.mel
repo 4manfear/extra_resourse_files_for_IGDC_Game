@@ -1,0 +1,69 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+// Creation Date:  Oct 18, 2004
+//
+//  Procedure Name:
+//      proxyMultiSwitch
+//
+//  Description:
+//      Switches the active reference to the given tag, for the given array of
+//  reference nodes (as specified by the global gProxyMultiSwitchRefNodes).
+//	Each reference node implicitly defines a distinct proxy set.
+//
+//  Input Arguments:
+//      Tag, list of reference nodes.
+//
+//  Return Value:
+//      None.
+//
+
+global proc proxyMultiSwitch(string $tag)
+//
+//	Description:
+//
+//		Given a tag, and a list of references, for each reference that has
+//	a proxy with this tag, make it active, and if necessary, load it.
+//
+{
+	global string $gProxyMultiSwitchRefNodes[];
+	if( !`exists isActiveProxy` ){
+		source "proxyUtils.mel";
+	}
+	int $refIndex = 0;
+	int $refSize = size($gProxyMultiSwitchRefNodes);
+	while( $refIndex < $refSize ){
+		if( !`objExists $gProxyMultiSwitchRefNodes[$refIndex]` ){
+			// This could happen if we switched a proxy that was a parent of
+			// this reference originally, such that this reference node is
+			// actually no longer part of the scene. In such cases, we just
+			// skip this reference node.
+			//
+			$refIndex++;
+			continue;
+		}
+		string $proxyNodes[] = `getRelatedProxies $gProxyMultiSwitchRefNodes[$refIndex]`;
+		int $proxySize = size( $proxyNodes );
+		int $proxyIndex = 0;
+		while( $proxyIndex < $proxySize ){
+			string $proxyNode = $proxyNodes[$proxyIndex];
+			string $proxyTag=`getAttr ($proxyNode + ".proxyTag")`;
+			if( $proxyTag == $tag ){
+				// If this isn't the active proxy, make it so.
+				//
+				if( !isActiveProxy( $proxyNode ) ){
+					proxySwitch( $proxyNode );
+				}
+				break;	// tags should be unique
+			}
+			$proxyIndex++;
+		}
+		$refIndex++;
+	}
+}

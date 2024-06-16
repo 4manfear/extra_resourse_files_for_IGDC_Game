@@ -1,0 +1,37 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//<doc>
+//<name resetPfxToPolyCamera>
+//
+//<synopsis>
+//	resetPfxToPolyCamera
+//
+//<returns>
+//  None.
+//
+//<description>
+//  Setup all paint effects and toon elements that are 
+//	converted to poly that are also view dependant
+//	for the current renderable camera. For example if you had changed
+//	the current render camera since doing toon to poly then
+//  this will connect the new render camera to the toon nodes
+//	so the profiles face the rendered view.   
+//
+//<flags>
+//  None.
+//<examples>
+//  resetPfxToPolyCamera;
+//</doc>
+
+
+
+global proc resetPfxToPolyCamera()
+{
+	setPfxToPolyCamera( getCameraForPfx(), false );
+}

@@ -1,0 +1,22 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+// Resources for Plug-in: ikSpringSolver
+// 
+// ----------------------------
+// Registered string resources:
+// ----------------------------
+setPluginResource( "ikSpringSolver", "kCommandArgumentFailed", "无法获取命令参数。");
+setPluginResource( "ikSpringSolver", "kNotIkHandle", "命令参数不是 IK 控制柄。");
+// 
+// --------------------------
+// Registered node resources:
+// --------------------------
+// 
+// Node: ikSpringSolver
+// 
+setNodeNiceNameResource( "ikSpringSolver", "IK 弹簧解算器" );

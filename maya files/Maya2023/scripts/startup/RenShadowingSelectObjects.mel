@@ -1,0 +1,49 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+
+global proc selectObjectsShadowedBy(string $node)
+{
+	waitCursor -state on;
+
+	string $shadowedObjects[] = 
+		`lightlink 
+			-query
+			-shadow 
+			-shapes false
+			-transforms true
+			-hierarchy false
+			-sets false
+			-light $node`;
+
+	// Begin by selecting nothing
+	//
+	select -clear;
+
+    int     $i;
+    string  $selectCommand;
+
+    $selectCommand = "select";
+
+    for ($i = 0; $i < size($shadowedObjects); $i++)
+    {
+		$selectCommand = ($selectCommand + " " + $shadowedObjects[$i]);
+    }
+
+    eval($selectCommand);
+	waitCursor -state off;
+}
+
+global proc RenShadowingSelectObjects()
+{
+	string $selectedLights[] = `selectionConnection -q -object activeList`;
+
+	if (size($selectedLights) >= 1)
+	{
+		selectObjectsShadowedBy($selectedLights[0]);
+	}
+}

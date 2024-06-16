@@ -1,0 +1,47 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc assignBrushToHairSystem()
+{
+	string $brush = getDefaultBrush();
+
+//	string $nodes[] = getBrushes( 2 );
+//	if( size($nodes) >0 ){
+//		$brush = $nodes[0];
+//	}
+
+	string $hsys[] = getSelectedHairSystems();
+	int $numHsys = size( $hsys );
+	if( $numHsys < 1 ){
+		warning( uiRes("m_doDeleteHairPB.kNoHairSystemSelected"));
+		return;
+	}
+
+	int $i;
+	for( $i = 0; $i < $numHsys; $i++ ){
+		string $pfxHair = destinationNodeNameFromConnection( 
+				$hsys[$i] + ".outputRenderHairs" );
+		if( $pfxHair == "" ){
+			$pfxHair = `createNode pfxHair`;
+			connectAttr ($hsys[$i] + ".outputRenderHairs") ($pfxHair + ".renderHairs");
+			setAttr ( $pfxHair + ".displayPercent") 100;
+			setAttr ( $pfxHair + ".drawAsMesh") false;
+		}
+		if( $pfxHair == "" ){
+			warning( (uiRes("m_assignBrushToHairSystem.kCouldntCreatePfxHair")));
+			continue;
+		}
+		string $oldBrush = sourceNodeNameFromConnection( $pfxHair + ".brush" );
+		if( size($oldBrush) > 0 ){
+			disconnectAttr ( $oldBrush + ".outBrush" ) ( $pfxHair + ".brush" );
+		}
+		string $newBrush[] = `duplicate -ic $brush`;
+		brushStartSetup( $newBrush[0], 1 );
+		connectAttr ($newBrush[0] + ".outBrush") ($pfxHair + ".brush");
+		connectAttr time1.outTime ($newBrush[0] + ".time");
+	}
+}

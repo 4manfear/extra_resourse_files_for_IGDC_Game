@@ -1,0 +1,120 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+// Creation Date:  14 January 1999
+//
+//
+//  Procedure Name:
+//      cutAttachCurvesToolScript
+//
+//  Description:
+//	create wrapper around the cutAttachCurves command
+//
+//  Input Arguments:
+//		0 ==> do the command.
+//		1 ==> show the action option box
+//		2 ==> return the command
+//		3 ==> show tool option box
+//		4 ==> enter the tool
+//
+//  Return Value:
+//      None.
+//
+
+global proc cutAttachCurvesToolSetup( int $forceFactorySettings, string $goToTool )
+{
+	optionVar -init $forceFactorySettings -category "Modeling.Curves.Cut/Attach"
+		-iv cutAttachCurvesEuc 0
+		-iv cutAttachCurvesLac 1
+		;
+
+	if( "" != $goToTool ) {
+		scriptCtx -e -euc `optionVar -q cutAttachCurvesEuc` $goToTool;
+		scriptCtx -e -lac `optionVar -q cutAttachCurvesLac` $goToTool;
+	}
+}
+
+global proc cutAttachCurvesValues ( string $toolName ) 
+{
+	scriptCtxCommonValues( $toolName );
+}
+
+global proc cutAttachCurvesProperties()
+{
+	scriptCtxCommonProperties;
+}
+
+proc createCutAttachCurveContext( string $tool )
+{
+	if( ! `scriptCtx -exists $tool` ) {
+		cutAttachCurvesToolSetup( 0, "" );
+
+		int $n = 0;
+		if( `optionVar -q cutAttachCurvesLac` ) {
+			$n = 2;
+		}
+
+		scriptCtx -i1 "vacantCell.png"
+			-title (uiRes("m_cutAttachCurvesToolScript.kCutAttachCurvesTool"))
+//			-bcn "cutCurves"
+
+			-exitUponCompletion `optionVar -q cutAttachCurvesEuc`
+			-totalSelectionSets 1
+			-expandSelectionList true
+			-fcs ("cutAttachCurvesToolScript 0")
+
+			-setNoSelectionPrompt ((uiRes("m_cutAttachCurvesToolScript.kSelectTwoCurves")) )
+			-setSelectionPrompt ((uiRes("m_cutAttachCurvesToolScript.kSelectAnotherCurve")) )
+
+			-setAutoToggleSelection true
+			-setAutoComplete `optionVar -q cutAttachCurvesLac`
+			-showManipulators true
+			-setSelectionCount $n
+
+			-nurbsCurve true
+			-curveParameterPoint true
+			-editPoint true
+		$tool;
+	}
+}
+
+global proc string cutAttachCurvesToolScript( int $setToTool )
+//
+//	Description :
+//		0 ==> do the command.
+//		1 ==> show the action option box
+//		2 ==> return the command
+//		3 ==> show tool/action option box
+//		4 ==> enter the tool/do the command		ONLY ALLOW THIS FOR NOW
+{
+	string $tool = "";
+	string $afterCut[];
+	int $n, $i;
+
+	switch( $setToTool ) {
+	  case 4:
+		$tool = "cutAttachCurveContext";
+		createCutAttachCurveContext $tool;
+		setToolTo $tool;
+		break;
+	  case 0:
+	  default:
+		cutCurvePreset(0,1,0.1,6,0,0,1,4,1);
+		$afterCut = `ls -sl`;
+		$n = size($afterCut);
+		for( $i=0; $i<$n; $i+=1 ) {
+			// Now, two of these are bad, two are OK:
+			if( `getAttr ($afterCut[$i] + ".spans")` < 1) delete $afterCut[$i];
+		}
+		doAttachCurveArgList( 2, { "0", "1", "1", "0", "0.5", "0", "0.1" } );
+		break;
+	}
+
+	return "";
+}

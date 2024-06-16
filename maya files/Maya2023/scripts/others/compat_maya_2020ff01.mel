@@ -1,0 +1,16 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+// Global Maya compatibility file, version 2020ff01
+////////////////////////////////////////////////////////////////////////////
+
+attrCompatibility -v "2020ff01";
+attrCompatibility -renameAttr maxEdgeLength polyRemesh refineThreshold;
+attrCompatibility -renameAttr mel polyRemesh rft;
+attrCompatibility -renameAttr collapseThreshold polyRemesh reduceThreshold;
+attrCompatibility -renameAttr cot polyRemesh rdt;

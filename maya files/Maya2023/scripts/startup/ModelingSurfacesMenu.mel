@@ -1,0 +1,572 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+// Creation Date:  17 June 2014
+//
+//
+//  Procedure Name:
+//      ModelingSurfacesMenu
+//
+//  Description:
+//		Create the MODELING->Surfaces menu
+//
+//  Input Arguments:
+//      Parent window that menu will be a part of.
+//
+//  Return Value:
+//      None.
+//
+
+global proc ModelingSurfacesMenu ( string $parent ) 
+//
+// Description:
+//		Modeling Surfaces menu
+//
+{
+	if (! `isTrue "SurfaceUIExists"`) return;
+
+	setParent -m $parent;
+	if( `menu -q -ni $parent` != 0 ) {
+		//
+		//	Menu is built already - just return
+		//
+		return;
+	}
+
+	menuItem -divider true -dividerLabel (uiRes("m_ModelingSurfacesMenu.kCreateDivider"));
+		
+		string $cmd = "Loft";
+		menuItem
+			-rtc $cmd
+			-dmc "loftToolScript 2"
+			surfLoftItem;
+		
+			$cmd = "LoftOptions";
+			menuItem -optionBox true 
+				-label (uiRes("m_ModelingSurfacesMenu.kLoftOptions"))
+				-annotation (getRunTimeCommandAnnotation($cmd))
+				-c $cmd
+				-i "skin.png"
+				loftDialogItem;
+		
+		$cmd = "Planar";
+		menuItem 
+			-rtc $cmd
+			-dmc "planarToolScript 2"
+			planarTrimItem;
+
+			$cmd = "PlanarOptions";
+			menuItem -optionBox true -i "planarTrim.png"
+				-label (uiRes("m_ModelingSurfacesMenu.kPlanarOptions")) 
+				-annotation (getRunTimeCommandAnnotation($cmd))
+				-c $cmd
+				planerTrimDialogItem;
+			
+		$cmd = "Revolve";
+		menuItem
+			-rtc $cmd
+			-dmc "revolveToolScript 2"
+			surfRevolveItem;
+
+			$cmd = "RevolveOptions";
+			menuItem -optionBox true
+				-label (uiRes("m_ModelingSurfacesMenu.kRevolveOptions"))
+				-annotation (getRunTimeCommandAnnotation($cmd))
+				-c $cmd
+				-i "revolve.png"
+				revolveDialogItem;
+		
+		menuItem -d true -ld false;
+
+		menuItem -label (uiRes("m_ModelingSurfacesMenu.kBirail"))  -sm 1 -to 1 -aob true;
+
+			$cmd = "Birail1";
+			menuItem
+				-rtc $cmd
+				-dmc "birailToolScript 2 1"
+				spBirailItem;
+
+				$cmd = "Birail1Options";
+				menuItem -optionBox true -image "birail1Gen.png"
+					-annotation (getRunTimeCommandAnnotation($cmd))
+					-c $cmd
+					birail1ToolDialog;
+
+			$cmd = "Birail2";
+			menuItem
+				-rtc $cmd
+				-dmc "birailToolScript 2 2"
+				dpBirailItem;
+
+				$cmd = "Birail2Options";
+				menuItem -optionBox true -image "birail2Gen.png"
+					-annotation (getRunTimeCommandAnnotation($cmd))
+					-c $cmd
+					birail2ToolDialog;
+
+			$cmd = "Birail3";
+			menuItem
+				-rtc $cmd
+				-dmc "birailToolScript 2 3"
+				mpBirailItem;
+
+				$cmd = "Birail3Options";
+				menuItem -optionBox true -image "birail3Gen.png"
+					-annotation (getRunTimeCommandAnnotation($cmd))
+					-c $cmd
+					birail3ToolDialog;
+
+		setParent -m .. ;
+
+		$cmd = "Extrude";
+		menuItem
+			-rtc $cmd
+			-dmc "extrudeToolScript 2"
+			surfExtrudeItem;
+
+			$cmd = "ExtrudeOptions";
+			menuItem -optionBox true 
+				-label (uiRes("m_ModelingSurfacesMenu.kExtrudeOptions"))
+				-annotation (getRunTimeCommandAnnotation($cmd))
+				-c $cmd
+				-i "extrude.png"
+				extrudeDialogItem;
+
+		menuItem -d true -ld false;
+
+		$cmd = "Boundary";
+		menuItem
+			-rtc $cmd
+			-dmc "boundaryToolScript 2"
+			surfBoundaryItem;
+
+			$cmd = "BoundaryOptions";
+			menuItem -optionBox true
+				-label (uiRes("m_ModelingSurfacesMenu.kBoundaryOptions"))
+				-annotation (getRunTimeCommandAnnotation($cmd))
+				-c $cmd
+				-i "boundary.png"
+				boundaryDialogItem;
+			
+			$cmd = "SquareSurface";
+			menuItem
+				-rtc $cmd
+				-dmc "squareSrfToolScript 2"
+				surfSquareItem;
+
+				$cmd = "SquareSurfaceOptions";
+				menuItem -optionBox true
+					-label (uiRes("m_ModelingSurfacesMenu.kSquareOptions"))
+					-annotation (getRunTimeCommandAnnotation($cmd))
+					-c $cmd
+					-i "squareSrf.png"
+					squareDialogItem;
+
+		menuItem -d true -ld false;
+
+		$cmd = "Bevel";
+		menuItem 
+			-rtc $cmd
+			-dmc "bevelToolScript 2"
+			surfBevelItem;
+
+			$cmd = "BevelOptions";
+			menuItem -optionBox true 
+				-label (uiRes("m_ModelingSurfacesMenu.kBevelOptions")) 
+				-annotation (getRunTimeCommandAnnotation($cmd))
+				-c $cmd
+				-i "bevel.png"
+				bevelDialogItem;
+		
+		$cmd = "BevelPlus";
+		menuItem 
+			-rtc $cmd
+			-dmc "bevelPlusToolScript 2"
+			surfBevelPlusItem;
+
+			$cmd = "BevelPlusOptions";
+			menuItem -optionBox true 
+				-label (uiRes("m_ModelingSurfacesMenu.kBevelPlusOptions")) 
+				-annotation (getRunTimeCommandAnnotation($cmd))
+				-c $cmd
+				-i "bevelPlus.png"
+				bevelPlusDialogItem;
+
+	menuItem -divider true -dividerLabel (uiRes("m_ModelingSurfacesMenu.kEditNurbsSurfacesDivider"));
+		
+		$cmd = "DuplicateNURBSPatches";
+		menuItem
+			-rtc $cmd
+			-dmc "duplicateSurfaceToolScript 2"
+			duplSrfItem;
+
+			$cmd = "DuplicateNURBSPatchesOptions";
+			menuItem -optionBox true -i "duplicateSurface.png"
+				-annotation (getRunTimeCommandAnnotation($cmd))
+				-c $cmd
+				duplSrfDialog;
+
+			menuItem -d true -ld false;
+
+		$cmd = "AlignSurfaces";
+		menuItem
+			-rtc $cmd
+			-dmc "alignSurfaceToolScript 2"
+			alignItem;
+
+			$cmd = "AlignSurfacesOptions";
+			menuItem -optionBox true -i "alignSurface.png" 
+				-annotation (getRunTimeCommandAnnotation($cmd))
+				-c $cmd
+				alignDialogItem;
+		
+		$cmd = "AttachSurfaces";
+		menuItem
+			-rtc $cmd
+			-dmc "attachSrfToolScript 2"
+			attachSrfItem;
+
+			$cmd = "AttachSurfacesOptions";
+			menuItem -optionBox true -i "align.png"
+				-annotation (getRunTimeCommandAnnotation($cmd))
+				-c $cmd
+				attachSrfDialog;
+
+		menuItem -rtc "AttachSurfaceWithoutMoving"
+			attachWithoutMovingItem;
+
+		$cmd = "DetachSurfaces";
+		menuItem
+			-rtc $cmd
+			-dmc "detachSurfaceToolScript 2"
+			detachItem;
+
+			$cmd = "DetachSurfacesOptions";
+			menuItem -optionBox true -i "detach.png"
+				-annotation (getRunTimeCommandAnnotation($cmd))
+				-c $cmd
+				detachDialog;
+
+		menuItem -rtc "MoveSurfaceSeam"
+			moveSurfaceSeamItem;
+
+		$cmd = "OpenCloseSurfaces";
+		menuItem
+			-rtc $cmd
+			-dmc "closeSurfaceToolScript 2"
+			closeItem;
+
+			$cmd = "OpenCloseSurfacesOptions";
+			menuItem -optionBox true -i "openCloseSurface.png"
+				-annotation (getRunTimeCommandAnnotation($cmd))
+				-c $cmd
+				closeDialogItem;
+		
+		menuItem -d true -ld false; 
+
+		$cmd = "IntersectSurfaces";
+		menuItem
+			-rtc $cmd
+			-dmc "intersectToolScript 2"
+			intersectItem;
+
+			$cmd = "IntersectSurfacesOptions";
+			menuItem -optionBox true 
+				-annotation (getRunTimeCommandAnnotation($cmd))
+				-i "srfIntersect.png"
+				-c $cmd
+				intersectDialogItem;
+		
+		$cmd = "ProjectCurveOnSurface";
+		menuItem
+			-rtc $cmd
+			-dmc "projectToolScript 2"
+			projectCurveItem;
+
+			$cmd = "ProjectCurveOnSurfaceOptions";
+			menuItem -optionBox true
+				-annotation (getRunTimeCommandAnnotation($cmd))
+				-i "projectCurve.png"
+				-c $cmd
+				projectCurveDialogItem;
+
+		$cmd = "TrimTool";
+		menuItem 
+			-rtc $cmd 
+			trimSurfaceItem;
+
+			$cmd = "TrimToolOptions";
+			menuItem -optionBox true -image "trim.png"
+				-annotation (getRunTimeCommandAnnotation($cmd))
+				-c $cmd 
+				trimDialogItem;
+
+		$cmd = "UntrimSurfaces";
+		menuItem
+			-rtc $cmd
+			-dmc "untrimToolScript 2"
+			untrimItem;
+
+			$cmd = "UntrimSurfacesOptions";
+			menuItem -optionBox true -image "untrim.png"
+				-annotation (getRunTimeCommandAnnotation($cmd))
+				-c $cmd
+				untrimDialogItem;
+		
+		menuItem -d true -ld false;
+
+		$cmd = "ExtendSurfaces";
+		menuItem
+			-rtc $cmd
+			-dmc "extendSurfaceToolScript 2"
+			extendSrfItem;
+
+			$cmd = "ExtendSurfacesOptions";
+			menuItem -optionBox true -i "extendSurface.png"
+				-annotation (getRunTimeCommandAnnotation($cmd))
+				-c $cmd
+				extendSurfaceDialogItem;
+
+		$cmd = "InsertIsoparms";
+		menuItem
+			-rtc $cmd
+			-dmc "insertSurfaceToolScript 2"
+			insertItem;
+
+			$cmd = "InsertIsoparmsOptions";
+			menuItem -optionBox true -i "insert.png"
+				-annotation (getRunTimeCommandAnnotation($cmd))
+				-c $cmd
+				insertDialog;
+
+		$cmd = "OffsetSurfaces";
+		menuItem
+			-rtc $cmd
+			-dmc "offsetSurfaceToolScript 2"
+			surfOffsetItem;
+
+			$cmd = "OffsetSurfacesOptions";
+			menuItem -optionBox true
+				-annotation (getRunTimeCommandAnnotation($cmd))
+				-i "offsetSurface.png"
+				-c $cmd
+				offsetSurfaceDialogItem;
+
+		menuItem -d true -ld false;
+
+		$cmd = "RoundTool";
+		menuItem 
+			-rtc $cmd 
+			roundItem;
+
+			$cmd = "RoundToolOptions";
+			menuItem -optionBox true -image "roundSrf.png"
+				-annotation (getRunTimeCommandAnnotation($cmd))
+				-c $cmd
+				roundOptionItem;
+
+		menuItem 
+			-label (uiRes("m_ModelingSurfacesMenu.kStitch"))  
+			-sm 1 -to 1 -aob true;
+
+			$cmd = "StitchSurfacePoints";
+			menuItem
+				-rtc $cmd
+				-dmc "performStitchSurfacePoints(2)"
+				stitchSurfacePointsItem;
+
+				$cmd = "StitchSurfacePointsOptions";
+				menuItem -optionBox true
+					-annotation (getRunTimeCommandAnnotation($cmd))
+					-i "stitchSurfacePoints.png"
+					-c $cmd
+					stitchSurfacePointsDialogItem;
+
+			$cmd = "StitchEdgesTool";
+			menuItem 
+				-rtc $cmd 
+				surfStitchItem;
+
+				$cmd = "StitchEdgesToolOptions";
+				menuItem -optionBox true -image "stitchSrf.png"
+					-annotation (getRunTimeCommandAnnotation($cmd))
+					-c $cmd
+					stitchSrfDialogItem;
+
+			$cmd = "GlobalStitch";
+			menuItem
+				-rtc $cmd
+				-dmc "globalStitchToolScript 2"
+				globalStitchItem;
+
+				$cmd = "GlobalStitchOptions";
+				menuItem -optionBox true
+					-annotation (getRunTimeCommandAnnotation($cmd))
+					-image "globalStitch.png"
+					-c $cmd
+					globalStitchDialogItem;
+
+		setParent -m .. ;
+
+		menuItem 
+			-label (uiRes("m_ModelingSurfacesMenu.kSurfaceFillet")) 
+			-sm 1 -to 1 -aob true;
+
+			$cmd = "CircularFillet";
+			menuItem
+				-rtc $cmd
+				-dmc "circFilletToolScript 2"
+				circularFilletItem;
+
+				$cmd = "CircularFilletOptions";
+				menuItem -optionBox true
+					-annotation (getRunTimeCommandAnnotation($cmd))
+					-i "surfaceFillet.png"
+					-c $cmd
+					circularFilletDialogItem;
+
+			$cmd = "FreeformFillet";
+			menuItem
+				-rtc $cmd
+				-dmc "freeFilletToolScript 2"
+				freeFormFilletItem ;
+
+				$cmd = "FreeformFilletOptions";
+				menuItem -optionBox true
+					-annotation (getRunTimeCommandAnnotation($cmd))
+					-i "filletFreeform_S.png"
+					-c $cmd
+					freeFormFilletDialogItem;
+
+			$cmd = "FilletBlendTool";
+			menuItem
+       			-rtc $cmd
+       			-dmc "blendToolScript 2"
+				blendItem;
+
+				$cmd = "FilletBlendToolOptions";
+				menuItem -optionBox true -image "blendSurface.png"
+	        		-annotation (getRunTimeCommandAnnotation($cmd))
+					-c $cmd
+					blendDialogItem;
+
+		setParent -m .. ;
+		
+		menuItem -d true -ld false;
+
+		menuItem
+		    -rtc "SculptGeometryTool"
+		    -dragDoubleClickCommand "SculptGeometryToolOptions"
+		    ;
+	  
+			menuItem -optionBox true
+				-annotation (getRunTimeCommandAnnotation("SculptGeometryToolOptions"))
+				-image "putty.png"
+				-command "SculptGeometryToolOptions"
+				;
+
+		menuItem 
+			-label (uiRes("m_ModelingSurfacesMenu.kSurfaceEditing")) 
+			-sm 1 -to 1 -aob true;
+
+			$cmd = "SurfaceEditingTool";
+			menuItem 
+				-rtc $cmd
+				surfaceEditorItem;
+
+				$cmd = "SurfaceEditingToolOptions";
+				menuItem -optionBox true -image "surfaceEditor.png"
+					-annotation (getRunTimeCommandAnnotation($cmd))
+					-c $cmd
+					surfaceEditorDialogItem;
+
+			$cmd = "BreakTangent";
+			menuItem
+				-rtc $cmd
+				breakTangentItem;
+
+			$cmd = "SmoothTangent";
+			menuItem
+				-rtc $cmd
+				smoothTangentItem;
+
+		setParent -m ..;
+
+		menuItem -d true -ld false;
+
+		menuItem 
+			-label (uiRes("m_ModelingSurfacesMenu.kBooleans"))  
+			-sm 1 -to 1 -aob true;	
+
+			$cmd = "SurfaceBooleanUnionTool";
+			menuItem
+				-rtc $cmd
+				-dmc "nurbsBooleanToolScript 2 0"
+				booleanUnionItem;
+
+				$cmd = "SurfaceBooleanUnionToolOptions";
+				menuItem -optionBox true -image "nurbsShellUnion.png"
+					-annotation (getRunTimeCommandAnnotation($cmd))
+					-c $cmd
+					unionOptItem;
+
+			$cmd = "SurfaceBooleanSubtractTool";
+			menuItem
+				-rtc $cmd
+				-dmc "nurbsBooleanToolScript 2 1"
+				booleanSubtractItem;
+
+				$cmd = "SurfaceBooleanSubtractToolOptions";
+				menuItem -optionBox true -image "nurbsShellSubtract.png"
+					-annotation (getRunTimeCommandAnnotation($cmd))
+					-c $cmd
+					subtractOptItem;
+
+			$cmd = "SurfaceBooleanIntersectTool";
+			menuItem
+				-rtc $cmd
+				-dmc "nurbsBooleanToolScript 2 2"
+				booleanIntersectItem;
+
+				$cmd = "SurfaceBooleanIntersectToolOptions";
+				menuItem -optionBox true -image "nurbsShellIntersect.png"
+					-annotation (getRunTimeCommandAnnotation($cmd))
+					-c $cmd
+					intersectOptItem;
+
+		setParent -m ..;
+
+		menuItem -d true -ld false;
+
+		$cmd = "RebuildSurfaces";
+		menuItem
+			-rtc $cmd
+			-dmc "rebuildSurfaceToolScript 2"
+			rebuildSrfItem;
+
+			$cmd = "RebuildSurfacesOptions";
+			menuItem -optionBox true -i "rebuildSurface.png"
+				-annotation (getRunTimeCommandAnnotation($cmd))
+				-c $cmd
+				rebuildSurfaceDialogItem; 
+
+		$cmd = "ReverseSurfaceDirection";
+		menuItem
+			-rtc $cmd
+			-dmc "reverseSurfaceToolScript 2"
+			reverseItem;
+
+			$cmd = "ReverseSurfaceDirectionOptions";
+			menuItem -optionBox true -i "reverseSurface.png"
+				-annotation (getRunTimeCommandAnnotation($cmd))
+				-c $cmd
+				reverseDialogItem;
+    
+	setParent -m ..;
+}

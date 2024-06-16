@@ -1,0 +1,22 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+// Apply this preset to the selected fluid
+//
+applyFluidDiskCache( "$MAYA_LOCATION/presets/fluids/.mayaData/mayaLogo3D.mcfi",
+					 0,
+					 80,
+					 60,
+					 10,
+					 0,
+					 1,
+					 1,
+					 0,
+					 0,
+					 0,
+					 0,
+					 0 );

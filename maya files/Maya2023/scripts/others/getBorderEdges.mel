@@ -1,0 +1,25 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+
+// Use the selection constraints, and get the border edges.
+//
+// Preserves the selection Constraints	: YES
+// Preserves the selection List			: NO
+//
+global proc getBorderEdges(string $obj) 
+{
+	select -r $obj;
+
+	// get edges
+	select -r `polyListComponentConversion -te`;
+
+	int $W[]=`polySelectConstraint -q -w`;
+	int $M[]=`polySelectConstraint -q -m`;
+	polySelectConstraint -t 0x8000 -w 1 -m 2;
+	polySelectConstraint -t 0x8000 -w $W[0] -m $M[0];
+}

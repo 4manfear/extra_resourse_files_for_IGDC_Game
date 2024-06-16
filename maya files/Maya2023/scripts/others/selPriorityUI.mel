@@ -1,0 +1,79 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+global proc selPriorityUI( ) 
+//
+// Sets selection priority for object types in the
+// scene
+//
+{
+
+	if (`window -exists selPriorityWin`) 
+	{
+		showWindow selPriorityWin;
+		return;
+	}
+	int $currentVal;
+	string $command;
+	string $selItems[] =  { "handle",
+							"ikHandle",
+							"ikEndEffector",
+							"joint",
+							"light",
+							"camera",
+							"lattice",
+							"sculpt",
+							"nurbsSurface",
+							"polymesh",
+							"curve",
+							"nurbsCurve",
+							"cos",
+							"plane",
+							"locator",
+							"dimension",
+							"particleShape",
+							"emitter",
+							"field",
+							"spring",
+							"rigidBody",
+							"rigidConstraint",
+							"texture",
+							"surfaceEdge",
+							"subdiv",
+							"subdivMeshPoint",
+							"subdivMeshEdge",
+							"subdivMeshFace",
+							"surfaceFace"
+						};
+
+				
+	window -title (uiRes("m_selPriorityUI.kSelPriority")) selPriorityWin;
+
+		columnLayout -adj true priorityContainer;
+
+		int $i, $n;
+		$n = size($selItems);
+			for( $i=0; $i < $n; $i++)
+			{
+				$currentVal = `selectPriority -q ("-" + $selItems[$i])`;
+				$command = ( "selectPriority -" + $selItems[$i] + 
+							" `intSliderGrp -q -v " + $selItems[$i] + 
+							"intSlider`" ); 
+			
+				intSliderGrp -f 
+					-l $selItems[$i] 
+					-minValue 0 -maxValue 50 
+					-v $currentVal
+					-dc $command
+					( $selItems[$i] + "intSlider" );
+			}
+
+		setParent ..;
+
+	showWindow selPriorityWin;
+}

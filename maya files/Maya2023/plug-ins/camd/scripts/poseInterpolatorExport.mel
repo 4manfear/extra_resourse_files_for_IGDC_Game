@@ -1,0 +1,40 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+
+// export a list of poseInterpolator nodes to the given filePath.
+// Parameters:
+// 		filePath: 	the exported file.
+// 		tpls:  		a list of poseInterpolator nodes to be exported.
+// 		shape: 		to export the pose shape or not.
+//  
+global proc int poseInterpolatorExport(
+					string $filePath, 
+					string $tpls[], int $shape)
+{
+	if ($filePath == "")
+		return 0;
+	if (size($tpls) == 0)
+	{
+		string $warningMsg = getPluginResource("poseInterpolator", "kNoPoseInterpolators");
+		warning ($warningMsg);
+		return 0;
+	}
+	for ($tpl in $tpls)
+	{
+		if (isPoseInterpolator($tpl) == 0)
+		{
+			string $warningMessage = getPluginResource("poseInterpolator", "kNotPoseInterpolator");
+			$warningMessage = `format -stringArg $tpl $warningMessage`;
+			warning ($warningMessage);
+		}
+	}
+	
+	string $poses[];
+	clear($poses); // to export every pose of these tpls.
+	return poseInterpolatorExportPoses($filePath, $tpls, $poses, $shape);
+} 

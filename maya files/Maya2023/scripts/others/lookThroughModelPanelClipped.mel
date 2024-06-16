@@ -1,0 +1,32 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//  Creation Date:  August 13, 2003
+//
+//  Procedure Name:
+//      lookThroughModelPanelClipped
+//
+//  Description:
+//		Procedure to ensure the panel with focus has a model panel,
+//		and look through a given object, with clipping plane values supplied.
+//
+//  Input Arguments:
+//      object - name of the object to look through
+//      panelName - name of the panel to look though object in
+//		nearClip - near clipping plane value
+//		farClip - far clipping plane value
+//
+//  Return Value:
+//      None.
+//
+
+global proc lookThroughModelPanelClipped( string $object, string $panelName, float $nearClip, float $farClip )
+{
+	lookThroughModelPanelSetup $panelName;
+    lookThru -nc $nearClip -fc $farClip $object $panelName;
+}

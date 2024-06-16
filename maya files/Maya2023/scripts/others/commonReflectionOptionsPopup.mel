@@ -1,0 +1,84 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc commonReflectionOptionsPopup()
+{
+	// Check whether symmetry is supported based on the current tool/settings
+	if( !`exists "reflectionIsSupported"`) source "reflectionValues.mel";
+	if( !`exists "reflectionSetMode"`) source "reflectionProperties.mel";
+	int $enable = reflectionIsSupported();
+	
+	int $reflectionOn = `symmetricModelling -q -symmetry`;
+
+	int $reflectionAbout;
+	string $val = `symmetricModelling -q -about` ;
+	if ($val == "world")
+		$reflectionAbout = 0;
+	else if ($val == "object")
+		$reflectionAbout = 1;
+	else // topo
+		$reflectionAbout = 2;
+
+	int $reflectionAxis;
+	$val = `symmetricModelling -q -axis` ;
+	if ($val == "x")
+		$reflectionAxis = 0;
+	else if ($val == "y")
+		$reflectionAxis = 1;
+	else
+		$reflectionAxis = 2;
+
+	menuItem 
+		-label (uiRes("m_commonReflectionOptionsPopup.kSymmetryLabel"))
+		-enable $enable
+		-subMenu 1
+		-radialPosition	"N";
+
+		menuItem 
+			-label (uiRes("m_commonReflectionOptionsPopup.kSymmetryLabel"))
+			-radialPosition	"N"
+			-checkBox	$reflectionOn
+			-c	("symmetricModelling -e -symmetry #1; if (#1) SymmetrizeSelection;");
+
+		menuItem 
+			-label (uiRes("m_commonReflectionOptionsPopup.kWorldLabel"))
+			-radialPosition	"W"
+			-checkBox	($reflectionAbout == 0)
+			-c	("symmetricModelling -e -about \"world\"");
+
+		menuItem 
+			-label (uiRes("m_commonReflectionOptionsPopup.kObjectLabel"))
+			-radialPosition	"E"
+			-checkBox	($reflectionAbout == 1)
+			-c	("symmetricModelling -e -about \"object\"");
+
+		menuItem 
+			-label (uiRes("m_commonReflectionOptionsPopup.kTopologyLabel"))
+			-radialPosition	"NE"
+			-checkBox	($reflectionAbout == 2)
+			-c	("reflectionSetMode topo");
+
+		menuItem 
+			-label (uiRes("m_commonReflectionOptionsPopup.kXAxisLabel"))
+			-radialPosition	"SW"
+			-checkBox	($reflectionAxis == 0)
+			-c	("symmetricModelling -e -axis \"x\"");
+
+		menuItem 
+			-label (uiRes("m_commonReflectionOptionsPopup.kYAxisLabel"))
+			-radialPosition	"S"
+			-checkBox	($reflectionAxis == 1)
+			-c	("symmetricModelling -e -axis \"y\"");
+
+		menuItem 
+			-label (uiRes("m_commonReflectionOptionsPopup.kZAxisLabel"))
+			-radialPosition	"SE"
+			-checkBox	($reflectionAxis == 2)
+			-c	("symmetricModelling -e -axis \"z\"");
+
+	setParent -m ..;
+}

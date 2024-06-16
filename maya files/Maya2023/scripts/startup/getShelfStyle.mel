@@ -1,0 +1,28 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  Sept 1997
+//
+//  Description:
+//      Gets the shelf style for one shelf tab
+//
+
+global proc string getShelfStyle(string $shelfTab) {
+
+	string $kids [] = `tabLayout -q -ca $shelfTab`;
+	string $style;
+
+	if (size($kids) > 0) {
+		$style = `shelfLayout -q -style ($shelfTab +"|"+ $kids[0])`;
+	} else {
+		$style = `optionVar -q shelfItemStyle`;
+	}
+
+	return $style;
+}

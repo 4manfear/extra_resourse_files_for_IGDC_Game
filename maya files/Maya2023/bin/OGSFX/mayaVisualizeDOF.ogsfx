@@ -1,0 +1,90 @@
+//**************************************************************************/
+// Copyright (c) 2010 Autodesk, Inc.
+// All rights reserved.
+//
+// These coded instructions, statements, and computer programs contain
+// unpublished proprietary information written by Autodesk, Inc., and are
+// protected by Federal copyright law. They may not be disclosed to third
+// parties or copied or duplicated in any form, in whole or in part, without
+// the prior written consent of Autodesk, Inc.
+//**************************************************************************/
+// DESCRIPTION:  Spread the influence of DOF to neighboring pixels.
+// AUTHOR:  Kells Elmquist, converted to OGSFX by Eric Haines, July 2013
+// CREATED: November 2010
+//**************************************************************************/
+
+#include "Common.ogsfh"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+//	Spread DOF circles of confusion to affected pixels
+//
+// The  source image texure to be blurred
+uniform texture2D source;
+uniform sampler2D sourceSamp = sampler_state
+{
+    Texture = <source>;
+};
+
+// the coc/depth texture is a float2 texture that has no-abs coc in .x & linear depth in .y
+uniform texture2D cocDepth;
+uniform sampler2D cocDepthSamp = sampler_state
+{
+    Texture = <cocDepth>;
+};
+
+uniform int		searchRadius = 8;   // in pixels, radius 4 = 9x9 samples; 8 = 17x17; side=2*radius+1
+uniform vec2	searchDirection;	// (0,1) for V pass or (1,0) for H pass
+uniform int		sampleSpacing = 1;	// stride between pixel samples in motion spreading, 1x1 default
+uniform float	acceptThreshold = 0.01;	// similarity threshold to accept neighbor
+
+
+/*
+// filter kernel, return value of kernel of radius r at a distance x from the filter center
+// both x & r must be positive, r must be > 0
+uniform float filter( float r, float x )
+{
+	// box kernel
+	//return 1;
+	// linear (triangle) kernel
+	return saturate( 1.0 - x/r );
+	// gaussian kernel
+	//return 0.79788 * exp( -x*x/(0.375 * r*r) ) / r;
+}*/
+
+GLSLShader visualizeDOFBlur
+{
+    // DOF Pixel shader. 2 pass (H&V) filter, pass controlled by searchDirection
+    // NOTE: This expects the common screen quad vertex shader output in common.cgh.
+//     uniform vec4 visualizeDOFBlur( VS_TO_PS_ScreenQuad In ) : COLOR0
+    void main()
+    {
+        // Compute the offset between samples in uv space
+        vec2 offset = sampleSpacing * searchDirection / gScreenSize;
+
+        // center pixel
+        //vec4 s0 = texture2D(sourceSamp, VSUV);
+        vec4 c0 = texture2D(cocDepthSamp, VSUV);
+
+        const float nearOffset = 0.0;
+        const float cocScale = 25.0;
+
+        float coc = abs( c0.x );
+        float z = c0.y / (20.0 + c0.y);
+        float isNear = (c0.x < nearOffset)? 0.4 : 0.0;
+
+        colorOut = vec4( cocScale * coc, 0.4 * z, isNear, 1.0 );
+    }
+}
+
+// shader for either pass of the 2 pass h/v spreading technique.
+technique spreadDOFPass
+{
+    pass p0
+    {
+        VertexShader (in VS_INPUT_ScreenQuad, out VS_TO_PS_ScreenQuad) = VS_ScreenQuad;
+        PixelShader (in VS_TO_PS_ScreenQuad, out pixelOut) = visualizeDOFBlur;
+    }
+}
+
+

@@ -1,0 +1,35 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  June 23 1996
+//
+//  Description:
+//      This script initializes the Playback range.  Initialization 
+//		involves determining the initial Playback range preferences,
+//		creating the UI and setting the initial visibility.
+//
+{
+	//	Get the Playback range's initial visibility preference.
+	//
+	int $playbackRangeVisible = true;
+	if (`optionVar -exists playbackRangeVisible`) {
+		$playbackRangeVisible = `optionVar -query playbackRangeVisible`;
+	} else {
+		optionVar -intValue playbackRangeVisible $playbackRangeVisible;
+	}
+
+	//  Create the Playback range.
+	//
+	if (`exists playbackRange`) { 
+		eval "source playbackRange";
+	}
+
+	//	Set the Playback range's initial visibility.
+	setPlaybackRangeVisible($playbackRangeVisible);
+}

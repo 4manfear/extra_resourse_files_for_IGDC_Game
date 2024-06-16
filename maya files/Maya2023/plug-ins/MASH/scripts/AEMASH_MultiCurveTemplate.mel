@@ -1,0 +1,135 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc AEMASH_MultiCurveTemplate( string $nodeName )
+{
+    editorTemplate -beginScrollLayout;
+    python("import MASH.nodeHeaders; MASH.nodeHeaders.addHeader('" + $nodeName + "', 'Multi-Curve')")
+
+    editorTemplate  -label (getPluginResource("MASH", "kCurveType")) -addControl "offsetType";
+    editorTemplate -addSeparator;
+    editorTemplate -callCustom "AEmultiCurveSlider" "AEmultiCurveSliderEdit" "";
+    editorTemplate  -label (getPluginResource("MASH", "kTracerLength")) -addControl "maxCurveLength";
+    editorTemplate  -label (getPluginResource("MASH", "kTracerVar")) -addControl "maxLengthVariance";
+    editorTemplate -beginLayout (getPluginResource("MASH", "kExperimentSet")) -collapse 1;
+        editorTemplate  -label (getPluginResource("MASH", "kExtraPoints")) -addControl "extraPoints";
+        editorTemplate  -label (getPluginResource("MASH", "kClosedCurve")) -addControl "curveClosed";
+        editorTemplate  -label (getPluginResource("MASH", "kCurveSmooth")) -ann (getPluginResource("MASH", "kCurveSmoothAnn")) -addControl "curveDegree";
+    editorTemplate -endLayout;
+    editorTemplate -beginLayout (getPluginResource("MASH", "kPointToPoint")) -collapse 1;
+        editorTemplate -ccu "MASHcreateInputs" "MASHeditInputs" "pointLocation" "Point Object";
+        editorTemplate -callCustom "AEaddPointButtons" "AEaddPointButtonsEdit" "";
+    editorTemplate -endLayout;
+
+    editorTemplate -addExtraControls;
+    editorTemplate -endScrollLayout;
+    AEdependNodeTemplate $nodeName;
+
+    editorTemplate -suppress "Envelope";
+    editorTemplate -suppress "randEnvelope";
+    editorTemplate -suppress "StepEnvelope";
+    editorTemplate -suppress "numberOfCurves";
+    editorTemplate -suppress "inIterations";
+    editorTemplate -suppress "time";
+    editorTemplate -suppress "curveClosed";
+}
+
+global proc AEaddPointButtons ( string $attr )
+{
+    string $nodeName[];
+    tokenize($attr, ".", $nodeName);
+
+    button -bgc (181.0/255.0) (157.0/255.0) (136.0/255.0) -label (getPluginResource("MASH", "kConnectPointObj"))  -c ("multiCurveButtonCMDS " + $nodeName[0] + " 1")
+    connPointMASHButton;
+    button -bgc (140.0/255.0) (167.0/255.0) (173.0/255.0) -label (getPluginResource("MASH", "kCreatePointObj"))  -c ("multiCurveButtonCMDS " + $nodeName[0] + " 2")
+    createPointMASHButton;
+
+    separator -w 100 -h 5 -hr 1 -st "none";
+}
+
+
+global proc AEaddPointButtonsEdit ( string $attr )
+{
+    string $nodeName[];
+    tokenize($attr, ".", $nodeName);
+
+    button -e -c ("multiCurveButtonCMDS " + $nodeName[0] + " 1")
+    connPointMASHButton;
+    button -e -c ("multiCurveButtonCMDS " + $nodeName[0] + " 2")
+    createPointMASHButton;
+
+}
+
+global proc multiCurveButtonCMDS (string $nodeName, int $whichCMD)
+{
+    if ($whichCMD == 1)
+    {
+        string $obj[] = `ls -sl -tr`;
+        if (size($obj) > 0) {
+            connectAttr -force ($obj[0]+".translate") ($nodeName+".pointLocation");
+        }
+        else {
+            MASHinViewMessage("Please select a translate.", "Warning");
+        }
+    }
+    if ($whichCMD == 2)
+    {
+        string $obj[] = `spaceLocator`;
+
+        connectAttr -force ($obj[0]+".translate") ($nodeName+".pointLocation");
+        MASHinViewMessage("Translate connected.", "Info");
+
+    }
+    evalDeferred("updateAE " + $nodeName);
+}
+
+global proc AEmultiCurveSlider ( string $attr )
+{
+    string $nodeName[];
+    tokenize($attr, ".", $nodeName);
+
+    string $command = ("mSetCurveCount(\""+$nodeName[0]+"\")");
+
+    int $currentValue = `getAttr ($nodeName[0] +".numberOfCurves")`;
+
+    intSliderGrp  //intSliderGrp
+	-w 280 -h 40
+	-label (getPluginResource("MASH", "kNumCurves"))
+	-field true
+	-value $currentValue
+	-minValue 1
+	-maxValue 50
+	-fieldMaxValue 500
+    -dc $command
+	sliderNumOfCurvesMultiCurve;
+
+    string $connectAttr = ($nodeName[0] +".numberOfCurves");
+
+    connectControl slider $connectAttr;
+
+
+    separator -w 100 -h 5 -hr 1 -st "none";
+}
+
+global proc AEmultiCurveSliderEdit ( string $attr )
+{
+    string $nodeName[];
+    tokenize($attr, ".", $nodeName);
+
+    int $currentValue = `getAttr ($nodeName[0] +".numberOfCurves")`;
+
+    string $command = ("mSetCurveCount(\""+$nodeName[0]+"\")");
+
+    intSliderGrp
+	-e -dc $command -v $currentValue
+	sliderNumOfCurvesMultiCurve;
+
+    string $connectAttr = ($nodeName[0] +".numberOfCurves");
+
+    connectControl slider $connectAttr;
+
+}

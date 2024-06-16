@@ -1,0 +1,26 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc string poseInterpolatorDriverName(string $tpl, int $index)
+// Gets the name of a driver by given index.
+{
+	string $tplShape = poseInterpolatorShape( $tpl );
+	string $drivers[] = poseInterpolatorDrivers( $tpl );
+	string $attrName = $tplShape + ".driver";
+	int $indices[] = `getAttr -multiIndices $attrName`;
+	for ($i in $indices)
+	{
+	    if($i == $index)
+	    {
+	        string $tempAttrName = $tplShape + ".driver[" + $i + "].driverMatrix";
+	        string $connections[] = `listConnections -d false $tempAttrName`;
+	        if(size($connections))
+	            return $connections[0];
+	    }
+	}
+	return "";
+} 

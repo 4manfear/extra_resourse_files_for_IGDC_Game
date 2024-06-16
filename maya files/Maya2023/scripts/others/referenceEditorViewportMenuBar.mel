@@ -1,0 +1,138 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc referenceEditorViewportNewCamera(string $menu){
+//
+//  Description:
+//		Build new perspective camera for reference editor viewport.  
+//		
+//  Input Arguments:
+//		$menu - parent of all menu item names
+//
+//  Return Value:
+//      None
+//
+	global string $gReferenceEditorModelEditor;
+
+	// Note the leading colon on the camera name to allow the name to
+	// be found even when in relativeNames mode.
+	//
+	global string $gRefEdViewportCamera[];
+	$gRefEdViewportCamera = `camera -n :refEdViewportCamera`;
+	modelEditor -edit -camera $gRefEdViewportCamera[0] $gReferenceEditorModelEditor;
+
+	referenceEditorViewportBuildCamerasMenu $menu;
+}
+
+global proc referenceEditorViewportBuildCamerasMenu(string $menu){
+//
+//  Description:
+//		Build cameras menu for reference editor viewport.  
+//		
+//  Input Arguments:
+//		$menu - parent of all menu item names
+//
+//  Return Value:
+//      None
+//
+	global string $gReferenceEditorModelEditor;
+	string $cameras[] = `listCameras -perspective`;
+	menu -e -deleteAllItems $menu;
+
+	setParent -menu $menu;
+
+    for ($camera in $cameras) {
+        menuItem -label $camera 
+			-command
+            ("modelEditor -edit -camera " + ($camera) + " " + ($gReferenceEditorModelEditor))
+			;
+    }
+
+    menuItem -divider true;
+
+	menuItem -label (uiRes("m_referenceEditorViewportMenuBar.kNewPerspective"))
+		-command ("referenceEditorViewportNewCamera " + $menu)
+			;
+
+}
+
+
+global proc referenceEditorViewportMenuBar(string $menuBarLayout,
+										   string $modelEditor){
+//
+//  Description:
+//		Build menus and menuItems for reference editor viewport menubar.  
+//		
+//  Input Arguments:
+//		$menuBarLayout - parent of all menus and items
+//		$modelEditor - name of the modelEditor that the menu items work on
+//
+//  Return Value:
+//      None
+//
+
+	int $dimWhenNoSelect = 0;
+		
+	//	These menu items are mostly copied from createModelPanelMenu.
+	//
+
+	string $itemName;
+
+	// The shadows menu item will only be available
+	// if the hardware support the HWshadows
+	//
+	global int $gSupportHWshadows = true;
+	
+	if( `about -nt` )
+	{
+		string $checkHWshadowsExt = `openGLExtension -ext "GL_ARB_shadow"`;
+		if( $checkHWshadowsExt == "" )
+			$checkHWshadowsExt = `openGLExtension -ext "GL_SGIX_shadow"`;
+		if( $checkHWshadowsExt == "" )
+		{
+			$checkHWshadowsExt = `openGLExtension -ext "GL_ARB_texture_env_combine"`;
+			if( $checkHWshadowsExt == "" )
+				$checkHWshadowsExt = `openGLExtension -ext "GL_EXT_texture_env_combine"`;
+			if( $checkHWshadowsExt != "" )	{
+				$checkHWshadowsExt = `openGLExtension -ext "GL_ARB_multitexture"`;
+				if( $checkHWshadowsExt != "" )	{
+					$checkHWshadowsExt = `openGLExtension -ext "GL_EXT_bgra"`;
+				}
+			}
+		}
+		if( $checkHWshadowsExt == "" )	{ $gSupportHWshadows = false; }
+		else							{ $gSupportHWshadows = true;	}
+	}
+	
+	string $cameraString = (uiRes("m_referenceEditorViewportMenuBar.kCameras"));
+	
+	$itemName = `menu -tearOff false 
+			-aob true 
+			-label (uiRes("m_referenceEditorViewportMenuBar.kShading"))
+			-postMenuCommandOnce false
+			-familyImage "menuIconShading.png"`;
+	menu -edit -pmc ("updateShadingMenu "+$itemName+" "+$modelEditor) $itemName;
+
+	$itemName = `menu -tearOff true 
+			-label (uiRes("m_referenceEditorViewportMenuBar.kLighting"))
+			-postMenuCommandOnce false
+			-familyImage "menuIconLighting.png"`;
+	menu -e -pmc ("updateLightingMenu "+$itemName+" "+$modelEditor) $itemName;
+
+	$itemName = `menu -tearOff true 
+			-label (uiRes("m_referenceEditorViewportMenuBar.kShow"))
+			-postMenuCommandOnce false
+			-familyImage "menuIconShow.png"`;
+	menu -e -pmc ("updateShowMenu "+$itemName+" "+$modelEditor+" \"\" \"\"") $itemName;
+
+	$itemName = `menu -tearOff true 
+			-label $cameraString
+			-familyImage "menuIconShow.png"`;
+
+		referenceEditorViewportBuildCamerasMenu $itemName ;
+
+}

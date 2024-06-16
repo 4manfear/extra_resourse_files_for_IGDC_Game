@@ -1,0 +1,26 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//  Description:
+//  This is used when a group node is selected and we need to extend the selection
+//  to include all transforms in the group. Useful when we want an operation to work
+//  on each geometry that is part of a group but we have only the group node selected.
+//
+//  Input Arguments:
+//      None.
+//
+//  Return Value:
+//      None.
+//
+
+global proc expandPolyGroupSelection()
+{
+	// We need to expand selection to include polygons(12) vertices(31) edges(32) faces(34) UVs(35)
+	if( `selectMode -q -o` )
+		select `filterExpand -sm 12 -sm 31 -sm 32 -sm 34 -sm 35 -ex false`;
+}

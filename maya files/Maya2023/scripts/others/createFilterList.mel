@@ -1,0 +1,43 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  July 2, 1997
+//
+//  Description:
+//      Creates a list of filters and their creation commands for use
+//		by the deviceEditor.
+//
+//  Input Arguments:
+//		int			Active/Inactive state.
+//						0 for inactive.
+//						1 for active.
+// 
+//  Return Value:
+//		string[]	An array of filter names and creation commands.
+//
+//		The array alternates between a string containing the filter name
+//		and a string containing the commands to create the filter.
+//		
+//
+
+global proc string[] createFilterList(int $active)
+{
+	string $activeState = " -deviceEditorActive " + $active + ";";
+
+	//	There must be an even pairing of filter names and creation commands
+	//
+	string $filters[2] = {
+	//	NAME		CREATION COMMANDS
+	//	----------------------------------------------------------------
+		(uiRes("m_createFilterList.kEuler")),	
+			"filter -t filterEuler -n \"euler\"" + $activeState
+	};
+
+	return $filters;
+}

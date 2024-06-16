@@ -1,0 +1,43 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+// This array controls what attributes are excluded when creating a locked reference.
+//
+global proc string[] getLockReferenceExcludedAttributes()
+{
+    // Any attributes listed in this array will be skipped when
+    // locking down attributes when creating a locked reference.
+    //
+    global string $gLockReferenceExcludedAttributes[];
+    $gLockReferenceExcludedAttributes[0] = "equalizerMap";
+
+    return $gLockReferenceExcludedAttributes;
+}
+
+// Historically, Maya has only allowed you to indicate which attribute types you want to exclude
+// from reference locking. However, many times, this is not granular enough. The user may want to
+// exclude certain attributes on a particular node instead of across the board. To allow users to
+// add their own custom logic before deciding if a particular plug should be locked, we have added a
+// shouldLockReferencedAttribute function. To enable this, change the return value of this function
+// to 1.
+// NOTE: This will work on top of the attribute type exclusions in getLockReferenceExcludedAttributes
+global proc int wantContextualLockReferencedAttribute()
+{
+    // By default, only look at attribute type lock exclusions.
+    // Change to 1 if you want Maya to call shouldLockReferencedAttribute
+    return 0;
+}
+
+// Return 1 to indicate the given attribute on the given node should be locked, 0 to indicate
+// unlocked.
+// NOTE: Returns full paths for nodes. i.e. it will include namespaces and full dag paths if it's a dag node
+// NOTE: This will work on top of the attribute type exclusions in getLockReferenceExcludedAttributes
+global proc int shouldLockReferencedAttribute(string $node, string $attr)
+{
+    // by default, assume all plugs should be locked
+    return 1;
+}

@@ -1,0 +1,218 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  Dec 3, 1998
+//
+//  Procedure Name:
+//      performPolyToCurve
+//
+//         
+//
+
+proc setOptionVars (int $forceFactorySettings)
+{			   
+	optionVar -init $forceFactorySettings -category "Modify.Convert.Polygon Edges to Curve"
+		-iv polyToCurveForm 3
+		-iv polyToCurveDegree 3
+		-iv polyToCurveConformToSmoothMesh 1
+		;
+}
+
+global proc performPolyToCurveSetup (string $parent, int $forceFactorySettings)
+{
+	setOptionVars($forceFactorySettings);
+	setParent $parent;
+
+	int $ival;
+	$ival = `optionVar -q polyToCurveForm`;
+	radioButtonGrp -edit -select $ival formRBG;
+
+	$ival = `optionVar -q polyToCurveDegree`;
+	switch($ival) 
+	{
+		case 1: radioButtonGrp -e -select 1 rebuildCrvDegree123; break;
+		case 2: radioButtonGrp -e -select 2 rebuildCrvDegree123; break;
+		case 3: radioButtonGrp -e -select 3 rebuildCrvDegree123; break;
+		case 5: radioButtonGrp -e -select 1 rebuildCrvDegree57; break;
+		case 7: radioButtonGrp -e -select 2 rebuildCrvDegree57; break;
+		default: radioButtonGrp -e -select 3 rebuildCrvDegree123; break;
+	}
+
+	$ival = `optionVar -q polyToCurveConformToSmoothMesh`;
+	checkBoxGrp -edit -value1 $ival conformToSmoothMeshCBG;
+}
+
+global proc performPolyToCurveCallback (string $parent, int $doIt)
+{
+	setParent $parent;
+
+	int $ival;
+	$ival = `radioButtonGrp -query -select formRBG`;
+	optionVar -intValue polyToCurveForm $ival;
+
+	int $degreeBtn123 = `radioButtonGrp -q -select rebuildCrvDegree123`;
+	int $degreeBtn57 = `radioButtonGrp -q -select rebuildCrvDegree57`;
+	int $degree;
+	switch($degreeBtn123) {
+		case 1: $degree = 1; break;
+		case 2: $degree = 2; break;
+		case 3: $degree = 3; break;
+		default:
+			switch($degreeBtn57) {
+				case 1: $degree = 5; break;
+				case 2: $degree = 7; break;
+				default: $degree = 3; break;
+			}
+		break;
+	}
+
+	optionVar -iv polyToCurveDegree $degree;
+
+	$ival = `checkBoxGrp -query -value1 conformToSmoothMeshCBG`;
+	optionVar -intValue polyToCurveConformToSmoothMesh $ival;
+
+	if ($doIt) 
+	{
+		performPolyToCurve 0;
+		addToRecentCommandQueue "performPolyToCurve 0" "CreateCurveFromPoly";
+	}
+}
+
+proc polyToCurveOptions()
+{
+	global int $gOptionBoxTemplateDescriptionMarginWidth;
+	global int $gOptionBoxTemplateFrameSpacing;
+	
+	string $commandName = "performPolyToCurve";
+	string $callback = ($commandName + "Callback");
+	string $setup = ($commandName + "Setup");
+	   
+	string $layout = getOptionBox();
+	setParent $layout;
+	setUITemplate -pushTemplate OptionBoxTemplate;
+	waitCursor -state 1;
+
+	// Form layout
+	string $parent = `formLayout polyToCurveOptionsFormLayout`;
+
+		// Description frame
+		string $descriptionFrame = 
+		`frameLayout -label (uiRes("m_performPolyToCurve.kDescriptionLabel"))
+				-marginWidth $gOptionBoxTemplateDescriptionMarginWidth`;	
+			columnLayout;
+				text (uiRes("m_performPolyToCurve.kDescription"));
+				text (uiRes("m_performPolyToCurve.kDescription2"));
+				text (uiRes("m_performPolyToCurve.kDescription3"));
+		setParent $parent;
+
+		string $label1 = (uiRes("m_performPolyToCurve.kNotPeriodic"));
+		string $label2 = (uiRes("m_performPolyToCurve.kPeriodic"));
+		string $label3 = (uiRes("m_performPolyToCurve.kPeriodicIfClosed"));
+
+		// Settings frame
+		string $settingsFrame = 
+		`frameLayout -label (uiRes("m_performPolyToCurve.kSettingsLbl"))`;
+			columnLayout;
+
+				radioButtonGrp -numberOfRadioButtons 3 -vertical
+					-label (uiRes("m_performPolyToCurve.kPeriodicLbl"))
+						-labelArray3 $label1 $label2 $label3
+					formRBG;
+
+				separator -style "none";
+
+				checkBoxGrp -label1 (uiRes("m_performPolyToCurve.kUseSMP"))
+					conformToSmoothMeshCBG;
+
+				separator -style "none";
+
+				radioButtonGrp -label (uiRes("m_performPolyToCurve.kDegreeLbl"))
+					-numberOfRadioButtons 3
+					-label1 (uiRes("m_performPolyToCurve.kLinear"))
+					-label2 (uiRes("m_performPolyToCurve.kQuadratic"))
+					-label3 (uiRes("m_performPolyToCurve.kCubic"))
+					-select 3
+					rebuildCrvDegree123;
+
+				radioButtonGrp -shareCollection rebuildCrvDegree123
+					-numberOfRadioButtons 2
+					-label1 (uiRes("m_performPolyToCurve.kQuintic"))
+					-label2 (uiRes("m_performPolyToCurve.kHeptic"))
+					rebuildCrvDegree57;
+
+			setParent $parent;
+		setParent ..;
+
+	formLayout -e
+			-af $descriptionFrame "top" $gOptionBoxTemplateFrameSpacing
+			-af $descriptionFrame "left" $gOptionBoxTemplateFrameSpacing
+			-af $descriptionFrame "right" $gOptionBoxTemplateFrameSpacing
+			-an $descriptionFrame "bottom"
+
+			-ac $settingsFrame "top" $gOptionBoxTemplateFrameSpacing $descriptionFrame
+			-af $settingsFrame "left" $gOptionBoxTemplateFrameSpacing
+			-af $settingsFrame "right" $gOptionBoxTemplateFrameSpacing
+			-an $settingsFrame "bottom" 
+		$parent;
+
+	waitCursor -state 0;
+	setUITemplate -popTemplate;
+	   
+	string $applyBtn = getOptionBoxApplyBtn();
+	button -edit -label (uiRes("m_performPolyToCurve.kConvertLbl"))
+	       -command ($callback + " " + $parent + " " + 1)
+		$applyBtn;
+
+	string $saveBtn = getOptionBoxSaveBtn();
+	button -edit 
+		-command ($callback + " " + $parent + " " + 0 + "; hideOptionBox")
+		$saveBtn;
+
+	string $resetBtn = getOptionBoxResetBtn();
+	button -edit 
+		-command ($setup + " " + $parent + " " + 1)
+		$resetBtn;
+			 
+	setOptionBoxTitle( (uiRes("m_performPolyToCurve.kOptionsTitle")) );
+
+	setOptionBoxHelpTag( "PolyToCurve" );
+
+	eval (($setup + " " + $parent + " " + 0));      
+	showOptionBox();
+}
+
+global proc string performPolyToCurve( int $option )
+{
+	string $cmd="";
+	switch ($option) 
+	{
+	  case 1:
+		// Just the option box
+		polyToCurveOptions; 
+		break;
+		
+	  default:
+		setOptionVars(false);
+
+		int $form = `optionVar -q polyToCurveForm`;
+		$form = $form - 1;
+
+		int $degree = `optionVar -q polyToCurveDegree`;
+
+		int $conformToSmooth = `optionVar -q polyToCurveConformToSmoothMesh`;
+
+		$cmd = "polyToCurve -form " + $form + " -degree " + $degree + " -conformToSmoothMeshPreview " + $conformToSmooth + ";";
+
+		if ($option == 0)
+			evalEcho $cmd;
+
+		break;
+	}
+	return $cmd;
+}

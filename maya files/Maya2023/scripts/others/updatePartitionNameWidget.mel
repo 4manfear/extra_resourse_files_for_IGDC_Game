@@ -1,0 +1,30 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//
+//
+//
+//
+//  Creation Date:  June 2000
+//
+//  Description:
+//      Used to update the partition name in the deformers options boxes.
+//
+global proc updatePartitionNameWidget()
+{
+	
+	if (`optionMenuGrp -exists partitionListWidget`) {	
+		string $partitionNameVal = `optionMenuGrp -q -v partitionListWidget`;
+		if ($partitionNameVal == (uiRes("m_updatePartitionNameWidget.kCreateNewPartition"))) {
+			textFieldGrp -e -enable `checkBoxGrp -q -v1 exclWidget` partitionNameWidget;
+		} else {
+			textFieldGrp -e -enable 0 partitionNameWidget;
+		}
+	}
+}

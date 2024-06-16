@@ -1,0 +1,46 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//	Procedure Name:
+//	AEpointOnSurfaceInfoTemplate
+//
+//	Description Name;
+//	Creates the attribute editor controls for the pointOnSurfaceInfo node
+//
+//	Input Value:
+//	nodeName
+//
+//	Output Value:
+//	None
+//
+
+global proc AEpointOnSurfaceInfoTemplate ( string $nodeName )
+{
+	editorTemplate -beginScrollLayout;
+		string $inputSurface = (uiRes("m_AEpointOnSurfaceInfoTemplate.kInputSurface"));
+		editorTemplate -beginLayout (uiRes("m_AEpointOnSurfaceInfoTemplate.kPointOnSurfaceInfoAttr")) -collapse false;
+			editorTemplate -callCustom ("AEinputNew \""+$inputSurface+"\"")
+					("AEinputReplace \""+$inputSurface+"\"")
+					"inputSurface";
+			editorTemplate -addControl "parameterU";
+			editorTemplate -addControl "parameterV";
+			editorTemplate -addControl "turnOnPercentage";
+
+			// the results
+			editorTemplate -addControl "position";
+			editorTemplate -addControl "normal";
+			editorTemplate -addControl "tangentU";
+			editorTemplate -addControl "tangentV";
+		editorTemplate -endLayout;
+	
+		// include/call base class/node attributes
+		AEabstractBaseCreateTemplate $nodeName;
+
+	editorTemplate -addExtraControls;
+	editorTemplate -endScrollLayout;
+}

@@ -1,0 +1,51 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc Unfold3DFixNonManifold(string $topoErrors[])
+{
+	int $nonManifold = 0;
+	int $zeroEdge = 0;
+	int $invalidComponents = 0;
+	for ($error in $topoErrors)
+	{
+		switch ($error) {
+		
+			case "nonManifoldEdge":
+			case "nonManifoldVertex":
+			case "nonManifoldUV":
+				$nonManifold = 1;
+				break;
+			case "unconnectedEdge":
+			case "unconnectedVertex":
+			case "unconnectedUV":
+				$invalidComponents = 1;
+				break;
+			case "degenerateEdge":
+				break;
+		}
+	}
+	string $origSel[] = `ls -sl`;
+	int $isObjectMode = `selectMode -q -o`;
+	string $compSelType = `getComponentMask`;
+	polyCleanupArgList 4 { "0","1","1","0","0","0","0","0","0","1e-05",$zeroEdge,"1e-05","0","1e-05","0",$nonManifold,"0",$invalidComponents };
+	string $cleanedMeshes[] = `ls -o -sl`;
+	if($isObjectMode)
+	{
+		selectMode -object;
+		hilite;
+	}
+	setComponentMask($compSelType);
+	select -r $origSel;
+	
+	string $resultMessage = (uiRes("m_Unfold3DFixNonManifold.kNonManifoldRemoveResult"));
+	for($mesh in $cleanedMeshes)
+	{
+		$resultMessage += " " + $mesh;
+	}
+	$resultMessage += " ]\n";
+	warning -n $resultMessage;
+}

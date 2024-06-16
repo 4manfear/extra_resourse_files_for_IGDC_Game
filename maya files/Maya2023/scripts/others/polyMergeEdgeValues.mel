@@ -1,0 +1,35 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//# this proc points the tool properties
+//# window to the current polyMergeEdge context
+
+global proc polyMergeEdgeValues ( string $toolName )
+{
+	string $name = "polyMergeEdge";
+	string $parent = (`toolPropertyWindow -q -location` + "|" + $name);
+	setParent $parent;
+
+    // Merge mode
+    //
+	int $mode = `polyMergeEdgeCtx -q -mm $toolName`;
+	
+	if($mode == 0)
+		$mode = 2;
+	else if($mode == 2)
+		$mode = 3;
+
+	radioButtonGrp -e -sl $mode
+		-on1 ("polyMergeEdgeCtx -e -mm 1 " + $toolName)
+		-on2 ("polyMergeEdgeCtx -e -mm 0 " + $toolName)
+		-on3 ("polyMergeEdgeCtx -e -mm 2 " + $toolName)
+		mergeModeRadio;
+
+	string $helpTag= "MergeEdgeTool";
+	toolPropertySetCommon $toolName ($name + ".png") $helpTag;
+	toolPropertySelect $name;
+}

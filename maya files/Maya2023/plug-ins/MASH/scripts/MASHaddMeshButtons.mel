@@ -1,0 +1,51 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc MASHaddMeshButtons ( string $attr )
+{
+    string $nodeName[];
+    tokenize($attr, ".", $nodeName);
+
+    button -label "Connect Mesh"  -c ("mashAddMeshButtonCMDS " + $nodeName[0] + " 1")
+    MASHaddMeshButton;
+
+    separator -w 100 -h 5 -hr 1 -st "none";
+}
+
+
+global proc MASHaddMeshButtonsEdit ( string $attr )
+{
+    string $nodeName[];
+    tokenize($attr, ".", $nodeName);
+
+    button -e -c ("mashAddMeshButtonCMDS " + $nodeName[0] + " 1")
+    MASHaddMeshButton;
+}
+
+
+
+global proc mashAddMeshButtonCMDS (string $nodeName, int $whichCMD)
+{
+    if ($whichCMD == 1)
+    {
+        string $filter[] = `filterExpand -sm 12`;
+
+        if (size($filter) > 0) {
+            string $shape[] = `listRelatives -s $filter[0]`;
+
+            connectAttr -force ($shape[0]+".worldMesh") ($nodeName+".inputMesh");
+
+            MASHinViewMessage("Mesh connected.", "Info");
+
+            catchQuiet(`setAttr ($nodeName+".arrangement") 4`);
+        }
+        else {
+            MASHinViewMessage("Please select a mesh.", "Warning");
+        }
+    }
+    evalDeferred("updateAE " + $nodeName);
+}

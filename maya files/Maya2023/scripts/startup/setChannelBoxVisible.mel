@@ -1,0 +1,43 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  10 December 1998
+//
+//	Description:
+//		Set the visibility of the channel box.
+//
+//	Arguments:
+//		$visible - Visibility for the channel box.
+//
+global proc setChannelBoxVisible(int $visible)
+{
+	if(`optionVar -query channelsLayersSeparate`) {
+		setChannelsVisible($visible);
+	} else {
+		setChannelsLayersVisible($visible);
+	}
+}
+
+global proc raiseChannelBox()
+{
+	if(`optionVar -query channelsLayersSeparate`) {
+		raiseChannels();
+	} else {
+		raiseChannelsLayers();
+	}
+}
+
+global proc int isChannelBoxRaised()
+{
+	if(`optionVar -query channelsLayersSeparate`) {
+		return isChannelsRaised();
+	} else {
+		return isChannelsLayersRaised();
+	}
+}

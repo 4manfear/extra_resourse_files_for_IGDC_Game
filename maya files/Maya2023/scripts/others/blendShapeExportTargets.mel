@@ -1,0 +1,49 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+
+global proc blendShapeExportTargets(
+	string $filePath,
+	string $bs, string $tgts[])
+// 
+// Description:
+//     Export the blendShape and targets into a file. 
+// 
+// Input Arguments:
+//     $filePath: 	the exported file, end with ".shp".
+//     $bs: 	    name of the exported blendShape node. 
+//     $tgts:       target names, all targets will be exported when this array is empty.  
+//
+{
+	// get the target index from the target name.
+	int $tgtIndices[];
+	for($tgt in $tgts)
+	{
+		int $idx = blendShapeTargetIndexFromName($bs, $tgt);
+		if ($idx != -1)
+			$tgtIndices[size($tgtIndices)] = $idx;
+	}
+	
+	string $cmd = "blendShape -edit -export ";
+	$cmd += "\"" + $filePath + "\""; 
+	for ($item in $tgtIndices)
+	{
+		// base index of exportTarget flag are ignored during exporting,
+		// so 0 is used for all targets.
+		$cmd += " -exportTarget 0 " + $item;
+	}
+	$cmd += " " + $bs;
+	evalEcho($cmd);
+	
+	// in case the progressbar is enabled and not stop normally
+	global string $gMainProgressBar;
+	if (`progressBar -query -isCancelled $gMainProgressBar`) {}
+	else
+	{
+		progressBar -edit -endProgress $gMainProgressBar;
+	}
+}

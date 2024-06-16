@@ -1,0 +1,152 @@
+<fragment uiName="mayaStandardSurfaceParams" name="mayaStandardSurfaceParams" type="structure" class="ShadeFragment" version="1.0" feature_level="0">
+    <description><![CDATA[Struct for lighting information.]]></description>
+    <properties>
+        <struct name="mayaStandardSurfaceParams" struct_name="mayaStandardSurfaceParams" />
+    </properties>
+    <values>
+    </values>
+    <outputs>
+        <alias name="mayaStandardSurfaceParams" struct_name="mayaStandardSurfaceParams" />
+        <float3 name="N" />
+        <float3 name="T" />
+        <float3 name="B" />
+        <float name="base" />
+        <float3 name="baseColor" />
+        <float name="diffuseColor" />
+        <float name="diffuseRoughness" />
+        <float name="metalness" />
+        <float name="metalIOR" />
+        <float name="metalExtinction" />
+        <float name="specular" />
+        <float3 name="specularColor" />
+        <float name="specularIOR" />
+        <float2 name="specularRoughness" />
+        <float name="transmission" />
+        <float3 name="opacity" />
+        <float name="subsurface" />
+        <float3 name="subsurfaceColor" />
+        <float name="coat" />
+        <float3 name="coatColor" />
+        <float name="coatIOR" />
+        <float2 name="coatRoughness" />
+        <float3 name="coatT" />
+        <float3 name="coatB" />
+        <float name="sheen" />
+        <float3 name="sheenColor" />
+        <float name="sheenRoughness" />
+        <float3 name="emission" />
+    </outputs>
+    <implementation>
+        <implementation render="OGSRenderer" language="Cg" lang_version="2.1">
+            <function_name val="" />
+            <declaration name="mayaStandardSurfaceParams">
+                <![CDATA[
+struct mayaStandardSurfaceParams {
+    float3 N;
+    float3 T;
+    float3 B;
+    float base;
+    float3 baseColor;
+    float3 diffuseColor;
+    float diffuseRoughness;
+    float metalness;
+    float3 metalIOR;
+    float3 metalExtinction;
+    float specular;
+    float3 specularColor;
+    float2 specularRoughness;
+    float specularIOR;
+    float transmission;
+    float3 opacity;
+    float subsurface;
+    float3 subsurfaceColor;
+    float coat;
+    float3 coatColor;
+    float coatIOR;
+    float2 coatRoughness;
+    float3 coatT;
+    float3 coatB;
+    float sheen;
+    float3 sheenColor;
+    float sheenRoughness;
+    float3 emission;
+};
+                ]]>
+            </declaration>
+        </implementation>
+        <implementation render="OGSRenderer" language="HLSL" lang_version="11.0">
+            <function_name val="" />
+            <declaration name="mayaStandardSurfaceParams">
+                <![CDATA[
+struct mayaStandardSurfaceParams {
+    float3 N;
+    float3 T;
+    float3 B;
+    float base;
+    float3 baseColor;
+    float3 diffuseColor;
+    float diffuseRoughness;
+    float metalness;
+    float3 metalIOR;
+    float3 metalExtinction;
+    float specular;
+    float3 specularColor;
+    float2 specularRoughness;
+    float specularIOR;
+    float transmission;
+    float3 opacity;
+    float subsurface;
+    float3 subsurfaceColor;
+    float coat;
+    float3 coatColor;
+    float coatIOR;
+    float2 coatRoughness;
+    float3 coatT;
+    float3 coatB;
+    float sheen;
+    float3 sheenColor;
+    float sheenRoughness;
+    float3 emission;
+};
+                ]]>
+            </declaration>
+        </implementation>
+        <implementation render="OGSRenderer" language="GLSL" lang_version="3.0">
+            <function_name val="" />
+            <declaration name="mayaStandardSurfaceParams">
+                <![CDATA[
+struct mayaStandardSurfaceParams {
+    vec3 N;
+    vec3 T;
+    vec3 B;
+    float base;
+    vec3 baseColor;
+    vec3 diffuseColor;
+    float diffuseRoughness;
+    float metalness;
+    vec3 metalIOR;
+    vec3 metalExtinction;
+    float specular;
+    vec3 specularColor;
+    vec2 specularRoughness;
+    float specularIOR;
+    float transmission;
+    vec3 opacity;
+    float subsurface;
+    vec3 subsurfaceColor;
+    float coat;
+    vec3 coatColor;
+    float coatIOR;
+    vec2 coatRoughness;
+    vec3 coatT;
+    vec3 coatB;
+    float sheen;
+    vec3 sheenColor;
+    float sheenRoughness;
+    vec3 emission;
+};
+                ]]>
+            </declaration>
+        </implementation>
+    </implementation>
+</fragment>

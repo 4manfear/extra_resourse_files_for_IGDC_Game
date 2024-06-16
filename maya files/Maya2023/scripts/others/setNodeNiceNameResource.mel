@@ -1,0 +1,46 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  September 2006
+//
+//<doc>
+//<name setNodeNiceNameResource>
+//
+//<synopsis>
+//		setNodeNiceNameResource(string $nodeType, string $str)
+//
+//<related setAttrNiceNameResource loadPluginLanguageResources>
+//<description>
+//      Convenience routines to define localizable string resource values 
+//      for a node niceName value.  
+//
+//<flags>
+//      string	 $nodeType   the node type 
+//      string	 $str        displayable nice name string to be associated with this nodetype
+//
+//
+//<examples>
+//  // Set the niceName string associated with 
+//  // the node type "myNode".  This example shows an
+//  // English resource value, however this routine would more often
+//  // be called in practice to provide localized string values. 
+//  // 
+//  setNodeNiceNameResource( "myNode", "My Node");
+//
+//</doc>
+//
+
+global proc setNodeNiceNameResource( string $nodeType, string $str )
+{
+    // Key has format n_NNN.niceName
+    // where NNN = node type name 
+     string $fullId = "n_" + $nodeType + ".niceName";
+
+    displayString -replace -value $str $fullId;
+}

@@ -1,0 +1,137 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+
+//
+//  Creation Date:  June 07, 2007
+//
+//	Owner: jchan
+//
+//  Description:
+//      This script defines the procedure for getting the localized UI Component names.
+//
+
+//<doc>
+//<name localizedUIComponentLabel>
+//
+//<synopsis>
+//		localizedUIComponentLabel( string $englishPanelLabel )
+//
+//<description>
+//		Use this procedure to obtain the localized versions of 
+//      UI Component labels such as "Status Line", "Shelf", "Time Slider",
+//		"Range Slider", "Command Line", "Help Line", "Maya Live Control Panel",
+//		"Tool Box", "Attribute Editor", "Tool Settings", "Channel Box / Layer Editor",
+//		"Layer Editor", and "Channel Box".
+//		
+//<returns>
+//      string: the localized version of the label passed in.
+//
+//      If localizedUIComponentLabel() is passed a label for which no
+//		localized label is defined, the returned result is the unchanged 
+//      input string.  
+//
+//<examples>
+//		// This command creates a menu item with the localized version of the attribute editor
+//		// name as its label.
+//
+//		menuItem -label (localizedUIComponentLabel("Attribute Editor"))
+//</doc>
+
+//
+//  Procedure Name:
+//      localizedUIComponentLabels
+//
+//  Description:
+//		Returns localized UI component labels..
+//
+//
+global proc string[] localizedUIComponentLabels()
+{
+	global string $gUIComponentLabels[];
+
+    if( size( $gUIComponentLabels ) ) {
+        return $gUIComponentLabels;
+    }
+
+    $gUIComponentLabels = {
+							 "Status Line"						,   (uiRes("m_localizedUIComponentLabel.kStatusLine"))
+							,"Shelf"							, 	(uiRes("m_localizedUIComponentLabel.kShelf"))
+							,"Time Slider"						,   (uiRes("m_localizedUIComponentLabel.kTimeSlider"))
+							,"Range Slider"						,   (uiRes("m_localizedUIComponentLabel.kRangeSlider"))
+							,"Command Line"						,   (uiRes("m_localizedUIComponentLabel.kCommandLine"))
+							,"Help Line"						,   (uiRes("m_localizedUIComponentLabel.kHelpLine"))
+							,"Tool Box"							,   (uiRes("m_localizedUIComponentLabel.kToolBox"))
+							,"Attribute Editor"					,   (uiRes("m_localizedUIComponentLabel.kAttributeEditor"))
+							,"Tool Settings"					,   (uiRes("m_localizedUIComponentLabel.kToolSettings"))
+							,"Channel Box / Layer Editor"		, 	(uiRes("m_localizedUIComponentLabel.kChannelBoxLayerEditor"))
+							,"Channel Box"						,   (uiRes("m_localizedUIComponentLabel.kChannelBox"))
+							,"Layer Editor"						,   (uiRes("m_localizedUIComponentLabel.kLayerEditor"))
+							, "Viewport"						, 	(uiRes("m_localizedUIComponentLabel.kViewport"))
+							, "Attribute Spread Sheet"			, 	(uiRes("m_localizedUIComponentLabel.kAttributeSpreadSheet"))
+							, "Modeling Toolkit"				, 	(uiRes("m_localizedUIComponentLabel.kModelingToolkit"))
+							, "XGen"							, 	(uiRes("m_localizedUIComponentLabel.kXgen"))
+							, "XGen Interactive Groom Editor"	,	(uiRes("m_localizedUIComponentLabel.kIgSplineEditorDockTitle"))
+							, "Quick Rig"						, 	(uiRes("m_localizedUIComponentLabel.kQuickRig"))
+							, "Human IK"						, 	(uiRes("m_localizedUIComponentLabel.kHumanIK"))
+							, "Render Settings"					, 	(uiRes("m_localizedUIComponentLabel.kRenderSettings"))
+							, "Render Settings (masterLayer)"	, 	(uiRes("m_localizedUIComponentLabel.kRenderSettingsMasterLayer"))
+							, "Render Setup"					, 	(uiRes("m_localizedUIComponentLabel.kRenderSetup"))
+							, "Light Editor"					, 	(uiRes("m_localizedUIComponentLabel.kLightEditor"))
+							, "Light Editor (Global Mode)"		,	(uiRes("m_localizedUIComponentLabel.kLightEditorGlobalMode"))
+							, "Light Editor (Layer Mode)"		,	(uiRes("m_localizedUIComponentLabel.kLightEditorLayerMode"))
+							, "Property Editor"					,	(uiRes("m_localizedUIComponentLabel.kPropertyEditor"))
+							, "Property Editor - Render Setup"	,	(uiRes("m_localizedUIComponentLabel.kPropertyEditorRenderSetup"))
+							, "Property Editor - Light Editor"	,	(uiRes("m_localizedUIComponentLabel.kPropertyEditorLightEditor"))
+							, "Looking through: Select_Light"	,	(uiRes("m_localizedUIComponentLabel.kLookingThroughSelectLight"))
+							, "MASH Editor"						, 	(uiRes("m_localizedUIComponentLabel.kMASHOutliner"))
+						};
+	
+	return $gUIComponentLabels;			 				
+}
+
+
+//
+//  Procedure Name:
+//      localizedUIComponentLabel.
+//
+//  Description:
+//		Returns the localized UI component label.
+//
+//  Input Arguments:
+//		The english version of the UI component label.
+//
+//  Return Value:
+//      The localized version of the UI component label.
+//
+
+global proc string localizedUIComponentLabel(string $nameEN)
+{
+	string $localizedLabel;
+    string $uiComponentlabels[] = localizedUIComponentLabels();
+    int $foundIt = false;
+    int $i, $count = size( $uiComponentlabels );
+
+    for( $i = 0; $i < $count-1; $i+=2 ) {
+        if( $nameEN == $uiComponentlabels[$i] ) {
+			// get localized name of the matched workspace..
+            $localizedLabel = $uiComponentlabels[$i+1];
+            $foundIt = true;
+            break;
+        }
+    }
+
+    // If we couldn't find a match, just return what was
+    // passed in.
+    //
+    if( !$foundIt ) {
+		uiToMelMsg( "UIComponents_melToUI", $nameEN, 0 );
+        $localizedLabel = $nameEN;
+    }
+
+    return $localizedLabel;
+}

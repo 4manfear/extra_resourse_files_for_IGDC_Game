@@ -1,0 +1,518 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//  Creation Date:  April 1999
+//
+//  This routine contains the names of the plug-ins that contain
+//  functionality that is a core part of Maya.  If those plug-in
+//  are installed, we want to "autoload" them the first time this
+//  release of Maya is started.
+//
+//  If customer's subsequently decide they don't want to have
+//  those plug-ins autoloaded, they can disable the autoload via
+//  Maya's plug-in manager.
+//
+//  This code is very specific to the installation setup of a
+//  particular Maya release, you probably should not fiddle
+//  with it without consulting the release engineering team first.
+
+global proc initialPluginLoad()
+{
+	string $mayaPlugInPath = `getenv MAYA_PLUG_IN_PATH`;
+	string $pluginAutoloadList[] = { };
+	string $category = "Plugins";
+	if (`getenv "MAYA_NO_INITIAL_AUTOLOAD_MT"` == "") {
+		appendStringArray( $pluginAutoloadList, { "modelingToolkit" }, 1 );
+	}
+
+	// List of plug-ins introduced with 3.0
+	if ( ! `optionVar -exists oneTimeUnlimitedPluginLoad30` ) {
+		optionVar -category $category -iv oneTimeUnlimitedPluginLoad30 1;
+
+		string $licenseType = `about -p`;
+
+		// Do not erase pre 3.0 setup if there is
+		// one. oneTimeUnlimitedPluginLoad was the optionvar used
+		// then.
+		if (! `optionVar -exists oneTimeUnlimitedPluginLoad` ) 
+		{
+			string $defaultPlugins[] = {
+				"rotateHelper"
+				, "ik2Bsolver"
+			};
+			$pluginAutoloadList = AWAppendStringsToStringArray (
+									$defaultPlugins,
+									$pluginAutoloadList);
+
+			$licenseType = match("Unlimited", $licenseType);
+			if ( $licenseType == "Unlimited" ) {
+				string $UnlimitedPlugins[] = {
+					"Fur"
+				};
+				$pluginAutoloadList = AWAppendStringsToStringArray (
+					$UnlimitedPlugins, $pluginAutoloadList);
+			}
+		}
+
+	}
+
+	// List of plug-ins introduced with 5.0	
+	if ( ! `optionVar -exists oneTimeDefaultPluginLoad50` ) {
+		optionVar -category $category -iv oneTimeDefaultPluginLoad50 1;
+	
+		string $defaultPlugins[] = {};
+
+		$pluginAutoloadList = AWAppendStringsToStringArray (
+							$defaultPlugins,
+							$pluginAutoloadList);
+
+	}
+
+	// List of plug-ins introduced with 6.5.  Some are only
+	// available on specific platforms.
+	if ( ! `optionVar -exists oneTimeDefaultPluginLoad65` ) {
+		optionVar -category $category -iv oneTimeDefaultPluginLoad65 1;
+	
+		string $defaultPlugins[] = {
+			"fbxmaya"
+		};
+
+		$pluginAutoloadList = AWAppendStringsToStringArray (
+			$defaultPlugins, 
+			$pluginAutoloadList);
+	}
+
+	// List of plug-ins introduced with 7.0
+	if ( ! `optionVar -exists oneTimeDefaultPluginLoad70` ) {
+		optionVar -category $category -iv oneTimeDefaultPluginLoad70 1;
+	
+		string $defaultPlugins[] = {
+			"ikSpringSolver"
+		};
+
+		$pluginAutoloadList = AWAppendStringsToStringArray (
+			$defaultPlugins,
+			$pluginAutoloadList);
+	}
+
+	// List of plug-ins introduced with 2008 Extension 2
+	if ( ! `optionVar -exists oneTimeDefaultPluginLoad2008Ext2` ) {
+		optionVar -category $category -iv oneTimeDefaultPluginLoad2008Ext2 1;
+	
+		string $defaultPlugins[] = {
+			"MayaMuscle"
+		};
+
+		$pluginAutoloadList = AWAppendStringsToStringArray (
+			$defaultPlugins,
+			$pluginAutoloadList);
+	}
+	
+	// List of plug-ins introduced with 2011 
+	if ( ! `optionVar -exists oneTimeDefaultPluginLoad2011` ) {
+		optionVar -category $category -iv oneTimeDefaultPluginLoad2011 1;
+	
+		string $defaultPlugins[] = {
+			"mayaHIK"
+		};
+
+		$pluginAutoloadList = AWAppendStringsToStringArray (
+			$defaultPlugins,
+			$pluginAutoloadList);
+	}
+
+	// List of plug-ins introduced with 2012
+	if ( ! `optionVar -exists oneTimeDefaultPluginLoad2012` ) {
+		optionVar -category $category -iv oneTimeDefaultPluginLoad2012 1;
+	
+		string $defaultPlugins[] = {
+			"mayaHIK", 
+			"mayaCharacterization", // Depends on mayaHIK
+			"OpenEXRLoader",
+			"tiffFloatReader",
+			"OneClick"
+		};
+
+			$pluginAutoloadList = AWAppendStringsToStringArray (
+				$defaultPlugins,
+				$pluginAutoloadList); 
+	}
+
+	// List of plug-ins introduced with 2013
+	if ( ! `optionVar -exists oneTimeDefaultPluginLoad2013` ) {
+		optionVar -category $category -iv oneTimeDefaultPluginLoad2013 1;
+	
+		string $defaultPlugins[] = {
+			"AbcExport",
+			"AbcImport",
+			"gpuCache" ,
+			"quatNodes",
+			"matrixNodes"
+		};
+
+		$pluginAutoloadList = AWAppendStringsToStringArray (
+							$defaultPlugins,
+							$pluginAutoloadList);
+	}
+
+	// List of plug-ins introduced with 2013 Update
+	if ( ! `optionVar -exists oneTimeDefaultPluginLoad2013Update` ) {
+		optionVar -category $category -iv oneTimeDefaultPluginLoad2013Update 1;
+	
+		string $defaultPlugins[] = {		
+			"sceneAssembly",
+			"ArubaTessellator" 
+		};
+
+		$pluginAutoloadList = AWAppendStringsToStringArray (
+							$defaultPlugins,
+							$pluginAutoloadList);
+	}
+
+	// List of DX11-specific plug-ins introduced with Maya 2013 Extension
+	// These are only auto-loaded if the user selects Direct X 11 as the
+	// VP2.0 rendering engine:
+	if ( ! `optionVar -exists oneTimeDefaultPluginLoad2013ExtensionDX` &&
+		getPreferredRenderingEngine() == "DirectX11" )
+	{
+		optionVar -category $category -iv oneTimeDefaultPluginLoad2013ExtensionDX 1;
+	
+		string $defaultPlugins[] = {
+			"dx11Shader"
+		};
+
+		$pluginAutoloadList = AWAppendStringsToStringArray (
+							$defaultPlugins,
+							$pluginAutoloadList);
+	}
+
+	// List of plug-ins introduced with 2014
+	if (! `optionVar -exists oneTimeDefaultPluginLoad2014`) {
+		optionVar -category $category -iv oneTimeDefaultPluginLoad2014 1;
+		
+		string $defaultPlugins[] = {};
+		
+		string $autoLoaderPlugins [] = { "autoLoader" };
+		if ( !`about -batch` ) {
+			appendStringArray( $defaultPlugins, $autoLoaderPlugins, size($autoLoaderPlugins) );
+		}
+		
+
+		$pluginAutoloadList = AWAppendStringsToStringArray (
+			$defaultPlugins,
+			$pluginAutoloadList );
+	}
+
+	// List of plug-ins introduced with 2014 Update
+	if ( ! `optionVar -exists oneTimeDefaultPluginLoad2014Update` ) {
+		optionVar -category $category -iv oneTimeDefaultPluginLoad2014Update 1;
+
+		string $defaultPlugins[] = {};
+
+		string $xgenPlugin[] = { 
+			"xgenToolkit",
+			"xgenMR"
+		};
+
+		if (`getenv "MAYA_NO_INITIAL_AUTOLOAD_MT"` == "") {
+			appendStringArray( $defaultPlugins, $xgenPlugin, size($xgenPlugin) );
+		}
+
+	
+		$pluginAutoloadList = AWAppendStringsToStringArray (
+							$defaultPlugins,
+							$pluginAutoloadList);
+
+		string $defaultPluginsNT[] = {};
+
+		if (`about -nt`) {
+			$pluginAutoloadList = AWAppendStringsToStringArray (
+				$defaultPluginsNT,
+				$pluginAutoloadList );
+		}
+	}
+
+	// List of plug-ins introduced with 2015
+	if (! `optionVar -exists oneTimeDefaultPluginLoad2015`) {
+		optionVar -category $category -iv oneTimeDefaultPluginLoad2015 1;
+		
+		string $defaultPlugins[] = {};
+
+			string $shaderFXPlugins [] = { "shaderFXPlugin" };
+			appendStringArray( $defaultPlugins, $shaderFXPlugins, size($shaderFXPlugins) );
+
+			string $unfold3DPlugin [] = { "Unfold3D" };
+			appendStringArray( $defaultPlugins, $unfold3DPlugin, size($unfold3DPlugin) );
+		
+
+		$pluginAutoloadList = AWAppendStringsToStringArray (
+			$defaultPlugins,
+			$pluginAutoloadList );
+	}
+
+	// List of plug-ins introduced with Maya 2015 Extension 1 and
+	// Maya LT Extension 1.
+	if (! `optionVar -exists oneTimeDefaultPluginLoad2015Ext1`) {
+		optionVar -category $category -iv oneTimeDefaultPluginLoad2015Ext1 1;
+
+		string $defaultPlugins[] = {};
+
+		//	Game exporters are not available on Linux.
+		if (!`about -linux`)
+		{
+				//	Maya got the GamePipeline plugin in 2015 Ext 1,
+				//	after LT.
+				string $gamePipelinePlugin [] = { "GamePipeline" };
+				appendStringArray(
+					$defaultPlugins,
+					$gamePipelinePlugin,
+					size($gamePipelinePlugin)
+				);
+
+				//	Maya got the gameFbxExporter plugin in 2015 Ext 1,
+				//	after LT.
+				string $gameFbxExporterPlugin [] = { "gameFbxExporter" };
+				appendStringArray(
+					$defaultPlugins,
+					$gameFbxExporterPlugin,
+					size($gameFbxExporterPlugin)
+				);
+		}
+
+		$pluginAutoloadList = AWAppendStringsToStringArray (
+			$defaultPlugins,
+			$pluginAutoloadList );
+	}
+
+	// List of plug-ins introduced with Maya 2016 Extension 1
+	//
+	if (! `optionVar -exists oneTimeDefaultPluginLoad2016Ext1`) {
+		optionVar -category $category -iv oneTimeDefaultPluginLoad2016Ext1 1;
+
+		string $defaultPlugins[] = { "lookdevKit" };
+
+		string $typePlugin [] = { "Type" };
+		appendStringArray(
+			$defaultPlugins,
+			$typePlugin,
+			size($typePlugin)
+		);
+
+		$pluginAutoloadList = AWAppendStringsToStringArray (
+			$defaultPlugins,
+			$pluginAutoloadList );
+	}
+
+	// List of plug-ins introduced with Maya 2016.
+	if (! `optionVar -exists oneTimeDefaultPluginLoad2016`) {
+		optionVar -category $category -iv oneTimeDefaultPluginLoad2016 1;
+
+		string $defaultPlugins[] = {		
+			"objExport"
+		};
+
+		$pluginAutoloadList = AWAppendStringsToStringArray (
+							$defaultPlugins,
+							$pluginAutoloadList);
+	}
+
+
+	// List of plug-ins introduced with Maya 2016 Ext1.
+	if (! `optionVar -exists oneTimeDefaultPluginLoad2016Ext1`) {
+		optionVar -category $category -iv oneTimeDefaultPluginLoad2016Ext1 1;
+
+		string $defaultPlugins[] = {		
+			"lookdevKit"
+		};
+
+		$pluginAutoloadList = AWAppendStringsToStringArray (
+							$defaultPlugins,
+							$pluginAutoloadList);
+	}
+
+
+	// List of plug-ins introduced with Maya 2016 Extension 2 
+	if (! `optionVar -exists oneTimeDefaultPluginLoad2016Ext2`) {
+		optionVar -category $category -iv oneTimeDefaultPluginLoad2016Ext2 1;
+
+		string $defaultPlugins[] = {
+			"invertShape"
+		};
+		
+		string $poseInterpolatorPlugin [] = { "poseInterpolator" };
+		appendStringArray(
+			$defaultPlugins,
+			$poseInterpolatorPlugin,
+			size($poseInterpolatorPlugin)
+		);
+
+		$pluginAutoloadList = AWAppendStringsToStringArray (
+							$defaultPlugins,
+							$pluginAutoloadList);
+		
+	}
+
+	// List of plug-ins introduced with Maya 2017.
+	if (! `optionVar -exists oneTimeDefaultPluginLoad2017`) {
+		optionVar -category $category -iv oneTimeDefaultPluginLoad2017 1;
+
+		string $defaultPlugins[] = {
+			"curveWarp",
+			"MASH",
+			"mtoa",
+			"hairPhysicalShader",
+			"meshReorder"
+		};
+
+		$pluginAutoloadList = AWAppendStringsToStringArray (
+							$defaultPlugins,
+							$pluginAutoloadList);
+
+		if (!`about -linux`)
+		{
+			string $defaultPlugins[] = {
+				"ATFPlugin"
+			};
+
+			$pluginAutoloadList = AWAppendStringsToStringArray (
+							$defaultPlugins,
+							$pluginAutoloadList);
+		}
+	}
+
+	// List of plug-ins introduced with Maya 2018.
+	if (! `optionVar -exists oneTimeDefaultPluginLoad2018`){
+		optionVar -category $category -iv oneTimeDefaultPluginLoad2018 1;
+		
+		if (`about -linux`)
+		{
+			string $defaultPlugins[] = {
+				"pxrUsd"
+			};
+
+			$pluginAutoloadList = AWAppendStringsToStringArray (
+							$defaultPlugins,
+							$pluginAutoloadList);
+		}
+	}
+
+	// List of plug-ins introduced with Maya 2020 Update 1.
+	if (! `optionVar -exists oneTimeDefaultPluginLoad2020Update1`){
+		optionVar -category $category -iv oneTimeDefaultPluginLoad2020Update1 1;
+		
+		string $defaultPlugins[] = {
+			"ufeSupport"
+		};
+
+		$pluginAutoloadList = AWAppendStringsToStringArray (
+							$defaultPlugins,
+							$pluginAutoloadList);
+	}
+
+	// List of plug-ins introduced with Maya 2021
+	if (! `optionVar -exists oneTimeDefaultPluginLoad2021`){
+		optionVar -category $category -iv oneTimeDefaultPluginLoad2021 1;
+		
+		string $defaultPlugins[] = {
+			"sweep"
+		};
+
+		$pluginAutoloadList = AWAppendStringsToStringArray (
+							$defaultPlugins,
+							$pluginAutoloadList);
+	}
+
+	// List of plug-ins introduced with Maya 2022
+	if (! `optionVar -exists oneTimeDefaultPluginLoad2022`) {
+		optionVar -category $category -iv oneTimeDefaultPluginLoad2022 1;
+		
+		string $defaultPlugins[] = {
+			"mayaUsdPlugin"
+		};
+
+		$pluginAutoloadList = AWAppendStringsToStringArray (
+							$defaultPlugins,
+							$pluginAutoloadList);
+	}
+
+	// List of plug-ins introduced with Maya 2023
+	if (! `optionVar -exists oneTimeDefaultPluginLoad2023`) {
+		optionVar -category $category -iv oneTimeDefaultPluginLoad2023 1;
+		
+		string $defaultPlugins[] = {
+			"polyBoolean"
+		};
+
+		$pluginAutoloadList = AWAppendStringsToStringArray (
+							$defaultPlugins,
+							$pluginAutoloadList);
+	}
+
+	if ( size($pluginAutoloadList)>0 ) {
+
+		string $pluginPaths[];
+		string $ext;
+		string $extensions[];
+		string $fileName;
+
+		print($pluginAutoloadList);
+
+		if (`about -nt`) {
+			$extensions[0] = ".mll";
+			$extensions[1] = ".nll.dll";
+			tokenize $mayaPlugInPath ";" $pluginPaths;
+		} else if (`about -mac`) {
+			$extensions[0] = ".bundle";
+			tokenize $mayaPlugInPath ":" $pluginPaths;
+		} else
+		{
+			$extensions[0] = ".so";
+			tokenize $mayaPlugInPath ":" $pluginPaths;
+		}
+
+		$extensions[size($extensions)] = ".py";
+
+		for ( $pluginName in $pluginAutoloadList ) {
+			if ( ! `pluginInfo -query -loaded $pluginName` ) {
+				int $foundIt = false;
+
+				for ( $pluginDirectory in $pluginPaths ) {
+					$fileName =   $pluginDirectory
+								+ "/"
+								+ $pluginName;
+
+					for ($ext in $extensions) {
+
+						// If the plug-in file exists, we will try to load it
+						// Use the -r test instead of -x.  -x on Windows only
+						// checks the file extension, and won't return true on
+						// a file with a .mll extension.
+						// delay plugin load until necessary libraries are loaded
+						if ( `filetest -r ($fileName + $ext)` ) {
+							string $cmdAutoLoad = "autoLoadPlugin(\"\", \"" 
+										+ $pluginName
+										+ "\", \""
+										+ $pluginName
+										+ "\")";
+							evalDeferred($cmdAutoLoad);
+						
+							// stop searching after we find the first match.
+							$foundIt = true;
+							break;
+						}
+					}
+
+					if ($foundIt) {
+						break;
+					}
+				}
+			} else {
+				pluginInfo -edit -autoload true $pluginName;
+			}
+		}
+	}
+}

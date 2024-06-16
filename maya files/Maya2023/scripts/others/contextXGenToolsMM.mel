@@ -1,0 +1,99 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//  Procedure Name:
+//      contextXGenToolsMM
+//
+//  Description:
+//      This procedure creates the popup/marking menu
+//      for XGen brushes. See ModelEdMenu.
+//
+//  Input Arguments:
+//      The parent item to parent the popup menu to.
+//
+//  Return Value:
+//      None.
+
+
+global proc int contextXGenToolsMM(string $parent)
+{
+	if (!`pluginInfo -q -loaded xgenToolkit`)
+	{
+		return 0;
+	}
+	
+	if (`popupMenu -query -exists $parent`)
+	{
+		popupMenu -edit -deleteAllItems $parent;
+
+		setParent -menu $parent;
+	
+		int $index = getGroomingToolIndex();
+		if($index == -1)
+		{
+			return 0;
+		}
+		
+		string $currentContext = `currentCtx`; 
+		switch($currentContext)
+		{
+			case "xgmGrabBrushTool":
+				contextXGenGrabToolMM();
+				return 1;
+			case "xgmCombBrushTool":
+				contextXGenCombToolMM();
+				return 1;
+			case "xgmCutBrushTool":
+				contextXGenCutToolMM();
+				return 1;
+			case "xgmWidthBrushTool":
+				contextXGenWidthToolMM();
+				return 1;
+			case "xgmDirectionBrushTool":
+				contextXGenDirectionToolMM();
+				return 1;
+			case "xgmLengthBrushTool":
+				contextXGenLengthToolMM();
+				return 1;
+			case "xgmSmoothBrushTool":
+				contextXGenSmoothToolMM();
+				return 1;
+			case "xgmFreezeBrushTool":
+				contextXGenFreezeToolMM();
+				return 1;
+			case "xgmNoiseBrushTool":
+				contextXGenNoiseToolMM();
+				return 1;
+			case "xgmDensityBrushTool":
+				contextXGenDensityToolMM();
+				return 1;
+			case "xgmClumpBrushTool":
+				contextXGenClumpToolMM();
+				return 1;
+			case "xgmPartBrushTool":
+				contextXGenPartToolMM();
+				return 1;
+			case "xgmPlaceBrushTool":
+				contextXGenPlaceToolMM();
+				return 1;
+			case "xgmSelectBrushTool":
+				contextXGenSelectToolMM();
+				return 1;
+			default:
+				return 0;
+		}
+	}
+	
+	return 0;
+}
+
+global proc xgmSwitchSymmetryType(string $brush, string $tool, int $symmetryType)
+{
+	string $cmd = $brush + " -e -brushSymmetryType " + $symmetryType + " " + $tool;
+	eval($cmd);
+}

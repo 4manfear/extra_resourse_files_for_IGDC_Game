@@ -1,0 +1,27 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//# this proc points the tool properties
+//# window to the current polyMergeFacet context
+
+global proc polyMergeFacetValues ( string $toolName )
+{
+	string $name = "polyMergeFacet";
+	string $parent = (`toolPropertyWindow -q -location` + "|" + $name);
+	setParent $parent;
+
+    // Merge mode
+    //
+	int $mode = `polyMergeFacetCtx -q -mm $toolName`+1;
+	optionMenuGrp -e -sl $mode
+		-cc ("polyMergeFacetCtx -e -mm (`optionMenuGrp -q -sl mergeFacetMode`-1) " + $toolName)
+		mergeFacetMode;
+
+	string $helpTag= "MakeHoleTool";
+	toolPropertySetCommon $toolName ($name + ".xpm") $helpTag;
+	toolPropertySelect $name;
+}

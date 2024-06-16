@@ -1,0 +1,45 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc blendShapeResetInterpolationCurve(string $bsName, int $targetIndex, float $ibWeight)
+{
+	int $ibIndex = 5000 + $ibWeight * 1000;
+	string $itcPlug = $bsName + ".inbetweenInfoGroup[" + $targetIndex + "].inbetweenInfo[" + $ibIndex + "].itc";
+	int $indexArray[] = `getAttr -multiIndices $itcPlug`;
+	string $itpPlug = $bsName + ".inbetweenInfoGroup[" + $targetIndex + "].inbetweenInfo[" + $ibIndex + "].itp";
+	int $itpValue = `getAttr $itpPlug`;
+	if($itpValue == 0 || $itpValue == 1)
+	{
+		for ($index in $indexArray)
+		{
+			string $curPlug = $itcPlug + "["+ $index + "]";
+			removeMultiInstance -b true $curPlug;
+		}
+		if($itpValue == 0)
+		{
+			string $curPlug = $itcPlug + "["+ 0 + "]";
+			setAttr $curPlug 0 0;
+			$curPlug = $itcPlug + "["+ 1 + "]";
+			setAttr $curPlug 0.2 0.2;
+			$curPlug = $itcPlug + "["+ 2 + "]";
+			setAttr $curPlug 0.5 0.5;
+			$curPlug = $itcPlug + "["+ 3 + "]";
+			setAttr $curPlug 1 1;
+		}
+		else if($itpValue == 1)
+		{
+			string $curPlug = $itcPlug + "["+ 0 + "]";
+			setAttr $curPlug 0 0;
+			$curPlug = $itcPlug + "["+ 1 + "]";
+			setAttr $curPlug 0.0 0.5;
+			$curPlug = $itcPlug + "["+ 2 + "]";
+			setAttr $curPlug 0.5 1.0;
+			$curPlug = $itcPlug + "["+ 3 + "]";
+			setAttr $curPlug 1 1;
+		}
+	}
+}

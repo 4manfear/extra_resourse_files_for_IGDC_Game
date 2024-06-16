@@ -1,0 +1,47 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//  Creation Date:	April 11, 2008
+//
+//  Procedure Name:
+//	AEdirectorTemplate
+//
+//  Description Name;
+//	Creates the attribute editor controls for the Sequencer node.
+//
+//  Input Value:
+//	nodeName 
+//
+//  Output Value:
+//	None
+//
+global proc AEsequencerDimFrames( string $nodeName )
+{
+	editorTemplate -dimControl $nodeName "minFrame" 1;
+	editorTemplate -dimControl $nodeName "maxFrame" 1;
+}
+
+global proc AEsequencerTemplate ( string $nodeName )
+{
+	editorTemplate -beginScrollLayout;
+		editorTemplate -beginLayout (uiRes("m_AEsequencerTemplate.kSequencerAttrs"))  -collapse 0;
+		editorTemplate -endLayout;
+
+		editorTemplate -addControl "minFrame" "AEsequencerDimFrames";
+		editorTemplate -addControl "maxFrame";
+		
+		// suppressed attributes
+		editorTemplate -suppress "shots";
+		editorTemplate -suppress "audio";
+
+		// include/call base class/node attributes
+		AEdependNodeTemplate $nodeName;
+
+	editorTemplate -addExtraControls;
+	editorTemplate -endScrollLayout;
+}

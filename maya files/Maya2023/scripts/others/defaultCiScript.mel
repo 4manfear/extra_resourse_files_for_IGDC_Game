@@ -1,0 +1,51 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc int defaultCiScript ( string $fileName, string $srcPath, string $destPath )
+{
+	string $srcFile;
+	string $destFile;
+	string $result;
+	int		$status;
+	string $srcIconFile;
+	string $destIconFile;
+	
+    if (match("/$", $srcPath) != "/" && match("^/", $fileName) != "/") {
+        $srcFile = $srcPath + "/" + $fileName;
+    } else {
+        $srcFile = $srcPath + $fileName;
+    }
+    
+    if (match("/$", $destPath) != "/" && match("^/", $fileName) != "/") {
+        $destFile = $destPath + "/" + $fileName;
+    } else {
+        $destFile = $destPath + $fileName;
+    }
+    
+    $status = `sysFile -cp $destFile $srcFile`;
+    if (($status) > 0) {
+    	$status = 0;
+	string $msg = (uiRes("m_defaultCiScript.kResult")) ;
+	print `format -stringArg $destFile $msg` ;
+   	} else {
+    	// If the file was successfully checked in then remove original.
+    	$srcIconFile = $srcFile+".ICON";
+    	$destIconFile = $destFile+".ICON";
+    	
+    	if (`file -q -ex $srcIconFile`) {
+		sysFile -cp $destIconFile $srcIconFile;
+                sysFile -del $srcIconFile;
+	    	system(("chmod 444 "+$destIconFile));
+    	}
+    	
+    	system(("chmod 444 "+$destFile));
+	sysFile -del $srcFile;
+    	$status = 1;
+    }
+
+	return $status;
+}

@@ -1,0 +1,78 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+// Create marking menu for both q-LMB and CTRL-SHIFT-RMB popup's
+//
+global proc selectMarkingMenuImpl()
+{
+	int $dragSelect = `selectPref -q -paintSelect`;
+	int $cbsCb;
+	string $cbsCmd;
+	if (!$dragSelect)
+	{
+		$cbsCmd = "selectPref -useDepth #1";
+		$cbsCb = `selectPref -q -useDepth`;
+	}
+	else
+	{
+		$cbsCmd = "selectPref -paintSelectWithDepth #1";
+		$cbsCb = `selectPref -q -paintSelectWithDepth`;
+	}
+
+	//
+	// Top level non-submenu
+	//
+
+	menuItem -radialPosition "NW"
+		-label (uiRes("m_selectMarkingMenuImpl.kMarqueeSelect"))
+		-checkBox (!$dragSelect) 
+		-command ("selectPref -paintSelect 0");
+
+	menuItem -radialPosition "NE"
+		-label (uiRes("m_selectMarkingMenuImpl.kDragSelect"))
+		-checkBox ($dragSelect) 
+		-command ("selectPref -paintSelect 1");
+
+	menuItem -radialPosition "E"
+		-label (uiRes("m_selectMarkingMenuImpl.kCBSelect"))
+		-checkBox ($cbsCb) 
+		-command $cbsCmd;
+
+	menuItem -radialPosition "SE"
+		-label (uiRes("m_selectMarkingMenuImpl.kClearSelect"))
+		-command ("select -clear");
+
+	menuItem -radialPosition "W"
+		-label (uiRes("m_selectMarkingMenuImpl.kPaintSelect"))
+		-command ("ArtPaintSelectTool");
+
+	menuItem -radialPosition "SW"
+		-label (uiRes("m_selectMarkingMenuImpl.kLassoSelect"))
+		-command ("LassoTool");
+
+	//
+	// Lower non-gestural menus
+	//
+	menuItem
+		-label (uiRes("m_selectMarkingMenuImpl.kAutoCBSelect"))
+		-annotation (uiRes("m_selectMarkingMenuImpl.kAutoCBSelectAnnot"))
+		-checkBox `selectPref -q -autoUseDepth`
+		-command ("selectPref -autoUseDepth #1");
+
+	//
+	// North submenu
+	//
+	commonReflectionOptionsPopup();
+
+
+	//
+	// South submenu
+	//
+	commonSelectOptionsPopup();
+
+}

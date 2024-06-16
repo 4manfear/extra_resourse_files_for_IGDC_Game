@@ -1,0 +1,32 @@
+<!--
+Copyright 2016 Autodesk, Inc. All rights reserved. 
+
+Use of this software is subject to the terms of the Autodesk 
+license agreement provided at the time of installation or download, 
+or which otherwise accompanies this software in either electronic 
+or hard copy form.
+-->
+<fragment  uiName="BeginHoldoutPass" name="BeginHoldoutPass" type="sceneEffect" class="ScriptFragment" version="1.0" feature_level="0" >
+    <description>
+<![CDATA[
+]]>
+</description>
+    <properties>
+        <target  name="final" />
+    </properties>
+    <values>
+    </values>
+    <outputs>
+        <target  name="output" />
+    </outputs>
+    <parametershare>
+    </parametershare>
+    <implementation render="OGS" language="ScriptInterpreter" version="0.1" >
+        <scriptCommands>
+            <Call name="SetPassSemantic" arg0="holdOutBKGDGraphSemantic" arg1="TRUE" />
+            <Call name="SetPassSemantic" arg0="shadedBeautyGraphSemantic" arg1="TRUE" />
+            <SetParameter name="@output" value="@final" />
+        </scriptCommands>
+    </implementation>
+</fragment>
+

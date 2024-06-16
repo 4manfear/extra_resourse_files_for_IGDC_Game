@@ -1,0 +1,79 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+
+//
+//  Description:
+// 		Apply/Save hypergraph panel settings
+//
+
+global string $gSavedHypergraphPanelStates[] = {};
+global string $gSavedHypergraphPanelNames[] = {};
+global int $gDoRestoreHypergraphSettings[] = {};
+//  Procedure Name:
+//      findSavedHypergraphPanelName
+//
+//  Description:
+//		Find the index of the first occurance of $thePanel in $gSavedHypergraphPanelNames
+//
+//  Input Arguments:
+//		None.
+//
+//  Return Value:
+//      index of name or -1 if name does not occur in $gSavedHypergraphPanelNames
+//
+global proc int 
+findSavedHypergraphPanelName( string $thePanel )
+{
+	global string $gSavedHypergraphPanelNames[];
+
+	int $i;
+	for ( $i = 0; $i < size($gSavedHypergraphPanelNames); $i++ ) {
+		if ( $thePanel == $gSavedHypergraphPanelNames[$i] ) {
+			return $i;
+		}
+	}
+	return -1;
+}
+
+//  Procedure Name:
+//      saveHypergraphSettings
+//
+//  Description:
+//		Save settings for all hypergraph panels, used to ensure that
+//		creating a new scene does not lose any unsaved settings changes.
+//
+//  Input Arguments:
+//		None.
+//
+//  Return Value:
+//      None.
+//
+global proc 
+saveHypergraphSettings( )
+{
+	global string $gSavedHypergraphPanelNames[];
+	global string $gSavedHypergraphPanelStates[];
+	global int $gDoRestoreHypergraphSettings[];
+
+	string $panels[] = `getPanel -scriptType hyperGraphPanel`;
+	string $callback = `scriptedPanelType -query -saveStateCallback hyperGraphPanel`;
+	string $panel;
+	for ($panel in $panels) {
+		string $stateString = `eval ($callback + " "+ $panel)`;
+		int $i = `findSavedHypergraphPanelName $panel`;
+		if ($i == -1) {
+			$i = `size $gSavedHypergraphPanelNames`;
+		}
+		$gSavedHypergraphPanelNames[$i] = $panel;
+		$gSavedHypergraphPanelStates[$i] = $stateString;
+		//
+		// We are saving the settings, set flag so that 
+		// next init of a panel with this name will restore settings
+		$gDoRestoreHypergraphSettings[$i] = 1;
+	}
+}

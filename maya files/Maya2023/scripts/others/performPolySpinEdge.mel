@@ -1,0 +1,84 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc performPolySpinEdge( int $op )
+{
+	string $editor = `getPanel -withFocus`;
+	if ($editor == "" || "modelPanel" != `getPanel -typeOf $editor`) 
+	{
+		return;
+	}
+
+	string $cmd;
+	string $splitNodes[] = `ls -selection -type "polySpinEdge"`;
+	if (size($splitNodes) > 0)
+	{
+		for ($node in $splitNodes)
+		{
+			string $offsetAttr = ($node + ".offset");
+			int $currentOffset = `getAttr $offsetAttr`;
+			if ($op == 0)
+				$currentOffset++;
+			else
+				$currentOffset--;
+
+			$cmd += ("setAttr " + $offsetAttr + " " + $currentOffset + ";");
+		}
+
+		evalEcho $cmd;
+	}
+	else
+	{
+		string $edgeList[] = `filterExpand -expand false -selectionMask 32`;
+		if(size($edgeList) != 0)
+		{
+            // Merge instances that refer to the same object/component
+            if (`filterInstances -q -shapes`) select -r `filterInstances -shapes`;
+
+			int $offset = ($op == 0 ? 1 : -1);
+			int $doHistory = `constructionHistory -q -toggle`;
+			$cmd = ("polySpinEdge -ch " + $doHistory + " -offset " + $offset);
+
+			string $negEdges[];
+		    int $symEnabled = `symmetricModelling -q -symmetry`;
+			if ($symEnabled) {
+			   $negEdges = `filterExpand -expand false -selectionMask 32 -symNegative`;
+			}
+
+			if (size($negEdges) == 0) {
+			   	// No symmetry
+				$res =`evalEcho $cmd`;
+				if (size($res) > 0)
+					select -add $res;
+			} else {
+			  	// Symmetry
+				string $posEdges[] = `filterExpand -expand false -selectionMask 32 -symPositive -symSeam`;
+
+			  	// Spin negative edges
+				string $negCmd = ($cmd + " -reverse true " + stringArrayToString($negEdges, " "));
+				$res1 =`evalEcho $negCmd`;
+				if (size($res1) > 0)
+					select -add $res1;
+
+			  	// Spin positive edges
+				if (size($posEdges) != 0) {
+					string $posCmd = ($cmd + " " + stringArrayToString($posEdges, " "));
+					$res2 =`evalEcho $posCmd`;
+					if (size($res2) > 0)
+						select -add $res2;
+				}
+
+				// Select original edges
+				select -add $edgeList;
+			}
+		}
+		else
+		{
+			warning( (uiRes("m_performPolySpinEdge.kWarningNoEdgesOrNodeSelected")) );
+		}
+	}
+}

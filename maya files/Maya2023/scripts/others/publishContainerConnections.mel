@@ -1,0 +1,58 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  July 30, 1997
+//
+//<doc>
+//<name publishContainerConnections>
+//<owner "Autodesk Unsupported">
+//
+//<synopsis>
+//		publishContainerConnections(int $collapseInputs)
+//
+//<returns>
+//		None
+//
+//<description>
+//      Publishes all connections between nodes in the selected container
+//      and nodes outside the selected container. Connections that are
+//      already published will be unchanged.
+//
+//<flags>
+//      int $collapseInputs if true, all connections into the container from
+// 			the same attribute will be published to a single attribute
+//
+//<examples>
+//  // To publish all connections to unique attributes 
+// 	publishContainerConnections 0
+//
+//
+//</doc>
+/////////////////////////////////////////////////////////////////////////
+
+global proc publishContainerConnections(int $collapseInputs)
+{
+	int $count = 0;
+	string $allContainers[] = `ls -sl -containers`;
+	if (size($allContainers) == 0) {
+		error( (uiRes("m_publishContainerConnections.kNoContainersSelected")));
+	}
+	for ($container in $allContainers) {
+		if ($collapseInputs) {
+			containerPublish -inConnections -outConnections -mergeShared $container;			
+		} else {
+			container -e -publishConnections $container;
+		}
+		$count++;
+	}
+
+	string $format = (uiRes("m_publishContainerConnections.kPublishedConnInfo"));
+	string $info = `format -stringArg $count $format`;
+	print( $info );
+}

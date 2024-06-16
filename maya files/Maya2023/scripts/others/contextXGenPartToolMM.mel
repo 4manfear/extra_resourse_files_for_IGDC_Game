@@ -1,0 +1,248 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc xgmTogglePartInvertFrozenEffect()
+{
+	int $newInvertFrozenValue = !`xgmPartBrushContext -q -freezeMode xgmPartBrushTool`;
+	xgmPartBrushContext -e -freezeMode $newInvertFrozenValue xgmPartBrushTool;
+}
+
+global proc xgmTogglePartFalloffColor()
+{
+	int $newFalloffColorValue = !`xgmPartBrushContext -q -fc xgmPartBrushTool`;
+	xgmPartBrushContext -e -fc $newFalloffColorValue xgmPartBrushTool;
+}
+
+global proc xgmTogglePartPreselectionHighlight()
+{
+	int $newPreselectionHighlight = !`xgmPartBrushContext -q -ps xgmPartBrushTool`;
+	xgmPartBrushContext -e -ps $newPreselectionHighlight xgmPartBrushTool;
+}
+
+global proc xgmTogglePartShowFrozen()
+{
+	int $newShowFrozen = !`xgmPartBrushContext -q -sf xgmPartBrushTool`;
+	xgmPartBrushContext -e -sf $newShowFrozen xgmPartBrushTool;
+}
+
+global proc xgmSwitchPartAxis(int $alongStroke) 
+{
+	xgmPartBrushContext -e -alongStroke $alongStroke xgmPartBrushTool;
+}
+
+global proc xgmTogglePartEnableCollide()
+{
+	int $newEnableCollide = !`xgmPartBrushContext -q -ec xgmPartBrushTool`;
+	xgmPartBrushContext -e -ec $newEnableCollide xgmPartBrushTool;
+}
+
+global proc xgmTogglePartEnableRootToTipFalloff()
+{
+	int $newEnableRootToTip = !`xgmPartBrushContext -q -ert xgmPartBrushTool`;
+	xgmPartBrushContext -e -ert $newEnableRootToTip xgmPartBrushTool;
+}
+
+global proc xgmTogglePartFilterBackfaces()
+{
+	int $newFilterBackfaces = !`xgmPartBrushContext -q -fb xgmPartBrushTool`;
+	xgmPartBrushContext -e -fb $newFilterBackfaces xgmPartBrushTool;
+}
+
+global proc xgmSwitchPartFallOffType(string $falloffType) 
+{
+	xgmPartBrushContext -e -brushFalloffType $falloffType xgmPartBrushTool;
+}
+
+global proc contextXGenPartToolMM()
+{
+	int $currentInvertFrozen = !`xgmPartBrushContext -q -freezeMode xgmPartBrushTool`;
+	menuItem
+		-label (uiRes("m_contextXGenPartToolMM.kInvertFrozenEffect"))
+		-command xgmTogglePartInvertFrozenEffect
+		-checkBox $currentInvertFrozen
+		-radialPosition "N" 
+		-enableCommandRepeat 1
+		;
+
+	int $currentFalloffColor = `xgmPartBrushContext -q -fc xgmPartBrushTool`;
+	menuItem
+		-label (uiRes("m_contextXGenPartToolMM.kBrushFalloffColor"))
+		-command xgmTogglePartFalloffColor
+		-checkBox $currentFalloffColor
+		-radialPosition "NE" 
+		-enableCommandRepeat 1
+		;
+
+	int $currentPreselectionHighlight = `xgmPartBrushContext -q -ps xgmPartBrushTool`;
+	menuItem
+		-label (uiRes("m_contextXGenPartToolMM.kPreselectionHighlight"))
+		-command xgmTogglePartPreselectionHighlight 
+		-checkBox $currentPreselectionHighlight
+		-radialPosition "E"
+		-enableCommandRepeat 1
+		;
+
+	int $currentShowFrozen = `xgmPartBrushContext -q -sf xgmPartBrushTool`;
+	menuItem
+		-label (uiRes("m_contextXGenPartToolMM.kShowFrozen"))
+		-command xgmTogglePartShowFrozen 
+		-checkBox $currentShowFrozen
+		-radialPosition "SE" 
+		-enableCommandRepeat 1
+		;
+	
+	int $currentEnableCollide = `xgmPartBrushContext -q -ec xgmPartBrushTool`;
+	menuItem
+		-label (uiRes("m_contextXGenPartToolMM.kCollideWithMeshes"))
+		-command xgmTogglePartEnableCollide 
+		-checkBox $currentEnableCollide
+		-radialPosition "SW" 
+		-enableCommandRepeat 1
+		;
+
+	int $currentRootToTipFalloff = `xgmPartBrushContext -q -ert xgmPartBrushTool`;
+	menuItem
+		-label (uiRes("m_contextXGenPartToolMM.kRootToTipFalloff"))
+		-command xgmTogglePartEnableRootToTipFalloff
+		-checkBox $currentRootToTipFalloff
+		-radialPosition "W" 
+		-enableCommandRepeat 1
+		;
+
+	int $currentFilterBackFaces = `xgmPartBrushContext -q -fb xgmPartBrushTool`;
+	menuItem
+		-label (uiRes("m_contextXGenPartToolMM.kFilterBackFaces"))
+		-command xgmTogglePartFilterBackfaces
+		-checkBox $currentFilterBackFaces
+		-radialPosition "NW" 
+		-enableCommandRepeat 1
+		;
+
+	menuItem
+		-label (uiRes("m_contextXGenPartToolMM.kFalloffType"))
+		-subMenu 1
+		-enableCommandRepeat 1
+		;
+		
+		radioMenuItemCollection;
+		string $currentFallOffType = `xgmPartBrushContext -q -bft xgmPartBrushTool`;
+
+		menuItem
+			-label (uiRes("m_contextXGenPartToolMM.kSurface"))
+			-command "xgmSwitchPartFallOffType(\"surface\")"
+			-radioButton ($currentFallOffType == "surface")
+			-enableCommandRepeat 1
+			;
+			
+	setParent -m ..;
+
+	string $brushCmd = "xgmPartBrushContext";
+	string $tool = "xgmPartBrushTool";
+	string $flag = "-brushFalloffCurve";
+	string $defaultValFlag = "-defaultBrushFalloffCurve";
+	string $param = $brushCmd + "\", \"" + $tool + "\", \"" + $flag + "\", \"" + $defaultValFlag;
+	menuItem
+		-label (uiRes("m_contextXGenPartToolMM.kAdjustBrushFalloffCurve"))
+		-command ("xgmMarkingMenuAdjustFalloffCurve( \"" + $param + "\" )")
+		-enableCommandRepeat 1
+		;
+
+	$flag = "-rootToTipCurve";
+	$defaultValFlag = "-defaultRootToTipCurve";
+	$param = $brushCmd + "\", \"" + $tool + "\", \"" + $flag + "\", \"" + $defaultValFlag;
+	menuItem
+		-label (uiRes("m_contextXGenPartToolMM.kAdjustRootToTipFalloffCurve"))
+		-command ("xgmMarkingMenuAdjustFalloffCurve( \"" + $param + "\" )")
+		-enableCommandRepeat 1
+		;
+	
+	menuItem
+		-label (uiRes("m_contextXGenPartToolMM.kAxis"))
+		-subMenu 1
+		-enableCommandRepeat 1
+		;
+		
+		radioMenuItemCollection;
+		string $currentAxis = `xgmPartBrushContext -q -alongStroke xgmPartBrushTool`;
+		menuItem
+			-label (uiRes("m_contextXGenPartToolMM.kAlongStroke"))
+			-command "xgmSwitchPartAxis(1)"
+			-radioButton ($currentAxis == 1)
+			-enableCommandRepeat 1
+			;
+			
+		menuItem
+			-label (uiRes("m_contextXGenPartToolMM.kAwayFromCenter"))
+			-command "xgmSwitchPartAxis(0)"
+			-radioButton ($currentAxis == 0)
+			-enableCommandRepeat 1
+			;
+			
+	setParent -m ..;
+	
+	menuItem
+		-label (uiRes("m_contextXGenPartToolMM.kSymmetry"))
+		-subMenu 1
+		-enableCommandRepeat 1
+		;
+		
+		radioMenuItemCollection;
+		string $currentSymmetryType = `xgmPartBrushContext -q -brushSymmetryType xgmPartBrushTool`;
+		menuItem
+			-label (uiRes("m_contextXGenPartToolMM.kOff"))
+			-command "xgmSwitchSymmetryType(\"xgmPartBrushContext\", \"xgmPartBrushTool\", 0)"
+			-radioButton ($currentSymmetryType == 0)
+			-enableCommandRepeat 1
+			;
+			
+		menuItem
+			-label (uiRes("m_contextXGenPartToolMM.kObjectX"))
+			-command "xgmSwitchSymmetryType(\"xgmPartBrushContext\", \"xgmPartBrushTool\", 1)"
+			-radioButton ($currentSymmetryType == 1)
+			-enableCommandRepeat 1
+			;
+
+		menuItem
+			-label (uiRes("m_contextXGenPartToolMM.kObjectY"))
+			-command "xgmSwitchSymmetryType(\"xgmPartBrushContext\", \"xgmPartBrushTool\", 2)"
+			-radioButton ($currentSymmetryType == 2)
+			-enableCommandRepeat 1
+			;
+			
+		menuItem
+			-label (uiRes("m_contextXGenPartToolMM.kObjectZ"))
+			-command "xgmSwitchSymmetryType(\"xgmPartBrushContext\", \"xgmPartBrushTool\", 3)"
+			-radioButton ($currentSymmetryType == 3)
+			-enableCommandRepeat 1
+			;
+			
+		menuItem
+			-label (uiRes("m_contextXGenPartToolMM.kWorldX"))
+			-command "xgmSwitchSymmetryType(\"xgmPartBrushContext\", \"xgmPartBrushTool\", 4)"
+			-radioButton ($currentSymmetryType == 4)
+			-enableCommandRepeat 1
+			;
+
+		menuItem
+			-label (uiRes("m_contextXGenPartToolMM.kWorldY"))
+			-command "xgmSwitchSymmetryType(\"xgmPartBrushContext\", \"xgmPartBrushTool\", 5)"
+			-radioButton ($currentSymmetryType == 5)
+			-enableCommandRepeat 1
+			;
+			
+		menuItem
+			-label (uiRes("m_contextXGenPartToolMM.kWorldZ"))
+			-command "xgmSwitchSymmetryType(\"xgmPartBrushContext\", \"xgmPartBrushTool\", 6)"
+			-radioButton ($currentSymmetryType == 6)
+			-enableCommandRepeat 1
+			;
+
+	setParent -m ..;
+	
+	setParent -menu ..;
+
+}

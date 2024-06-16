@@ -1,0 +1,188 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+// provided at the time of installation or download, or which otherwise accompanies 
+
+//
+// Startup and initialization stuff
+//
+
+global int    $gIlrIsSystemLinux;
+global int    $gIlrIsSystemNT;
+global int    $gIlrIsSystemMac;
+global float  $gIlrMayaVersion;
+global string $gIlrPluginName  = "";
+global int    $gIlrDebugEnabled   = 0;
+
+
+global proc ilrDebugPrint(string $msg)
+{
+	global int $gIlrDebugEnabled;
+	if ($gIlrDebugEnabled) {
+		print("// TURTLE DEBUG: " + $msg + "\n");
+	}
+}
+
+proc int ilrIsNumeric(string $str)
+{
+	return isValidString($str, "[0-9.]*");
+}
+
+global proc float ilrGetMayaVersion()
+{
+	string $ver = `about -product`;
+
+	string $item;
+	string $items[];
+	tokenize($ver, " ", $items);
+
+	for ($item in $items)
+	{
+		if (ilrIsNumeric($item)) {
+			$ver = $item;
+			break;
+		}
+	}
+
+	float $fver = $ver;
+	return $fver;
+}
+
+global proc ilrLoadScripts()
+{
+
+	// if in batch mode how much of this is required
+	if (`about -batch`)
+	{
+		//return;
+	}
+
+	eval("source \"ilrUserInterface.mel\"");
+	eval("source \"ilrRender.mel\"");
+	eval("source \"ilrRenderWindow.mel\"");
+	eval("source \"ilrBake.mel\"");
+	eval("source \"ilrImagePlane.mel\"");
+	eval("source \"ilrAttributes.mel\"");
+	eval("source \"ilrProgressBar.mel\"");
+	eval("source \"ilrCreateGlobalsTab.mel\"");
+	eval("source \"ilrRegisterRenderer.mel\"");
+	eval("source \"ilrLightLinks.mel\"");
+	eval("source \"ilrBakeLayer.mel\"");
+	eval("source \"ilrBakeLayerEditor.mel\"");
+	eval("source \"ilrUVSizeAssignmentEditor.mel\"");
+	eval("source \"ilrModifyRenderGlobalsWindow.mel\"");
+	eval("source \"ilrUtilities.mel\"");
+	eval("source \"ilrHwTextureCache.mel\"");
+    eval("source \"ilrPointCloudBakeEditor.mel\"");
+    eval("source \"ilrIBLLightRigEditor.mel\"");
+    eval("source \"ilrTextureResamplingEditor.mel\"");
+
+	eval("source \"AEilrSurfaceThicknessTemplate.mel\"");
+	eval("source \"AEilrOccSamplerTemplate.mel\"");
+	eval("source \"AEilrNormalMapTemplate.mel\"");
+	eval("source \"AEilrLUANodeTemplate.mel\"");
+	eval("source \"AEilrShadowMaskTemplate.mel\"");
+	eval("source \"AEilrBakeLayerTemplate.mel\"");
+	eval("source \"AEilrBakeLayerManagerTemplate.mel\"");
+	eval("source \"AEilrHwBakeVisualizerTemplate.mel\"");
+
+	eval("source \"ilrAECameraOptions.mel\"");
+	eval("source \"ilrAEDisplacementShaderOptions.mel\"");
+	eval("source \"ilrAEFileOptions.mel\"");
+	eval("source \"ilrAEGeometryShapeOptions.mel\"");
+	eval("source \"ilrAELightOptions.mel\"");
+	eval("source \"AEilrOccDataTemplate.mel\"");
+	eval("source \"AEilrBasicPhotonShaderTemplate.mel\"");
+	eval("source \"AEilrPhysicPhotonShaderTemplate.mel\"");
+	eval("source \"AEilrDielectricPhotonShaderTemplate.mel\"");
+	eval("source \"AEilrBssrdfShaderTemplate.mel\"");
+	eval("source \"AEilrOrenNayarShaderTemplate.mel\"");
+	eval("source \"AEilrRaySamplerTemplate.mel\"");
+	eval("source \"AEilrAshikhminShaderTemplate.mel\"");
+	eval("source \"AEilrDielectricShaderTemplate.mel\"");
+	eval("source \"AEilrUVMappingVisualizerTemplate.mel\"");
+	eval("source \"AEilrOutputShaderBackendNodeTemplate.mel\"");
+	eval("source \"AEilrPointCloudShapeTemplate.mel\"");
+	eval("source \"ilrAERenderLayerOptions.mel\"");
+	eval("source \"ilrAEShadingEngineOptions.mel\"");
+	eval("source \"ilrAESurfaceShaderOptions.mel\"");
+}
+
+
+// This procedure for loading Turtle if it has not been loaded yet.
+//
+global proc ilrLoadTurtle()
+{
+	ilrDebugPrint("Making sure Turtle plug-in is loaded");
+
+	string $plugin = "Turtle";
+	if (!`pluginInfo -q -l $plugin`) {
+		loadPlugin $plugin;
+	}
+}
+
+global proc ilrStartup(string $pluginName)
+{
+	ilrDebugPrint("Starting startup");
+	
+	global string $gIlrPluginName;
+	global int    $gIlrIsSystemLinux;
+	global int    $gIlrIsSystemNT;
+	global int    $gIlrIsSystemMac;
+	global int    $gIlrIsSystemMacX86;
+	global float  $gIlrMayaVersion;
+	global int    $gIlrScriptJobs[];
+
+	$gIlrPluginName = $pluginName;
+	$gIlrMayaVersion = ilrGetMayaVersion();
+	$gIlrIsSystemLinux = `about -li`;
+	$gIlrIsSystemNT = `about -nt`;
+	$gIlrIsSystemMac = `about -mac`;
+	$gIlrIsSystemMacX86 = 0;
+	if ($gIlrMayaVersion >= 8.5) {
+		$gIlrIsSystemMacX86 = `about -x86`;
+	}
+
+	// load the scripts
+	ilrLoadScripts();
+
+	evalDeferred -lp "ilrLoadShelf";
+
+	// Create script jobs
+	$gIlrScriptJobs[size($gIlrScriptJobs)] = `scriptJob -protected -event "SceneOpened" "ilrInitScene"`;
+	$gIlrScriptJobs[size($gIlrScriptJobs)] = `scriptJob -protected -event "NewSceneOpened" "ilrInitScene"`;
+	$gIlrScriptJobs[size($gIlrScriptJobs)] = `scriptJob -protected -event "SceneImported" "ilrInitScene"`;
+
+	// Create UI jobs if not in batch mode
+	if (!`about -batch`)
+	{
+		$gIlrScriptJobs[size($gIlrScriptJobs)] = `scriptJob -protected -event "SelectionChanged" "ilrUpdateAEDeferred"`;
+		$gIlrScriptJobs[size($gIlrScriptJobs)] = `scriptJob -protected -event "SelectionChanged" "ilrUpdateSpreadSheetEditor"`;
+		$gIlrScriptJobs[size($gIlrScriptJobs)] = `scriptJob -protected -event "constructionHistoryChanged" "ilrUpdateAEDeferred"`;
+	}
+	
+	ilrDebugPrint("Startup done");
+}
+
+global proc ilrLoadShelf()
+{
+	// if in batch mode, then no shelves
+	if (`about -batch`)
+	{
+		return;
+	}
+
+	global string $gShelfTopLevel;
+	setParent $gShelfTopLevel;
+
+	if ( `shelfLayout -exists TURTLE` ) {
+		return;
+	}
+
+	loadNewShelf "shelf_TURTLE.mel";
+}

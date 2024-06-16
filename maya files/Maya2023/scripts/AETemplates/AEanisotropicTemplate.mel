@@ -1,0 +1,87 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//  Procedure Name:
+//	AEanisotropicTemplate
+//
+//  Description Name;
+//	Creates the attribute editor controls for the anisotropic Node
+//
+//  Input Value:
+//	nodeName 
+//
+//  Output Value:
+//	None
+// 
+
+global proc checkAnisotropicReflectivity (string $nodeName)
+{
+	string $nodeAttr = $nodeName + ".anisotropicReflectivity";
+	int $ar = `getAttr $nodeAttr`;
+	if( $ar == 1 )
+		editorTemplate -dimControl $nodeName "reflectivity" true;
+	else
+		editorTemplate -dimControl $nodeName "reflectivity" false;
+}
+
+global proc AEfresnelRefractiveIndexNew( string $attrName )
+{
+	setUITemplate -pst attributeEditorTemplate;	
+ 	attrFieldSliderGrp -attribute $attrName -label (uiRes("m_AEanisotropicTemplate.kFresnelIndex"))
+            fresnelIndexSlider;
+    setUITemplate -ppt;
+}
+
+global proc AEfresnelRefractiveIndexReplace( string $attrName )
+{
+ 	attrFieldSliderGrp -e -attribute $attrName -label (uiRes("m_AEanisotropicTemplate.kFresnelIndexReplace"))
+            fresnelIndexSlider;
+}
+
+global proc AEanisotropicTemplate ( string $nodeName )
+{
+	AEswatchDisplay $nodeName;
+	editorTemplate -beginScrollLayout;
+		AElambertCommon $nodeName;
+
+		editorTemplate -beginLayout (uiRes("m_AEanisotropicTemplate.kSpecularShading")) -collapse 0;
+			editorTemplate -addControl "angle";
+			editorTemplate -addControl "spreadX";
+			editorTemplate -addControl "spreadY";
+			editorTemplate -addControl "roughness";
+			editorTemplate -callCustom "AEfresnelRefractiveIndexNew"
+				"AEfresnelRefractiveIndexReplace" "fresnelRefractiveIndex";
+
+			// include/call base class/node attributes
+			AEreflectCommonSpecularShading $nodeName;
+
+			editorTemplate -addControl "anisotropicReflectivity" "checkAnisotropicReflectivity";
+
+		editorTemplate -endLayout;
+
+		// include/call base class/node attributes
+		AEreflectCommon $nodeName;
+
+        if(isLegacyViewportEnabled())
+        {           
+            //
+            // Add the Hardware texture section only if the user enable the legacy viewport
+            //
+            editorTemplate -beginLayout (uiRes("m_AEanisotropicTemplate.kHardwareTexturing")) -collapse true;
+                AEhardwareTextureTemplate $nodeName
+                    ("color transparency ambientColor incandescence "+
+                     "normalCamera diffuse translucence");
+            editorTemplate -endLayout;
+        }
+        
+	editorTemplate -suppress "tangentUCamera";
+	editorTemplate -suppress "tangentVCamera";
+
+	editorTemplate -addExtraControls;
+	editorTemplate -endScrollLayout;
+}

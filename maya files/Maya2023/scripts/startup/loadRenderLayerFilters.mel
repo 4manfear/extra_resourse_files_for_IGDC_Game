@@ -1,0 +1,108 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global string $gDefaultNotInRenderLayersFilter = "DefaultNotInRenderLayersFilter";
+global string $gDefaultInRenderLayersFilter = "DefaultInRenderLayersFilter";
+global string $gDefaultNotInSelectedRenderLayersFilter = "DefaultNotInSelectedRenderLayersFilter";
+global string $gDefaultInSelectedRenderLayersFilter = "DefaultInSelectedRenderLayersFilter";
+global string $gRenderLayersCategory = "RenderLayers";
+global string $gRenderSetupPluginName = "renderSetup";
+
+//
+// This function is needed to deal with the fact that itemFilters will only
+// allow for secondScripts if there are byScripts. This function is essentially
+// a no-op (simply returns true) for byScripts to enable the presence of 
+// secondScripts.
+//
+global proc int returnsTrue() {
+    return 1;
+}
+
+// (Oct-25-2015) Note: the following functions use stringArrayToString to
+// convert string array arguments to a list of string arguments. It was
+// originally thought that this was unnecessary because string arrays should be
+// automatically converted to a list of string arguments, but this was found to
+// not be the case for some reason. So the stringArrayToString implementation
+// remains for the time being.
+
+global proc string[] notInRenderLayers(string $objects[]) {
+	string $renderLayers[] = `renderSetup -q -renderLayers`;
+	string $cmds = "renderLayerMembers " + stringArrayToString($objects, " ") + " -notIn true -renderLayers " + stringArrayToString($renderLayers, " ");
+	return eval($cmds);
+}
+
+global proc string[] inRenderLayers(string $objects[]) {
+	string $renderLayers[] = `renderSetup -q -renderLayers`;
+	string $cmds = "renderLayerMembers " + stringArrayToString($objects, " ") + " -renderLayers " + stringArrayToString($renderLayers, " ");
+	return eval($cmds);
+}
+
+global proc string[] notInSelectedRenderLayers(string $objects[]) {
+	string $renderLayers[] = `renderSetupSelect -q -renderLayers`;
+	string $cmds = "renderLayerMembers " + stringArrayToString($objects, " ") + " -notIn true -renderLayers " + stringArrayToString($renderLayers, " ");
+	return eval($cmds);
+}
+
+global proc string[] inSelectedRenderLayers(string $objects[]) {
+	string $renderLayers[] = `renderSetupSelect -q -renderLayers`;
+	string $cmds = "renderLayerMembers " + stringArrayToString($objects, " ") + " -renderLayers " + stringArrayToString($renderLayers, " ");
+	return eval($cmds);
+}
+
+//
+//  Description:
+//		This script is executed when the renderSetup plugin is loaded
+//		to load the render setup Outliner itemFilters.
+//
+global proc loadRenderLayerFilters() {
+	global string $gDefaultNotInRenderLayersFilter;
+	global string $gDefaultInRenderLayersFilter;
+	global string $gDefaultNotInSelectedRenderLayersFilter;
+	global string $gDefaultInSelectedRenderLayersFilter;
+	global string $gRenderLayersCategory;
+	global string $gRenderSetupPluginName;
+
+    // Early out if we're in batch mode.
+    if (`about -batch`) {
+        return;
+    }
+
+	source "filterUI.mel";
+	source "filterUIUpdateDefaultFilters.mel";
+	
+	addCustomOutlinerFilterWithScript($gDefaultNotInRenderLayersFilter, 
+	                                  (uiRes("m_loadRenderLayerFilters.kNotInRenderLayers")), 
+									  $gRenderLayersCategory, 
+									  "returnsTrue", 
+									  "notInRenderLayers", 
+									  "");
+	addCustomOutlinerFilterWithScript($gDefaultInRenderLayersFilter, 
+	                                  (uiRes("m_loadRenderLayerFilters.kInRenderLayers")), 
+									  $gRenderLayersCategory, 
+									  "returnsTrue", 
+									  "inRenderLayers", 
+									  "");
+	addCustomOutlinerFilterWithScript($gDefaultNotInSelectedRenderLayersFilter, 
+	                                  (uiRes("m_loadRenderLayerFilters.kNotInSelectedRenderLayers")), 
+									  $gRenderLayersCategory, 
+									  "returnsTrue", 
+									  "notInSelectedRenderLayers", 
+									  "");
+	addCustomOutlinerFilterWithScript($gDefaultInSelectedRenderLayersFilter, 
+	                                  (uiRes("m_loadRenderLayerFilters.kInSelectedRenderLayers")), 
+									  $gRenderLayersCategory, 
+									  "returnsTrue", 
+									  "inSelectedRenderLayers", 
+									  "");
+
+	// setting these callbacks to be python callbacks.
+	itemFilter -e -uniqueNodeNames true -pythonModule "maya.app.renderSetup.model.modelCmds" $gDefaultNotInRenderLayersFilter;
+	itemFilter -e -uniqueNodeNames true -pythonModule "maya.app.renderSetup.model.modelCmds" $gDefaultInRenderLayersFilter;
+	itemFilter -e -uniqueNodeNames true -pythonModule "maya.app.renderSetup.views.viewCmds" $gDefaultNotInSelectedRenderLayersFilter;
+	itemFilter -e -uniqueNodeNames true -pythonModule "maya.app.renderSetup.views.viewCmds" $gDefaultInSelectedRenderLayersFilter;
+
+}

@@ -1,0 +1,67 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  20 Feb 2002
+//
+//  Description:
+//      Verify fluid resolution
+//		
+//
+global proc int verifyFluidResolution(string $fluid,  int $newResX,
+									   int $newResY,
+									   int $newResZ )
+//
+// Description:
+//	Put up a confirm box if the new resolution might be too large.
+//	Return true if resolution is verified (either not too large
+//  or user chooses to continue anyway), false if not.
+//  
+//  For 2D fluids, pass in "1" for $newResZ.
+//  For initial fluid creation , pass in "" for fluid name
+//  
+{
+	int $resOK = true;
+	int $newRes = $newResX * $newResY * $newResZ; // negative if too large
+
+	if( size($fluid) > 0 ) {
+		int $oldResX = getAttr( $fluid + ".resolutionW" );
+		int $oldResY = getAttr( $fluid + ".resolutionH" );
+		int $oldResZ = getAttr( $fluid + ".resolutionD" );	    
+		int $oldRes = $oldResX * $oldResY * $oldResZ;
+		if( ($oldRes >= $newRes) && ( $newRes > 0 )) {
+			return $resOK;
+		}
+	}
+
+	if( $newRes > 3375000 || $newRes < 0 ) {
+		string $title   = (uiRes("m_verifyFluidResolution.kTitle"));
+		string $cancel = (uiRes("m_verifyFluidResolution.kCancel"));
+		string $saveAndContinue = (uiRes("m_verifyFluidResolution.kSaveandContinue")); 
+		string $message = (uiRes("m_verifyFluidResolution.kPerformanceAfectedMessage"));
+		$title = `format -s $newResX -s $newResY -s $newResZ $title`;
+		string $lastChance = `confirmDialog 
+			-title $title
+			-message $message 
+			-button $saveAndContinue  
+			-button (uiRes("m_verifyFluidResolution.kContinue"))
+			-button $cancel
+			-defaultButton $saveAndContinue
+			-cancelButton $cancel 
+			-dismissString $cancel`;	
+
+		if( $lastChance == $cancel ) {
+			$resOK = false;
+		} else if( $lastChance == $saveAndContinue ) {
+			FileMenu_SaveItem();
+		}
+	}
+
+	return $resOK;
+}
+

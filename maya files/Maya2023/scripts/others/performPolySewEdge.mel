@@ -1,0 +1,131 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  4 April 1997
+//
+//  Procedure Name:
+//      performPolySewEdge
+//
+//  Description:
+//        sew the selected polygon border edges
+//         
+//  Input Arguments:
+//        $option : Whether to set the options to default values.
+//  Return Value:
+//        command string iff $option==2
+//
+
+proc setOptionVars (int $forceFactorySettings)
+{			   
+	optionVar -init $forceFactorySettings -category "Edit Polygons.Merge Multiple Edges"
+		-iv polySewEdgeMap 1
+		-fv polySewEdge 0.0
+		-iv polySewEdgeWorldSpace 1
+		;
+}
+
+global proc performPolySewEdgeSetup (string $parent, int $forceFactorySettings)
+{
+	setOptionVars($forceFactorySettings);
+	setParent $parent;
+	
+	int $iSM = `optionVar -query polySewEdgeMap`;
+    checkBoxGrp -edit -value1 $iSM polySewEdgeMap;
+	
+	float $fval = `optionVar -query polySewEdge`;
+	floatSliderGrp -edit -value $fval polySewEdge;
+	
+	int $iWS = `optionVar -query polySewEdgeWorldSpace`;
+    checkBoxGrp -edit -value1 $iWS polySewEdgeWorldSpace;
+}
+
+global proc performPolySewEdgeCallback (string $parent, int $doIt)
+{
+	setParent $parent;
+    optionVar -intValue polySewEdgeMap
+        `checkBoxGrp -query -value1 polySewEdgeMap`;
+	optionVar -floatValue polySewEdge 
+		`floatSliderGrp -query -value polySewEdge`;
+    optionVar -intValue polySewEdgeWorldSpace
+        `checkBoxGrp -query -value1 polySewEdgeWorldSpace`;
+	if ($doIt) {
+		performPolySewEdge 0;
+		addToRecentCommandQueue "performPolySewEdge 0" "PolySewEdge";
+	}
+}
+
+proc polySewEdgeOptions ()
+{
+	string $commandName = "performPolySewEdge";
+	string $callback = ($commandName + "Callback");
+	string $setup = ($commandName + "Setup");
+	   
+	string $layout = getOptionBox();
+	setParent $layout;
+	setUITemplate -pushTemplate DefaultTemplate;
+	waitCursor -state 1;
+	
+	string $parent = `columnLayout -adjustableColumn 1`;
+
+    checkBoxGrp -label1 (uiRes("m_performPolySewEdge.kMergeUVs")) polySewEdgeMap;
+
+	floatSliderGrp -label (uiRes("m_performPolySewEdge.kThreshold")) -min 0 -max 10 -fmx 10000000 polySewEdge;
+
+    checkBoxGrp -label1 (uiRes("m_performPolySewEdge.kWorldSpaceCoords")) polySewEdgeWorldSpace;
+
+	waitCursor -state 0;
+	setUITemplate -popTemplate;
+	   
+	string $applyBtn = getOptionBoxApplyBtn();
+	button -edit -label (uiRes("m_performPolySewEdge.kSew"))
+		-command ($callback + " " + $parent + " " + 1)
+		$applyBtn;
+	string $saveBtn = getOptionBoxSaveBtn();
+	button -edit 
+		-command ($callback + " " + $parent + " " + 0 + "; hideOptionBox")
+		$saveBtn;
+	string $resetBtn = getOptionBoxResetBtn();
+	button -edit 
+		-command ($setup + " " + $parent + " " + 1)
+		$resetBtn;
+
+	setOptionBoxTitle( (uiRes("m_performPolySewEdge.kOptionBoxTitle")) );
+	
+	setOptionBoxHelpTag( "MergeMultipleEdges" );
+
+	eval (($setup + " " + $parent + " " + 0));      
+	showOptionBox();
+}
+
+global proc string performPolySewEdge (int $option)
+{
+	string $cmd="";
+	string $sel[];
+	float $fval;
+	int $ivSM, $ivWS;
+	switch ($option) {
+	case 0:
+		setOptionVars(false);
+		$fval = `optionVar -query polySewEdge`;
+        $ivSM = `optionVar -query polySewEdgeMap`;
+        $ivWS = `optionVar -query polySewEdgeWorldSpace`;
+		$cmd=("polySewEdge -t " + $fval + " -tx " + $ivSM + " -ws " + $ivWS);
+		polyPerformAction $cmd e 0;
+		break;
+	case 1: polySewEdgeOptions; break;
+	default:
+		setOptionVars(false);
+		$fval = `optionVar -query polySewEdge`;
+        $ivSM = `optionVar -query polySewEdgeMap`;
+        $ivWS = `optionVar -query polySewEdgeWorldSpace`;
+		$cmd=("polySewEdge -t " + $fval + " -tx " + $ivSM +" -ws " + $ivWS);
+		$cmd = ("polyPerformAction \"" + $cmd + "\" e 0");
+	}
+	return $cmd;
+}

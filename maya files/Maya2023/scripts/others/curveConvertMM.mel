@@ -1,0 +1,71 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  23 October 2003
+//
+//  Procedure Name:
+//      nurbsConvertMM
+//
+//  Description:
+//      This procedure creates the popup/marking menu
+//      for curves component conversion. See buildConvertMM.
+//
+//  Input Arguments:
+//      The parent item to parent the popup menu to.
+//
+//  Return Value:
+//      None.
+
+global proc curveConvertMM(string $parent, int $isBezier){
+	
+	if (`popupMenu -query -exists $parent`){
+		popupMenu -edit -deleteAllItems $parent;
+		
+		setParent -menu $parent;
+
+		menuItem
+			-label (uiRes("m_curveConvertMM.kCurveConvertToCV"))
+			-annotation (getRunTimeCommandAnnotation ("SelectCurveCVsAll"))
+			-command ("string $selection[] = `ls -sl`; SelectCurveCVsAll;" +
+						"hilite $selection; selectType -ocm -alc false; " +
+						"selectType -ocm -cv on;")
+			-radialPosition "W" 
+			;
+
+		menuItem
+			-label (uiRes("m_curveConvertMM.kCurveConvertToFirstCV"))
+			-annotation (getRunTimeCommandAnnotation ("SelectCurveCVsFirst"))
+			-command ("string $selection[] = `ls -sl`; SelectCurveCVsFirst;" +
+						"hilite $selection; selectType -ocm -alc false; " +
+						"selectType -ocm -cv on;")
+			-radialPosition "N" 
+			;
+
+		menuItem
+			-label (uiRes("m_curveConvertMM.kCurveConvertToLastCV"))
+			-annotation (getRunTimeCommandAnnotation ("SelectCurveCVsLast"))
+			-command ("string $selection[] = `ls -sl`; SelectCurveCVsLast;" +
+						"hilite $selection; selectType -ocm -alc false; " +
+						"selectType -ocm -cv on;")
+			-radialPosition "S" 
+			;
+		
+		if( !$isBezier )
+		{
+			menuItem
+				-label (uiRes("m_curveConvertMM.kCurveConvertToCluster"))
+				-annotation (getRunTimeCommandAnnotation ("ClusterCurve"))
+				-command "ClusterCurve"
+				-radialPosition "E" 
+				;
+		}
+
+		setParent -menu ..;	
+	}
+}

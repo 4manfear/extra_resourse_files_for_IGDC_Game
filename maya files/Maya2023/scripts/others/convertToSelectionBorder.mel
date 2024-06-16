@@ -1,0 +1,74 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc convertToSelectionBorder(int $compType, int $doSelect, string $borderComps[], string $containedFaces[])
+{
+    string $sel[] = `ls -sl`;
+
+    $containedFaces = `polyListComponentConversion -ff -fv -fe -fuv -fvf -tf -in $sel`;
+	if (0 == size($containedFaces))
+	{
+		// if there are no contained faces, then we'll convert everything to faces and see what we get
+		$containedFaces = `polyListComponentConversion -ff -fv -fe -fuv -fvf -tf $sel`;
+	}
+
+	if (0 == size($containedFaces))
+	{
+		return;
+	}
+
+	$borderComps = `polyListComponentConversion -ff -te -bo $containedFaces`;
+
+	switch ($compType) {
+	case 0:
+		$borderComps = `polyListComponentConversion -fe -tv $borderComps`;
+		break;
+	case 1:
+		$borderComps = `polyListComponentConversion -fe -tuv $borderComps`;
+		break;
+	default:
+		break;
+	}
+
+	if ($doSelect)
+	{
+		if (`selectMode -q -object`) 
+		{
+			selectType -ocm -alc false;
+
+			switch ($compType) {
+			case 0:
+				selectType -ocm -polymeshVertex true;
+				break;
+			case 1:
+				selectType -ocm -polymeshUV true;
+				break;
+			default:
+				selectType -ocm -polymeshEdge true;
+				break;
+			}
+		} 
+		else 
+		{
+			selectType -alc false;
+
+			switch ($compType) {
+			case 0:
+				selectType -polymeshVertex true;
+				break;
+			case 1:
+				selectType -polymeshUV true;
+				break;
+			default:
+				selectType -polymeshEdge true;
+				break;
+			}
+		}
+
+		select $borderComps;
+	}
+}

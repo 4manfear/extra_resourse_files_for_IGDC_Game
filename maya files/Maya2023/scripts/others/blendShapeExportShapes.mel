@@ -1,0 +1,89 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc blendShapeExportShapes()
+{
+	string $shpFileFilter = (uiRes("m_blendShapeExportShapes.kShape")) + " (*.shp) (*.shp)";
+	string $title = (uiRes("m_blendShapeExportShapes.kExportShapes"));
+	
+	// Single blendShape node is selected.
+	if (size(getShapeEditorTreeviewSelection(11)) == 1)
+	{		
+		string $result[] = `fileDialog2 -fileFilter $shpFileFilter -caption $title`;
+		if (size($result) == 0)
+			return;
+		string $filePath = $result[0];
+		
+		string $bsArray[] = getShapeEditorTreeviewSelection(11);
+		string $bsNode = $bsArray[0];
+		blendShape -edit -export $filePath $bsNode; 
+		
+		// in case the progressbar is enabled and not stop normally
+		global string $gMainProgressBar;
+		if (`progressBar -query -isCancelled $gMainProgressBar`) {}
+		else
+		{
+			progressBar -edit -endProgress $gMainProgressBar;
+		}
+		
+		return;
+	}
+	
+	if (size(getShapeEditorTreeviewSelection(9)) > 0)
+	{
+		string $selectedTargets[] = getShapeEditorTreeviewSelection(24);
+
+		string $bsdName;
+		string $tgtItems[];
+		for ($i = 0; $i < size($selectedTargets); ++$i)
+		{
+			string $buffer[];
+			tokenize( $selectedTargets[$i], ".", $buffer );
+			if (size($buffer) != 2)
+				continue;
+			if ($i == 0)
+				$bsdName = $buffer[0];
+			else if ($bsdName != $buffer[0])
+			{	
+				return; // Not the same blendShape node.
+			}
+			
+			$tgtItems[size($tgtItems)] = $buffer[1];
+		}
+		
+		if (size($tgtItems))
+		{
+			// export targets
+			
+			string $result[] = `fileDialog2 -fileFilter $shpFileFilter -caption $title`;
+			if (size($result) == 0)
+				return;
+			string $filePath = $result[0];
+			
+			string $cmd = "blendShape -edit -export ";
+			$cmd += "\"" + $filePath + "\""; 
+			for ($item in $tgtItems)
+			{
+				// base index of exportTarget flag are ignored during exporting,
+				// so 0 is used for all targets.
+				$cmd += " -exportTarget 0 " + $item;
+			}
+			$cmd += " " + $bsdName;
+			evalEcho($cmd);
+		}
+
+		// in case the progressbar is enabled and not stop normally
+		global string $gMainProgressBar;
+		if (`progressBar -query -isCancelled $gMainProgressBar`) {}
+		else
+		{
+			progressBar -edit -endProgress $gMainProgressBar;
+		}
+				
+		return;
+	}
+}

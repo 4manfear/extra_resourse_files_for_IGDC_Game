@@ -1,0 +1,89 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc float convertMeasurement(
+	float  $value,
+	string $fromUnits,
+	string $toUnits)
+//
+//	Description:
+//		Convert a value from one unit of measurement to another.
+//
+//	Arguments:
+//		value - Value to convert.
+//		fromUnits - Units value is currently in.
+//		toUnits - Units to convert value to. 
+//
+//	Valid units are:
+//		"inches",
+//		"cm",
+//		"mm",
+//		"points",
+//		"picas"
+//
+{
+	float $result = $value;
+	float $kInchesInOneCentimeter = 0.393700787;
+	float $kInchesInOneMillimeter = 0.0393700787;
+	float $kInchesInOnePoint = 0.0138888889;
+	float $kInchesInOnePicas = 0.166666667;
+
+	//	Nothing to do if units are the same.
+	//
+	if ($fromUnits == $toUnits) return $result;
+
+	// First convert the value from its current units to inches.
+	//
+	float $valueInInches;
+	string $msg;
+	switch ($fromUnits)
+	{
+		case "inches":
+			$valueInInches = $value;
+			break;
+		case "cm":
+			$valueInInches = $value * $kInchesInOneCentimeter;
+			break;
+		case "mm":
+			$valueInInches = $value * $kInchesInOneMillimeter;
+			break;
+		case "points":
+			$valueInInches = $value * $kInchesInOnePoint;
+			break;
+		case "picas":
+			$valueInInches = $value * $kInchesInOnePicas;
+			break;
+		default:
+			$msg = (uiRes("m_convertMeasurement.kCannotConvertFrom"));
+			error (`format -stringArg $fromUnits $msg`);
+	}
+
+	// Now convert the value in inches to the desired units 
+	//
+	switch ($toUnits)
+	{
+		case "inches":
+			$result = $valueInInches;
+			break;
+		case "cm":
+			$result = $valueInInches / $kInchesInOneCentimeter;
+			break;
+		case "mm":
+			$result = $valueInInches / $kInchesInOneMillimeter;
+			break;
+		case "points":
+			$result = $valueInInches / $kInchesInOnePoint;
+			break;
+		case "picas":
+			$result = $valueInInches / $kInchesInOnePicas;
+			break;
+		default:
+			$msg = (uiRes("m_convertMeasurement.kCannotConvertTo"));
+			error (`format -stringArg $toUnits $msg`);
+	}
+	return $result;
+}

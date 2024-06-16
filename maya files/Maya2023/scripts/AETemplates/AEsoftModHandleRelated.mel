@@ -1,0 +1,40 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+// FILE: AEsoftModHandleRelated.mel
+// INPUT: string (node name)
+// RETURN:	string[] (list of related nodes, with the node whose
+//			tab you want to be opened duplicated at the
+//			end of the array)
+//
+
+global proc string[] AEsoftModHandleRelated (string $node)
+{
+	string $retval[];
+
+	int $ii, $jj;
+	string $conns[] = `listConnections -s false ($node+".softModTransforms")`;
+
+	// look for a connected softMod node
+	//
+	int $len = size($conns);
+	for ($ii = 0; $ii < $len; $ii++) {
+		if ("softMod" == nodeType($conns[$ii])) {
+			$softModNode = $conns[$ii];
+			$retval[0] = $softModNode;
+			$retval[1] = $softModNode;
+			break;
+		}
+	}
+
+	if (0 == size($retval)) {
+		$retval[0] = $node;
+	}
+	
+	return $retval;
+}
+

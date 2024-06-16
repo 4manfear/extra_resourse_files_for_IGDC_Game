@@ -1,0 +1,51 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+// Global Maya compatibility file, version 3.0ff01
+////////////////////////////////////////////////////////////////////////////
+attrCompatibility -v "3.0ff01";
+
+// change long name of air field inherit attribute
+//
+attrCompatibility -r inheritVelocity airField inherit;
+
+// change type of emitter minDistance and maxDistance
+// from double to double linear
+//
+attrCompatibility -type doubleLinear pointEmitter minDistance;
+attrCompatibility -type doubleLinear pointEmitter maxDistance;
+
+// change type of geoConnector ownerCentroidX/Y/Z
+// and ownerCentroidLocal X/Y/Z from double to double linear
+//
+attrCompatibility -type doubleLinear geoConnector ownerCentroidX;
+attrCompatibility -type doubleLinear geoConnector ownerCentroidY;
+attrCompatibility -type doubleLinear geoConnector ownerCentroidZ;
+attrCompatibility -type doubleLinear geoConnector ownerCentroidLocalX;
+attrCompatibility -type doubleLinear geoConnector ownerCentroidLocalY;
+attrCompatibility -type doubleLinear geoConnector ownerCentroidLocalZ;
+
+// Change field max distance to double linear
+// Affects all fields, change for all.
+//
+attrCompatibility -type doubleLinear gravityField maxDistance;
+attrCompatibility -type doubleLinear radialField  maxDistance;
+attrCompatibility -type doubleLinear newtonField  maxDistance;
+attrCompatibility -type doubleLinear vortexField  maxDistance;
+attrCompatibility -type doubleLinear uniformField maxDistance;
+attrCompatibility -type doubleLinear turbulenceField maxDistance;
+attrCompatibility -type doubleLinear airField     maxDistance;
+attrCompatibility -type doubleLinear dragField    maxDistance;
+
+// Change radial "type" to "radialType"
+// Only the long name is affected.
+//
+attrCompatibility -r radialType radialField type;
+
+
+

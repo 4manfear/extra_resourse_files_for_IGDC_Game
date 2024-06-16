@@ -1,0 +1,61 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc resetModelEditor( string $camera, string $editorName )
+{
+	global string $gViewport2;
+	global string $gLegacyViewport;
+
+	modelEditor -e 
+		-camera $camera
+		-useInteractiveMode 0
+		-displayLights "default" 
+		-displayAppearance "smoothShaded" 
+		-activeOnly 0
+		-wireframeOnShaded 0
+		-bufferMode "double" 
+		-twoSidedLighting 0
+		-backfaceCulling 0
+		-xray 0
+		-jointXray 0
+		-activeComponentsXray 0
+		-st 1
+		-displayTextures 0	
+		//-textureMaxSize 1024 - this is queried from the hardware. Don't articially clamp it.
+		-allObjects 1		
+		-shadows 0
+		-fogging 0
+		-smoothWireframe 0
+		//-lineWidth 1
+		-viewSelected false
+		$editorName;
+		
+	int $vpRenderer = 2; // default
+	if(`optionVar -exists viewportRenderer`)
+    {
+         $vpRenderer = `optionVar -q viewportRenderer`;
+    }
+	if($vpRenderer == 1) {
+		modelEditor -e -rendererName $gLegacyViewport $editorName;
+	}
+	else {
+		modelEditor -e -rendererName $gViewport2 $editorName;
+	}
+	
+	if (`isTrue "MayaCreatorExists"`) {
+		modelEditor -e -strokes 1 $editorName;
+	}
+
+	// reset plugin display filters
+	string $pluginFilters[] = `pluginDisplayFilter -q -listFilters`;
+	for ($filter in $pluginFilters) {
+		modelEditor -e -pluginObjects $filter 1 $editorName;
+	}
+
+	// disable isolate select auto update
+	editor -edit -lck -mainListConnection "activeList" $editorName;
+}

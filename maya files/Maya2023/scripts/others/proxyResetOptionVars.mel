@@ -1,0 +1,33 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+// Creation Date:  Nov 15, 2004
+//
+//  Procedure Name:
+//      proxyResetOptionVars
+//
+//  Description:
+//      Resets the optionVar entries associated with proxies.
+//
+
+global proc proxyResetOptionVars()
+//
+//	Description:
+//		Resets the optionVar's for proxies.
+//
+{
+	optionVar -default -category "Files/Projects"
+		-sv proxyOptionsReferenceTag ""
+		-iv proxyOptionsUseNewReferenceTag true
+		-sv proxyOptionsNewReferenceTag ""
+		-sv proxyOptionsProxyTag ""
+		-iv proxyOptionsUseNewProxyTag true
+		-sv proxyOptionsNewProxyTag ""
+		;
+}

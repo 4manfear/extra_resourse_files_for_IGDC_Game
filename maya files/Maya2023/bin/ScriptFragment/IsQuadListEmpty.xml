@@ -1,0 +1,22 @@
+<fragment  uiName="IsQuadListEmpty" name="IsQuadListEmpty" type="sceneEffect" class="ScriptFragment" version="1.0" feature_level="0" >
+    <description>
+<![CDATA[
+Check if the quad list is empty or not.]]>
+</description>
+    <properties>
+        <countedObject  name="quadDrawShadedList" />
+    </properties>
+    <values>
+    </values>
+    <outputs>
+        <bool  name="noQuads" />
+    </outputs>
+    <parametershare>
+    </parametershare>
+    <implementation render="OGS" language="ScriptInterpreter" version="0.1" >
+        <scriptCommands>
+            <Call name="isListEmpty" arg0="@quadDrawShadedList" arg1="@noQuads" />
+        </scriptCommands>
+    </implementation>
+</fragment>
+

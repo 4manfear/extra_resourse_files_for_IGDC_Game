@@ -1,0 +1,43 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//
+//<doc>
+//<name menuItemToShelf>
+//
+//<synopsis>
+//		menuItemToShelf (string $itemName)
+//
+//<returns>
+//		None.
+//
+//<description>
+//		Creates a button on the current shelf that, when pressed, will
+//		act like selecting the specified menu item.
+//
+//<flags>
+//		string $itemName Name of the menu item. (Not the label)
+//
+//<examples>
+//	menuItemToShelf "selectAllItem";
+//
+//</doc>
+
+global proc menuItemToShelf (string $itemName) 
+{
+	global string $gShelfTopLevel;
+
+	string $currentShelf;
+
+	if (`tabLayout -exists $gShelfTopLevel`) {
+		$currentShelf = `tabLayout -q -st $gShelfTopLevel`;
+        catchQuiet( `callPython "maya.app.general.menuItemToShelf" "menuItemToShelf" {$currentShelf,$itemName}` ); 
+        shelfTabRefresh;
+    }
+}

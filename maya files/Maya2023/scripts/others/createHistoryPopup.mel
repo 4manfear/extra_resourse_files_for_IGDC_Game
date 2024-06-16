@@ -1,0 +1,52 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  26 Feb 1996
+//
+//  Description:
+//      This procedure fills the history popup
+
+proc string needTheLead()
+{
+	string $result = "";
+	string $all[] = `ls -l -sl -tail 1 -type dagNode`;
+	if( size($all) > 0 ) {
+		$result = $all[0];
+	}
+	else {
+		$all = `ls -sl -tail 1`;
+		if( size($all) > 0 ) {
+			$result = $all[0];
+		}
+	}
+	return $result;
+}
+
+global proc createHistoryPopup()
+//
+// Creates a menu on the toolbar that shows a list of
+// all operations that took place to create/modify
+// the currently selected object.  Note that the list
+// is not being filtered yet to get rid of things that
+// users won't really care about, nor are the operations
+// being listed as operations - their DG node names are
+// simply being stuck into the menu.  This should
+// change.
+
+{
+	// Delete all menu entries currently in the popup
+	//
+	popupMenu -e -dai historyPopup;
+	setParent -menu historyPopup;
+
+	// Get the list of selected items and do the list
+	// for the lead/last item.
+	//
+	historyPopupFill( `needTheLead`, false, 1 );
+}

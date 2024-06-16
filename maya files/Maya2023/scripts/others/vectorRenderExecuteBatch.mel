@@ -1,0 +1,87 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//  Creation Date:  23 December 2002
+//
+//  Procedure Name:
+//      vectorRenderExecuteBatch
+//
+//  Description:
+//      This script executes batch rendering for the vector renderer.
+//
+//  Input Arguments:
+//      None
+//  Return Value:
+//      None
+//
+
+////////////////////////////////////////////////////////////////////////////////
+//
+////////////////////////////////////////////////////////////////////////////////
+
+proc vectorRenderInBatchMode(string $option)
+{
+    // /////////////////////////////////////////////////////////////
+    // At this point the file is already loaded to Maya,
+    // the plugin is loaded, and the vector render globals node
+        // has been created.  So, just use the vectorize command
+    // to render the file.
+    // /////////////////////////////////////////////////////////////
+
+    source "vectorRenderUtil.mel";
+
+    string $projectDir = (`workspace -q -fn`) + "/";
+    chdir  $projectDir;
+    string $imageDir   = `vrBuildDirectoryName`;
+
+    string $renderFileName = `file -q -sn`;
+
+    if (size ($renderFileName)) {
+        // create output image directory, if it does not exist
+        workspace -cr $imageDir;
+
+        string $infofmt = (uiRes("m_vectorRenderExecuteBatch.kBatchVectorImagesWrittenTo"));
+		vrVectorRenderInfo(`format -s $imageDir $infofmt`);
+        // If one would like to generate a log file for the batch render
+        // adding a -log parameter to the line will do this.
+        // without the -log option, the output will go to stdout
+
+
+        // Get the width and height
+        int $width = `getAttr defaultResolution.width`;
+        int $height = `getAttr defaultResolution.height`;
+
+		string $vectorizeCmd = vrVectorBuildCommand( false, $width, $height, "", $option );
+		string $vectorizefmt = (uiRes("m_vectorRenderExecuteBatch.kExecutedCommand"));
+		vrVectorRenderInfo(`format -s $vectorizeCmd $vectorizefmt`);
+
+		eval $vectorizeCmd;
+		print("\n");
+
+        string $vectorizefmt2 = (uiRes("m_vectorRenderExecuteBatch.kBatchRenderedImages"));
+		vrVectorRenderInfo(`format -s $imageDir $vectorizefmt2`);
+        print("\n");
+    } else {
+        print("\n");
+        vrVectorRenderInfo((uiRes("m_vectorRenderExecuteBatch.kSceneFileNotFound")));
+        print("\n\n");
+    }
+}
+
+
+global proc vectorRenderExecuteBatch(string $option)
+{
+    // Make sure that the plugin is loaded.
+    if( ! `pluginInfo -q -l "VectorRender"` ) {
+        loadPlugin "VectorRender";
+    }
+
+    // Render the file.
+    vectorRenderInBatchMode($option);
+
+}

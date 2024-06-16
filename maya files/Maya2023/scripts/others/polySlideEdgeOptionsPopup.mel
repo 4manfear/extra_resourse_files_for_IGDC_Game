@@ -1,0 +1,45 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+// Create popup menu for polySlideEdge tool options
+//
+
+global proc polySlideEdgeOptionsPopup()
+{
+	string $toolName = `currentCtx`;
+
+	// Parent menu already set when this function is called,
+	// so just add a menu items
+	int $relativeMode = `polySlideEdgeCtx -q -absolute $toolName`;
+	int $useSnapping = `polySlideEdgeCtx -q -useSnapping $toolName`;
+	
+		
+	menuItem
+		-l	(uiRes("m_polySlideEdgeOptionsPopup.kRelativeSlideEdgeMode"))
+		-rp	"W"
+		-cb	$relativeMode
+		-c	("polySlideEdgeCtx -e -absolute " + !$relativeMode + " " + $toolName);
+
+	menuItem
+		-l	(uiRes("m_polySlideEdgeOptionsPopup.kSlideEdgeUseSnapping"))
+		-rp	"E"
+		-cb	$useSnapping
+		-c ("polySlideEdgeCtx -e -useSnapping " + !$useSnapping + " " + $toolName);
+
+	//
+	// North submenu
+	//
+	commonReflectionOptionsPopup();
+
+	//
+	// South submenu
+	//
+	commonSelectOptionsPopup();
+
+}
+

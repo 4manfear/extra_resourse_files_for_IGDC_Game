@@ -1,0 +1,376 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+// Creation Date:  20 Februrary 1996
+//
+    
+//
+//  Procedure Name:
+//		playButtonStart, playButtonStepBackward, playButtonBackward
+//		playButtonStop, playButtonRecord, playButtonForward
+//		playButtonStepForward, playButtonEnd
+//
+//  Description:
+//      Procs that update the current time according to which
+//		playback control is pressed.
+//
+//  Input Arguments:
+//      None.
+//
+//  Return Value:
+//      None.
+//
+global proc playButtonStart() {
+	currentTime -edit `playbackOptions -query -min`;
+}
+
+global proc playButtonStepBackward() {
+    PreviousFrame;
+}
+
+global proc playButtonBackward() {
+	int $isOscillate = (`playbackOptions -q -loop` == "oscillate");
+
+	if(( `play -query -state` == 1 ) 
+	&&(( `play -query -forward` == 0 ) || $isOscillate ))
+	{
+		play -state off;
+	}
+	else {
+		float $by = `playbackOptions -query -by`;	
+		if( `currentTime -q` - $by < `playbackOptions -q -min` ) {
+			currentTime -e `playbackOptions -q -max`;
+		}
+
+		global string $gTimeSliderTimeField;
+		global string $gPlayBackForwardButton;
+		global string $gPlayBackReverseButton;
+
+		// We do this here since the callback that sets up the 
+		// images on the buttons won't get called if we're already
+		// playing back (forward) and hit the "backward" button;
+		// The "playingBack" condition will not have been changed!
+		// 
+		symbolButton -edit 
+			-image "timeplay.png" 
+			-annotation (uiRes("m_timeSlider.kPlayForwardsAnnot"))  $gPlayBackForwardButton; 
+		symbolButton -edit 
+			-image "timestop.png" 
+			-annotation (uiRes("m_timeSlider.kStopPlaybackAnnot"))  $gPlayBackReverseButton; 
+		timeField -e -enable false $gTimeSliderTimeField;
+		
+		play -forward off;
+	}
+}
+global proc playButtonForward() {
+	global string $gTimeSliderTimeField;
+
+	int $isOscillate = (`playbackOptions -q -loop` == "oscillate");
+
+	if(( `play -query -state` == 1 ) 
+	&&(( `play -query -forward` == 1 ) || $isOscillate ))
+	{
+		play -state off;
+	}
+	else {
+		float $by = `playbackOptions -query -by`;	
+		if( `currentTime -q` + $by > `playbackOptions -q -max` ) {
+			currentTime -e `playbackOptions -q -min`;
+		}
+
+		global string $gPlayBackForwardButton;
+		global string $gPlayBackReverseButton;
+		global string $gPlayBackSlider;
+
+		// We do this here since the callback that sets up the 
+		// images on the buttons won't get called if we're already
+		// playing back (forward) and hit the "backward" button;
+		// The "playingBack" condition will not have been changed!
+		// 
+		symbolButton -edit 
+			-image "timestop.png" 
+			-annotation (uiRes("m_timeSlider.kStopPlaybackAnnot"))  $gPlayBackForwardButton; 
+		symbolButton -edit 
+			-image "timerev.png" 
+			-annotation (uiRes("m_timeSlider.kPlayBackwardsAnnot"))  $gPlayBackReverseButton; 
+		timeField -e -enable false $gTimeSliderTimeField;
+		
+		play -forward on -sound `timeControl -q -s $gPlayBackSlider` -playSound `timeControl -query -displaySound $gPlayBackSlider`;
+	}
+}
+
+global proc playButtonStepForward() {
+    NextFrame;
+}
+
+global proc playButtonEnd() {
+	currentTime -edit `playbackOptions -query -max`;
+}
+
+global proc int playbackStateChanged() {
+	global string $gPlayBackForwardButton;
+	global string $gPlayBackReverseButton;
+	global string $gTimeSliderTimeField;
+
+	if( `isTrue playingBack` ) {
+		if(( `play -query -st` == 0) || `play -query -forward` == 1 ) {
+
+			if( `symbolButton -exists $gPlayBackForwardButton` ) {
+				symbolButton -edit 
+					-image "timestop.png" 
+					-annotation (uiRes("m_timeSlider.kStopPlaybackAnnot"))  $gPlayBackForwardButton; 
+			}
+
+			if( `symbolButton -exists $gPlayBackReverseButton` ) {
+				symbolButton -edit 
+					-image "timerev.png" 
+					-annotation (uiRes("m_timeSlider.kPlayBackwardsAnnot"))  $gPlayBackReverseButton; 
+			}
+		}
+		else {
+			if( `symbolButton -exists $gPlayBackForwardButton` ) {
+				symbolButton -edit 
+					-image "timeplay.png" 
+					-annotation (uiRes("m_timeSlider.kPlayForwardsAnnot"))  $gPlayBackForwardButton; 
+			}
+
+			if( `symbolButton -exists $gPlayBackReverseButton` ) {
+				symbolButton -edit 
+					-image "timestop.png" 
+					-annotation (uiRes("m_timeSlider.kStopPlaybackAnnot"))  $gPlayBackReverseButton; 
+			}
+		}
+
+		if( `timeField -exists $gTimeSliderTimeField` ) {
+			timeField -e -enable false $gTimeSliderTimeField;
+		}
+	}
+	else {
+		if( `symbolButton -exists $gPlayBackForwardButton` ) {
+			symbolButton -edit 
+				-image "timeplay.png" 
+				-annotation (uiRes("m_timeSlider.kPlayForwardsAnnot"))  $gPlayBackForwardButton; 
+		}
+
+		if( `symbolButton -exists $gPlayBackReverseButton` ) {
+			symbolButton -edit 
+				-image "timerev.png" 
+				-annotation (uiRes("m_timeSlider.kPlayBackwardsAnnot"))  $gPlayBackReverseButton; 
+		}
+
+		if( `timeField -exists $gTimeSliderTimeField` ) {
+			timeField -e -enable true $gTimeSliderTimeField;
+		}
+	}
+
+	// Scripts attached to the "condition" command
+	// must return an int.
+	//
+	return 1;
+}
+
+// Procedure Name: 
+//		timeSlider
+//	
+// Description:
+//		This implements the group of controls that represents the
+//		timeSlider.  The timeSlider can either be part of a window
+//		or in a window of its own.
+//
+// Input Arguments:
+//		The name of the layout that the timeSlider should add itself
+//		to.  If empty, then this script will create a window.
+//
+// Return Value:
+//		The name of the top level layout control.
+//			(Used for embedding within another window)
+//
+//global proc string timeSlider(string $parentName)
+{
+	global string $gTimeSliderForm;
+	global string $gPlayBackForwardButton;
+	global string $gPlayBackReverseButton;
+	global string $gPlayBackSlider;
+	global string $gTimeSliderTimeField;
+	
+	//	Create a layout appropriate for the Time slider.
+	//
+	string $timeSlider = `formLayout -parent $gTimeSliderForm`;
+
+	//	Create a frame layout for the Time slider control.
+	//
+	string $timeFrame = `frameLayout
+		-parent         $timeSlider
+		-borderVisible  false
+		-labelVisible   false
+		-collapse       false
+		-collapsable    false`;
+
+	//	Create the Time slider control.
+	//
+	$gPlayBackSlider = `timeControl -parent $timeFrame -height 30`;
+
+	setParent $timeSlider;
+
+	//	Create the Time field.
+	//
+	$gTimeSliderTimeField = `timeField
+		-annotation (uiRes("m_timeSlider.kCurrentTimeSetAnnot")) 
+		-width      90
+		-precision  2`;
+	timeField -edit
+		$gTimeSliderTimeField; 
+
+	//	Create a grid layout for the play back buttons.
+	//
+	int $nbCols = 8;
+	int $iconSize = 22;	// Real size = 20x20, but with padding for down/hover = 22x22
+	int $cellWidth = $iconSize + 1;
+	int $gridWidth = $nbCols * $cellWidth;
+
+	string $grid = `gridLayout 
+		-width               $gridWidth 
+		-numberOfRowsColumns 1 $nbCols 
+		-cellWidthHeight     $cellWidth $iconSize`;
+
+	//	Create the play back buttons...
+	//
+	string $startButton = `symbolButton
+		-image       "timerew.png"
+		-annotation (uiRes("m_timeSlider.kStartPlaybackRangeAnnot")) 
+		-command     "playButtonStart"`;
+
+	string $stepBackButton = `symbolButton
+		-image       "timeend.png"
+		-annotation (uiRes("m_timeSlider.kStepBackFrameAnnot"))
+		-command     "playButtonStepBackward"`;
+
+	string $prevButton = `symbolButton
+		-image       "timeprev.png"
+		-annotation (uiRes("m_timeSlider.kStepBackOneKeyAnnot"))
+		-command     "PreviousKey"`;
+
+	$gPlayBackReverseButton = `symbolButton
+		-image       "timerev.png" 
+		-annotation  (uiRes("m_timeSlider.kPlayBackwardsAnnot")) 
+		-command     "playButtonBackward"`;
+
+	$gPlayBackForwardButton = `symbolButton
+		-image       "timeplay.png" 
+		-annotation  (uiRes("m_timeSlider.kPlayForwardsAnnot")) 
+		-command     "playButtonForward"`;
+
+	string $nextButton = `symbolButton
+		-image       "timenext.png" 
+		-annotation (uiRes("m_timeSlider.kStepForwardOneKeyAnnot"))
+		-command     "NextKey"`;
+
+	string $stepFwdButton = `symbolButton
+		-image       "timestart.png"
+		-annotation (uiRes("m_timeSlider.kStepForwardFrameAnnot"))
+		-command     "playButtonStepForward"`;
+
+	string $endButton = `symbolButton
+		-image       "timefwd.png" 
+		-annotation (uiRes("m_timeSlider.kEndPlaybackRangeAnnot")) 
+		-command     "playButtonEnd"`;
+
+	//	Make attachments for contents of Time slider.
+	//
+	formLayout -edit
+		-attachForm    $timeFrame  "top"    0
+		-attachForm    $timeFrame  "left"   1
+		-attachForm    $timeFrame  "bottom" 0
+		-attachControl $timeFrame  "right"  6 $gTimeSliderTimeField
+
+		-attachForm    $gTimeSliderTimeField  "top"    5
+		-attachNone    $gTimeSliderTimeField  "left"
+		-attachNone    $gTimeSliderTimeField  "bottom"
+		-attachControl $gTimeSliderTimeField  "right"  6 $grid
+
+		-attachForm    $grid       "top"    3
+		-attachNone    $grid       "left"
+		-attachNone    $grid       "bottom"
+		-attachForm    $grid       "right"  0
+		$timeSlider;
+
+	//	Attach Time slider to parent.
+	//
+    global int $gPanelHandleOffset;
+    
+	formLayout -edit
+		-attachForm    $timeSlider "top"    2
+		-attachForm    $timeSlider "bottom" 2
+		-attachForm    $timeSlider "right"  7
+		-attachForm    $timeSlider "left"   $gPanelHandleOffset	
+		$gTimeSliderForm;
+
+	//	Add call back to current time changes...
+	//
+	scriptJob -permanent -parent $timeSlider -event "timeChanged" 
+		( "timeField -edit -value `currentTime -query` " 
+			+ $gTimeSliderTimeField );
+	
+	//	Add callbacks playback controls...
+	timeField -edit -value `currentTime -query` 
+		-changeCommand ("currentTime " + 
+						"`timeField -query -value " 
+						+ $gTimeSliderTimeField + "`; " 
+						)
+		$gTimeSliderTimeField;
+
+	//  Register sound scrub callbacks on the timeControl widget.
+	//
+	timeControl -e -pc "timeControl -e -beginScrub $gPlayBackSlider" 
+		-rc "timeControl -e -endScrub $gPlayBackSlider" $gPlayBackSlider;
+
+	// Make sure the play controls are in synch with playback
+	//
+	condition -dependency playingBack 
+		      -script playbackStateChanged playbackIconsCondition;
+
+	// Attach a popup menu to the timeslider area
+	//
+	TimeSliderMenu($timeSlider);
+
+	setUIComponentStateCallback(
+		"Time Slider", "timeSliderVisibilityStateChange");
+}
+
+global proc int timeSliderVisibilityStateChange(
+	int    $newState,
+	string $layout)
+//
+//	Description:
+//		This procedure is called whenever the visibility state of the 
+//		Time Slider is changed.
+//
+//	Arguments:
+//		newState - The new visibile state of the Time Slider.
+//
+//		layout - The parent layout for the Time Slider.
+//
+//	Returns:
+//		true - If the change of state is to be allowed.
+//
+//		false - If the state change is rejected.
+//
+{
+	int $result = true;
+
+	//	Defer these commands because this proc is called when the visibility
+	//	state is about to change. This proc must return true to accept 
+	//	the state change. After this proc returns then restore the
+	//	panel focus and update the pref menu.
+	//
+	evalDeferred("restoreLastPanelWithFocus(); updatePrefsMenu();");
+
+	return $result;
+}
+

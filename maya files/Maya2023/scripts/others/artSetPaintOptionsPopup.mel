@@ -1,0 +1,18 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc artSetPaintOptionsPopup()
+{
+	menuItem -rp "N" -l (uiRes("m_artSetPaintOptionsPopup.kAdd"))
+ 		-c ("artSetPaintCtx -e -sot \"add\" `currentCtx`; ");
+	menuItem -rp "W" -l (uiRes("m_artSetPaintOptionsPopup.kTransfer"))
+ 		-c ("artSetPaintCtx -e -sot \"transfer\" `currentCtx`; ");
+	menuItem -rp "E" -l (uiRes("m_artSetPaintOptionsPopup.kRemove"))
+ 		-c ("artSetPaintCtx -e -sot \"remove\" `currentCtx`; ");
+	// Generate the reflection menu.
+	artisanReflectionMenu( );
+}

@@ -1,0 +1,162 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//  Procedure Name:
+//  MASHnewNetwork
+//
+//  Description;
+//  This proceedure creates a new MASH network/
+//  @param: The network name.
+//  @return: The names of the created Waiter, Instancer and Distribute Node.
+//
+
+global proc string[] MASHnewNetwork(string $networkName)
+{
+    int $loaded = `pluginInfo -query -l MASH`;
+    if (!$loaded) {
+        loadPlugin MASH;
+    }
+    
+    int $continue = 1;
+    string $waiter;
+    string $distNode;
+    string $instancer;
+    //get the number of selected objects
+    string $sel[] = `ls -sl`;
+    int $numSelObjs = `size($sel)`;
+
+    int $nameOnCreationOpVar = `optionVar -query mNOC`;
+
+    //do we want a particle instancer or mesh instancer (Repro node)
+    int $geomTypeOpVar = `optionVar -query mOGTN`;
+
+    // if we're using Mesh mode (Repro) check to see if we had anything selected that wasn't a mesh
+    if ($geomTypeOpVar == 1 ) {
+        int $numMeshObjs = 0;
+        for ($obj in $sel) {
+            string $useableNodes[] = `ls -l -type "mesh" -dag -lf -ni $obj`;
+            $numMeshObjs += size($useableNodes);
+        }
+
+        if (!$numMeshObjs && size($sel) != 0) {
+            // error and bail if there was nothing usable selected
+            MASHinViewMessage((getPluginResource("MASH", "kMASHMeshesOnly")), "Error");
+            $continue = 0;
+        }
+    }
+
+    if ($nameOnCreationOpVar && $continue) {
+
+        string $result = `promptDialog
+            -message (getPluginResource("MASH", "kNameNetwork"))
+            -button (getPluginResource("MASH", "kCreate")) -button (getPluginResource("MASH", "kCancel"))
+            -defaultButton (getPluginResource("MASH", "kCreate")) -cancelButton (getPluginResource("MASH", "kCancel"))
+            -dismissString (getPluginResource("MASH", "kCancel"))`;
+
+            // if OK pressed
+            if ($result == (getPluginResource("MASH", "kCreate"))) {
+                $networkName = `promptDialog -query -text`;
+            } else {
+                $continue = 0;
+            }
+
+    }
+    if ($continue) {
+        // hide the original objects if so desired
+        int $hideOnCreateOpVar = `optionVar -q "mHOC"`;
+        if ($hideOnCreateOpVar) {
+            for ($obj in $sel) hide;
+        }
+
+        //create the waiter
+        $waiter = `createNode MASH_Waiter -n $networkName`;
+        addAttr -longName instancerMessage -at message -hidden true $waiter;
+        //set the presets folder
+        string $presetsFolderOpVar  = `optionVar -query mPFL`;
+        setAttr ($waiter +".filename") -type "string" $presetsFolderOpVar;
+        //create a Distribute node
+        string $nodeName = ($waiter+"_Distribute");
+        $distNode = `createNode MASH_Distribute -n $nodeName`;
+
+        //for convenience we match the Map Direction to the initial linear distribution
+        setAttr ($distNode +".mapDirection") 4;
+
+        //connect the Distribute node to the Waiter
+        connectAttr -force ($distNode +".outputPoints") ($waiter +".inputPoints");
+        connectAttr -f ($distNode +".waiterMessage") ($waiter +".waiterMessage");
+
+        // create the instancer or repro node
+        if ($geomTypeOpVar == 1) {
+            string $reproName = $waiter+"_Repro";
+            string $cmd;
+            if (`python("import sys; sys.version_info[0]")` >= 3) {
+                $cmd = "from importlib import reload; import mash_repro_utils; reload(mash_repro_utils); mash_repro_utils.create_mash_repro_node(None,\""+$reproName+"\")";
+            } else {
+                $cmd = "import mash_repro_utils; reload(mash_repro_utils); mash_repro_utils.create_mash_repro_node(None,\""+$reproName+"\")";
+            }
+            $instancer = python($cmd);
+            rename $instancer ($waiter+"_Repro");
+            $instancer = ($waiter+"_Repro");
+        } else {
+            $instancer = `createNode instancer`;
+            rename $instancer ($waiter+"_Instancer");
+            $instancer = ($waiter+"_Instancer");
+        }
+
+        //connect the Waiter to the Instancer or Repro node
+        connectAttr -force ($waiter +".outputPoints") ($instancer +".inputPoints");
+
+        // add a message attribute to the instancer
+        addAttr -longName instancerMessage -at message -hidden true $instancer;
+        //connect message attributes to the instancer so we can find it later if needed
+        connectAttr -f ($waiter +".instancerMessage") ($instancer +".instancerMessage");
+
+        //if the user added more then one object to the network, set the number of points to reflect that
+        int $size = size($sel);
+        if (size($sel) > 1) {
+            setAttr ($distNode +".pointCount") $size;
+        }
+
+        // add the selected objects to the instancer or Repro
+        for ($trans in $sel) {
+            if ($geomTypeOpVar == 1) {
+                // connect the meshes to the Repro node with this hilarious Python
+                string $pyComm = "python (\"import mash_repro_utils; mash_repro_utils.connect_mesh_group(\\\""+$instancer+"\\\",\\\""+$trans+"\\\", new_connection=True)\")";
+                evalDeferred -lp $pyComm;
+            } else {
+                instancer -e -a -obj $trans $instancer;
+            }
+        }
+        /*
+        // Automatically create an ID node if one is needed, disabled for performance reasons.
+        if (size($sel) > 1) {
+            string $idNode = MASHaddNode("MASH_ID", $waiter);
+            setAttr ($idNode +".nuob") (size($sel));
+        }
+        */
+        //set the Distribute node defaults
+        if (`optionVar -exists mNDT`) {
+            string $distTypeOpVar       = `optionVar -query mNDT`;
+            if ($distTypeOpVar == "radialNetwork") setAttr ($distNode +".arrangement") 2;
+            else if ($distTypeOpVar == "gridNetwork") setAttr ($distNode +".arrangement") 6;
+            else if ($distTypeOpVar == "initialNetwork") setAttr ($distNode +".arrangement") 7;
+            else if ($distTypeOpVar == "zeroNetwork") setAttr ($distNode +".amplitudeX") 0.0;
+        }
+
+        //update the Repro interface
+        if ($geomTypeOpVar == 1) {
+            evalDeferred -lp "python(\"import mash_repro_aetemplate; mash_repro_aetemplate.refresh_all_aetemplates(force=True)\")";
+        }
+
+        // finally select the Waiter
+        select -ne $waiter;
+    }
+    string $coreNodes[] = {$waiter, $instancer, $distNode};
+    return $coreNodes;
+}
+

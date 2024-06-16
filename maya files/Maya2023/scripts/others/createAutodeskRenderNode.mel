@@ -1,0 +1,17 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc string createAutodeskRenderNode(string $nodeID, string $nodeName)
+{
+    if("" == $nodeID)
+    {
+        error (uiRes("m_createAutodeskRenderNode.kEmptyAutodeskType"));
+    }
+    $nodeName = `shadingNode -asShader adskMaterial -name $nodeName`;
+    adskAsset -assetID $nodeID $nodeName;
+    return $nodeName;
+}

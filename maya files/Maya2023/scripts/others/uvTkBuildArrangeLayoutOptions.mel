@@ -1,0 +1,389 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//  Procedure Name:
+//	  uvTkBuildArrangeLayoutOptions
+//
+//  Description:
+//		Build Arrange & Layout options for UV toolkit
+//
+//  Input Arguments:
+//	  $parentForm - Parent form
+//
+//  Return Value:
+//	  Layout to be added into form
+//
+global proc string uvTkBuildArrangeLayoutOptions(string $parentForm)
+{
+	global int $gUVTkTwinBtnWth;
+	global int $gUVTkTwinBtnHgt;
+	global int $gUVTkSubAreaTitleWidth;
+	global int $gUVTkSubAreaPad;
+	global float $gUVTkSubAreaBGColor[];
+	
+	uvTkSetArrangeLayoutOptionVars(0);
+	string $layout = `frameLayout -p $parentForm -collapsable true -collapse true -lv false`;
+		string $dtbPadForm = `formLayout`;
+			string $dtbForm = `formLayout -bgc $gUVTkSubAreaBGColor[0] $gUVTkSubAreaBGColor[1] $gUVTkSubAreaBGColor[2]`;
+			
+				string $disText = `text -w $gUVTkSubAreaTitleWidth -l (uiRes("m_uvTkBuildArrangeLayoutOptions.kDistribute")) -align "center"`;
+				string $disUBtn = `iconTextButton -st "iconOnly" -i (   "nudgeUp.png") -c ("uvTkDoDistributeShells up") -rpt 1
+																					   -ann (uiRes("m_uvTkBuildArrangeLayoutOptions.kDistributeShellsUp"))`;
+				string $disDBtn = `iconTextButton -st "iconOnly" -i ( "nudgeDown.png") -c ("uvTkDoDistributeShells down") -rpt 1
+																					   -ann (uiRes("m_uvTkBuildArrangeLayoutOptions.kDistributeShellsDown"))`;
+				string $disLBtn = `iconTextButton -st "iconOnly" -i ( "nudgeLeft.png") -c ("uvTkDoDistributeShells left") -rpt 1
+																					   -ann (uiRes("m_uvTkBuildArrangeLayoutOptions.kDistributeShellsLeft"))`;
+				string $disRBtn = `iconTextButton -st "iconOnly" -i ("nudgeRight.png") -c ("uvTkDoDistributeShells right") -rpt 1
+																					   -ann (uiRes("m_uvTkBuildArrangeLayoutOptions.kDistributeShellsRight"))`;
+				floatField -en false 
+						   -w 60 
+						   -cc "uvTkUpdateDistributeFactor" 
+						   -ann (uiRes("m_uvTkBuildArrangeLayoutOptions.kDistributeFactor"))
+						   uvTkDistributeFactorField;
+				floatField -e -en true uvTkDistributeFactorField;
+				string $disTgtBtn = `iconTextButton -st "textOnly" 
+													-nbg false
+													-flat false
+													-w ($gUVTkTwinBtnWth/2)
+													-l (uiRes("m_uvTkBuildArrangeLayoutOptions.kTarget"))
+ 													-c ("uvTkDoDistributeTarget")
+													-ann (uiRes("m_uvTkBuildArrangeLayoutOptions.kDistributeTowardsTarget"))`;
+				
+				setParent ..; //$dtbForm
+				formLayout -e 
+				-af $disText top	5
+				-af $disText left   $gUVTkSubAreaPad
+				-af $disText bottom 5
+				
+				-af $disUBtn top   5
+				-ac $disUBtn left 45 $disText
+				
+				-ac $disLBtn top  0 $disUBtn
+				-ac $disLBtn left $gUVTkSubAreaPad $disText
+				
+				-ac uvTkDistributeFactorField top  0 $disUBtn
+				-ac uvTkDistributeFactorField left 0 $disLBtn
+				
+				-ac $disRBtn top  0 $disUBtn
+				-ac $disRBtn left 0 uvTkDistributeFactorField
+				
+				-ac $disDBtn top   0 $disLBtn
+				-ac $disDBtn left 45 $disText
+				
+				-ac $disTgtBtn top  0 $disUBtn
+				-ac $disTgtBtn left 5 $disRBtn
+				$dtbForm;
+				
+			setParent ..; //$dtbPadForm
+			formLayout -e 
+			-af $dtbForm top 5
+			-af $dtbForm left 5
+			-af $dtbForm right 0
+			-af $dtbForm bottom 0
+			$dtbPadForm;
+			
+		string $form = `formLayout`;
+			string $btnLbls[] = {(uiRes("m_uvTkBuildArrangeLayoutOptions.kOrientShells")),			// 0
+								 (uiRes("m_uvTkBuildArrangeLayoutOptions.kOrientToEdges")),		// 1
+								 (uiRes("m_uvTkBuildArrangeLayoutOptions.kStackShells")),			// 2
+								 (uiRes("m_uvTkBuildArrangeLayoutOptions.kUnstackShells")),		// 3
+								 (uiRes("m_uvTkBuildArrangeLayoutOptions.kStackOrient")),		// 4
+								 (uiRes("m_uvTkBuildArrangeLayoutOptions.kStackSimilar")),         // 5
+								 (uiRes("m_uvTkBuildArrangeLayoutOptions.kGatherShells")),			// 6
+								 (uiRes("m_uvTkBuildArrangeLayoutOptions.kRandomizeShells")),	// 7
+								 (uiRes("m_uvTkBuildArrangeLayoutOptions.kMeasure")),					// 8
+								 (uiRes("m_uvTkBuildArrangeLayoutOptions.kLayout")),						// 9
+								 (uiRes("m_uvTkBuildArrangeLayoutOptions.kLayoutAlong"))};			// 10
+			string $btnCmds[] = {"UVOrientShells",
+								 "uvTkDoOrientToEdges",
+								 "uvTkDoStackShells",
+								 "UVUnstackShells",
+								 "uvTkDoStackAndOrient",
+								 "UVStackSimilarShells",
+								 "UVGatherShells",
+								 "RandomizeShells",
+								 "uvTkDoMeasure",
+								 "LayoutUV",
+								 "uvTkDoLayoutAlong"};
+			string $ShiftAnnt = (uiRes("m_uvTkBuildArrangeLayoutOptions.kShiftLMBOptions"));
+			string $btnAnns[] = {getRunTimeCommandAnnotation("UVOrientShells"),
+								 (uiRes("m_uvTkBuildArrangeLayoutOptions.kOrientToEdgesAnn")),
+								 (uiRes("m_uvTkBuildArrangeLayoutOptions.kStackShellsAnn")),
+								 getRunTimeCommandAnnotation("UVUnstackShells") + $ShiftAnnt,
+								 (uiRes("m_uvTkBuildArrangeLayoutOptions.kStackAndOrientShellsAnn")),
+								 getRunTimeCommandAnnotation("UVStackSimilarShells"),
+								 getRunTimeCommandAnnotation("UVGatherShells"),
+								 getRunTimeCommandAnnotation("RandomizeShells") + $ShiftAnnt,
+								 (uiRes("m_uvTkBuildArrangeLayoutOptions.kMeasureAnn")),
+								 getRunTimeCommandAnnotation("LayoutUV") + $ShiftAnnt,
+								 (uiRes("m_uvTkBuildArrangeLayoutOptions.kLayoutAlongAnn"))};
+			string $btnShfs[] = {"",
+								 "",
+								 "",
+								 "UVUnstackShellsOptions",
+								 "",
+								 "UVStackSimilarShellsOptions",
+								 "",
+								 "RandomizeShellsOptions",
+								 "",
+								 "LayoutUVOptions",
+								 ""};
+			string $btnImgs[] = {"polyOrientShell.png",
+								 "polyOrientToEdge.png",
+								 "polyStackShell.png",
+								 "polyUnstackShell.png",
+								 "polyStackOrient.png",
+								 "polyStackSimilarShells.png",
+								 "polyGatherShell.png",
+								 "polyRandomizeShell.png",
+								 "polyMeasureUV.png",
+								 "polyLayoutUV.png",
+								 "polyLayoutUVDirectional.png"};
+			string $btns[] =	{"OrientShellBtn",
+								 "OrientToEdgeBtn",
+								 "StackShellBtn",
+								 "UnstackShellBtn",
+								 "StackOrientBtn",
+								 "StackSimilarShellBtn",
+								 "GatherShellBtn",
+								 "RandomizeShellBtn",
+								 "MeasureUVBtn",
+								 "LayoutUVBtn",
+								 "LayoutUVAlongBtn"};
+			for($i = 0; $i < size($btnLbls); $i++)
+			{
+				if($btnShfs[$i] != "")
+					$btnCmds[$i] = "if(`getModifiers`%2){"+$btnShfs[$i]+";}else{evalDeferred\""+$btnCmds[$i]+"\";}";
+				iconTextButton
+					  -p $form
+					  -flat false
+					  -st "iconAndTextHorizontal"
+					  -w $gUVTkTwinBtnWth -h $gUVTkTwinBtnHgt
+					  -i $btnImgs[$i]
+					  -l $btnLbls[$i]
+					  -c $btnCmds[$i]
+					  -rpt 1
+					  -ann $btnAnns[$i]
+					  $btns[$i];
+			}
+			
+			optionMenu -p $form -w $gUVTkTwinBtnWth -h $gUVTkTwinBtnHgt -cc ("optionVar -iv uvTkMeasureType (`optionMenu -q -sl uvTkMeasureMenu` - 1)") uvTkMeasureMenu;
+				menuItem -p uvTkMeasureMenu -label (uiRes("m_uvTkBuildArrangeLayoutOptions.kHorizontalUVDistance")) 
+											-ann (uiRes("m_uvTkBuildArrangeLayoutOptions.kHorizontalUVDistanceAnnot"));
+				menuItem -p uvTkMeasureMenu -label (uiRes("m_uvTkBuildArrangeLayoutOptions.kVerticalUVDistance")) 
+											-ann (uiRes("m_uvTkBuildArrangeLayoutOptions.kVerticalUVDistanceAnnot"));
+				menuItem -p uvTkMeasureMenu -label (uiRes("m_uvTkBuildArrangeLayoutOptions.kPixelDistance")) 
+											-ann (uiRes("m_uvTkBuildArrangeLayoutOptions.kPixelDistanceAnnot"));
+				menuItem -p uvTkMeasureMenu -label (uiRes("m_uvTkBuildArrangeLayoutOptions.kAngleBetween"))
+											-ann (uiRes("m_uvTkBuildArrangeLayoutOptions.kAngleBetweeAnnotn"));
+			
+			$measureLayout = `formLayout -w $gUVTkTwinBtnWth -h $gUVTkTwinBtnHgt -bgc 0.2 0.2 0.2`;
+				text -l "0" -align left uvTkMeasureResult;
+				string $measureResultMenu = `popupMenu -b 1 -p uvTkMeasureResult`; 
+				menu -e -pmc("uvTkBuildMeasureResultMenu " + $measureResultMenu) $measureResultMenu;
+				string $measureResultMenu2 = `popupMenu -b 3 -p uvTkMeasureResult`; 
+				menu -e -pmc("uvTkBuildMeasureResultMenu " + $measureResultMenu2) $measureResultMenu2; 
+				setParent ..;
+				formLayout -e 
+					-af uvTkMeasureResult top	0
+					-af uvTkMeasureResult left   5
+					-af uvTkMeasureResult right  5
+					-af uvTkMeasureResult bottom 0
+					$measureLayout;
+			
+			iconTextRadioCollection;
+			iconTextRadioButton -p $form
+								-ebg 1
+								-st "textOnly"
+								-w ($gUVTkTwinBtnWth/4) -h $gUVTkTwinBtnHgt
+								-l (uiRes("m_uvTkBuildArrangeLayoutOptions.kLayoutU"))
+								-onc "optionVar -iv uvTkLayoutType 0"
+								-ann (uiRes("m_uvTkBuildArrangeLayoutOptions.kAlongUAnn"))
+								uvTkLayoutUBtn;
+			iconTextRadioButton -p $form
+								-ebg 1
+								-st "textOnly"
+								-w ($gUVTkTwinBtnWth/4) -h $gUVTkTwinBtnHgt
+								-l (uiRes("m_uvTkBuildArrangeLayoutOptions.kLayoutV"))
+								-onc "optionVar -iv uvTkLayoutType 1"
+								-ann (uiRes("m_uvTkBuildArrangeLayoutOptions.kAlongVAnn")) 
+								uvTkLayoutVBtn;
+			formLayout -e
+					  -af $btns[0] top  5
+					  -af $btns[0] left 5
+					  -af $btns[1] top  5
+					  -ac $btns[1] left 1 $btns[0]
+					  -ac $btns[2] top  1 $btns[0]
+					  -af $btns[2] left 5
+					  -ac $btns[3] top  1 $btns[1]
+					  -ac $btns[3] left 1 $btns[2]
+					  -ac $btns[4] top  1 $btns[2]
+					  -af $btns[4] left 5
+					  -ac $btns[5] top  1 $btns[3]
+					  -ac $btns[5] left 1 $btns[4]
+					  -ac $btns[6] top  1 $btns[4]
+					  -af $btns[6] left 5
+					  -ac $btns[7] top  1 $btns[5]
+					  -ac $btns[7] left 1 $btns[6]
+					  -ac $btns[8] top  5 $btns[6]
+					  -af $btns[8] left 5
+					  -ac uvTkMeasureMenu top  5 $btns[6]
+					  -ac uvTkMeasureMenu left 1 $btns[8]
+					  -ac $measureLayout top  1 uvTkMeasureMenu
+					  -ac $measureLayout left 1 $btns[8]
+					  -ac $btns[9] top	5 $measureLayout
+					  -af $btns[9] left 5
+					  -ac $btns[10] top	1 $btns[9]
+					  -af $btns[10] left   5
+					  -af $btns[10] bottom 5
+					  -ac uvTkLayoutUBtn top  1 $btns[9]
+					  -ac uvTkLayoutUBtn left 1 $btns[10]
+					  -ac uvTkLayoutVBtn top  1 $btns[9]
+					  -ac uvTkLayoutVBtn left 1 uvTkLayoutUBtn
+					  $form;
+			setParent ..;
+		setParent ..;
+	uvTkUpdateArrangeLayoutOptions();
+	return $layout;
+}
+
+global proc uvTkSetArrangeLayoutOptionVars(int $forceFactorySettings)
+{
+	optionVar -init $forceFactorySettings -category "UV Editor.Arrange and Layout"
+		-fv uvTkDistributeFactor 0
+		-iv uvTkLayoutType 0
+		-iv uvTkMeasureType 2
+		;
+}
+
+global proc uvTkUpdateArrangeLayoutOptions()
+{	
+	float $uvTkDistributeFactor = `optionVar -q uvTkDistributeFactor`;
+	if(`floatField -q -ex uvTkDistributeFactorField`) 
+		floatField -e -v $uvTkDistributeFactor uvTkDistributeFactorField;
+	
+	int $uvTkLayoutType = `optionVar -q uvTkLayoutType`;
+	if($uvTkLayoutType == 0)
+	{
+		if(`iconTextRadioButton -q -ex uvTkLayoutUBtn`) 
+			iconTextRadioButton -e -sl uvTkLayoutUBtn;
+	}
+	else if($uvTkLayoutType == 1)
+	{
+		if(`iconTextRadioButton -q -ex uvTkLayoutVBtn`) 
+			iconTextRadioButton -e -sl uvTkLayoutVBtn;
+	}
+	
+	int $uvTkMeasureType = `optionVar -q uvTkMeasureType`;
+	if(`optionMenu -q -ex uvTkMeasureMenu`)
+		optionMenu -e -select ($uvTkMeasureType+1) uvTkMeasureMenu;
+}
+
+global proc uvTkUpdateDistributeFactor()
+{
+	if(`floatField -q -ex uvTkDistributeFactorField`)
+	{
+		float $uvTkDistributeFactor =`floatField -q -v uvTkDistributeFactorField`;
+		optionVar -fv uvTkDistributeFactor $uvTkDistributeFactor;
+	}
+}
+
+global proc uvTkDoDistributeShells(string $direction)
+{
+	uvTkSetArrangeLayoutOptionVars(0);
+	uvTkUpdateDistributeFactor(); //Save optionVar before perform command
+	float $uvTkDistributeFactor = `optionVar -q uvTkDistributeFactor`;
+	$cmd = "texDistributeShells(0, " + $uvTkDistributeFactor + ", \"" + $direction + "\", {})";
+	evalEcho($cmd);
+}
+
+global proc uvTkDoDistributeTarget()
+{
+	evalEcho("texDistributeShells 1 0 \"\" {}");
+}
+
+global proc uvTkDoOrientToEdges()
+{
+	evalEcho("texOrientEdge");
+}
+
+global proc uvTkDoStackShells()
+{
+	evalEcho("texStackShells {}");
+}
+
+global proc uvTkDoStackAndOrient()
+{
+	evalEcho("texStackShells {}");
+	UVOrientShells;
+}
+
+global proc uvTkDoMeasure()
+{
+	texCheckSelection("any");
+	uvTkSetArrangeLayoutOptionVars(0);
+	int $uvTkMeasureType = `optionVar -q uvTkMeasureType`;
+	// 0: horizontal distance
+	// 1: vertical distance
+	// 2: pixel distance
+	// 3: angle
+	if($uvTkMeasureType == 2)
+	{
+		evalEcho("texCalculatePixelDistance");
+		return;
+	}
+	if(!`text -q -ex uvTkMeasureResult`)
+		return;
+	
+	string $cmd = "";
+	if($uvTkMeasureType == 0)
+	{
+		$cmd = "float $uvBox[] = `polyEvaluate -boundingBoxComponent2d`;";
+		$cmd += "abs($uvBox[1] - $uvBox[0]);";
+	}
+	else if($uvTkMeasureType == 1)
+	{
+		$cmd = "float $uvBox[] = `polyEvaluate -boundingBoxComponent2d`;";
+		$cmd += "abs($uvBox[3] - $uvBox[2]);";
+	}
+	else if($uvTkMeasureType == 3)
+	{
+		texCheckSelection("UV2"); // Selection check
+		string $selection[] = `ls -selection -flatten`;
+		$cmd = "texCalculateAngle " + $selection[0] + " " + $selection[1];
+	}
+	float $result = 0;
+	if ($cmd != "")
+		$result = evalEcho($cmd);
+	text -e -l (`texRoundOff $result 4`) uvTkMeasureResult;
+}
+
+global proc uvTkBuildMeasureResultMenu(string $theMenu)  
+{ 
+	menu -e -dai $theMenu; 
+	menuItem -p $theMenu -label (uiRes("m_uvTkBuildArrangeLayoutOptions.kCopyToClipboard")) -c "uvTkCopyMeasureResultToClipBoard";
+}
+
+global proc uvTkCopyMeasureResultToClipBoard()  
+{ 
+	$res = `text -q -l uvTkMeasureResult`;
+	string $cmd = "";
+	if(`about -win`)
+		$cmd = "set/p=\""+$res+"\"<nul | clip" ;
+	else if(`about -mac`)
+		$cmd = "echo "+$res+" | tr -d \"\\n\" | pbcopy";
+	else if(`about -linux`)
+		$cmd = "echo "+$res+" | tr -d \"\\n\" | xclip -selection";
+	system($cmd);
+}
+
+global proc uvTkDoLayoutAlong()
+{
+	int $type = `optionVar -q uvTkLayoutType`;
+	evalEcho("texLayoutAlong " + $type);
+}
+

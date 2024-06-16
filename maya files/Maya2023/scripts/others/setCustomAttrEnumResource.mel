@@ -1,0 +1,56 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  September 2006
+//
+//<doc>
+//<name setCustomAttrEnumResource>
+//
+//<synopsis>
+//		setCustomAttrEnumResource(string $nodeType, string $attrLongName, int $enumIndex, string $str)
+//
+//<related setNodeNiceNameResource setAttrNiceNameResource setCustomAttrNiceNameResource loadPluginLanguageResources>
+//<description>
+//
+//      Convenience routine to define localizable string resource values 
+//      for a custom attribute's enumerated values.  
+//
+//<flags>
+//      string	 $nodeType   the node type 
+//      string	 $attrLongName the attribute's long name
+//      string	 $enumIndex  the index associated with the enum value (0, 1, 2, etc.)
+//      string	 $str        display string 
+//
+//
+//<examples>
+//  // Set the attribute enum strings associated with 
+//  // attribute "md" on node type "myNode".  
+//  // This example shows English resource values, however this 
+//  // routine would more often be called in practice to provide 
+//  // localized string values. 
+//  // 
+//	setCustomAttrEnumResource( "myNode", "md", 0, "Disabled");
+//	setCustomAttrEnumResource( "myNode", "md", 1, "Enabled");
+//
+//</doc>
+//
+
+
+global proc setCustomAttrEnumResource( string $nodeType, string $attrLongName, int $enumIndex, string $str )
+{
+    // Key has format n_NNN.a_AA1_enum_XX
+    // Where NNN = node type 
+    //       AA1 = attribute long name 
+    //       XX  = enum index (number) 
+    string $fullId = "n_" + $nodeType + ".a_" + $attrLongName + "_enum_" + $enumIndex;
+
+	// Note we do *not* call -replace here -- we want to catch clashes.
+	//
+    displayString -value $str $fullId;
+}

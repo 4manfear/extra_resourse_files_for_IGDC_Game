@@ -1,0 +1,56 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date: March 17, 1999
+//
+//
+// Description:
+//  Converts version 1.92 preferences to version 1.93.
+//		- change label of panel config to remove ambiguity between 
+//		  Hypergraph and Hypershade.
+//
+//
+{
+	//
+	//  Change panel config label to remove ambiguity between Hypergraph
+	//  and Hypershade.
+	//
+	string $config = `getPanel -configWithLabel "Persp/Graph/Hyper"`;
+	if ("" != $config) {
+		panelConfiguration -e -l "Persp/Graph/Hypergraph" $config;
+	}
+
+	//
+	//  Remove optionVars related to marking menu and hotbox menus.
+	//
+
+	catch (`optionVar 
+		-remove markingMenuEditorAnnotations
+		-remove markingMenuEditorDisplayAsMMFlags
+		-remove markingMenuEditorFilenames
+		-remove markingMenuEditorIsNamedCommandFlags`);
+
+	catch (`optionVar 
+		-remove nameOfHotBoxC1MarkingMenu
+		-remove nameOfHotBoxC2MarkingMenu
+		-remove nameOfHotBoxC3MarkingMenu
+		-remove nameOfHotBoxE1MarkingMenu
+		-remove nameOfHotBoxE2MarkingMenu
+		-remove nameOfHotBoxE3MarkingMenu
+		-remove nameOfHotBoxN1MarkingMenu
+		-remove nameOfHotBoxN2MarkingMenu
+		-remove nameOfHotBoxN3MarkingMenu
+		-remove nameOfHotBoxS1MarkingMenu
+		-remove nameOfHotBoxS2MarkingMenu
+		-remove nameOfHotBoxS3MarkingMenu
+		-remove nameOfHotBoxW1MarkingMenu
+		-remove nameOfHotBoxW2MarkingMenu
+		-remove nameOfHotBoxW3MarkingMenu`);
+
+}

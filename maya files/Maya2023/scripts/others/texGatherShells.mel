@@ -1,0 +1,95 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+// ===========================================================================
+//
+//  Creation Date: October 24, 2016
+//
+//  Procedure Name:
+//      texGatherShells
+//
+//  Description:
+//      UV workflow function used for finding UV shells that are on the 
+//      outside of the default UV range (0 to 1) and offsetting them back to
+//      this region. Keeps the UV layout by offsetting in steps of 1.0 UV unit.
+//
+//  Input Arguments
+//      None.
+//
+//  Return Value:
+//      None.
+//
+//  Notes:
+//  This script is part of the implementation of Nightshade UV Editor into
+//  Autodesk Maya. For testing purposes, keep the source commands at the top
+//  and then just source this entire script.
+//
+// ===========================================================================
+
+global proc texGatherShells()
+{
+    // Store selection
+	texCheckSelection("any");
+    string $selection[] = `ls -selection`;
+    string $temp[] = `polyListComponentConversion -toUV`;
+    string $selectionUVs[] = `ls -flatten $temp`;
+
+   // Begin progressBar
+	global string $gMainProgressBar;
+    progressBar -e -bp -max (size($selectionUVs)) $gMainProgressBar;
+
+    // Go through each UV
+    for ($uv in $selectionUVs)
+    {
+        // Break if  cancelled by user
+        if (`progressBar -q -isCancelled $gMainProgressBar`)
+        {
+            warning((uiRes("m_texGatherShells.kInteruptMsg")));
+            break;
+        }
+
+        int $offset = false;
+        float $offsetU = 0.0;
+        float $offsetV = 0.0;
+        float $position[] = `polyEditUV -q $uv`;
+
+        // Get U offset distance as whole 0-1 -steps
+        if ($position[0] < 0){
+            $offsetU = 1 - trunc($position[0]);
+            $offset = true;
+        } else if ($position[0] > 1){
+            $offsetU = 0 - trunc($position[0]);
+            $offset = true;
+        }
+        // Get V offset distance as whole 0-1 -steps
+        if ($position[1] < 0){
+            $offsetV = 1 - trunc($position[1]);
+            $offset = true;
+        } else if ($position[1] > 1){
+            $offsetV = 0 - trunc($position[1]);
+            $offset = true;
+        }
+
+        // Move the shell
+        if ($offset == true)
+        {
+            select -replace $uv;
+            polyEditUVShell
+                -relative true
+                -uValue $offsetU
+                -vValue $offsetV
+            ;
+        }
+
+        // Step progressBar
+        progressBar -e -s 1 $gMainProgressBar;
+    }
+    // End progressBar
+    progressBar -e -ep $gMainProgressBar;
+    // Reselect original selection
+    select -replace $selection;
+}

@@ -1,0 +1,48 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc Unfold3DFixNonManifoldDialogDismiss(int $alwaysFix, int $alwaysShow, int $sel, string $commandName)
+{
+	string $fixNonManifoldOptVar = "Unfold3DFixNonManifoldBefore" + $commandName;
+	string $askToFixNonManifoldOptVar = "Unfold3DAskToFixNonManifoldBefore" + $commandName;
+	
+	if ($alwaysFix && $sel)
+		optionVar -intValue $fixNonManifoldOptVar 1;
+		
+	optionVar -intValue $askToFixNonManifoldOptVar $alwaysShow;
+		
+	if ($sel)
+		layoutDialog -dismiss "yes";
+	else
+		layoutDialog -dismiss "no";
+}
+
+global proc Unfold3DFixNonManifoldDialog(string $commandName, string $commandDisplayName)
+{
+	string $message = (uiRes("m_Unfold3DFixNonManifoldDialog.kConfirmToFixNonManifold")) +
+					  $commandDisplayName + 
+					  (uiRes("m_Unfold3DFixNonManifoldDialog.kToRun"));
+	string $fix = (uiRes("m_Unfold3DFixNonManifoldDialog.kFix"));
+	string $cancel = (uiRes("m_Unfold3DFixNonManifoldDialog.kCancel"));
+	string $alwaysFixText = (uiRes("m_Unfold3DFixNonManifoldDialog.kAlwaysFix"));
+	string $alwaysShowText = (uiRes("m_Unfold3DFixNonManifoldDialog.kAlwaysShow"));
+	
+	columnLayout -columnAttach "both" 10 -rowSpacing 10 -columnWidth 450;
+		string $text = `text -h 60 -al "left" -ww true -l $message`;
+		string $alwaysFixCheckBox = `checkBox -h 15 -l $alwaysFixText -v 0`;
+		string $alwaysShowCheckBox = `checkBox -h 15 -l $alwaysShowText -v 1`;
+		rowLayout -numberOfColumns 2 -columnAttach2 "right" "left" -columnOffset2 10 10 -columnWidth2 225 225;
+			string $fixButton = `button -w 80 -l $fix`;
+			string $cancelButton = `button -w 80 -l $cancel`;
+		setParent ..;
+	setParent ..;
+	
+	string $callbackCmd = "Unfold3DFixNonManifoldDialogDismiss(eval(\"checkBox -q -value " + $alwaysFixCheckBox + "\"),eval(\"checkBox -q -value " + $alwaysShowCheckBox + "\"),1,\"" + $commandName + "\")";
+	button -e -c $callbackCmd $fixButton;
+	$callbackCmd = "Unfold3DFixNonManifoldDialogDismiss(eval(\"checkBox -q -value " + $alwaysFixCheckBox + "\"),eval(\"checkBox -q -value " + $alwaysShowCheckBox + "\"),0,\"" + $commandName + "\")";
+	button -e -c $callbackCmd $cancelButton;
+}

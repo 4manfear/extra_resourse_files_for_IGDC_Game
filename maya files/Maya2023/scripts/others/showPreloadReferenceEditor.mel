@@ -1,0 +1,33 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+// Creation Date:  February 3, 2004
+//
+// Description:
+//		Create and show the Preload Reference Editor.
+//
+source "preloadReferenceEditorPanel.mel";
+
+global proc showPreloadReferenceEditor()
+{
+	string $title = (uiRes("m_showPreloadReferenceEditor.kPreloadRefEditor"));
+	if ( `about -mac` )
+	{
+		global string $gPreloadReferenceEditorWindowName;
+		$gPreloadReferenceEditorWindowName = `window -menuBar true -titleBar true -title $title PreLoadRefEditor`;
+	
+		createPreloadRefEdPanel($gPreloadReferenceEditorWindowName);
+		showWindow $gPreloadReferenceEditorWindowName;
+	}
+	else
+	{
+		layoutDialog -title $title -ui ("createPreloadRefEdPanel(\"preloadReferenceEditorDialog\")");
+	}
+}
+

@@ -1,0 +1,42 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  15 September 1996
+//<doc>
+//<name floatEq>
+//
+//<synopsis>
+//		int	floatEq(float $f1, float $f2)
+//
+//<description>
+//      This script checks two float to determine they are
+//      equal within 0.01.
+//
+//<flags>
+//      float	$f1	First float value to be compared
+//      float	$f2	Second float value to be compared
+//
+//<returns>
+//      int : 1 if values are within 0.01, else 0
+//
+//<examples>
+//
+//	floatEq(5.0, 5.001);
+//	// Result: 1 //
+//
+//	floatEq(5.0, 5.1);
+//	// Result: 0 //
+//
+//</doc>
+//
+global proc int floatEq( float $vLhs, float $vRhs )
+{
+	return abs( $vLhs - $vRhs ) < 0.01;
+
+} // floatEq //

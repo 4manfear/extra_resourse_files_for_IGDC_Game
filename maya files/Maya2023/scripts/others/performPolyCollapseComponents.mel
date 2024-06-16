@@ -1,0 +1,22 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+
+global proc string performPolyCollapseComponents (int $ret, string $comp)
+{
+	string $lbl;
+	if ($ret)
+		return ("performPolyCollapseComponents 0 \"" + $comp + "\"");
+	
+	if ($comp == "f") $lbl="polyCollapseFacet";
+	else if ($comp == "e") $lbl="polyCollapseEdge";
+	else if ($ret == 0) {
+		warning ((uiRes("m_performPolyCollapseComponents.kSelectEdgesOrFaces")));
+		return "";
+	}
+	return `polyPerformAction $lbl $comp 0`;
+}

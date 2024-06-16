@@ -1,0 +1,45 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  May, 2016
+//
+//  Description:
+//      Script to get the localized name of a workspace control
+//
+//
+//  Procedure Name:
+//      getLocalizedWsComponentLabel
+//  Description:
+//		Returns the localized workspace component label.
+//
+//  Input Arguments:
+//		The english version of the workspace component label.
+//
+//  Return Value:
+//      The localized version of the workspace component label.
+//
+global proc string getLocalizedWsComponentLabel(string $nameEN)
+{
+	if( !`exists localizedPanelLabel` ) {
+		source localizedPanelLabel;
+	}
+	if( !`exists localizedUIComponentLabel` ) {
+		source localizedUIComponentLabel;
+	}
+	
+	// check if it's a panel, if not the following would return passed string itself.
+	string $localizedLabel = localizedPanelLabel($nameEN);
+	
+	// if it's not a panel, check UI components
+	if($localizedLabel == $nameEN) {
+		$localizedLabel = localizedUIComponentLabel($nameEN);
+	}
+
+    return $localizedLabel;
+}

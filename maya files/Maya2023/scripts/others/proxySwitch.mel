@@ -1,0 +1,35 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+// Creation Date:  Oct 1, 2004
+//
+//  Procedure Name:
+//      proxySwitch
+//
+//  Description:
+//      Switches the active reference to the given proxy reference.
+//
+//  Input Arguments:
+//      Name of reference node
+//
+//  Return Value:
+//      None.
+//
+
+global proc proxySwitch(string $newRefNode)
+//
+//	Description:
+//
+//		Given a reference node that is a proxy, load it as the proxy. If
+//	necessary, unload the current proxy. Assumes that the proxy isn't currently
+//	loaded (i.e., we don't check for it here).
+//
+{
+	proxyActivate( $newRefNode, true );
+}

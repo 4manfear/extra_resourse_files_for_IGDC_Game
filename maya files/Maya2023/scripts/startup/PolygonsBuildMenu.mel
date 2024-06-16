@@ -1,0 +1,340 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc createSelectCreaseSetsMenu( string $parent )
+{
+	setParent -menu $parent;
+	menu -edit -deleteAllItems $parent;
+
+	menuItem -rtc "CreateCreaseSet";
+
+		menuItem
+			-optionBox true
+			-label (uiRes("m_PolygonsBuildMenu.kCreateCreaseSetOptions"))
+			-annotation (getRunTimeCommandAnnotation("CreateCreaseSetOptions"))
+			-image "polyCreateCreaseSet.png"
+			-command "CreateCreaseSetOptions"
+			;
+
+	menuItem -divider true;
+
+	string $sets[];
+
+	if (`objExists defaultCreaseDataSet`)
+	{
+		$sets = sort(`sets -query defaultCreaseDataSet`);
+
+		for( $set in $sets )
+		{
+			menuItem -label $set -c ( "select -r " + $set );
+		}
+	}
+
+	if (0 == `size($sets)`)
+	{
+		menuItem -label (uiRes("m_PolygonsBuildMenu.kNoSelectCreaseSets")) -enable false;
+	}
+}
+
+global proc modelingToolkitLoadCallbackProc( string $pluginName ) {
+	if($pluginName == "modelingToolkit"){
+		MTsetToggleMenuItem;
+	}
+}
+
+global proc reorderVertexToggleMenuItem()
+{
+	int $enabled = `pluginInfo -q -loaded "meshReorder"`;
+	if(`menuItem -ex reorderVertexMenuItem`)
+		menuItem -e -enable $enabled reorderVertexMenuItem;
+}
+
+global proc PolygonsBuildMenu(string $parent)
+//
+// Description:
+//		Modeling Edit Mesh menu (which is also the legacy Polygons Edit Mesh menu)
+//
+{
+	if (! `isTrue "PolygonsExists"`) return;
+
+	setParent -m $parent; 
+
+	// If menu is built, run scripts that happen on every menu open
+	if (`menu -q -ni $parent` != 0) {
+
+		MTsetToggleMenuItem;
+		reorderVertexToggleMenuItem;
+
+	// Else build all UI
+	}
+	else
+	{
+		menuItem -divider true -dividerLabel (uiRes("m_PolygonsBuildMenu.kComponentsDivider1"));
+			menuItem
+				-rtc "SubdividePolygon"
+				-dragMenuCommand "performPolySubdivide \"\" 2" 
+				-dragDoubleClickCommand "SubdividePolygonOptions"
+				;
+
+				menuItem -optionBox true
+					-annotation (getRunTimeCommandAnnotation("SubdividePolygonOptions"))
+					-image "polySubdFacet.png" 
+					-command "SubdividePolygonOptions" 
+					;
+
+			menuItem
+				-rtc "BevelPolygon" 
+				-dragMenuCommand "performPolyBevel 2"
+				-dragDoubleClickCommand "BevelPolygonOptions"
+				;
+
+				menuItem -optionBox true
+					-annotation (getRunTimeCommandAnnotation("BevelPolygonOptions"))
+					-image "polyBevel.png" 
+					-command "BevelPolygonOptions"
+					;
+
+			menuItem
+				-rtc "BridgeOrFill"
+				-dragMenuCommand "performPolyBridgeEdge 2" 
+				-dragDoubleClickCommand "BridgeEdgeOptions"
+				;
+
+				menuItem -optionBox true
+					-annotation (getRunTimeCommandAnnotation("BridgeEdgeOptions"))
+					-image "polyExtrudeEdge.png" 
+					-command "BridgeEdgeOptions"
+					;
+
+			menuItem
+				-version "2018"
+				-rtc "PolyCircularize"
+				-dragMenuCommand "performPolyCircularize 2" 
+				-dragDoubleClickCommand "PolyCircularizeOptions"
+				;
+
+				menuItem -optionBox true
+					-annotation (getRunTimeCommandAnnotation("PolyCircularizeOptions"))
+					-image "polyExtrudeEdge.png" 
+					-command "PolyCircularizeOptions"
+					;
+
+			menuItem
+				-rtc "PolygonCollapse"
+				-dragMenuCommand "performPolyCollapse 1"
+				;
+			menuItem -rtc "ConnectComponents";
+
+				menuItem -optionBox true
+					-annotation (getRunTimeCommandAnnotation("ConnectComponentsOptions"))
+					-image "polyConnectComponents.png"
+					-command "ConnectComponentsOptions"
+					;
+
+			menuItem
+				-rtc "DetachComponent"
+				;
+
+			menuItem
+				-rtc "PolyExtrude"
+				-dragMenuCommand "performPolyExtrude 2" 
+				-dragDoubleClickCommand "PolyExtrudeOptions"
+				;
+
+				menuItem -optionBox true
+					-annotation (uiRes("m_PolygonsBuildMenu.kPolyBuildExtrudeOptionsAnnot"))
+					-image "polyExtrudeFacet.png" 
+					-command "performPolyExtrude 1"
+					;
+
+			menuItem
+				-rtc "PolyMerge"
+				-dragMenuCommand "performPolyMerge 2" 
+				-dragDoubleClickCommand "PolyMergeOptions"
+				;
+
+				menuItem -optionBox true
+					-annotation (getRunTimeCommandAnnotation("PolyMergeOptions"))
+					-image "polyMerge.png" 
+					-command "PolyMergeOptions" 
+					;
+
+			menuItem
+				-rtc "MergeToCenter"
+				;
+
+			menuItem
+				-rtc "MovePolygonComponent"
+				-dragMenuCommand "performPolyMove \"\" 2"
+				-dragDoubleClickCommand "MovePolygonComponentOptions"
+				;
+
+				menuItem -optionBox true
+					-annotation (getRunTimeCommandAnnotation("MovePolygonComponentOptions"))
+					-image "polyMoveVertex.png" 
+					-command "MovePolygonComponentOptions"
+					;
+
+			menuItem -divider true -longDivider false;
+
+			menuItem
+				-version "2017"
+				-rtc "FlipMesh"
+				;
+
+			menuItem
+				-version "2017"
+				-rtc "Symmetrize"
+				;
+
+		menuItem -divider true -dividerLabel (uiRes("m_PolygonsBuildMenu.kVertexDivider1"));
+			menuItem -rtc "AverageVertex";
+
+				menuItem -optionBox true 
+					-annotation (uiRes("m_PolygonsBuildMenu.kNewPolyAvgVtsOptionsAnnot"))
+					-command "performPolyAverageVertex 1" 
+					-enableCommandRepeat false 
+					-image "polyAverageVertex.png"
+					;
+			
+			menuItem
+				-rtc "ChamferVertex" 
+				-dragMenuCommand "performPolyChamferVertex 2"
+				-dragDoubleClickCommand "ChamferVertexOptions"
+				;
+
+				menuItem -optionBox true
+					-annotation (getRunTimeCommandAnnotation("ChamferVertexOptions"))
+					-image "polyChamfer.png" 
+					-command "ChamferVertexOptions"
+					;
+
+			menuItem
+				-version "2017"
+				-rtc "ReorderVertex"
+				reorderVertexMenuItem;
+				
+			reorderVertexToggleMenuItem;
+
+				
+		menuItem -divider true -dividerLabel (uiRes("m_PolygonsBuildMenu.kEdgeDivider1"));
+			string $cmd = "DeletePolyElements";
+			menuItem
+				-version "2014"
+				-rtc $cmd
+				;
+
+			menuItem
+				-rtc "PolyEditEdgeFlow"
+				-dragMenuCommand "performPolyEditEdgeFlow 2"
+				-dragDoubleClickCommand "PolyEditEdgeFlowOptions"
+				-version "2014"
+				;
+
+				menuItem -optionBox true
+					-annotation (getRunTimeCommandAnnotation("PolyEditEdgeFlowOptions"))
+					-image "polyEditEdgeFlow.png"
+					-command "PolyEditEdgeFlowOptions"
+					-version "2014"
+					;
+
+			menuItem
+				-rtc "FlipTriangleEdge"
+				;
+
+			menuItem
+				-rtc "PolySpinEdgeBackward"
+				;
+
+			menuItem
+				-rtc "PolySpinEdgeForward"
+				;
+
+		menuItem -divider true -dividerLabel (uiRes("m_PolygonsBuildMenu.kFaceDivider1"));
+			menuItem
+				-rtc "PolyAssignSubdivHole"
+				;
+
+				menuItem -optionBox 1 -ecr false 
+					-annotation (getRunTimeCommandAnnotation("PolyAssignSubdivHoleOptions"))
+					-image "polyAssignSubdivHole.png"
+					-command "PolyAssignSubdivHoleOptions"
+					;
+
+			menuItem
+				-rtc "DuplicateFace"
+				-dragMenuCommand "performPolyChipOff 2 1" 
+				-dragDoubleClickCommand "DuplicateFaceOptions"
+				;
+
+				menuItem -optionBox true
+					-annotation (getRunTimeCommandAnnotation("DuplicateFaceOptions"))
+					-image "polyDuplicateFacet.png"
+					-command "DuplicateFaceOptions" 
+					;
+
+			menuItem
+				-rtc "ExtractFace"
+				-dragMenuCommand "performPolyChipOff 2 0"
+				-dragDoubleClickCommand "ExtractFaceOptions"
+				;
+
+				menuItem -optionBox true
+					-annotation (getRunTimeCommandAnnotation("ExtractFaceOptions"))
+					-image "polyChipOff.png" 
+					-command "ExtractFaceOptions"
+					;
+
+			menuItem
+				-rtc "PokePolygon" 
+				-dragDoubleClickCommand "PokePolygonOptions"
+				;
+
+				menuItem -optionBox true
+					-annotation (getRunTimeCommandAnnotation("PokePolygonOptions"))
+					-image "polyPoke.png"
+					-command "PokePolygonOptions"
+					;
+
+			menuItem
+				-version "2017"
+				-rtc "WedgePolygon" 
+				-dragDoubleClickCommand "WedgePolygonOptions"
+				;
+
+				menuItem -optionBox true
+					-annotation (getRunTimeCommandAnnotation("WedgePolygonOptions"))
+					-image "polyWedgeFace.png"
+					-command "WedgePolygonOptions"
+					;
+
+		menuItem -divider true -dividerLabel (uiRes("m_PolygonsBuildMenu.kCurveDivider1"));
+			menuItem
+				-rtc "ProjectCurveOnMesh" 
+				-dragDoubleClickCommand "ProjectCurveOnMeshOptions"
+				ProjectCurveOnMeshItem;
+
+				menuItem -optionBox true
+					-annotation (getRunTimeCommandAnnotation("ProjectCurveOnMeshOptions"))
+					-image "projectCurve.png" 
+					-command "ProjectCurveOnMeshOptions" 
+					ProjectCurveOnMeshOptionsItem;
+
+			menuItem
+				-rtc "SplitMeshWithProjectedCurve" 
+				-dragDoubleClickCommand "SplitMeshWithProjectedCurveOptions"
+				SplitMeshWithProjectedCurveItem;
+
+				menuItem -optionBox true
+					-annotation (getRunTimeCommandAnnotation("SplitMeshWithProjectedCurveOptions"))
+					-image "projectCurve.png" 
+					-command "SplitMeshWithProjectedCurveOptions" 
+					SplitMeshWithProjectedCurveItemItem;
+
+		setParent -m ..;
+	}
+}

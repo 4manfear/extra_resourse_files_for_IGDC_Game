@@ -1,0 +1,39 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//
+//  Creation Date:  Oct 24, 1996
+//
+//  Description:
+//  This proc fills the free form surface fillet tool property sheet 
+//	with values.
+//  See also blendProperties.mel
+//
+//  Input Arguments:
+//      $toolName        - this is the name of the instance of the tool
+//                        that the property sheet is modifying.
+//
+//  Return Value:
+//      None.
+//
+//
+//
+//
+
+
+global proc birail3Values ( string $toolName ) 
+//
+//  Description:
+//		Sets the state of the property sheet based on the values
+//		in the tool context.
+//
+{
+	performBirail 3 3 $toolName;
+	scriptCtxCommonValues( $toolName );
+}

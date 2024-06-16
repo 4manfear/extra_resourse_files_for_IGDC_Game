@@ -1,0 +1,76 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//  Procedure Name:
+//	AElambertCommon
+//
+//  Description Name;
+//	Creates attribute editor controls in separate files
+//	for the lambert Node
+//
+//  Input Value:
+//	nodeName 
+//
+//  Output Value:
+//	None
+// 
+
+
+//
+//  Procedure Name:
+//	 AEshaderBumpNew
+//
+
+global proc AEshaderBumpNew (string $attrName)
+{
+	setUITemplate -pst attributeEditorTemplate;
+
+	attrNavigationControlGrp 
+		-label (uiRes("m_AElambertCommon.kBumpMapping"))
+		-at $attrName
+		-dragCallback "AEdragCallback"
+		bumpControl;
+
+	setUITemplate -ppt;
+}
+
+
+//
+//  Procedure Name:
+//	AEshaderBumpReplace
+//
+
+global proc AEshaderBumpReplace (string $attrName)
+{
+	attrNavigationControlGrp -edit
+		-at $attrName
+		bumpControl;
+}
+
+//
+//  Procedure Name:
+//	AElambertCommon
+//
+
+global proc AElambertCommon ( string $nodeName )
+{
+	editorTemplate -callCustom AEshaderTypeNew AEshaderTypeReplace "message";
+
+	editorTemplate -beginLayout (uiRes("m_AElambertCommon.kCommonMaterialAttr")) -collapse 0;
+		editorTemplate -addControl "color";
+		editorTemplate -addControl "transparency";
+		editorTemplate -addControl "ambientColor";
+		editorTemplate -addControl "incandescence";
+		editorTemplate -callCustom "AEshaderBumpNew" "AEshaderBumpReplace"
+			 		"normalCamera";
+		editorTemplate -addControl "diffuse";
+		editorTemplate -addControl "translucence";
+		editorTemplate -addControl "translucenceDepth";
+		editorTemplate -addControl "translucenceFocus";
+	editorTemplate -endLayout;
+}

@@ -1,0 +1,106 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//textureEditorIsolateSelect.mel
+//
+//must be in view faces of selected images mode to see effects
+//
+// $mode =
+//			0: remove all visible for selected object
+//			1: add selected to visible set
+//			2: remove selected from visible set
+
+global proc textureEditorIsolateSelect(int $mode){
+
+	string $compSelType = `getComponentMask`; 
+
+	// determine if textureEditorIsolateSelectSet exists
+	string $setExists[] = `ls textureEditorIsolateSelectSet`;
+	if (size($setExists) == 0)
+	{
+		// In object mode, we first change mode to face mode to avoid a error when create facets set, 
+		// then restore object mode back.
+		if($compSelType == "none")
+		{
+			eval(textureWindowChangeSelectTypeString(1));
+		}
+		sets -name "textureEditorIsolateSelectSet" -facets true;
+		if($compSelType == "none")
+		{
+			changeSelectMode -object;
+		}
+	}
+
+	string $objects[] = `ls -hl -dag -shapes -noIntermediate`;  
+	if(size($objects) == 0) 
+	{ 
+		$objects = `ls -sl -dag -shapes -noIntermediate`;  
+	}
+
+	//Remove All
+	if($mode == 0)  
+	{  
+		for ($object in $objects)  
+		{  
+			string $faces[] = `polyListComponentConversion -fv -fe -fuv -fvf -tf $object`;  
+			sets -edit   
+				-remove textureEditorIsolateSelectSet $faces;   		  
+		}  
+		return;  
+	}
+
+	// If in object mode, no need to update isolate set.
+	if($compSelType == "none")
+		return;
+	
+	// Begin changing the set
+	string $components[] = `ls -sl`;
+
+	//convert selection to faces
+	string $faces[] = `polyListComponentConversion 
+		-ff -fv -fe -fuv -fvf -tf $components`;
+	
+	// Add selected.
+	if( $mode == 1) {
+		sets -edit 
+			-addElement textureEditorIsolateSelectSet $faces;
+	}
+	// Remove selected.
+	else if( $mode == 2) {
+		sets -edit
+			-remove textureEditorIsolateSelectSet $faces;
+	}
+
+	for ($object in $objects){
+		
+		// Find out the groupId nodes connected to the mesh
+		string $meshGroupIdNode[] = `listConnections -type groupId
+			$object`;
+		string $setGroupIdNode[] = `listConnections -type groupId
+			textureEditorIsolateSelectSet`;
+		
+		// create an intersector to find the proper groupId
+		string $groupIdIntersector = `stringArrayIntersector`;
+		stringArrayIntersector -edit -intersect $meshGroupIdNode $groupIdIntersector;
+		stringArrayIntersector -edit -intersect $setGroupIdNode $groupIdIntersector;
+		string $groupIdNode[] = `stringArrayIntersector -query $groupIdIntersector`;
+
+		// Delete the intersector as we are now done with it
+		//
+		deleteUI $groupIdIntersector;
+		
+		if( size($groupIdNode) > 0 )
+		{
+			// Get the magic number from that node
+			int $groupId = `getAttr ($groupIdNode[0] +".groupId")`;
+
+			// Set that magic number to the meshShape
+			setAttr ($object + ".displayFacesWithGroupId") $groupId;
+		}
+	}
+}
+

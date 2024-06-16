@@ -1,0 +1,94 @@
+<!--
+Copyright 2016 Autodesk, Inc. All rights reserved. 
+
+Use of this software is subject to the terms of the Autodesk 
+license agreement provided at the time of installation or download, 
+or which otherwise accompanies this software in either electronic 
+or hard copy form.
+-->
+<fragment  uiName="HoldOutPass" name="HoldOutPass" type="sceneEffect" class="ScriptFragment" version="1.0" feature_level="0" >
+    <description>
+    <![CDATA[
+        Hold out fragment
+    ]]>
+    </description>
+    <properties>
+        <countedObject  name="holdOutList" />
+        <camera  name="camera" />
+        <target  name="final" />
+        <target  name="depth" />
+        <float4  name="viewport" />
+    </properties>
+    <values>
+        <float4 name="viewport" value="0.000000,0.000000,1.000000,1.000000"  />
+    </values>
+    <outputs>
+        <target  name="output" />
+    </outputs>
+    <parametershare>
+    </parametershare>
+    <implementation render="OGS" language="ScriptInterpreter" version="0.1" >
+        <scriptCommands>
+            <SetViewport value="@viewport" />
+            <SetTarget index="0" value="@final" />
+            <SetDepthStencil value="@depth" />
+            <SetCamera value="@camera" />
+            <SetEffect name="" />
+            <Call name="isListEmpty" arg0="@holdOutList" arg1="@holdOutListsEmpty" />
+            <Declare name="localState" type="stateSetter" />
+            <SetStateCommand commandName="SetStateParameter" name="localState" parameter="DepthWriteEnable" value="true" />
+            <SetStateCommand commandName="SetStateParameter" name="localState" parameter="SetWriteMask" value="None" />
+            <SetStateCommand commandName="CommitNewState" name="localState" />
+            <IfNot value="@holdOutListsEmpty" />
+                <Call name="SetPassSemantic" arg0="holdOutPass" arg1="TRUE" />
+                <Render name="@holdOutList" />
+                <Call name="SetPassSemantic" arg0="holdOutPass" arg1="FALSE" />
+            <EndIf />
+            <SetStateCommand commandName="RestorePreviousState" name="localState" />
+            <Declare name="localState2" type="stateSetter" />
+            <SetStateCommand commandName="SetStateParameter" name="localState2" parameter="SetBlendEnable" value="true" />
+            <SetStateCommand commandName="SetStateParameter" name="localState2" parameter="SourceBlend" value="Zero" />
+            <SetStateCommand commandName="SetStateParameter" name="localState2" parameter="DestinationBlend" value="SourceColor" />
+            <SetStateCommand commandName="SetStateParameter" name="localState2" parameter="BlendOperation" value="Add" />
+            <SetStateCommand commandName="SetStateParameter" name="localState2" parameter="AlphaSourceBlend" value="One" />
+            <SetStateCommand commandName="SetStateParameter" name="localState2" parameter="AlphaDestinationBlend" value="InvSourceAlpha" />
+            <SetStateCommand commandName="SetStateParameter" name="localState2" parameter="AlphaBlendOperation" value="Add" />
+            <SetStateCommand commandName="SetStateParameter" name="localState2" parameter="AlphaTestEnabled" value="false" />
+            <SetStateCommand commandName="SetStateParameter" name="localState2" parameter="DepthEnable" value="true" />
+            <SetStateCommand commandName="SetStateParameter" name="localState2" parameter="DepthWriteEnable" value="false" />
+            <SetStateCommand commandName="SetStateParameter" name="localState2" parameter="CullMode" value="ECullBack" />
+            <SetStateCommand commandName="CommitNewState" name="localState2" />
+            <IfNot value="@holdOutListsEmpty" />
+                <Call name="SetPassSemantic" arg0="holdOutPass" arg1="TRUE" />
+                <SetFragmentEffect name="MayaHoldOutShader" path="mayaHoldOutShader" />
+                <Render name="@holdOutList" />
+                <RestoreOverrideEffect />
+                <Call name="SetPassSemantic" arg0="holdOutPass" arg1="FALSE" />
+            <EndIf />
+            <SetStateCommand commandName="RestorePreviousState" name="localState2" />
+            <Declare name="localState3" type="stateSetter" />
+            <SetStateCommand commandName="SetStateParameter" name="localState3" parameter="SetBlendEnable" value="true" />
+            <SetStateCommand commandName="SetStateParameter" name="localState3" parameter="SourceBlend" value="One" />
+            <SetStateCommand commandName="SetStateParameter" name="localState3" parameter="DestinationBlend" value="One" />
+            <SetStateCommand commandName="SetStateParameter" name="localState3" parameter="BlendOperation" value="Add" />
+            <SetStateCommand commandName="SetStateParameter" name="localState3" parameter="AlphaSourceBlend" value="One" />
+            <SetStateCommand commandName="SetStateParameter" name="localState3" parameter="AlphaDestinationBlend" value="InvSourceAlpha" />
+            <SetStateCommand commandName="SetStateParameter" name="localState3" parameter="AlphaBlendOperation" value="Add" />
+            <SetStateCommand commandName="SetStateParameter" name="localState3" parameter="AlphaTestEnabled" value="false" />
+            <SetStateCommand commandName="SetStateParameter" name="localState3" parameter="DepthEnable" value="true" />
+            <SetStateCommand commandName="SetStateParameter" name="localState3" parameter="DepthWriteEnable" value="false" />
+            <SetStateCommand commandName="SetStateParameter" name="localState3" parameter="CullMode" value="ECullBack" />
+            <SetStateCommand commandName="CommitNewState" name="localState3" />
+            <IfNot value="@holdOutListsEmpty" />
+                <Call name="SetPassSemantic" arg0="holdOutPass" arg1="TRUE" />
+                <SetFragmentEffect name="MayaHoldOutFogShader" path="mayaHoldOutFogShader" />
+                <Render name="@holdOutList" />
+                <RestoreOverrideEffect />
+                <Call name="SetPassSemantic" arg0="holdOutPass" arg1="FALSE" />
+            <EndIf />
+            <SetStateCommand commandName="RestorePreviousState" name="localState3" />
+            <SetParameter name="@output" value="@final" />
+        </scriptCommands>
+    </implementation>
+</fragment>
+

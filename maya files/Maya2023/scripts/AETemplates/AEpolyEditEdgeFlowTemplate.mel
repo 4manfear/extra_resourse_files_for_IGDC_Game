@@ -1,0 +1,52 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Procedure Name:
+//	AEpolyEditEdgeFlowTemplate
+//
+//  Description Name;
+//	Creates the attribute editor controls for the polyEditEdgeFlow Node
+//
+//  Input Value:
+//	nodeName 
+//
+//  Output Value:
+//	None
+// 
+
+global proc polyEditEdgeFlowControls( string $nodeName )
+{
+	string $attr = $nodeName + ".edgeFlow";
+	int $edgeFlowValue = `getAttr $attr`;
+
+	if ($edgeFlowValue == 0) {
+		editorTemplate -dimControl $nodeName "adjustEdgeFlow" true;
+	}
+	else {
+		editorTemplate -dimControl $nodeName "adjustEdgeFlow" false;
+	}
+}
+
+global proc AEpolyEditEdgeFlowTemplate( string $nodeName )
+{
+	editorTemplate -beginScrollLayout;
+		editorTemplate -beginLayout (uiRes("m_AEpolyEditEdgeFlowTemplate.kPolyEditEdgeFlowHistory")) -collapse 0;
+			editorTemplate -addControl "edgeFlow" "polyEditEdgeFlowControls";
+			editorTemplate -addControl "adjustEdgeFlow";
+		editorTemplate -endLayout;
+
+		// include/call base class/node attributes
+		AEpolyModifierInclude $nodeName;
+
+		// suppressed attributes
+		editorTemplate -suppress "inputComponents";
+
+		editorTemplate -addExtraControls;
+	editorTemplate -endScrollLayout;
+}

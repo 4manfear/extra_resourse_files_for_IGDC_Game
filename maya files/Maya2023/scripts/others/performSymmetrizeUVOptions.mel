@@ -1,0 +1,272 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc SymmetrizeUVToolSetup(string $parent, int $forceFactorySettings)
+{
+	optionVar -init $forceFactorySettings -category "UV Editor.Symmetrize"
+		-iv polySymmetrizeUVAxis 0
+		-fv polySymmetrizeUVAxisOffset 0.5
+		-fv polySymmetrizeUVAxisIncrement 0.1
+		;
+	
+	setParent $parent;
+	$setInt = eval("optionVar -q polySymmetrizeUVAxis");
+	radioButtonGrp -e -select ($setInt+1) symmetrizeUVOptionsMirrorAxis;
+
+	$setFloat = eval("optionVar -q polySymmetrizeUVAxisOffset");
+	floatFieldGrp -e -v1 $setFloat symmetrizeUVOptionsMirrorAxisPosition;
+
+	$setFloat = eval("optionVar -q polySymmetrizeUVAxisIncrement");
+	floatFieldGrp -e -v1 $setFloat symmetrizeUVOptionsMirrorAxisIncrement;
+}
+
+//  Procedure Name:
+//      assembleCmd
+//
+//  Description:
+//		Construct the command that will apply the option box values.
+//
+//  Input Arguments:
+//      None.
+//
+proc string assembleCmd()
+{
+	return "symmetrizeUV";
+}
+
+global proc SymmetrizeUVToolCallback(string $parent, int $doIt)
+{
+	if(`radioButtonGrp -q -e symmetrizeUVOptionsMirrorAxis`)
+	{
+		optionVar -iv polySymmetrizeUVAxis (`radioButtonGrp -q -select symmetrizeUVOptionsMirrorAxis` - 1);
+		SymmetrizeUVContext -e -a (`radioButtonGrp -q -select symmetrizeUVOptionsMirrorAxis` - 1) texSymmetrizeUVContext;
+	}
+	if(`floatFieldGrp -q -e symmetrizeUVOptionsMirrorAxisPosition`)
+	{
+		optionVar -fv polySymmetrizeUVAxisOffset (`floatFieldGrp -q -v1 symmetrizeUVOptionsMirrorAxisPosition`);
+		SymmetrizeUVContext -e -ap (`optionVar -q polySymmetrizeUVAxisOffset`) texSymmetrizeUVContext;
+	}
+	if(`floatFieldGrp -q -e symmetrizeUVOptionsMirrorAxisIncrement`)
+	{
+		optionVar -fv polySymmetrizeUVAxisIncrement (`floatFieldGrp -q -v1 symmetrizeUVOptionsMirrorAxisIncrement`);
+		SymmetrizeUVContext -e -ai (`optionVar -q polySymmetrizeUVAxisIncrement`) texSymmetrizeUVContext;
+	}
+	if ($doIt ) {
+		//	Execute the command with the option settings.
+		$cmd = `assembleCmd`;
+		eval($cmd);	
+	}
+}
+
+//
+//  Procedure Name:
+//      symmetrizeUVOptions
+//
+//  Description:
+//		Construct the option box UI.  Involves accessing the standard option
+//		box and customizing the UI accordingly.
+//
+//  Input Arguments:
+//      None.
+//
+//  Return Value:
+//      None.
+//
+proc SymmetrizeUVToolOptions()
+{
+	//	Name of the command for this option box.
+	//
+	string $commandName = "SymmetrizeUVTool";
+
+	//	Build the option box actions.
+	//
+	string $callback = ($commandName + "Callback");
+	string $setup = ($commandName + "Setup");
+
+ 	//	STEP 1:  Get the option box.
+	//	============================
+	//
+	//	The value returned is the name of the layout to be used as
+	//	the parent for the option box UI.
+	//
+	string $layout = getOptionBox();
+	setParent $layout;
+	
+	//	STEP 2:  Pass the command name to the option box.
+	//	=================================================
+	//
+	//	Any default option box behaviour based on the command name is set 
+	//	up with this call.  For example, updating the 'Help' menu item with
+	//	the name of the command.
+	//
+	setOptionBoxCommandName($commandName);
+	
+	//	STEP 3:  Activate the default UI template.
+	//	==========================================
+	//
+	//	Activate the default UI template so that the layout of this 
+	//	option box is consistent with the layout of the rest of the 
+	//	application.
+	//
+	setUITemplate -pushTemplate DefaultTemplate;
+
+	//	STEP 4: Create option box contents.
+	//	===================================
+	//	
+	//	This, of course, will vary from option box to option box.	
+	//	Turn on the wait cursor.
+	//
+	waitCursor -state 1;
+
+    // Global template variables for form spacing
+	global int $gOptionBoxTemplateFrameSpacing;
+	// Form layout
+	string $parent = `formLayout`;
+
+		// Settings frame
+		string $settingsFrame = 
+		`frameLayout -label (uiRes("m_performSymmetrizeUVOptions.kSettingsFrame")) -collapsable false`;
+			columnLayout;
+			radioButtonGrp 
+				-label (uiRes("m_performSymmetrizeUVOptions.kMirrorAxis"))
+				-numberOfRadioButtons 2
+				-label1 (uiRes("m_performSymmetrizeUVOptions.kU"))
+				-label2 (uiRes("m_performSymmetrizeUVOptions.kV"))
+				-vertical 
+				symmetrizeUVOptionsMirrorAxis;
+			floatFieldGrp
+					-label (uiRes("m_performSymmetrizeUVOptions.kMirrorAxisPosition"))
+					symmetrizeUVOptionsMirrorAxisPosition;
+			floatFieldGrp
+					-label (uiRes("m_performSymmetrizeUVOptions.kMirrorAxisIncrement"))
+					symmetrizeUVOptionsMirrorAxisIncrement;
+			
+		setParent $parent; // frameLayout
+
+	setParent ..; // formLayout
+
+	// Attach frame to form layout
+	formLayout -edit
+		-attachForm $settingsFrame "top" $gOptionBoxTemplateFrameSpacing
+		-attachForm $settingsFrame "left" $gOptionBoxTemplateFrameSpacing
+		-attachForm $settingsFrame "right" $gOptionBoxTemplateFrameSpacing
+		-attachNone $settingsFrame "bottom" 
+	$parent;
+
+	//	Turn off the wait cursor.
+	//
+	waitCursor -state 0;
+	
+	//	Step 5: Deactivate the default UI template.
+	//	===========================================
+	//
+	setUITemplate -popTemplate;
+
+	//	Step 6: Customize the buttons.  
+	//	==============================
+	//
+	//	Provide more descriptive labels for the buttons.  This is not 
+	//	necessary, but in some cases, for example, a button labelled 
+	//	'Create' may be more meaningful to the user than one labelled
+	//	'Apply'.
+	//
+	//	Disable those buttons that are not applicable to the option box.
+	//
+	//	Attach actions to those buttons that are applicable to the option
+	//	box.  Note that the 'Close' button has a default action attached 
+	//	to it that will hide the window.  If a a custom action is
+	//	attached to the 'Close' button then be sure to call the 'hide the
+	//	option box' procedure within the custom action so that the option
+	//	box is hidden properly.
+
+	//	'Apply' button.
+	//
+	string $applyBtn = getOptionBoxApplyBtn();
+	button -edit
+		-command ($callback + " " + $parent + " " + 1)
+		$applyBtn;
+
+	//	'Save' button.
+	//
+	string $saveBtn = getOptionBoxSaveBtn();
+	button -edit 
+		-command ($callback + " " + $parent + " " + 1 + "; hideOptionBox")
+		$saveBtn;
+
+	//	'Reset' button.
+	//
+	string $resetBtn = getOptionBoxResetBtn();
+	button -edit 
+		-command ($setup + " " + $parent + " " + 1)
+		$resetBtn;
+
+	//	Step 7: Set the option box title.
+	//	=================================
+	//
+	setOptionBoxTitle (uiRes("m_performSymmetrizeUVOptions.kSymmetrizeUVOptions"));
+
+	//	Step 8: Customize the 'Help' menu item text.
+	//	============================================
+	//
+	setOptionBoxHelpTag( "SymmetrizeUVTool" );
+
+	//	Step 9: Set the current values of the option box.
+	//	=================================================
+	//
+	eval (($setup + " " + $parent + " " + 0));	
+	
+	//	Step 10: Show the option box.
+	//	=============================
+	//
+	showOptionBox();
+}
+
+//
+//  Procedure Name:
+//      performSymmetrizeUVOptions
+//
+//  Description:
+//
+//  Input Arguments:
+//      0 - Execute the command.
+//      1 - Show the option box dialog.
+//      2 - Return the command.
+//
+global proc string performSymmetrizeUVOptions(int $action)
+{
+	string $cmd = "";
+
+	switch ($action) {
+
+		//	Execute the command.
+		//
+		case 0:
+			//	Get the command.
+			//
+			$cmd = `assembleCmd`;
+
+			//	Execute the command with the option settings.
+			//
+			eval($cmd);
+			break;
+
+		//	Show the option box.
+		//
+		case 1:
+			SymmetrizeUVToolOptions;
+			break;
+
+		//	Return the command string.
+		//
+		case 2:
+			//	Get the command.
+			//
+			$cmd = `assembleCmd`;
+			break;
+	}
+	return $cmd;
+}

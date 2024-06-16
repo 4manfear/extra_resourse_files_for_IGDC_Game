@@ -1,0 +1,132 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Description:
+//      This script assigns objects to bakeSets.
+//
+
+
+global proc assignBakeSet(string $bakeSet, string $item)
+{	
+	string $objectForAssignString = $item;
+
+    // No bake set ?
+    if ($bakeSet == "") 
+	{
+		error ((uiRes("m_assignBakeSet.kAssignBakeSetError")));
+    }
+
+	string $objs[];
+	
+	int $useSelectedFaces = false;
+	int $useSelectedShapes = false;
+
+	if ($item == "")
+	{
+		// No object was specified in the call to this procedure, so we will
+		// assign the bakeSet to whatever is on the current selection list 
+		// instead.
+		//
+		$objs = `ls -dag -objectsOnly -geometry -selection`;
+		if (size ($objs) == 0)
+		{
+			error ((uiRes("m_assignBakeSet.kNothingSelectedError")));
+		}
+		
+		$useSelectedFaces = true;
+
+		if( `nodeType $bakeSet` == "vertexBakeSet" )
+		{
+			string $meshes[] = `ls -typ mesh $objs`;
+			if( size($meshes) < size($objs) )
+			{
+				warning( (uiRes("m_assignBakeSet.kNonPolyObjsWarning")) );
+				$objs = $meshes;
+			}
+		}
+	}
+	else
+	{
+		//
+		// The $item is always an object, never a component (ie face).
+		// If the current selection contains faces of the specified item, then
+		// we would rather assign the new bakeSet to the specifically selected
+		// faces rather than the object as a whole. In particular, this allows
+		// users to select faces of a poly object and use the RMB menu to
+		// assign them to bakeSets.
+		// 
+
+		string $selection[] = `ls -selection`;
+		int $i;
+
+		for ($i = 0; $i < size($selection); $i++)
+		{
+			if (`match ($item + "\\.f\\[.*\\]") $selection[$i]` != "")
+			{
+				// One part of the currently selection is faces of the
+				// specified item. We will add the selected faces to the list
+				// of objects to which the bakeSet will be assigned.
+				//
+				$objs[size($objs)] = $selection[$i];
+				$objectForAssignString = $item;
+				$useSelectedFaces = true;
+			}
+		}
+
+		if (size($objs) == 0)
+		{
+			// Try again with the shape. Face selection will be names
+			// after the shape when other shapes are parented below the
+			// transform.
+			string $shapes[] = `listRelatives -s $item`;
+			if (size($shapes) > 0 )
+			{
+				string $shape = $shapes[0];
+				for ($i = 0; $i < size($selection); $i++)
+				{
+					if (`match ($shape + "\\.f\\[.*\\]") $selection[$i]` != "")
+					{
+						$objs[size($objs)] = $selection[$i];
+						$objectForAssignString = $shape;
+						$useSelectedFaces = true;
+					}
+				}
+			}
+		}
+
+		if (size($objs) == 0)
+		{
+			// There were no faces of the specified item in the current
+			// selection. Therefore, we will assign the bakeSet to the 
+			// entire object specified, more precisely, to object itself
+			// if the object is a shape, or all the shapes under the 
+			// object if the object is a transform.
+			//
+			$objs = `ls -dag -objectsOnly -geometry $item`;
+		}
+	}
+
+    sets -forceElement $bakeSet $objs;
+
+	string $result = "";
+
+	if ($useSelectedFaces){
+		string $fmt = (uiRes("m_assignBakeSet.kAssignNewBakeSetResult"));
+		$result = `format -s $objectForAssignString -s $bakeSet $fmt`;
+	} else if ($useSelectedShapes){
+		string $fmt = (uiRes("m_assignBakeSet.kAssignNewBakeSetResultShapes"));
+		$result = `format -s $bakeSet $fmt`;
+	} else {
+		string $fmt = (uiRes("m_assignBakeSet.kAssignNewBakeSetResultItem"));
+		$result = `format -s $objectForAssignString -s $bakeSet $fmt`;
+	}
+
+    print ($result);
+}
+

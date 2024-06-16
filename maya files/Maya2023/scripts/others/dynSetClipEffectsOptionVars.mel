@@ -1,0 +1,478 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  July, 1998
+//
+//  Description:
+//      This script contains code to create and/or set the default
+//		values for the option vars for the Dynamics Clip Effects
+//		menus/option boxes.
+//
+//
+//  ================ dynSetClipEffectsOptionVars ================
+//
+//  SYNOPSIS
+//      Set the specified sprite clip effect option box controls.
+//
+//  INPUT ARGUMENTS
+//		string $theClipEffect	the name of the clip effect to set controls for
+//		int $setFactorySettings whether to use default settings.
+//
+//
+global proc dynSetClipEffectsOptionVars(string $theClipEffect, int $setFactorySettings)
+{
+    if (!isValidClipEffect($theClipEffect))
+		return;
+
+	string $procName = ("set"+$theClipEffect+"OptionVars");
+	eval ($procName+" "+$setFactorySettings);
+}
+
+
+//  ================ setSmokeOptionVars ================
+//
+//  SYNOPSIS
+//      Set the smoke sprite clip effect option box optionVars.
+//
+//  INPUT ARGUMENTS
+//		int $setFactorySettings whether to use default settings.
+//
+//
+global proc setSmokeOptionVars (int $setFactorySettings)
+{
+	optionVar -init $setFactorySettings -category "Dynamics.Effects.Smoke"
+		-sv smokeImageName ""
+		-iv smokeCycleImages 0
+		-iv smokeStartImage 0
+		-iv smokeEndImage 50
+		-sv smokeParticleName ""
+		-fv smokeMinLifespan 3.0
+		-fv smokeMaxLifespan 7.0
+		-fv smokeThreshold 0.25
+		-fv smokeOpacity .4
+		-sv smokeEmitterName ""
+		-fv smokeEmissionRate 112.4
+		-fv smokeEmissionSpread .11
+		-fv smokeEmissionSpeed 1.0
+		-fv smokeEmissionDirX 0.0
+		-fv smokeEmissionDirY 1.0
+		-fv smokeEmissionDirZ 0.0
+		-iv smokeUseTurbulence 1
+		-sv smokeTurbulenceName ""
+		-fv smokeTurbulenceMagnitude 0.2
+		-fv smokeTurbulenceFrequency 2.0
+		-fv smokeTurbulenceAttenuation 2.8
+		;
+}
+
+
+//  ================ setFireOptionVars ================
+//
+//  SYNOPSIS
+//      Set the fire clip effect option box optionVars.
+//
+//  INPUT ARGUMENTS
+//		int $setFactorySettings whether to use default settings.
+//
+//
+global proc setFireOptionVars (int $setFactorySettings)
+{
+	optionVar -init $setFactorySettings -category "Dynamics.Effects.Fire"
+		-sv fireObject ""
+		-sv fireParticleName ""
+		-iv fireEmissionTypeOV 3
+		-fv fireDensity 10
+		-fv fireStartRadius 1.0
+		-fv fireEndRadius 0.4
+		-fv fireIntensity .35
+		-fv fireSpread .15
+		-fv fireScale 1
+		-fv fireTurbulence 240
+		-fv fireSpeed 85
+		-fv fireDirectionX 0.0
+		-fv fireDirectionY 1.0
+		-fv fireDirectionZ 0.0
+		;
+}
+
+
+//  ================ setFireworksOptionVars ================
+//
+//  SYNOPSIS
+//      Set the fireworks clip effect option box optionVars.
+//
+//  INPUT ARGUMENTS
+//		int $setFactorySettings whether to use default settings.
+//
+//
+global proc setFireworksOptionVars (int $setFactorySettings)
+{
+	optionVar -init $setFactorySettings -category "Dynamics.Effects.Fireworks"
+		-sv fireworksName ""
+		-iv fwNumRockets 10
+		-fv fwLaunchPositionX 0
+		-fv fwLaunchPositionY 0
+		-fv fwLaunchPositionZ 0
+		-fv fwBurstPosCenterX 0
+		-fv fwBurstPosCenterY 25
+		-fv fwBurstPosCenterZ 0
+		-fv fwBurstExtentsX 10
+		-fv fwBurstExtentsY 10
+		-fv fwBurstExtentsZ 10
+		-fv fwFirstLaunchFrame 1
+		-fv fwLaunchRate .1
+		-fv fwMinFlightTime 30
+		-fv fwMaxFlightTime 60
+		-fv fwMaxBurstSpeed 20
+		-fv fwTrailRate 50
+		-fv fwTrailSpeed 0.5
+		-fv fwTrailSpread 0.5
+		-fv fwMinTrailTailSize .2
+		-fv fwMaxTrailTailSize .8
+		-iv fwTrailSetUserColor 0
+		-sv fwTrailColorCreationProc ""
+		-iv fwTrailNumColors 5
+		-fv fwTrailGlowIntensity .3
+		-fv fwTrailIncanIntensity .25
+		-fv fwMinSparksCount 100
+		-fv fwMaxSparksCount 200
+		-fv fwMinSparksTailSize .3
+		-fv fwMaxSparksTailSize 1
+		-iv fwSparksSetUserColor 0
+		-sv fwSparksColorCreationProc ""
+		-iv fwSparksNumColors 32
+		-iv fwSparksColorSpread 1
+		-fv fwSparksGlowIntensity .3
+		-fv fwSparksIncanIntensity .25
+		;
+}
+
+
+//  ================ setFlowOptionVars ================
+//
+//  SYNOPSIS
+//      Set the flow-along-curve clip effect option box optionVars.
+//
+//  INPUT ARGUMENTS
+//		int $setFactorySettings whether to use default settings.
+//
+//
+global proc setFlowOptionVars (int $setFactorySettings)
+{
+	optionVar -init $setFactorySettings -category "Dynamics.Effects.Flow.Create Curve Flow"
+		-sv flowObject ""
+		-iv flowAttachEmitter 1
+		-fv flowNumControlSegs 5
+		-fv flowNumControlSubsegs 4
+		-fv flowEmitterRate 50
+		-fv flowRandomMotion .5
+		-fv flowLifespan 5
+		-fv flowGoalWeight 1
+		;
+}
+
+
+//  ================ setSurfaceFlowOptionVars ================
+//
+//  SYNOPSIS
+//      Set the flow-along-surface clip effect option box optionVars.
+//
+//  INPUT ARGUMENTS
+//		int $setFactorySettings whether to use default settings.
+//
+//
+global proc setSurfaceFlowOptionVars(int $setFactorySettings)
+{
+	// Remove old unused string prefs
+	optionVar -rm surfaceFlowManipType;
+
+	optionVar -init $setFactorySettings -category "Dynamics.Effects.Flow.Create Surface Flow"
+		-sv surfaceFlowObject ""
+		-iv surfaceFlowCreateParticle 1
+		-iv surfaceFlowCreateParticleForEachFlow 0
+		-iv surfaceFlowManipTypeId 1 // 1 == "u", 2 == "v", 3 == "-u", 4 == "-v"
+		-fv surfaceFlowControlResolution 5
+		-fv surfaceFlowSubControlResolution 0
+		-fv surfaceFlowManipulatorResolution 2
+		-fv surfaceFlowGoalWeight 1
+		-fv surfaceFlowEmitterRate 10
+		-fv surfaceFlowParticleLifespan 1.0
+		-fv surfaceFlowMinAgeRatio 0
+		-fv surfaceFlowMaxAgeRatio 1
+		;
+}
+
+
+//  ================ setDeleteSurfaceFlowOptionVars ================
+//
+//  SYNOPSIS
+//      Set the delete-surface-flow clip effect option box optionVars.
+//
+//  INPUT ARGUMENTS
+//		int $setFactorySettings whether to use default settings.
+//
+//
+global proc setDeleteSurfaceFlowOptionVars(int $setFactorySettings)
+{
+	optionVar -init $setFactorySettings -category "Dynamics.Effects.Flow.Delete Selected Flow"
+		-iv deleteSurfaceFlow 1
+		-iv removeParticlesFromSurfaceFlow 0
+		-iv deleteSurfaceFlowParticles 0
+		;
+
+	int $checkBoxExist = `checkBoxGrp -exists deleteSurfaceFlowParticles`;
+	if( $checkBoxExist )
+	{
+		int $removeParticles = 0;
+		int $radioExist = `optionVar -exists removeParticlesFromSurfaceFlow`;
+		if( $radioExist )
+			$removeParticles = `optionVar -q removeParticlesFromSurfaceFlow`;
+		if( $removeParticles )
+			checkBoxGrp -e -enable 0 deleteSurfaceFlowParticles;
+		else
+			checkBoxGrp -e -enable 1 deleteSurfaceFlowParticles;
+	}
+}
+
+
+//  ================ setLightningOptionVars ================
+//
+//  SYNOPSIS
+//      Set the lightning clip effect option box optionVars.
+//
+//  INPUT ARGUMENTS
+//		int $setFactorySettings whether to use default settings.
+//
+//
+global proc setLightningOptionVars(int $setFactorySettings)
+{
+	optionVar -init $setFactorySettings -category "Dynamics.Effects.Lightning"
+		-sv lightningObject ""
+		-iv lightningGrouping 0
+		-iv lightningCreateOptions 1
+		-iv lightningCurveSegments 20
+		-fv lightningThickness 1
+		-fv lightningMaxSpread 1
+		-fv lightningStart 0
+		-fv lightningEnd 1
+		-fv lightningGlowIntensity 0.5
+		;
+}
+
+
+//  ================ setMeltOptionVars ================
+//
+//  SYNOPSIS
+//      Set the melt clip effect option box optionVars.
+//
+//  INPUT ARGUMENTS
+//		int $setFactorySettings whether to use default settings.
+//
+//
+global proc setMeltOptionVars (int $setFactorySettings)
+{
+	optionVar -init $setFactorySettings -category "Dynamics.Effects.Melt"
+		-sv meltObject ""
+		-sv meltOnObject ""
+		-fv meltSpeed .4
+		-fv meltSpread 1.0
+		-fv meltDistortion 1.5
+		-fv meltDirectionX 0.0
+		-fv meltDirectionY -1.0
+		-fv meltDirectionZ 0.0
+		-iv meltUseLatticeRes 0
+		-iv meltLatticeResX 0
+		-iv meltLatticeResY 0
+		-iv meltLatticeResZ 0
+		;
+}
+
+//  ================ setShatterOptionVars ================
+//
+//  SYNOPSIS
+//      Set the shatter clip effect option box optionVars.
+//
+//  INPUT ARGUMENTS
+//		int $setFactorySettings whether to use default settings.
+//
+//  OPTION VARIABLES
+//
+//		Variable		|   Type	| Values		    	| Default	| Notes
+//      ----------------+-----------+-----------------------+-----------+--------
+//  	shatter type 	:	string	| surface/solid/crack	: surface	: 
+//
+global proc setShatterOptionVars (int $setFactorySettings)
+{
+	if ( $setFactorySettings )
+	{
+		string $shatterTypeValue = `optionVar -query shatterType`;
+
+		if ( $shatterTypeValue == "shatterSurfaceTab" )
+		{
+			setSurfaceShatterOptionVars( $setFactorySettings );
+		}
+		else if ( $shatterTypeValue == "shatterSolidTab" )
+		{
+			setSolidShatterOptionVars( $setFactorySettings );
+		}
+		else if ( $shatterTypeValue == "shatterCrackTab" )
+		{
+			setCrackShatterOptionVars( $setFactorySettings );
+		}
+	}
+	else
+	{
+		optionVar -init $setFactorySettings -category "Dynamics.Effects.Shatter"
+			-sv shatterType "shatterSurfaceTab"
+			;
+
+		setSurfaceShatterOptionVars( $setFactorySettings );
+		setSolidShatterOptionVars  ( $setFactorySettings );
+		setCrackShatterOptionVars  ( $setFactorySettings );
+	}
+}
+
+
+//  ================ setSurfaceShatterOptionVars ================
+//
+//  SYNOPSIS
+//      Set the shatter clip effect option box optionVars.
+//
+//  INPUT ARGUMENTS
+//		int $setFactorySettings whether to use default settings.
+//
+//  OPTION VARIABLES
+//
+//		Variable		|   Type	| Values		    	| Default	| Notes
+//      ----------------+-----------+-----------------------+-----------+--------
+//  	shatter name 	:	string	| any string         	: surfaceShatter	: 
+//  	shard count 	:	integer	| > 1			 		: 5		: 
+//  	smoothing		:	integer | on/off				: on		:
+//  	extrude			:	integer | on/off				: off		:
+//  	triangulate		:	integer | on/off				: on		: 
+//  	post operation 	:	string	| sets/soft/rigid		: sets		: 
+//  	edge Perturb	:	float   | >= 0.0 				: 0.0		: 
+//  	exact shards	:	integer | on/off				: on		: 
+//  	seed			:	integer | 0 - 100				: 0			: 
+//  	verbose			:	integer | on/off				: off		: 
+//
+global proc setSurfaceShatterOptionVars (int $setFactorySettings)
+{
+	// Remove unsed string prefs
+	//
+	optionVar -rm shatterSurfacePostOperation;
+
+	optionVar -init $setFactorySettings -category "Dynamics.Effects.Shatter"
+		-sv shatterSurfaceName "surfaceShatter"
+		-iv shatterSurfaceShardCount 5
+		-iv shatterSurfaceTriangulate true
+		-iv shatterSurfaceSmoothing true
+		-fv shatterSurfaceExtrude 0.0
+		// 1 = shapes, 2 = rigid bodies with collisions off
+		// 3 = soft bodies with goals, 4 = soft bodies with lattice and goals
+		// 5 = sets
+		-iv shatterSurfacePostOp 1
+		-iv shatterSurfaceExactCount true
+		-iv shatterSurfaceVerbose false
+		-iv shatterSurfaceOriginal 1
+		-iv shatterSurfaceMakeRigidBody 1
+		-iv shatterSurfaceSeedValue 0
+		;
+}
+
+
+//  ================ setSolidShatterOptionVars ================
+//
+//  SYNOPSIS
+//      Set the shatter clip effect option box optionVars.
+//
+//  INPUT ARGUMENTS
+//		int $setFactorySettings whether to use default settings.
+//
+//  OPTION VARIABLES
+//
+//		Variable		|   Type	| Values		    	| Default	| Notes
+//      ----------------+-----------+-----------------------+-----------+--------
+//  	shatter name 	:	string	| any string         	: solidShatter	: 
+//  	shard count 	:	integer	| > 1			 		: 5 		: 
+//  	triangulate		:	integer | on/off				: on		: 
+//  	post operation 	:	string	| shapes/sets/soft/rigid: sets		: 
+//  	edge Perturb	:	float   | >= 0.0 				: 0.0		: 
+//  	seed			:	integer | 0 - 100				: 0			: 
+//  	verbose			:	integer | on/off				: off		: 
+//
+global proc setSolidShatterOptionVars (int $setFactorySettings)
+{
+	// Remove unused string prefs 
+	optionVar -rm shatterSolidPostOperation;
+	
+	optionVar -init $setFactorySettings -category "Dynamics.Effects.Shatter"
+		-sv shatterSolidName "solidShatter"
+		-iv shatterSolidShardCount 5
+		-iv shatterSolidTriangulate true
+		-iv shatterSolidInteriorMaterial true
+		-iv shatterSolidRemoveInterior false
+		-fv shatterSolidExtrude 0.0
+		// 1 = "shapes", 2 = "rigid bodies with collisions off"
+		// 3 = "soft bodies with goals". 4 = "soft bodies with lattice and goals"
+		-iv shatterSolidPostOp 1
+		-fv shatterSolidEdgePerturbation 0.0
+		-iv shatterSolidVerbose false
+		-iv shatterSolidOriginal 1
+		-iv shatterSolidMakeRigidBody 1
+		-iv shatterSolidSeedValue 0
+		;
+}
+
+
+//  ================ setCrackShatterOptionVars ================
+//
+//  SYNOPSIS
+//      Set the shatter clip effect option box optionVars.
+//
+//  INPUT ARGUMENTS
+//		int $setFactorySettings whether to use default settings.
+//
+//  OPTION VARIABLES
+//
+//		Variable		|   Type	| Values		    	| Default	| Notes
+//      ----------------+-----------+-----------------------+-----------+--------
+//  	shatter name 	:	string	| any string         	: crackShatter	: 
+//  	crack count 	:	integer	| > 0			 		: 5 		: 
+//  	crack length 	:	integer	| > 0			 		: 50		: 
+//  	triangulate		:	integer | on/off				: on		: 
+//  	post operation 	:	string	| shapes/sets/soft/rigid: sets		: 
+//  	edge Perturb	:	float   | >= 0.0 				: 0.0		: 
+//  	seed			:	integer | 0 - 100				: 0			: 
+//  	verbose			:	integer | on/off				: off		: 
+//
+global proc setCrackShatterOptionVars (int $setFactorySettings)
+{
+	// Remove unused string option vars
+	optionVar -rm shatterCrackPostOperation;
+
+	optionVar -init $setFactorySettings -category "Dynamics.Effects.Shatter"
+		-sv shatterCrackName "crackShatter"
+		-iv shatterCrackCount 5
+		-iv shatterCrackLength 200
+		-iv shatterCrackTriangulate true
+		-fv shatterCrackExtrude 0.0
+		// 1 = "cracks on surface", 2 = "shapes"
+		// 3 = "rigid bodies with collisions off" 4 = "soft bodies with goals"
+		// 5 = "soft bodies with lattice and goals", 6 = "sets"
+		-iv shatterCrackPostOp 2
+		-fv shatterCrackEdgePerturbation 0.0
+		-iv shatterCrackVerbose false
+		-iv shatterCrackOriginal 1
+		-iv shatterCrackMakeRigidBody 1
+		-iv shatterCrackSeedValue 0
+		;
+}
+
+

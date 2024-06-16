@@ -1,0 +1,94 @@
+//**************************************************************************/
+// Copyright 2014 Autodesk, Inc.
+// All rights reserved.
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+//**************************************************************************/
+//
+// Sample shader to that can be used for shadow casting
+//
+attribute vertexInS
+{
+    vec3 Pm : POSITION;
+}
+
+//  Declarations
+
+attribute vertOutS
+{
+    vec3 Pw : TEXCOORD1;
+}
+
+// Vertex shader output structure.
+attribute pixelOut 
+{
+    vec4 colorOut: COLOR0;
+}
+
+//  Globals
+
+uniform mat4 World : world;
+uniform mat4 ViewProj : viewprojection;
+uniform float DepthPriority : depthpriority;
+uniform mat4 WorldViewProj : worldviewprojection;
+
+//  Fragments
+
+// Vertex Shader
+//
+GLSLShader VS
+{
+    vec3 iPw( vec3 pm, mat4 world )
+    {
+        return (world * vec4(pm, 1.0f)).xyz;
+    }
+
+    vec4 iPcPriority( vec3 pm, float depthPriority, mat4 worldViewProjectionC )
+    {
+        vec4 P = worldViewProjectionC * vec4(pm,1.0f);
+        P.z -= P.w * 2.0 * depthPriority;
+        return P;
+    }
+
+    void main()
+    {
+        Pw = iPw( Pm, World );
+        gl_Position = iPcPriority ( Pm, DepthPriority, WorldViewProj );
+    }
+}
+
+
+attribute fragInS 
+{ 
+    float3 Pw : TEXCOORD1; 
+}
+
+// Pixel Shader
+GLSLShader FS
+{
+    vec4 mayaCreateShadowMapPS( vec3 Pw, mat4 shadowViewProj )
+    {
+        vec4 Pndc = shadowViewProj * vec4(Pw,1.0f);
+        float retZ = 0.5f + 0.5f * Pndc.z / Pndc.w;
+        retZ += fwidth(retZ);
+        return vec4(retZ, retZ, retZ, retZ);
+    }
+
+    void main()
+    {
+        colorOut = mayaCreateShadowMapPS( Pw, ViewProj );
+    }
+}
+
+/////////////////////// Techniques ///////
+
+technique main
+{
+    pass P0
+    {
+        VertexShader (in vertexInS, out vertOutS) = VS;
+        PixelShader (in fragInS, out pixelOut) = FS;
+    }
+}
+

@@ -1,0 +1,65 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc AEshellDeformerTemplate( string $nodeName )
+{
+
+	editorTemplate -beginScrollLayout;
+
+	editorTemplate -beginLayout (getPluginResource("Type", "kTransformLbl"))  -collapse 1;
+    editorTemplate -addControl "enableAnimation";
+    editorTemplate -addControl "animationPosition";
+    editorTemplate -addControl "animationRotation";
+    editorTemplate -addControl "animationScale";
+	editorTemplate -endLayout;
+
+	editorTemplate -beginLayout (getPluginResource("Type", "kStepLbl"))  -collapse 1;
+    editorTemplate -addControl "randomDelay";
+    editorTemplate -addControl "reverseOrder";
+    editorTemplate -addControl "offsetFrames";
+    editorTemplate -addControl "randomSeed";
+	editorTemplate -endLayout;
+
+	editorTemplate -beginLayout (getPluginResource("Type", "kPivotsLbl"))  -collapse 1;
+    editorTemplate -addControl "xPivotLocation";
+    editorTemplate -addControl "yPivotLocation";
+    editorTemplate -addControl "zPivotLocation";
+
+    editorTemplate -addControl "localXRotationPivot";
+    editorTemplate -addControl "localYRotationPivot";
+    editorTemplate -addControl "localZRotationPivot";
+    editorTemplate -addControl "localYScalePivot";
+    editorTemplate -addControl "localXScalePivot";
+    editorTemplate -addControl "localZScalePivot";
+
+	editorTemplate -endLayout;
+
+    editorTemplate -addControl "time";
+
+	editorTemplate -addExtraControls;
+
+    //no controls in the interface, nothing for users to edit.
+	editorTemplate -suppress "caching"; 
+	editorTemplate -suppress "frozen"; 
+	editorTemplate -suppress "input";
+	editorTemplate -suppress "nodeState"; 
+	editorTemplate -suppress "weightList";
+	editorTemplate -suppress "envelope";
+	editorTemplate -suppress "map64BitIndices";
+	editorTemplate -suppress "animationMode";
+	
+	// shellDeformer specific hidden controls
+	editorTemplate -suppress "vertsPerChar";
+	editorTemplate -suppress "grouping";
+	editorTemplate -suppress "translateInPP";
+	editorTemplate -suppress "rotationPivotPointsPP";
+	editorTemplate -suppress "scalePivotPointsPP";
+	editorTemplate -suppress "enablePivotDisplay";
+
+    editorTemplate -endScrollLayout;
+
+}

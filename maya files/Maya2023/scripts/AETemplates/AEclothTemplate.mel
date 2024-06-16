@@ -1,0 +1,48 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:	May 13, 1997
+//
+//  Procedure Name:
+//	AEclothTemplate
+//
+//  Description:
+//	Creates the attribute editor controls for the clothNode
+//
+//  Input Value:
+//	nodeName
+//
+//  Output Value:
+//	None
+//
+
+
+global proc AEclothTemplate ( string $nodeName )
+{
+	AEswatchDisplay $nodeName;
+	editorTemplate -beginScrollLayout;
+		editorTemplate -beginLayout (uiRes("m_AEclothTemplate.kClothAttributes")) -collapse 0;
+			editorTemplate -addControl "gapColor";
+			editorTemplate -addControl "uColor";
+			editorTemplate -addControl "vColor";
+			editorTemplate -addControl "uWidth";
+			editorTemplate -addControl "vWidth";
+			editorTemplate -addControl "uWave";
+			editorTemplate -addControl "vWave";
+			editorTemplate -addControl "randomness";
+			editorTemplate -addControl "widthSpread";
+			editorTemplate -addControl "brightSpread";
+		editorTemplate -endLayout;
+   
+		// include/call base class/node attributes
+   		AEtexture2dCommon $nodeName;
+
+	editorTemplate -addExtraControls;
+	editorTemplate -endScrollLayout;
+}

@@ -1,0 +1,63 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+// 
+//  Creation Date: January 17, 2017
+// 
+//  Procedure Name: 
+//      texShellArrayContains 
+// 
+//  Description: 
+//      UV workflow function used for finding out whether the UV belongs to
+//      the UV shell. 
+// 
+//  Input Arguments 
+//      uvCoord              - String   - The UV to look for 
+//      shellArray           - String[] - A list of UV shells
+// 
+//  Return Value: 
+//      None. 
+// 
+//  Notes: 
+//  This script is part of the implementation of Nightshade UV Editor into 
+//  Autodesk Maya.  
+// 
+// =========================================================================== 
+ 
+global proc int texShellArrayContains(string $uvCoord, string $shellArray[])
+{
+	if (size($shellArray) == 0)
+		return 0;
+
+	string $buffer[];
+	tokenize($uvCoord, ".", $buffer);
+	string $object = $buffer[0];
+	int $uvId = `match "[0-9]+" $buffer[1]`;
+
+	// Check that the UV item is on the same object as the shell
+	tokenize($shellArray[0], ".", $buffer);
+	if ($object != $buffer[0])
+		return 0;
+
+	for ($uvList in $shellArray)
+	{
+		if (`match ":" $uvList` == "") {
+			if (`strcmp $uvCoord $uvList` == 0)
+				return 1;
+		}
+		else {
+			string $uvIds = `match "\\[[0-9:]+\\]" $uvList`;
+			$uvIds = `match "[0-9:]+" $uvIds`;
+			tokenize($uvIds, ":", $buffer);
+			int $minUV = $buffer[0], $maxUV = $buffer[1];
+			if ($uvId >= $minUV && $uvId <= $maxUV)
+				return 1;
+		}
+	}
+
+	return 0;
+}

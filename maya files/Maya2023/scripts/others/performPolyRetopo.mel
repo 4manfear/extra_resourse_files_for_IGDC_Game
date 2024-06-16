@@ -1,0 +1,323 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//  Creation Date:  12 July 2019
+//
+
+
+proc setOptionVars (int $forceFactorySettings)
+{
+	optionVar -init $forceFactorySettings -category "Modeling.Mesh.Retopologize"
+		-fv polyRetopoTargetEdgeDeviation 0.1
+		-fv polyRetopoRegularity 0.5
+		-fv polyRetopoUniformity 0.0
+		-fv polyRetopoAnisotropy 0.75
+		-fv polyRetopoCurveSingularitySeparation 0.1
+		-fv polyRetopoCurveCurveInfluenceDirection 0.01
+		-iv polyRetopoTargetFaceCount 1000
+		-iv polyRetopoTargetFaceCountTolerance 10
+		-iv polyRetopoKeepOriginal 0
+		-iv polyRetopoPreserveHardEdges 0
+		-iv polyRetopoPreprocessMesh 1
+		;
+}
+
+global proc performPolyRetopoSetup (string $parent, int $forceFactorySettings)
+{
+	setOptionVars($forceFactorySettings);
+	setParent $parent;
+
+    float $fval;
+
+    //$fval = `optionVar -query polyRetopoTargetEdgeDeviation`;
+    //floatSliderGrp -edit -value $fval polyRetopoTargetEdgeDeviation_FSG;
+
+    $fval = `optionVar -query polyRetopoRegularity`;
+    floatSliderGrp -edit -value $fval polyRetopoRegularity_FSG;
+
+    $fval = `optionVar -query polyRetopoUniformity`;
+    floatSliderGrp -edit -value $fval polyRetopoUniformity_FSG;
+
+    $fval = `optionVar -query polyRetopoAnisotropy`;
+    floatSliderGrp -edit -value $fval polyRetopoAnisotropy_FSG;
+
+    //$fval = `optionVar -query polyRetopoCurveSingularitySeparation`;
+    //floatSliderGrp -edit -value $fval polyRetopoCurveSingularitySeparation_FSG;
+
+    //$fval = `optionVar -query polyRetopoCurveCurveInfluenceDirection`;
+    //floatSliderGrp -edit -value $fval polyRetopoCurveCurveInfluenceDirection_FSG;
+
+
+    int $ival;
+
+    $ival = `optionVar -query polyRetopoTargetFaceCount`;
+    intSliderGrp -edit -value $ival polyRetopoTargetFaceCount_ISG;
+
+    $ival = `optionVar -query polyRetopoTargetFaceCountTolerance`;
+    intSliderGrp -edit -value $ival polyRetopoTargetFaceCountTolerance_ISG;
+
+    $ival = `optionVar -query polyRetopoKeepOriginal`;
+    checkBoxGrp -edit -value1 $ival polyRetopoKeepOriginal_CBG;
+
+    $ival = `optionVar -query polyRetopoPreserveHardEdges`;
+    checkBoxGrp -edit -value1 $ival polyRetopoPreserveHardEdges_CBG;
+
+    $ival = `optionVar -query polyRetopoPreprocessMesh`;
+    checkBoxGrp -edit -value1 $ival polyRetopoPreprocessMesh_CBG;	
+}
+
+global proc performPolyRetopoCallback (string $parent, int $doIt)
+{
+	setParent $parent;
+	
+	//optionVar -floatValue polyRetopoTargetEdgeDeviation
+	//	`floatSliderGrp -query -value polyRetopoTargetEdgeDeviation_FSG`;
+
+	optionVar -floatValue polyRetopoRegularity
+		`floatSliderGrp -query -value polyRetopoRegularity_FSG`;
+
+	optionVar -floatValue polyRetopoUniformity
+		`floatSliderGrp -query -value polyRetopoUniformity_FSG`;
+
+	optionVar -floatValue polyRetopoAnisotropy
+		`floatSliderGrp -query -value polyRetopoAnisotropy_FSG`;
+
+	//optionVar -floatValue polyRetopoCurveSingularitySeparation
+	//	`floatSliderGrp -query -value polyRetopoCurveSingularitySeparation_FSG`;
+
+	//optionVar -floatValue polyRetopoCurveCurveInfluenceDirection
+	//	`floatSliderGrp -query -value polyRetopoCurveCurveInfluenceDirection_FSG`;
+
+
+
+	optionVar -intValue polyRetopoTargetFaceCount
+		`intSliderGrp -query -value polyRetopoTargetFaceCount_ISG`;
+
+	optionVar -intValue polyRetopoTargetFaceCountTolerance
+		`intSliderGrp -query -value polyRetopoTargetFaceCountTolerance_ISG`;
+
+	optionVar -intValue polyRetopoKeepOriginal
+		`checkBoxGrp -query -value1 polyRetopoKeepOriginal_CBG`;
+
+	optionVar -intValue polyRetopoPreserveHardEdges
+		`checkBoxGrp -query -value1 polyRetopoPreserveHardEdges_CBG`;
+
+	optionVar -intValue polyRetopoPreprocessMesh
+		`checkBoxGrp -query -value1 polyRetopoPreprocessMesh_CBG`;
+
+	if ($doIt) {
+		performPolyRetopo 0;
+		addToRecentCommandQueue "performPolyRetopo 0" "PolyRetopo";
+	}
+}
+
+proc performPolyRetopoOptions ()
+{
+	// Global template variables for form spacing
+	global int $gOptionBoxTemplateFrameSpacing;
+	global int $gOptionBoxTemplateDescriptionMarginWidth;
+
+	string $commandName = "performPolyRetopo";
+	string $callback = ($commandName + "Callback");
+	string $setup = ($commandName + "Setup");
+	   
+	string $layout = getOptionBox();
+	setParent $layout;
+	setUITemplate -pushTemplate OptionBoxTemplate;
+	waitCursor -state 1;
+	
+	scrollLayout;
+
+	// Form layout
+	string $parent = `formLayout polyRetopoOptions`;
+	
+		// Description frame
+		string $descriptionFrame = 
+		`frameLayout -label (uiRes("m_performPolyRetopo.kDescriptionFrame")) -height 125
+			-mw $gOptionBoxTemplateDescriptionMarginWidth`;	
+
+			string $desc1 = (uiRes("m_performPolyRetopo.kDescription1"));
+			string $desc2 = (uiRes("m_performPolyRetopo.kDescription2"));
+
+			columnLayout;
+			text -wordWrap 1 -height 45 $desc1;
+			text -wordWrap 1 -height 40 $desc2;
+
+		setParent $parent;
+
+		// Pre-Processing frame
+		string $ppFrame = `frameLayout -label (uiRes("m_performPolyRetopo.kPPFrame")) -collapsable 1`;
+			columnLayout;
+
+			checkBoxGrp -label (uiRes("m_performPolyRetopo.kPreprocessMesh")) 
+				-annotation (uiRes("m_performPolyRetopo.kPreprocessMeshAnn"))
+                polyRetopoPreprocessMesh_CBG;
+
+			checkBoxGrp -label (uiRes("m_performPolyRetopo.kKeepOriginal")) 
+				-annotation (uiRes("m_performPolyRetopo.kKeepOrigAnn"))
+                polyRetopoKeepOriginal_CBG;
+
+			checkBoxGrp -label (uiRes("m_performPolyRetopo.kPreserveHardEdges")) 
+				-annotation (uiRes("m_performPolyRetopo.kPreserveHardEdgesAnn"))
+                polyRetopoPreserveHardEdges_CBG;
+
+		setParent $parent;
+
+		// Face count frame
+		string $fcFrame = `frameLayout -label (uiRes("m_performPolyRetopo.kFCFrame")) -collapsable 1`;
+			columnLayout;
+			
+			intSliderGrp -label (uiRes("m_performPolyRetopo.kTargetFaceCount")) 
+                -min 10 -max 100000
+				-annotation (uiRes("m_performPolyRetopo.kFaceCountAnn"))
+                polyRetopoTargetFaceCount_ISG;
+
+			intSliderGrp -label (uiRes("m_performPolyRetopo.kTargetFaceCountTolerance")) 
+                -min 1 -max 100
+				-annotation (uiRes("m_performPolyRetopo.kFaceCountTolAnn"))
+                polyRetopoTargetFaceCountTolerance_ISG;
+
+		setParent $parent;
+
+		// Topology frame
+		string $topoFrame = 
+		`frameLayout -label (uiRes("m_performPolyRetopo.kTopoFrame")) -collapsable 1`;
+
+			columnLayout;
+
+            floatSliderGrp -label (uiRes("m_performPolyRetopo.kRegularity")) 
+                -min 0.0 -max 1.0 
+				-annotation (uiRes("m_performPolyRetopo.kRegularityAnn"))
+                polyRetopoRegularity_FSG;
+
+            floatSliderGrp -label (uiRes("m_performPolyRetopo.kUniformity")) 
+                -min 0.0 -max 1.0 
+				-annotation (uiRes("m_performPolyRetopo.kFaceUniformityAnn"))
+                polyRetopoUniformity_FSG;
+
+			string $anisotropyAnn1 = (uiRes("m_performPolyRetopo.kAnisotropyAnn"));
+			string $anisotropyAnn2 = (uiRes("m_performPolyRetopo.kAnisotropyTipAnn"));
+
+            floatSliderGrp -label (uiRes("m_performPolyRetopo.kAnisotropy")) 
+                -min 0.0 -max 1.0 
+				-annotation ($anisotropyAnn1 + "\n" + $anisotropyAnn2)
+                polyRetopoAnisotropy_FSG;
+
+		setParent $parent;	
+
+	setParent ..;
+	setParent ..;
+
+	// Attach frame to form layout
+	formLayout - e
+		-af $descriptionFrame "top" $gOptionBoxTemplateFrameSpacing
+		-af $descriptionFrame "left" $gOptionBoxTemplateFrameSpacing
+		-af $descriptionFrame "right" $gOptionBoxTemplateFrameSpacing
+		-an $descriptionFrame "bottom"
+
+		-ac $ppFrame "top" $gOptionBoxTemplateFrameSpacing $descriptionFrame
+		-af $ppFrame "left" $gOptionBoxTemplateFrameSpacing
+		-af $ppFrame "right" $gOptionBoxTemplateFrameSpacing
+		-an $ppFrame "bottom" 
+
+		-ac $fcFrame "top" $gOptionBoxTemplateFrameSpacing $ppFrame
+		-af $fcFrame "left" $gOptionBoxTemplateFrameSpacing
+		-af $fcFrame "right" $gOptionBoxTemplateFrameSpacing
+		-an $fcFrame "bottom" 
+
+		-ac $topoFrame "top" $gOptionBoxTemplateFrameSpacing $fcFrame
+		-af $topoFrame "left" $gOptionBoxTemplateFrameSpacing
+		-af $topoFrame "right" $gOptionBoxTemplateFrameSpacing
+		-an $topoFrame "bottom" 
+	$parent;
+
+	
+	waitCursor -state 0;
+	setUITemplate -popTemplate;
+	   
+	string $applyBtn = getOptionBoxApplyBtn();
+	button -edit -label (uiRes("m_performPolyRetopo.kRetopoButton"))
+	       -command ($callback + " " + $parent + " " + 1)
+		$applyBtn;
+	string $saveBtn = getOptionBoxSaveBtn();
+	button -edit 
+		-command ($callback + " " + $parent + " " + 0 + "; hideOptionBox")
+		$saveBtn;
+	string $resetBtn = getOptionBoxResetBtn();
+	button -edit 
+		-command ($setup + " " + $parent + " " + 1)
+		$resetBtn;
+			 
+	setOptionBoxTitle( (uiRes("m_performPolyRetopo.kRetopoOptions")) );
+
+	//	Customize the 'Help' menu item text.
+	//
+	setOptionBoxHelpTag( "PolyRetopo" );
+
+	eval (($setup + " " + $parent + " " + 0));      
+	showOptionBox();
+}
+
+proc string assembleCmd()
+{
+    string $cmd = "polyRetopo";
+
+	$cmd += (" -caching 1");
+	$cmd += (" -constructionHistory " + `constructionHistory -q -toggle`);
+	$cmd += (" -replaceOriginal " + !((int)(`optionVar -query polyRetopoKeepOriginal`)));
+	$cmd += (" -preprocessMesh " + `optionVar -query polyRetopoPreprocessMesh`);
+	$cmd += (" -preserveHardEdges " + `optionVar -query polyRetopoPreserveHardEdges`);
+    // $cmd += (" -targetEdgeDeviation " + `optionVar -query polyRetopoTargetEdgeDeviation`);
+	$cmd += (" -topologyRegularity " + `optionVar -query polyRetopoRegularity`);
+	$cmd += (" -faceUniformity " + `optionVar -query polyRetopoUniformity`);
+	$cmd += (" -anisotropy " + `optionVar -query polyRetopoAnisotropy`);
+	// $cmd += (" -curveSingularitySeparation " + `optionVar -query polyRetopoCurveSingularitySeparation`);
+	// $cmd += (" -curveInfluenceDirection " + `optionVar -query polyRetopoCurveCurveInfluenceDirection`);
+	$cmd += (" -targetFaceCount " + `optionVar -query polyRetopoTargetFaceCount`);
+	$cmd += (" -targetFaceCountTolerance " + `optionVar -query polyRetopoTargetFaceCountTolerance`);
+
+	return $cmd;
+}
+
+global proc string performPolyRetopo (int $option)
+{
+	string $cmd="";
+
+	switch ($option) {
+	case 0:
+        setOptionVars(false);
+
+		select `filterExpand -ex true -sm 12`;
+		string $origSel[] = `ls -sl -o`;
+		if (1 != size($origSel)) {
+			error ((uiRes("m_performPolyRetopo.kObjectCountError")));
+			return "";
+		}
+
+        $cmd = assembleCmd();
+
+		string $cmdResult[] = `evalEcho $cmd`;
+
+		int $ko = ((int)(`optionVar -query polyRetopoKeepOriginal`));
+		if ($ko && 0 < size($cmdResult))
+		{
+			rename $origSel[0] ($origSel[0] + "_Original");
+			string $resultObj = `rename $cmdResult[0] $origSel[0]`;
+			select $resultObj;
+		}
+
+		break;
+	case 1: 
+        performPolyRetopoOptions; 
+        break;
+	default:
+        setOptionVars(false);
+        $cmd = assembleCmd();
+	}
+	return $cmd;
+}

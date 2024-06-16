@@ -1,0 +1,79 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+// Creation Date:  19 Dec 1996
+//
+//  Description:
+//		Create the popup menu for the Hardware Render Buffer.
+
+
+
+//  ========== buildGlRenderMenuNow ==========
+//
+//  Description:
+//		Build the menu the first time it is posted.
+//
+
+global proc  buildGlRenderMenuNow( string $panelName )
+{
+	global int $gMarkingMenusOn;
+
+	string		$panelControl = `panel -q -control $panelName`;
+	string		$popMenuName = ($panelControl+"|"+$panelName+"MainPop");
+
+
+	if (0 == `menu -q -numberOfItems $popMenuName`)
+	{
+		setParent -m $popMenuName;
+
+		// Put a label at the top of the menu to
+		// indicate the current working mode
+		//
+		menuItem -l "Hardware Render Menu";
+		menuItem -divider true;
+		menuItem -divider true;
+	}
+}
+
+
+
+//  ========== GlRenderEdMenu ==========
+//
+//  Description:
+//		Main entry point. Create an empty popup menu.
+//		Defer the actual widget creation until the 
+//		first time the menu is posted.
+//
+
+global proc  GlRenderEdMenu( string $panelName ) 
+{
+
+	// Find out current location of the panel and ensure
+	// that it has a control layout associated with it.
+	//
+	string		$panelControl = `panel -q -control $panelName`;
+
+	if ($panelControl != "")
+	{
+		string		$popMenuName = ($panelName + "MainPop");
+
+		if (!`popupMenu -exists $popMenuName`)
+		{
+			// Build the popup
+			//
+			popupMenu -parent $panelControl
+				-markingMenu false
+				-button 3
+				-postMenuCommand ("buildGlRenderMenuNow " + $panelName)
+				$popMenuName;
+		}
+	}
+
+
+}  // GlRenderEdMenu /

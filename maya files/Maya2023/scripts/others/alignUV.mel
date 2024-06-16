@@ -1,0 +1,118 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+// ===========================================================================
+//
+//  Procedure Name:
+//      alignUV
+//
+//  Description:
+//      UV workflow function used for aligning UVs to the minimum, maximum or
+//      average U and/or V position of a given UV selection.
+//
+//  Input Arguments
+//      action - Align type: maxU,minU,avgU,maxV,minV,avgV,singularity
+//
+//  Return Value:
+//      None.
+//
+// ===========================================================================
+
+global proc alignUV(string $action)
+{
+	string $selection[] = `ls -sl`;
+	string $uvs[];
+	$uvs = `filterExpand -ex false -sm 35`;
+	if (size($uvs) == 0)
+	{
+		// If Convert Selection is ON, try to convert the current selection to uvs.
+		int $val = `optionVar -q polyAutoConvertAction`;
+		if ( 1 == $val )
+			$uvs = `polyListComponentConversion -tuv`;
+
+		// Check if the set of uvs is still empty.
+		if (size($uvs) == 0) {
+			error((uiRes("m_alignUV.kNoUVsSelected")));
+			return;
+		}
+	}
+	string $buffer[];
+	tokenize $selection[0] "." $buffer;
+	string $mesh = $buffer[0];
+	string $pivotAttr = ($mesh + ".uvPivot") ;
+
+    // Calculate U and V centers
+    float $uvBox[] = `polyEvaluate -boundingBoxComponent2d $uvs`;
+    float $centerU = 0.5 * ( $uvBox[0] + $uvBox[1] );
+    float $centerV = 0.5 * ( $uvBox[2] + $uvBox[3] );
+
+    switch($action){
+	// Align to max U
+    case "maxU":
+        polyEditUV
+            -relative false
+            -uValue $uvBox[1]
+        $uvs;
+		setAttr $pivotAttr $uvBox[1] $centerV;
+        break;
+
+    // Align to min U
+    case "minU":
+        polyEditUV
+            -relative false
+            -uValue $uvBox[0]
+        $uvs;
+		setAttr $pivotAttr $uvBox[0] $centerV;
+        break;
+
+    // Align to average U
+    case "avgU":
+        polyEditUV
+            -relative false
+            -uValue $centerU
+        $uvs;
+		setAttr $pivotAttr $centerU $centerV;
+        break;
+
+    // Align to max V
+    case "maxV":
+        polyEditUV
+            -relative false
+            -vValue $uvBox[3]
+        $uvs;
+		setAttr $pivotAttr $centerU $uvBox[3];
+        break;
+
+    // Align to min V
+    case "minV":
+        polyEditUV
+            -relative false
+            -vValue $uvBox[2]
+        $uvs;
+		setAttr $pivotAttr $centerU $uvBox[2];
+        break;
+
+    // Align to average V
+    case "avgV":
+        polyEditUV
+            -relative false
+            -vValue $centerV
+        $uvs;
+		setAttr $pivotAttr $centerU $centerV;
+        break;
+
+    case "singularity":
+        polyEditUV
+            -relative false
+            -uValue $centerU
+            -vValue $centerV
+        $uvs;
+		setAttr $pivotAttr $centerU $centerV;		
+        break;
+    }
+}
+

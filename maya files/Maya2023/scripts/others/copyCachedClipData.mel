@@ -1,0 +1,67 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+	//
+//
+//  Creation Date:  Oct, 2000
+//
+//	Procedure Name:
+//		copyCachedClipData
+//
+//	Description:
+//		Callback used after moving attributes from a character
+//      to another character. Before removing the attributes from
+//		the first character, the "cacheClipData" mel script should
+//		have been used to isolate the clips from the original character.
+//		The result argument from cacheClipData is then passed to this
+//		mel script after the new attributes have been added to another
+//		character.
+//
+//	Input Arguments:
+//  $cache : 		result argument returned earlier by "cacheClipData"
+//	$destChar :		new character to receive the clips
+//
+//	Return Value:
+//		none
+//
+
+global proc 
+copyCachedClipData(string $cache[], string $destChar)
+{
+	string $library = $cache[0];
+	if (nodeType($library) != "clipLibrary") {
+		error( (uiRes("m_copyCachedClipData.kNoSourceLibErr")) );
+		return;
+	}
+	
+	string $clipsToCopy[];
+	int $ii;
+	for ($ii = 1; $ii < size($cache); $ii++) {
+		string $res = $cache[$ii];
+		if (nodeType($res) == "animClip") {
+			int $instanced = `getAttr ($res+".clipInstance")`;
+			if ($instanced) {
+				$clipsToCopy[size($clipsToCopy)] = $res;
+			}
+		}
+	}
+	if (size($clipsToCopy) > 0) {
+		string $copyCmd = "clip -copy ";
+		
+		for ($clip in $clipsToCopy) {
+			$copyCmd += (" -name "+$clip);
+		}
+		
+		$copyCmd += (" "+$library);
+		eval $copyCmd;
+		
+		string $pasteCmd = ("clip -pi -mm \"byNodeName\" -sc 1");
+		$pasteCmd += (" "+$destChar);
+		catch(`eval $pasteCmd`);
+		delete $library;
+	}
+}

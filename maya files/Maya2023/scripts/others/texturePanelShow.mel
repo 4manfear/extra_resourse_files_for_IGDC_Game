@@ -1,0 +1,40 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc texturePanelShow()
+//
+//  Description:
+//		Show texture panel, and attach it to UV toolkit panel
+//		
+//  Input Arguments:
+//		None
+//
+//  Return Value:
+//      None
+//
+{
+	string $texWin = "polyTexturePlacementPanel1Window";
+	string $texTkCtrl = "UVToolkitDockControl";
+	int $hasState = `workspaceControlState -q -ex $texWin`;
+	string $textureEditorTitle = localizedPanelLabel("UV Editor");
+	tearOffRestorePanel $textureEditorTitle polyTexturePlacementPanel true;
+	if (!`window -ex $texWin`)
+		return;
+	// The UI is dependent on plugin load state, so make sure the parent workspace control
+	// (if any) waits until plugins are auto-loaded before rebuilding UI
+	if (`workspaceControl -q -exists $texWin`) {
+		workspaceControl -e -checksPlugins true $texWin;
+	}
+	if (!`workspaceControl -q -exists $texTkCtrl`) {
+		UVToolkitPanel();
+	}
+	else if (!`workspaceControl -q -visible $texTkCtrl`)
+		workspaceControl -e -visible true $texTkCtrl;
+	
+	// Attach toolkit to UV editor as default; always docked to the right
+	workspaceControl -e -dockToControl $texWin right $texTkCtrl;
+}

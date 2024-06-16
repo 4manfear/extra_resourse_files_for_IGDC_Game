@@ -1,0 +1,35 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+// Global Maya compatibility file, version 2021ff01
+////////////////////////////////////////////////////////////////////////////
+
+attrCompatibility -v "2021ff01";
+attrCompatibility -renameAttr iq composeMatrix oq;
+
+attrCompatibility -removeAttr dagNode ghostColorPreA;
+attrCompatibility -removeAttr dagNode gap;
+attrCompatibility -removeAttr dagNode ghostColorPostA;
+attrCompatibility -removeAttr dagNode gla;
+attrCompatibility -removeAttr dagNode ghostRangeStart;
+attrCompatibility -removeAttr dagNode grs;
+attrCompatibility -removeAttr dagNode ghostRangeEnd;
+attrCompatibility -removeAttr dagNode gre;
+//
+attrCompatibility -removeAttr dagNode ghostingControl;
+attrCompatibility -removeAttr dagNode gc;
+//
+attrCompatibility -renameAttr gbfr dagNode gpr;
+//
+attrCompatibility -renameAttr gaft dagNode gps;
+//
+attrCompatibility -renameAttr gstp dagNode gss;
+
+//
+attrCompatibility -removeAttr cluster percentResolution;
+attrCompatibility -removeAttr cluster usePartialResolution;

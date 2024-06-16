@@ -1,0 +1,196 @@
+<!--
+===========================================================================
+Copyright 2015 Autodesk, Inc. All rights reserved.
+
+Use of this software is subject to the terms of the Autodesk license
+agreement provided at the time of installation or download, or which
+otherwise accompanies this software in either electronic or hard copy form.
+===========================================================================
+-->
+
+<fragment uiName="colorMathBase" name="colorMathBase" type="plumbing" class="ShadeFragment" version="1.0">
+	<description><![CDATA[Color operation shade fragment]]></description>
+	<properties>
+		<float3 name="colorA" />
+		<float3 name="colorB" />
+		<int name="operation" />
+	</properties>
+	<values>
+		<float3 name="colorA" value="1.0,0.0,0.0" />
+		<float3 name="colorB" value="0.0,0.0,1.0" />
+		<int name="operation" value="0" />
+	</values>
+	<outputs>
+		<float3  name="outColor" />
+	</outputs>
+	<implementation>
+	<implementation render="OGSRenderer" language="Cg" lang_version="2.1">
+		<function_name val="colorMathBase" />
+		<source>
+		<![CDATA[
+float3 colorMathBase(float3 colorA, float3 colorB, int operation)
+{
+	float3 retColor = colorA;
+
+	if (operation==0)
+	{
+		retColor[0] += colorB[0];
+		retColor[1] += colorB[1];
+		retColor[2] += colorB[2];
+	}
+	else if (operation==1)
+	{
+		retColor[0] -= colorB[0];
+		retColor[1] -= colorB[1];
+		retColor[2] -= colorB[2];
+	}
+	else if (operation==2)
+	{
+		retColor[0] *= colorB[0];
+		retColor[1] *= colorB[1];
+		retColor[2] *= colorB[2];
+	}
+	else if (operation==3)
+	{
+		retColor[0] = colorB[0] != 0.0 ? (colorA[0] / colorB[0]) : 0.0;
+		retColor[1] = colorB[1] != 0.0 ? (colorA[1] / colorB[1]) : 0.0;
+		retColor[2] = colorB[2] != 0.0 ? (colorA[2] / colorB[2]) : 0.0;
+	}
+	else if (operation==4)
+	{
+		if ((retColor[0] + retColor[1] + retColor[2]) > (colorB[0] + colorB[1] + colorB[2]))
+		{
+			retColor[0] = colorB[0];
+			retColor[1] = colorB[1];
+			retColor[2] = colorB[2];
+		}
+	}
+	else if (operation==5)
+	{
+		if ((retColor[0] + retColor[1] + retColor[2]) < (colorB[0] + colorB[1] + colorB[2]))
+		{
+			retColor[0] = colorB[0];
+			retColor[1] = colorB[1];
+			retColor[2] = colorB[2];
+		}
+	}
+
+	return retColor;
+}
+		]]>
+		</source>
+	</implementation>
+	<implementation render="OGSRenderer" language="HLSL" lang_version="11.0">
+		<function_name val="colorMathBase" />
+		<source>
+		<![CDATA[
+float3 colorMathBase(float3 colorA, float3 colorB, int operation)
+{
+	float3 retColor = colorA;
+
+	if (operation==0)
+	{
+		retColor[0] += colorB[0];
+		retColor[1] += colorB[1];
+		retColor[2] += colorB[2];
+	}
+	else if (operation==1)
+	{
+		retColor[0] -= colorB[0];
+		retColor[1] -= colorB[1];
+		retColor[2] -= colorB[2];
+	}
+	else if (operation==2)
+	{
+		retColor[0] *= colorB[0];
+		retColor[1] *= colorB[1];
+		retColor[2] *= colorB[2];
+	}
+	else if (operation==3)
+	{
+		retColor[0] = colorB[0] != 0.0 ? (colorA[0] / colorB[0]) : 0.0;
+		retColor[1] = colorB[1] != 0.0 ? (colorA[1] / colorB[1]) : 0.0;
+		retColor[2] = colorB[2] != 0.0 ? (colorA[2] / colorB[2]) : 0.0;
+	}
+	else if (operation==4)
+	{
+		if ((retColor[0] + retColor[1] + retColor[2]) > (colorB[0] + colorB[1] + colorB[2]))
+		{
+			retColor[0] = colorB[0];
+			retColor[1] = colorB[1];
+			retColor[2] = colorB[2];
+		}
+	}
+	else if (operation==5)
+	{
+		if ((retColor[0] + retColor[1] + retColor[2]) < (colorB[0] + colorB[1] + colorB[2]))
+		{
+			retColor[0] = colorB[0];
+			retColor[1] = colorB[1];
+			retColor[2] = colorB[2];
+		}
+	}
+
+	return retColor;
+}
+		]]>
+		</source>
+		</implementation>
+		<implementation render="OGSRenderer" language="GLSL" lang_version="3.0">
+			<function_name val="colorMathBase" />
+			<source>
+				<![CDATA[
+vec3 colorMathBase(vec3 colorA, vec3 colorB, int operation)
+{
+	vec3 retColor = colorA;
+
+	if (operation==0)
+	{
+		retColor[0] += colorB[0];
+		retColor[1] += colorB[1];
+		retColor[2] += colorB[2];
+	}
+	else if (operation==1)
+	{
+		retColor[0] -= colorB[0];
+		retColor[1] -= colorB[1];
+		retColor[2] -= colorB[2];
+	}
+	else if (operation==2)
+	{
+		retColor[0] *= colorB[0];
+		retColor[1] *= colorB[1];
+		retColor[2] *= colorB[2];
+	}
+	else if (operation==3)
+	{
+		retColor[0] = colorB[0] != 0.0 ? (colorA[0] / colorB[0]) : 0.0;
+		retColor[1] = colorB[1] != 0.0 ? (colorA[1] / colorB[1]) : 0.0;
+		retColor[2] = colorB[2] != 0.0 ? (colorA[2] / colorB[2]) : 0.0;
+	}
+	else if (operation==4)
+	{
+		if ((retColor[0] + retColor[1] + retColor[2]) > (colorB[0] + colorB[1] + colorB[2]))
+		{
+			retColor[0] = colorB[0];
+			retColor[1] = colorB[1];
+			retColor[2] = colorB[2];
+		}
+	}
+	else if (operation==5)
+	{
+		if ((retColor[0] + retColor[1] + retColor[2]) < (colorB[0] + colorB[1] + colorB[2]))
+		{
+			retColor[0] = colorB[0];
+			retColor[1] = colorB[1];
+			retColor[2] = colorB[2];
+		}
+	}
+
+	return retColor;
+}
+		]]>
+		</source>
+	</implementation>
+	</implementation>
+</fragment>

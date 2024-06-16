@@ -1,0 +1,116 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+// Options
+//
+// Update menu options so that they reflect state of editor
+//
+global proc updateOptionsState(string $editor)
+{
+	if (`menuItem -exists PopupShapeNodesItem`)
+		menuItem -e -cb `hyperGraph -q -showShapes $editor` 
+						PopupShapeNodesItem;
+	if (`menuItem -exists MenuShapeNodesItem`)
+		menuItem -e -cb `hyperGraph -q -showShapes $editor` 
+						MenuShapeNodesItem;	
+
+	if (`menuItem -exists PopupInvisibleNodesItem`)
+		menuItem -e -cb `hyperGraph -q -showInvisible $editor` 
+						PopupInvisibleNodesItem;
+	if (`menuItem -exists MenuInvisibleNodesItem`)
+		menuItem -e -cb `hyperGraph -q -showInvisible $editor` 
+						MenuInvisibleNodesItem;
+	if (`menuItem -exists PopupExpressionsItem`)
+		menuItem -e -cb `hyperGraph -q -showExpressions $editor` 
+						PopupExpressionsItem;
+	if (`menuItem -exists MenuExpressionsItem`)
+		menuItem -e -cb `hyperGraph -q -showExpressions $editor` 
+						MenuExpressionsItem;
+
+	if (`menuItem -exists PopupConstraintsItem`)
+		menuItem -e -cb `hyperGraph -q -showConstraints $editor` 
+						PopupConstraintsItem;
+	if (`menuItem -exists MenuConstraintsItem`)
+		menuItem -e -cb `hyperGraph -q -showConstraints $editor` 
+						MenuConstraintsItem;
+
+	if (`menuItem -exists PopupDeformersItem`)
+		menuItem -e -cb `hyperGraph -q -showDeformers $editor` 
+						PopupDeformersItem;
+	if (`menuItem -exists MenuDeformersItem`)
+		menuItem -e -cb `hyperGraph -q -showDeformers $editor` 
+						MenuDeformersItem;
+
+	if (`menuItem -exists PopupUnderworldItem`)
+		menuItem -e -cb `hyperGraph -q -showUnderworld $editor` 
+						PopupUnderworldItem;
+	if (`menuItem -exists MenuUnderworldItem`)
+		menuItem -e -cb `hyperGraph -q -showUnderworld $editor` 
+						MenuUnderworldItem;
+
+	if (`menuItem -exists PopupSelectedFromConnectionItem`)
+		menuItem -e -cb `hyperGraph -q -showConnectionFromSelected $editor` 
+						PopupSelectedFromConnectionItem;
+	if (`menuItem -exists MenuSelectedFromConnectionItem`)
+		menuItem -e -cb `hyperGraph -q -showConnectionFromSelected $editor` 
+						MenuSelectedFromConnectionItem;
+
+	if (`menuItem -exists PopupSelectedToConnectionItem`)
+		menuItem -e -cb `hyperGraph -q -showConnectionToSelected $editor` 
+						PopupSelectedToConnectionItem;
+	if (`menuItem -exists MenuSelectedToConnectionItem`)
+		menuItem -e -cb `hyperGraph -q -showConnectionToSelected $editor` 
+						MenuSelectedToConnectionItem;
+
+	if (`menuItem -exists PopupUpdateSelectionItem`)
+		menuItem -e -cb `hyperGraph -q -updateSelection $editor` 
+						PopupUpdateSelectionItem;
+	if (`menuItem -exists MenuUpdateSelectionItem`)
+		menuItem -e -cb `hyperGraph -q -updateSelection $editor` 
+						MenuUpdateSelectionItem;
+
+	if (`menuItem -exists PopupUpdateNodeAddedItem`)
+		menuItem -e -cb `hyperGraph -q -updateNodeAdded $editor` 
+						PopupUpdateNodeAddedItem;
+	if (`menuItem -exists MenuUpdateNodeAddedItem`)
+		menuItem -e -cb `hyperGraph -q -updateNodeAdded $editor` 
+						MenuUpdateNodeAddedItem;
+
+	if (`radioMenuItemCollection -exists ($editor + "OrientMenuCollection")`) {
+		menuItem -edit -rb 
+			(`hyperGraph -q -orientation $editor` == "horiz") ($editor+"MenuHorizItem");
+		menuItem -edit -rb 
+			(`hyperGraph -q -orientation $editor` == "vert") ($editor+"MenuVertItem");
+	}
+
+	if (`radioMenuItemCollection -exists ($editor + "OrientPopupCollection")`) {
+		menuItem -edit -rb 
+			(`hyperGraph -q -orientation $editor` == "horiz") ($editor+"PopupHorizItem");
+		menuItem -edit -rb 
+			(`hyperGraph -q -orientation $editor` == "vert") ($editor+"PopupVertItem");
+	}
+
+	if (`radioMenuItemCollection -exists ($editor + "FreeformMenuCollection")`) {
+		menuItem -edit -rb 
+			(`hyperGraph -q -freeform $editor`) MenuFreeformOnItem;
+		menuItem -edit -rb 
+			(`hyperGraph -q -freeform $editor` == false) MenuFreeformOffItem;
+	}
+
+	if (`radioMenuItemCollection -exists ($editor + "FreeformPopupCollection")`) {
+		menuItem -edit -rb 
+			(`hyperGraph -q -freeform $editor`) PopupFreeformOnItem;
+		menuItem -edit -rb 
+			(`hyperGraph -q -freeform $editor` == false) PopupFreeformOffItem;
+	}
+
+	iconTextCheckBox -edit -value (`hyperGraph -q -freeform $editor`)
+			($editor+"freeformButton");
+	iconTextCheckBox -edit -value (`hyperGraph -q -mergeConnections $editor`)
+			($editor+"mergeConnectionsButton");
+}

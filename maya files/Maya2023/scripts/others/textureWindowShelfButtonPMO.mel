@@ -1,0 +1,39 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//  Procedure Name:
+//	  textureWindowShelfButtonPMO
+//
+//  Description:
+//		The method textureWindowShelfButtonPMO defines the post menu command 
+//      that's called once the first time the rmb menu on a shelfButton is invoked.
+//
+//  Input Arguments:
+//	  $popupMenu   - Popup menu name
+//    $shelfButton - Shelf button name
+//    $shelfMagicString - Magic string inserted as a comment
+//
+//  Return Value:
+//	  None
+//
+global proc textureWindowShelfButtonPMO(string $popupMenu, string $shelfButton, string $shelfMagicString)
+{
+    setParent -m $popupMenu;
+	menu -e -deleteAllItems $popupMenu;
+    menuItem -label (uiRes("m_textureWindowShelfButtonPMO.kDelete")) 
+	         -annotation (uiRes("m_textureWindowShelfButtonPMO.kDeleteAnnot"))
+	         -command ($shelfMagicString + "evalDeferred(\"deleteUI -control " + $shelfButton + ";textureWindowShelfTextBarRefresh\")");
+}
+
+global proc textureWindowShelfTextBarRefresh()
+{
+    if(`shelfLayout -exists textureCustomShelf` && `frameLayout -ex textureEditorShelfTextBarFrameLayout`)
+	{
+	    $chilren = `shelfLayout -q -childArray textureCustomShelf`;
+		frameLayout -e -visible (size($chilren) == 0) textureEditorShelfTextBarFrameLayout;
+	}
+}

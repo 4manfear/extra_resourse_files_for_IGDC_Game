@@ -1,0 +1,27 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  June 08, 2006
+//
+//  Description:
+//      This script defines the procedure for getting the
+//      localized nice attribute name.
+//
+global proc string attributeShortName( string $nodeName, string $longName ) 
+{
+	string $plug = ($nodeName + "." + $longName);
+
+	string $msg = (uiRes("m_attributeShortName.kUseAttributeName"));
+	warning `format -s ("attributeName -short " + $plug) $msg`;
+
+	obsoleteProc( "attributeShortName", "attributeShortName.mel" );
+
+	return `attributeName -short $plug`;
+
+}

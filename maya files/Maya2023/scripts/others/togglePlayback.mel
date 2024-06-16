@@ -1,0 +1,37 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+// Creation Date:  23 July 1996
+//
+//
+//  Procedure Name:
+//      togglePlayback
+//
+//  Description:
+//		Toggles playback on and off, by checking
+//		to see if Maya is currently playing back
+//		or not.
+//
+//  Input Arguments:
+//      None.
+//
+//  Return Value:
+//      None.
+//
+
+global proc togglePlayback( ) {
+
+	if( `isTrue playingBack` ) {
+		play -state off;
+	} else {
+		playButtonForward;
+	}
+}
+
+

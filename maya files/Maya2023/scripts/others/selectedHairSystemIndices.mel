@@ -1,0 +1,64 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  2003
+//
+// Description: return indices of the inputHair array for all follicles that
+// are selected directly or indirectly.
+//	
+
+global proc int[] selectedHairSystemIndices(string $hsysArray[])
+{
+	int $out[];
+	string $hsys = "";
+	string $hcurves[] = getSelectedHairCurves();
+	int $numHairs = size( $hcurves );
+
+	int $ind[];
+	int $numInd = 0;
+	int $missingConnections = false;
+	int $multipleHairSystems = false;
+	for( $i = 0; $i < $numHairs; $i++ ){
+		string $hair = $hcurves[$i];
+		int $mode = getAttr ($hair + ".simulationMethod" );
+		if( $mode != 2 ){
+			continue; // don't connect pins to passive hairs
+		} 
+		string $con[] = `connectionInfo -dfs ($hair + ".outHair")`;
+		if( size( $con ) > 0 ){
+			string $buffer[];
+			int $numTokens = `tokenize $con[0] ".[]" $buffer`;
+			if( $numTokens == 3 ){
+				$hairSys = $buffer[0];
+				if( $hsys == "" ){
+					$hsys = $hairSys;
+				}  else if( $hairSys != $hsys ){
+					$multipleHairSystems = true;
+					break;
+				}
+				$ind[$numInd] = (int)$buffer[2];	
+				$numInd++;
+			}
+
+		} else {
+			$missingConnections = true;
+			break;
+		}
+				
+	}
+	if( $multipleHairSystems ){
+		warning((uiRes("m_selectedHairSystemIndices.kMultipleHairSystems"))); 
+	} else if( $missingConnections ){
+		warning((uiRes("m_selectedHairSystemIndices.kMissingConnections"))); 
+	} else {
+		$out = $ind;
+		$hsysArray[0] = $hsys;
+	}
+	return $out;	
+}

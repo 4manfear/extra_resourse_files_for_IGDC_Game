@@ -1,0 +1,94 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+
+//
+//  Procedure Name:
+//      createImagePlane
+//
+//  Description:
+//      Creates an image plane according to the given camera
+//
+//  Input Arguments:
+//      camera : camera name
+//
+//  Return Value:
+//      Return the names of imageplane shape and its transform.
+//
+
+proc setOptionVars ()
+{
+	optionVar -init false -category "Create.Free Image Plane"
+		-fv freeImageWidth 10.0
+		-fv freeImageHeight 10.0
+		-iv freeImageMR 1
+		;
+}
+
+global proc string[] createImagePlane (string $camera)                                          
+{
+	//Initialize the parameters
+	setOptionVars();
+
+	// query orthographic flag of the camera.
+	int $isOrtho = `camera -q -o $camera`;
+	
+	// Initialize the command's parameters
+ 	float $width  = `optionVar -query freeImageWidth`;
+ 	float $height = `optionVar -query freeImageHeight`;
+ 	int    $mr      = `optionVar -query freeImageMR`;
+
+    // create image plane
+	string $newImagePlane[];
+	
+	string $attrName;
+	
+	string $lookThruCamera = `lookThru -q`;
+	
+	if ( $isOrtho == 1 ) {
+	
+		float $widthOrtho = `camera -q -orthographicWidth $camera`;
+		
+		// for orthographic camera, create free imageplane.
+		$newImagePlane = `imagePlane -width $widthOrtho -height $widthOrtho -maintainRatio $mr -lookThrough $lookThruCamera`;
+		
+		// align imageplane to camera by orient-constraint.
+		// OGS_TODO: no support for camera instance case, since just use $cameraTransforms[0].
+		string $cameraTransforms[] = `listTransforms $camera`;
+	
+		// set camera rotation to imageplane
+		$attrName = $cameraTransforms[0] + ".rotate";
+		float $rot[] = `getAttr $attrName`;
+		$attrName = $newImagePlane[0] + ".rotate";
+		setAttr $attrName $rot[0] $rot[1] $rot[2];
+		
+		if ($cameraTransforms[0] != "top" && $cameraTransforms[0] != "side" && $cameraTransforms[0] != "front")
+		{
+			string $camreraTranslate = $cameraTransforms[0] + ".translate";
+			float   $translate[] = `getAttr $camreraTranslate`;	
+			move -worldSpace -moveXYZ $translate[0] $translate[1] $translate[2] $newImagePlane[0];
+			move -relative -objectSpace 0 0 -5 $newImagePlane[0];
+		}
+		
+	} else {
+	
+		// for perspective camera, create imageplane in underworld of the camera.
+		// We will consider that if user(s) detach the image plane from the camera 
+		// and the image plane will still respect the optionVars
+		
+		$newImagePlane = `imagePlane -camera $camera -width $width -height $height -maintainRatio $mr`;
+	}
+			
+	// make camera visible to ensure the image plane outline is drawn and selectable.
+	// consider cases where the camera name may be the same as another camera,
+	// but inside a different hierarchy.
+	//
+	string $parents[] = `listRelatives -fullPath -parent $camera`;
+	for ($item in $parents) showHidden $item;        
+
+	return $newImagePlane;
+}

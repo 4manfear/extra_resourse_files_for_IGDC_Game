@@ -1,0 +1,38 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//  Description:
+//
+//  Input Arguments:
+//      None.
+//
+//  Return Value:
+//      None.
+//
+
+global proc panZoomValues(string $toolName)
+{
+	string $icon = "camPanZoom.png";
+	string $helpTag = "PanZoomTool";
+	toolPropertySetCommon $toolName $icon $helpTag;
+
+	string $parent = (`toolPropertyWindow -q -location` + "|panZoom");
+	setParent $parent;
+
+	floatSliderGrp -e
+		-cc ("panZoomCtx -e -zoomScale #1 " + $toolName)
+		-v `panZoomCtx -q -zoomScale $toolName`
+		zoomScale;
+    radioButtonGrp -e
+       	-on1 ("panZoomCtx -e -panMode "+$toolName)
+       	-on2 ("panZoomCtx -e -zoomMode "+$toolName)
+     	-select ((`panZoomCtx -q -zoomMode $toolName`) + 1)
+     	panZoomMode;
+
+	toolPropertySelect panZoom;
+}

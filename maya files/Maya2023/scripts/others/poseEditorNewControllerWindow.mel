@@ -1,0 +1,62 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc poseEditorNewControllerWindow(string $targetAttr)
+//
+//  Description:
+//		Create window "New Controller". Used to connect from control attribute to driver controller attribute
+//
+//  Input Arguments:
+//	    string $targetAttr - Given target controller on interpolator node
+//
+{
+    global string $newControllerWindow;
+    $newControllerWindow = `window -title (uiRes("m_poseEditorNewControllerWindow.kNewController"))`;
+    string $layout = `formLayout`;
+    string $Label = `text -label (uiRes("m_poseEditorNewControllerWindow.kController"))`;
+    string $attrTextField = `textField attrTextField`;
+    string $okButton = `button -label (uiRes("m_poseEditorNewControllerWindow.kOk")) -w 80 -c ("poseEditorAddController " + $layout + " " + $targetAttr + "; deleteUI -window " + $newControllerWindow + ";")`;
+    string $cancelButton = `button -label (uiRes("m_poseEditorNewControllerWindow.kCancel")) -w 80 -c ("deleteUI -window " + $newControllerWindow)`;
+    formLayout -e  
+			    -attachForm  $Label "top" 10
+			    -attachForm  $Label "left" 10
+			    -attachNone  $Label "bottom" 
+			    -attachNone  $Label "right" 
+			    
+			    -attachControl  $attrTextField "top" 5 $Label
+			    -attachForm  $attrTextField "left" 10
+			    -attachNone  $attrTextField "bottom" 
+			    -attachForm  $attrTextField "right" 10
+			    
+			    -attachNone  $okButton "top" 
+			    -attachNone  $okButton "left"
+			    -attachForm  $okButton "bottom" 2
+			    -attachControl  $okButton "right" 10 $cancelButton
+			    
+			    -attachNone  $cancelButton "top" 
+			    -attachNone  $cancelButton "left" 
+			    -attachForm  $cancelButton "bottom" 2
+			    -attachForm  $cancelButton "right" 10
+		    $layout;
+    showWindow $newControllerWindow;
+}
+
+global proc poseEditorAddController(string $parent, string $targetAttr)
+//
+//  Description:
+//		Add new controller to interpolator driver
+//
+//  Input Arguments:
+//      string $parent - parent layout
+//	    string targetAttr - Given target driver
+//
+{
+    setParent $parent;
+    string $sourceAttr = `textField -q -text attrTextField`;
+	$freeIndex = getNextFreeMultiIndex($targetAttr,1);
+    eval("connectAttr -f "+$sourceAttr+" "+$targetAttr+"["+$freeIndex+"]");
+}

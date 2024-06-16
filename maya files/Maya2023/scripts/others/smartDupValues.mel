@@ -1,0 +1,44 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc smartDupEnableGeoType( string $parent )
+{
+	setParent $parent;
+
+	int $smartDupEnabled = `manipOptions -q -enableSmartDuplicate`;
+	optionMenuGrp -e -enable ($smartDupEnabled) smartDupGeoType;
+}
+
+global proc smartDupChangeGeoType( string $parent )
+{
+	setParent $parent;
+
+	manipOptions -smartDuplicateType `optionMenuGrp -q -select smartDupGeoType`;
+}
+
+global proc smartDupValues( string $parent )
+{
+	setParent $parent;
+
+	int $smartExtEnabled = `manipOptions -q -enableSmartExtrude`;
+	checkBoxGrp -e -v1 $smartExtEnabled
+		-cc ("manipOptions -enableSmartExtrude #1;")
+		manipEnableSmartExtrude_CBG;
+
+	int $smartDupEnabled = `manipOptions -q -enableSmartDuplicate`;
+	checkBoxGrp -e -v1 $smartDupEnabled
+		-cc ("manipOptions -enableSmartDuplicate #1;smartDupEnableGeoType \"" + $parent + "\";")
+		manipEnableSmartDuplicate_CBG;
+
+	int $smartDupType = `manipOptions -q -smartDuplicateType`;
+	optionMenuGrp -e -select $smartDupType
+		-cc ("smartDupChangeGeoType \"" + $parent + "\";")
+		smartDupGeoType;
+
+	smartDupEnableGeoType $parent;
+}
+

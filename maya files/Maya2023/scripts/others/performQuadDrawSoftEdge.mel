@@ -1,0 +1,112 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//  Procedure Name:
+//      performQuadDrawSoftEdge
+//
+//  Description:
+//		Soften the polygon edges on the hilighted object.
+//         
+//  Input Arguments:
+//      $option : Whether to set the options to default values.
+//
+//  Return Value:
+//      command string iff $option==2
+//
+proc setOptionVars(int $forceFactorySettings)
+{
+	optionVar -init $forceFactorySettings -category "Modeling.Mesh Display.Soften/Harden Edges"
+		-fv polySoftEdge 30.0
+		;
+}
+
+global proc performQuadDrawSoftEdgeSetup(string $parent, int $forceFactorySettings)
+{
+	setOptionVars($forceFactorySettings);
+	setParent $parent;
+	float $fval = `optionVar -query polySoftEdge`;
+	floatSliderGrp -edit -value $fval polySoftEdge;
+}
+
+global proc performQuadDrawSoftEdgeCallback(string $parent, int $doIt)
+{
+	setParent $parent;
+	optionVar -floatValue polySoftEdge `floatSliderGrp -query -value polySoftEdge`;
+	if ($doIt) {
+		performQuadDrawSoftEdge 0;
+		addToRecentCommandQueue "performQuadDrawSoftEdge 0" "QuadDrawSoftEdge";
+	}
+}
+
+proc quadDrawSoftEdgeOptions()
+{
+	string $commandName = "performQuadDrawSoftEdge";
+	string $callback = ($commandName + "Callback");
+	string $setup = ($commandName + "Setup");
+	   
+	string $layout = getOptionBox();
+	setParent $layout;
+	setUITemplate -pushTemplate DefaultTemplate;
+	waitCursor -state 1;
+	tabLayout -scr true -tv false;
+	string $parent = `columnLayout -adjustableColumn 1`;
+	floatSliderGrp -label (uiRes("m_performQuadDrawSoftEdge.kAngle")) -min 0.0 -max 180.0 -fmn 0.0 -fmx 180.0 polySoftEdge;
+	setParent ..;
+
+	waitCursor -state 0;
+	setUITemplate -popTemplate;
+	   
+	string $applyBtn = getOptionBoxApplyBtn();
+	button -edit -label (uiRes("m_performQuadDrawSoftEdge.kSoftHard"))
+	       -command ($callback + " " + $parent + " " + 1)
+		$applyBtn;
+	string $saveBtn = getOptionBoxSaveBtn();
+	button -edit 
+		-command ($callback + " " + $parent + " " + 0 + "; hideOptionBox")
+		$saveBtn;
+	string $resetBtn = getOptionBoxResetBtn();
+	button -edit 
+		-command ($setup + " " + $parent + " " + 1)
+		$resetBtn;
+	
+	setOptionBoxTitle((uiRes("m_performQuadDrawSoftEdge.kOptionBoxTitle")));
+	setOptionBoxHelpTag("NormalsSoftenHarden");
+	eval (($setup + " " + $parent + " " + 0));      
+	showOptionBox();
+}
+
+global proc string performQuadDrawSoftEdge(int $option)
+{
+	float $fval;
+	string $cmd = "";
+	string $hiliteList[];
+	switch ($option) {
+	case 0:
+		setOptionVars(false);
+		$fval = `optionVar -query polySoftEdge`;
+		$hiliteList = `ls -hilite`;
+		if (size($hiliteList) > 0) {
+			polySoftEdge -a $fval $hiliteList[0];
+			select -cl;
+		}
+		break;
+	case 1:
+		quadDrawSoftEdgeOptions;
+		break;
+	case 2:
+	default:
+		$hiliteList = `ls -hilite`;
+		if (size($hiliteList) > 0) {
+			setOptionVars(false);
+			$fval = `optionVar -query polySoftEdge`;
+			$cmd = ("polySoftEdge -a " + $fval + " \"" + $hiliteList[0] + "\"; select -cl;");
+		}
+		break;
+	}
+	return $cmd;
+}

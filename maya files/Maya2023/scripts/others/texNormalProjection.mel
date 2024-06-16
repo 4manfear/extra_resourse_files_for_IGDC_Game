@@ -1,0 +1,125 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+// ===========================================================================
+//
+//  Creation Date: November 09, 2016
+//
+//  Procedure Name:
+//      texNormalProjection
+//
+//  Description:
+//      UV workflow function used for taking a planar projection from the
+//      opposite end of the average face normal vector.
+//
+//  Input Arguments
+//      keepRatio       - whether keep ratio.
+//      beforeDeformers - whether insert projection before deformers.
+//      newUVSetName    - Name of new UV Set to be created.
+//
+//  Return Value:
+//      None.
+//
+//  Notes:
+//  This script is part of the implementation of Nightshade UV Editor into
+//  Autodesk Maya.
+//
+// ===========================================================================
+
+//// Create option variables - These can be connected to a UI
+
+global proc texNormalProjection(int $keepRatio, int $beforeDeformers, string $newUVSetName)
+{
+    texCheckSelection("any");
+    string $selection[] = `ls -selection`; 
+    ConvertSelectionToFaces;
+		
+    // Vars
+    string $vectorArray[];
+
+    // Split up faces per mesh
+    string $meshFaceGroupList[] = texGetMeshCompGroups("face");
+
+    // Start projecting - one meshFaceGroup at a time
+    for ($meshFaceGroup in $meshFaceGroupList)
+    {
+        // Retrieve face normal vector
+        vector $meanVector = << 0, 0, 0 >>;
+        string $vectorStrings[] = eval("polyInfo -faceNormals " + $meshFaceGroup);
+        for ($vectorString in $vectorStrings){
+            vector $normalVector = texGetPolyInfoNormalVector($vectorString);
+            $meanVector += $normalVector;
+        }
+        $meanVector = ($meanVector / `size($vectorStrings)`);
+
+        // Normalize mean vector and invert it
+        if ($meanVector.x != 0){
+            $meanVector = << -$meanVector.x, $meanVector.y, $meanVector.z >>;
+        }
+        if ($meanVector.y != 0){
+            $meanVector = << $meanVector.x, -$meanVector.y, $meanVector.z >>;
+        }
+        if ($meanVector.z != 0){
+            $meanVector = << $meanVector.x, $meanVector.y, -$meanVector.z >>;
+        }
+
+        // Converting the object-space vector to world space
+        string $faceList[] = stringToStringArray($meshFaceGroup, " ");
+        string $transform = `match "[^.]*" $faceList[0]`;
+        $transformMatrix = `xform -q -matrix $transform`;
+        $meanVector = pointMatrixMult($meanVector, $transformMatrix);
+        eval("select " + $meshFaceGroup);
+
+        // Create new tempCamera (by cloning the perspective camera)
+        $tempCamera = `duplicate "persp"`;
+
+        // Get current active modelling panel and switch the camera there to $tempCamera
+        $activePanel = `getPanel -withFocus`;
+        lookThru $tempCamera $activePanel;
+
+        // Position the temporary camera
+        float $valueX = $meanVector.x; // Yes this is absolutely necessary. MEL cannot read values from dot notations
+        float $valueY = $meanVector.y;
+        float $valueZ = $meanVector.z;
+        viewPlace -viewDirection $valueX $valueY $valueZ $tempCamera;
+        viewFit;
+
+		string $createdUVSet[];
+		// Create new set if needed
+		if($newUVSetName != "")
+			$createdUVSet = `polyUVSet -create -uvSet $newUVSetName`;
+		
+        // Make projection
+		string $cmd = "polyProjection -constructionHistory true -mapDirection \"c\" -type \"planar\" -insertBeforeDeformers ";
+		if($beforeDeformers)
+		    $cmd += "1 ";
+		else
+			$cmd += "0 ";
+		
+		if($keepRatio)
+		    $cmd += "-keepImageRatio ";
+		
+		if($createdUVSet[0] != "")
+		{
+		    $cmd += "-uvSetName \"" + $createdUVSet[0] + "\";";
+			$changeSetCmd = "polyUVSet -currentUVSet -uvSet \"" + $createdUVSet[0] + "\";";
+			$cmd = $cmd + $changeSetCmd;
+		}
+		
+		eval($cmd);
+
+        // Switch back to perspective camera and remove the temporary one
+        lookThru $activePanel "persp";
+        delete $tempCamera;
+    }
+
+    // Select the original selection 
+    select $selection; 
+
+    // Orient
+    texOrientShells();
+}

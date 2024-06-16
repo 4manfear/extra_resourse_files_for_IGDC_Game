@@ -1,0 +1,35 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<templates>
+	<using package='maya'/>
+	<template name='NEcolorMask'>
+		<attribute name='outColor' type='maya.float3'>
+			<label>Out Color</label>
+		</attribute>
+		<attribute name='outAlpha' type='maya.float'>
+			<label>Out Alpha</label>
+		</attribute>
+		<attribute name='inColor' type='maya.float3'>
+			<label>Color</label>
+		</attribute>
+		<attribute name='inAlpha' type='maya.float'>
+			<label>Alpha</label>
+		</attribute>
+		<attribute name='mask' type='maya.float3'>
+			<label>Mask</label>
+		</attribute>
+		<attribute name='maskAlpha' type='maya.float'>
+			<label>Mask Alpha</label>
+		</attribute>
+	</template>
+	<view name='NEDefault' template='NEcolorMask'>
+		<property name='outColor'/>
+		<property name='outAlpha'/>
+		<property name='inColor'/>
+		<property name='inAlpha'/>
+		<property name='mask'/>
+		<property name='maskAlpha'/>
+	</view>
+	<view name='NEDefaultSoloOutput' template='NEcolorMask'>
+		<property name='outColor'/>
+	</view>
+</templates>

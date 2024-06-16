@@ -1,0 +1,40 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+// Resources for Plug-in: AutodeskPacketFile
+// 
+// ----------------------------
+// Registered string resources:
+// ----------------------------
+setPluginResource( "AutodeskPacketFile", "rAppendMaskNotAvailable", "附加遮罩仅在编辑模式下可用。");
+setPluginResource( "AutodeskPacketFile", "rDeleteMaskNotAvailable", "删除遮罩仅在编辑模式下可用。");
+setPluginResource( "AutodeskPacketFile", "rEditMaskNotAvailable", "编辑遮罩仅在编辑模式下可用。");
+setPluginResource( "AutodeskPacketFile", "rInvalidFlag", "无效标志: ^1s");
+setPluginResource( "AutodeskPacketFile", "rMaskIdOutRange", "指定的遮罩 ID 超出范围。");
+setPluginResource( "AutodeskPacketFile", "rMaskNumberOnlyQueryAvailable", "遮罩数仅在查询模式下可用。");
+setPluginResource( "AutodeskPacketFile", "rParentOptionNotAvailable", "父对象选项仅在创建模式下可用。");
+setPluginResource( "AutodeskPacketFile", "rSelectedObjNoCommonParent", "选定对象必须全部具有公用父对象。");
+setPluginResource( "AutodeskPacketFile", "rSpecifiedSwitchNodeNotFound", "无法找到指定切换节点。");
+setPluginResource( "AutodeskPacketFile", "rTargetNodeNotShellNode", "目标节点不是壳节点。");
+setPluginResource( "AutodeskPacketFile", "rTargetNodeNotSwitchNode", "目标节点不是切换节点。");
+// 
+// --------------------------
+// Registered node resources:
+// --------------------------
+// 
+// Node: apfFileNode
+// 
+setNodeNiceNameResource( "apfFileNode", "Apf 文件节点" );
+setAttrNiceNameResource( "apfFileNode", "fzn", "冻结" );
+setAttrNiceNameResource( "apfFileNode", "fn", "文件名" );
+setAttrNiceNameResource( "apfFileNode", "ldl", "LOD 显示级别" );
+// 
+// Node: apfEntityNode
+// 
+setNodeNiceNameResource( "apfEntityNode", "Apf 实体节点" );
+setAttrNiceNameResource( "apfEntityNode", "cac", "当前活动的子对象" );
+setAttrNiceNameResource( "apfEntityNode", "apf", "Apf 文件名" );

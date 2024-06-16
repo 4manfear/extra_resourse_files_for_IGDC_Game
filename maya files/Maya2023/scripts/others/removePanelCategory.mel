@@ -1,0 +1,65 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  05 July 2006
+//
+//<doc>
+//<name removePanelCategory>
+//
+//<synopsis>
+//		int removePanelCategory( string $name )
+//
+//<description>
+//		Removes the category from the Panels pulldown menus. The Panels
+//	pulldowns are the menus specified per viewport which allow the user
+//	to switch between different camera views, or different layouts, etc.
+//	See the addPanelcategory and listPanelcategories commands for more
+//	details.
+//
+//<flags>
+//		string	 $name			The name of the category to remove from
+//								the Panels pulldown menus.
+//
+//<returns>
+//		int : Returns false if the name is not defined, and true
+//			  on success.
+//
+//<examples>
+//  removePanelCategory( "Stereo" );
+//
+//</doc>
+//
+
+global proc int removePanelCategory( string $name )
+{
+    global string $gCategoryName[];
+    global string $gCategoryInsertAfter[];
+    global string $gCategoryCmd[];
+                                                                                
+    // Search for the category name.
+	//
+    int $i;
+    int $nc = size( $gCategoryName );
+    for ( $i = 0; $i < $nc; $i++ ) {
+        if ( $gCategoryName[$i] == $name ) {
+            break;
+        }
+    }
+                                                                                
+    if ( $i >= $nc ) {
+		string $msg = (uiRes("m_removePanelCategory.kRemoveCategory"));
+		error `format -s $name $msg`;
+        return( false );
+    }
+    stringArrayRemoveAtIndex( $i, $gCategoryName );
+    stringArrayRemoveAtIndex( $i, $gCategoryInsertAfter );
+    stringArrayRemoveAtIndex( $i, $gCategoryCmd );
+
+    return( true );
+}

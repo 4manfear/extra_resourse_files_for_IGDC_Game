@@ -1,0 +1,1762 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//Create dynamic float value menus
+global proc uvTkCreateFloatCustomMenu(string $btn, string $defValues[], string $factorName, float $defaultValue)
+{	
+    string $floatField = $factorName + "Field";
+	string $changeCmd = $factorName + "ChangeCB"; 
+	
+	//Create MMB menu for button
+	string $toggleMenu = `popupMenu -b 2 -p $btn`; 
+	menu -e -postMenuCommand ("uvTkToogleFloatValue " + $factorName) $toggleMenu; 
+	
+	//Create toggle value optionVars
+	optionVar -init false -category "UV Editor.Transform"
+		-fv ($floatField + "ToggleValue0") $defaultValue
+		-fv ($floatField + "ToggleValue1") $defaultValue;
+	
+	//Format default values
+	string $defValueStr = "{";
+	for($i = 0; $i < size($defValues); $i++)
+	{
+		if($i != 0)
+			$defValueStr+=",";
+		$defValueStr+="\"";
+		$defValueStr+=$defValues[$i];
+		$defValueStr+="\"";
+	}
+	$defValueStr+="}";
+	
+	//Create LMB menu for button
+	string $valueMenu = `popupMenu -b 1 -p $btn`; 
+	menu -e -postMenuCommand ("uvTkBuildFloatCustomMenu "+$valueMenu+" "+$defValueStr+" "+$floatField+" "+$changeCmd) $valueMenu; 
+	
+	//Create RMB menu for floatField
+	string $fieldMenu = `popupMenu -b 3 -p $floatField`;
+	$cmd = "menu -e -deleteAllItems "+$fieldMenu+";";
+	$cmd += "menuItem -p "+$fieldMenu+" -label \""+ (uiRes("m_uvTkBuildTransformOptions.kSaveCustomValue")) +"\" -c (\"uvTkUpdateFloatCustomMenuOV "+$floatField+" "+$changeCmd+"\");";
+	menu -e -postMenuCommand $cmd $fieldMenu; 
+}
+
+global proc uvTkBuildFloatCustomMenu(string $valueMenu, string $defValues[], string $floatField, string $changeCmd)
+{
+	menu -e -deleteAllItems $valueMenu;
+	for($defValue in $defValues)
+	    menuItem -p $valueMenu -label $defValue -c ("floatField -e -v "+$defValue+" "+$floatField+";"+$changeCmd);
+
+	menuItem -p $valueMenu -divider true;
+	
+	//Get all values saved in optionVar
+	global int $gUVTkCustomMenuMaxSlots;
+	for($i = 0; $i < $gUVTkCustomMenuMaxSlots; $i++)
+	{
+		string $ovN = ($floatField + $i);
+		optionVar -init false -category "UV Editor.Transform" -fv $ovN 0.0;
+		if(`optionVar -q $ovN` != 0.0)
+        {
+        	$value = `optionVar -q $ovN`;
+        	menuItem -p $valueMenu -label $value -c ("floatField -e -v "+$value+" "+$floatField+";"+$changeCmd);
+        }
+	}
+}
+
+global proc uvTkUpdateFloatCustomMenuOV(string $floatField, string $changeCmd)
+{
+	float $value = `floatField -q -v $floatField`;
+	
+	//Copy values from optionVar
+	float $ovs[];
+	global int $gUVTkCustomMenuMaxSlots;
+	for($i = 0; $i < $gUVTkCustomMenuMaxSlots; $i++)
+	{
+		string $ovN = ($floatField + $i);
+		$ovs[$i] = `optionVar -q $ovN`;
+	}
+	
+	//Add new value to the head 
+	floatArrayInsertAtIndex(0, $ovs, $value);
+	
+	//Update optionVar
+	for($i = 0; $i < $gUVTkCustomMenuMaxSlots; $i++)
+	{
+		string $ovN = ($floatField + $i);
+		optionVar -fv $ovN $ovs[$i];
+	}
+}
+
+global proc uvTkSaveToogleFloatValue(string $factorName)
+{
+	string $floatField = $factorName + "Field";
+	string $tv0 = ($floatField + "ToggleValue0");
+	string $tv1 = ($floatField + "ToggleValue1");
+	float $tv1Value = `optionVar -q $tv1`;
+	float $newValue = `floatField -q -v $floatField`;
+	if($newValue != $tv1Value)
+	{
+		 optionVar -fv $tv0 $tv1Value;
+		 optionVar -fv $tv1 $newValue;
+	}
+}
+
+global proc uvTkToogleFloatValue(string $factorName)
+{
+	string $floatField = $factorName + "Field";
+	string $changeCmd = $factorName + "ChangeCB"; 
+	//Save current value first
+	eval($changeCmd);
+	string $tv0 = ($floatField + "ToggleValue0");
+	string $tv1 = ($floatField + "ToggleValue1");
+	float $tv0Value = `optionVar -q $tv0`;
+	float $oldValue = `floatField -q -v $floatField`;
+	if($oldValue != $tv0Value)
+	{
+		floatField -e -v $tv0Value $floatField;
+		eval($changeCmd);
+	}
+}
+
+// Initialize optionVars for Transform frame options
+global proc uvTkSetTransformOptionVars(int $forceFactorySettings)
+{
+	optionVar -init $forceFactorySettings -category "UV Editor.Transform"
+		-iv polyUVPivotBoundarySelector 0
+		-iv polyUVpivotMinU 0
+		-iv polyUVpivotMaxU 1
+		-iv polyUVpivotMinV 0
+		-iv polyUVpivotMaxV 1
+		-fv polyNudgeUVFactor 0.1
+		-iv polyNudgeUVAbsolute 0	// Default to relative
+		-fv polyRotateUVAngle 90.0
+		-fv polyScaleUVFactor 2.0
+		-iv polyScaleDirection 0	// 0:UV, 1:U, 2:V
+		-iv polyUVFlipDirection 1	// 1:U, 2:V
+		-fv polyUVTexelDensity 32.0
+		-iv polyUVTexelDensityMapSize 512
+		-iv polyDistributeUVDirection 1
+		;
+}
+
+global proc uvTkResetTransformToolSettings()
+{
+	texMoveContext -e
+		-snap 0
+		-snapValue 0.1
+		-snapComponentsRelative 1
+		texMoveContext;
+
+	texRotateContext -e 
+		-snap 0
+		-snapValue 15
+		texRotateContext;
+
+	texScaleContext -e 
+		-snap 0
+		-snapValue 1
+		-preventNegativeScale 1
+		texScaleContext;
+
+	uvTkUpdateStepSnapOptions("texMoveContext");
+	uvTkUpdateStepSnapOptions("texRotateContext");
+	uvTkUpdateStepSnapOptions("texScaleContext");
+	uvTkUpdateCompSpacingOptions();
+}
+
+global proc performPivotCycle(string $position)
+{
+	int $boundarySelector = `optionVar -q polyUVPivotBoundarySelector`;
+	if ( $boundarySelector == 0 )
+		evalEcho("texPivotCycle selection " + $position);
+	else if( $boundarySelector == 1 )
+		evalEcho("texPivotCycle uvRange " + $position);
+}
+							
+global proc performResetPivot()
+{
+	evalEcho("texPivotCycle selection middle");
+}
+
+global proc updatePivotUVArea(int $enable)
+{
+	if ( `formLayout -q -exists pivotUVAreaForm` )
+		formLayout -e -enable $enable pivotUVAreaForm;
+	if ( `iconTextStaticLabel -q -exists pivotFrameULabel` )
+		iconTextStaticLabel -e -image ($enable ? "UVEditorUAxis.png" : "UVEditorUAxisDisabled.png") pivotFrameULabel;
+	if ( `iconTextStaticLabel -q -exists pivotFrameVLabel` )
+		iconTextStaticLabel -e -image ($enable ? "UVEditorVAxis.png" : "UVEditorUAxisDisabled.png") pivotFrameVLabel;
+	optionVar -intValue polyUVPivotBoundarySelector $enable;
+}
+
+global proc uvTkUpdateTransformOptions()
+{
+	int $boundarySelector = `optionVar -q polyUVPivotBoundarySelector`;
+	if ( $boundarySelector == 0 )
+	{
+		if(`radioButton -q -exists pivotSelectionRadio`)
+		{
+			radioButton -e -select pivotSelectionRadio;
+			updatePivotUVArea(false);
+		}
+	}
+	else if( $boundarySelector == 1 )
+	{
+		if(`radioButton -q -exists pivotUVAreaRadio`)
+		{
+			radioButton -e -select pivotUVAreaRadio;
+			updatePivotUVArea(true);
+		}
+	}
+	int $pivotMinU = `optionVar -q polyUVpivotMinU`;
+	if ( `intField -q -exists pivotMinUField` )
+		intField -e -value $pivotMinU pivotMinUField;
+		
+	int $pivotMaxU = `optionVar -q polyUVpivotMaxU`;
+	if ( `intField -q -exists pivotMaxUField` )
+		intField -e -value $pivotMaxU pivotMaxUField;
+		
+	int $pivotMinV = `optionVar -q polyUVpivotMinV`;
+	if ( `intField -q -exists pivotMinVField` )
+		intField -e -value $pivotMinV pivotMinVField;
+		
+	int $pivotMaxV = `optionVar -q polyUVpivotMaxV`;
+	if ( `intField -q -exists pivotMaxVField` )
+		intField -e -value $pivotMaxV pivotMaxVField;
+		
+	float $nudgeFactor = `optionVar -q polyNudgeUVFactor`;
+	if ( `floatField -q -exists uvTkNudgeFactorField` )
+	{
+		floatField -e -value $nudgeFactor uvTkNudgeFactorField;
+		uvTkSaveToogleFloatValue("uvTkNudgeFactor");
+	}
+
+	uvTkUpdateNudgeUBtns();
+	
+	int $scaleDirection = `optionVar -q polyScaleDirection`;
+	if(`iconTextCheckBox -q -ex uvTkScaleUControlBtn`) 
+		iconTextCheckBox -e -v ($scaleDirection == 0 || $scaleDirection == 1) uvTkScaleUControlBtn;
+	if(`iconTextCheckBox -q -ex uvTkScaleVControlBtn`) 
+		iconTextCheckBox -e -v ($scaleDirection == 0 || $scaleDirection == 2) uvTkScaleVControlBtn;
+
+	float $rotateFactor = `optionVar -q polyRotateUVAngle`;
+	if( `floatField -q -exists uvTkRotateFactorField` )
+	{
+		floatField -e -value $rotateFactor uvTkRotateFactorField;
+		uvTkSaveToogleFloatValue("uvTkRotateFactor");
+	}
+
+	float $scaleFactor = `optionVar -q polyScaleUVFactor`;
+	if( `floatField -q -exists uvTkScaleFactorField` )
+	{
+		floatField -e -value $scaleFactor uvTkScaleFactorField;
+		uvTkSaveToogleFloatValue("uvTkScaleFactor");
+	}
+		
+	int $flipUVDir = `optionVar -q polyUVFlipDirection`;
+	if ( $flipUVDir == 1 )	// U
+	{
+		if(`iconTextRadioButton -q -exists flipUControlBtn`)
+			iconTextRadioButton -e -select flipUControlBtn;
+	}
+	else if( $flipUVDir == 2 )	//V
+	{
+		if(`iconTextRadioButton -q -exists flipVControlBtn`)
+			iconTextRadioButton -e -select flipVControlBtn;
+	}
+	
+	float $texelDensity = `optionVar -q polyUVTexelDensity`;
+	if( `floatField -q -exists uvTkTexelDensityField` )
+	{
+		floatField -e -value $texelDensity uvTkTexelDensityField;
+		uvTkSaveToogleFloatValue("uvTkTexelDensity");
+	}
+		
+	int $mapSize = `optionVar -q polyUVTexelDensityMapSize`;
+	if( `intField -q -exists uvTkTexelDensityMapSizeField` )
+		intField -e -value $mapSize uvTkTexelDensityMapSizeField;
+	
+	float $distributeUVDirection = `optionVar -q polyDistributeUVDirection`;
+    if($distributeUVDirection == 1 && `iconTextRadioButton -q -ex uvTkDistributeUVUBtn`) 
+		iconTextRadioButton -e -sl uvTkDistributeUVUBtn;
+    if($distributeUVDirection == 2 && `iconTextRadioButton -q -ex uvTkDistributeUVVBtn`) 
+		iconTextRadioButton -e -sl uvTkDistributeUVVBtn;	
+}
+
+global proc updateEditPivot()
+{
+	int $editMode = 0;
+
+	string $currContext = `currentCtx`;
+	if(`contextInfo -ex $currContext`)
+	{
+		string $currTool = `contextInfo -c $currContext`;
+
+		if ($currTool == "texMove")
+			$editMode = `texMoveContext -q -editPivotMode texMoveContext`;
+		else if ($currTool == "texRotate")
+			$editMode = `texRotateContext -q -editPivotMode texRotateContext`;
+		else if ($currTool == "texScale")
+			$editMode = `texScaleContext -q -editPivotMode texScaleContext`;
+	}
+
+	if ($editMode)
+	{
+		iconTextButton -e -bgc 0.322 0.52 0.65 editPivotBtn; // use our unified Maya highligh color #5285A6 
+	}
+	else
+	{
+		iconTextButton -e -bgc 0.37 0.37 0.37 editPivotBtn;
+		// off the background and then turn it on to reset it
+		iconTextButton -e -nbg 1 editPivotBtn;
+		iconTextButton -e -nbg 0 editPivotBtn;
+	}
+}
+
+global proc uvTkToggleScaleDirection(string $direction, int $status)
+{
+	uvTkSetTransformOptionVars(0);
+	if($status)
+		optionVar -iv polyScaleDirection 0;
+	else
+	    optionVar -iv polyScaleDirection ($direction == "U" ? 2 : 1);
+    uvTkUpdateTransformOptions();
+}
+
+global proc uvTkToggleNudgeUVRelAbs()
+{
+	global string $gUVTkNudgeBtns[];
+	int $nudgeUVAbsolute = `optionVar -q polyNudgeUVAbsolute`;
+	optionVar -intValue polyNudgeUVAbsolute (`optionVar -q polyNudgeUVAbsolute` ? 0 : 1);
+	uvTkUpdateNudgeUBtns();
+}
+
+global proc uvTkUpdateNudgeUBtns()
+{
+	global string $gUVTkNudgeBtns[];
+	int $nudgeUVAbsolute = `optionVar -q polyNudgeUVAbsolute`;
+	string $toggleBtnIcon = ($nudgeUVAbsolute ? 
+	                          "UVEditorMoveAbsolute.png" : 
+	                          "UVEditorMoveRelative.png");
+	if(`iconTextButton -q -exists relAbsToggleBtn`)
+		iconTextButton -e -image $toggleBtnIcon relAbsToggleBtn;
+						
+	string $absAnns[] = {"",
+                         (uiRes("m_uvTkBuildTransformOptions.kAbsVAnn")),
+                         (uiRes("m_uvTkBuildTransformOptions.kAbsUVAnn")),
+                         "",
+                         (uiRes("m_uvTkBuildTransformOptions.kAbsUAnn")),
+						 "",
+						 "",
+						 ""};
+						 
+    string $relAnns[] = {(uiRes("m_uvTkBuildTransformOptions.kUpLeftAnn")),
+                         (uiRes("m_uvTkBuildTransformOptions.kUpAnn")),
+                         (uiRes("m_uvTkBuildTransformOptions.kUpRightAnn")),
+                         (uiRes("m_uvTkBuildTransformOptions.kLeftAnn")),
+                         (uiRes("m_uvTkBuildTransformOptions.kRightAnn")),
+						 (uiRes("m_uvTkBuildTransformOptions.kDownLeftAnn")),
+                         (uiRes("m_uvTkBuildTransformOptions.kDownAnn")),
+                         (uiRes("m_uvTkBuildTransformOptions.kDownRightAnn"))};
+						
+	for($i = 0; $i < size($gUVTkNudgeBtns); $i++)
+	{
+		$btn = $gUVTkNudgeBtns[$i];
+		if(!`iconTextButton -q -exists $btn`)
+			continue;
+		if($nudgeUVAbsolute)
+		{
+			if($i == 1 || $i == 2 || $i == 4)
+			{
+			    iconTextButton -e -st "textOnly" -ebg true -bgc 0.327 0.327 0.327 
+					-ann $absAnns[$i] $btn;
+			}
+		    else
+			    iconTextButton -e -en false -ann $absAnns[$i] $btn;
+		}
+		else
+		{
+			if($i == 1 || $i == 2 || $i == 4)
+			{
+			    iconTextButton -e -st "iconOnly" -ebg false 
+				    -ann $relAnns[$i] $btn;
+			}
+			else
+				iconTextButton -e -en true -ann $relAnns[$i] $btn;
+		}
+	}
+}
+
+global proc string uvTkBuildTransformOptions(string $parentForm)
+{
+	global int $gUVTkTwinBtnWth;
+	global int $gUVTkTwinBtnHgt;
+	global int $gUVTkSubAreaTitleWidth;
+    global int $gUVTkSubAreaPad;
+    global float $gUVTkSubAreaBGColor[];
+	global float $gUVTkFrameHeadColor[];
+
+	uvTkSetTransformOptionVars(0);
+	string $layout = `frameLayout -p $parentForm -collapsable true -collapse true -lv false`;
+	    string $pivotPadForm = `formLayout`;
+		string $pivotForm = `formLayout -bgc $gUVTkSubAreaBGColor[0] $gUVTkSubAreaBGColor[1] $gUVTkSubAreaBGColor[2]`;
+			string $pivotLabel = `text -l (uiRes("m_uvTkBuildTransformOptions.kPivotLabel")) -width $gUVTkSubAreaTitleWidth -align "center" `;
+			string $pivotOptionsForm = `formLayout`;
+				{
+					string $pivotPositionForm = `formLayout`;
+					{
+						string $pivotPositionButtons[] = 
+						{
+							"pivotUpLeftBtn",
+							"pivotUpBtn",
+							"pivotUpRightBtn",
+							"pivotLeftBtn",
+							"pivotCenterBtn",
+							"pivotRightBtn",
+							"pivotBottomLeftBtn",
+							"pivotBottomBtn",
+							"pivotBottomRightBtn"
+						};
+						string $pivotPositionImages[] = 
+						{
+							"UVPivotTopLeft.png",
+							"UVPivotTop.png",
+							"UVPivotRight.png",
+							"UVPivotLeft.png",
+							"UVPivotCenter.png",
+							"UVPivotRight.png",
+							"UVPivotBottomLeft.png",
+							"UVPivotBottom.png",
+							"UVPivotBottomRight.png"
+						};
+						string $pivotPositionAnnot[] = 
+						{
+							(uiRes("m_uvTkBuildTransformOptions.kPivotUpLeftAnn")),
+							(uiRes("m_uvTkBuildTransformOptions.kPivotUpAnn")),
+							(uiRes("m_uvTkBuildTransformOptions.kPivotUpRightAnn")),
+							(uiRes("m_uvTkBuildTransformOptions.kPivotLeftAnn")),
+							(uiRes("m_uvTkBuildTransformOptions.kPivotCenterAnn")),
+							(uiRes("m_uvTkBuildTransformOptions.kPivotRightAnn")),
+							(uiRes("m_uvTkBuildTransformOptions.kPivotBottomLeftAnn")),
+							(uiRes("m_uvTkBuildTransformOptions.kPivotBottomAnn")),
+							(uiRes("m_uvTkBuildTransformOptions.kPivotBottomRightAnn"))
+						};
+						string $pivotPositionCmds[] = 
+						{
+							"performPivotCycle topLeft",
+							"performPivotCycle topMiddle",
+							"performPivotCycle topRight",
+							"performPivotCycle middleLeft",
+							"performPivotCycle middle",
+							"performPivotCycle middleRight",
+							"performPivotCycle bottomLeft",
+							"performPivotCycle bottomMiddle",
+							"performPivotCycle bottomRight"
+						};
+						for ($i = 0; $i < size($pivotPositionButtons); $i++)
+						{
+							iconTextButton  
+								-st "iconOnly" 
+								-image $pivotPositionImages[$i]
+								-w 26 -h 26
+								-ann $pivotPositionAnnot[$i]
+								-c $pivotPositionCmds[$i]
+								$pivotPositionButtons[$i];
+						}
+						
+						iconTextStaticLabel 
+							-st "iconOnly"
+							-image "UVEditorVAxis.png"
+							-w 3 -h 83
+							pivotFrameVLabel;
+							
+						iconTextStaticLabel 
+							-st "iconOnly"
+							-image "UVEditorUAxis.png"
+							-w 84 -h 3
+							pivotFrameULabel;
+							
+						setParent ..;
+						
+						formLayout -e
+							-attachForm		pivotFrameVLabel	"top"		2
+							-attachForm		pivotFrameVLabel	"left"		0
+							
+							-attachControl	pivotFrameULabel	"top"		0	pivotFrameVLabel
+							-attachForm		pivotFrameULabel	"left"		0
+							
+							-attachForm		pivotUpLeftBtn		"top"		0
+							-attachControl	pivotUpLeftBtn		"left"		2	pivotFrameVLabel
+							
+							-attachForm		pivotUpBtn			"top"		0
+							-attachControl	pivotUpBtn			"left"		2	pivotUpLeftBtn
+							
+							-attachForm		pivotUpRightBtn		"top"		0
+							-attachControl	pivotUpRightBtn		"left"		2	pivotUpBtn
+							
+							-attachControl	pivotLeftBtn		"top"		2	pivotUpLeftBtn
+							-attachControl	pivotLeftBtn		"left"		2	pivotFrameVLabel
+							
+							-attachControl	pivotCenterBtn		"top"		2	pivotUpBtn
+							-attachControl	pivotCenterBtn		"left"		2	pivotLeftBtn
+							
+							-attachControl	pivotRightBtn		"top"		2	pivotUpRightBtn
+							-attachControl	pivotRightBtn		"left"		2	pivotCenterBtn
+							
+							-attachControl	pivotBottomLeftBtn	"top"		2	pivotLeftBtn
+							-attachControl	pivotBottomLeftBtn	"left"		2	pivotFrameVLabel
+							
+							-attachControl	pivotBottomBtn		"top"		2	pivotCenterBtn
+							-attachControl	pivotBottomBtn		"left"		2	pivotBottomLeftBtn
+							
+							-attachControl	pivotBottomRightBtn	"top"		2	pivotRightBtn
+							-attachControl	pivotBottomRightBtn	"left"		2	pivotBottomBtn
+							
+						$pivotPositionForm;
+						
+						formLayout -e -en true $pivotPositionForm;
+					}
+					string $pivotboundarySelectorForm = `formLayout`;
+					{
+						string $boundarySelectorCollection = `radioCollection`;
+						
+						radioButton
+						    -en false
+							-label (uiRes("m_uvTkBuildTransformOptions.kSelection"))
+							-w 80 -h 20
+							-ann (uiRes("m_uvTkBuildTransformOptions.kPivotSelectionAnn"))
+							pivotSelectionRadio;
+						radioButton -e -en true pivotSelectionRadio;
+						
+						radioButton
+						    -en false
+							-label (uiRes("m_uvTkBuildTransformOptions.kUVArea"))
+							-w 80 -h 20
+							-ann (uiRes("m_uvTkBuildTransformOptions.kPivotUVAreaAnn"))
+							-onc "updatePivotUVArea true"
+							-ofc "updatePivotUVArea false"
+							pivotUVAreaRadio;
+						radioButton -e -en true pivotUVAreaRadio;
+							
+						string $pivotUVAreaForm = `formLayout pivotUVAreaForm`;
+						{
+							text
+								-label (uiRes("m_uvTkBuildTransformOptions.kULabel"))
+								-w 20 -h 20
+								pivotUText;
+								
+							text
+								-label (uiRes("m_uvTkBuildTransformOptions.kVLabel"))
+								-w 20 -h 20
+								pivotVText;
+								
+							string $pivotUVRangeField[] = 
+							{
+								"pivotMinUField",
+								"pivotMaxUField",
+								"pivotMinVField",
+								"pivotMaxVField"
+							};
+							string $pivotUVRangeOptionVars[] =
+							{
+								"polyUVpivotMinU",
+								"polyUVpivotMaxU",
+								"polyUVpivotMinV",
+								"polyUVpivotMaxV"
+							};
+							string $pivotUVRangeAnnots[] =
+							{
+								(uiRes("m_uvTkBuildTransformOptions.kPivotUVRangeMinU")),
+								(uiRes("m_uvTkBuildTransformOptions.kPivotUVRangeMaxU")),
+								(uiRes("m_uvTkBuildTransformOptions.kPivotUVRangeMinV")),
+								(uiRes("m_uvTkBuildTransformOptions.kPivotUVRangeMaxV"))
+							};
+							
+							for ($i = 0; $i < size($pivotUVRangeField); $i++)
+							{
+								intField  
+									-w 20 -h 20 
+									-ann $pivotUVRangeAnnots[$i]
+									-cc ("optionVar -intValue " + $pivotUVRangeOptionVars[$i] + " #1")
+									$pivotUVRangeField[$i];
+							}
+							setParent ..;
+							
+							formLayout -e
+								-attachForm		pivotUText				"top"		0
+								-attachForm		pivotUText				"left"		0
+								
+								-attachForm		pivotMinUField			"top"		0
+								-attachControl	pivotMinUField			"left"		1	pivotUText
+								
+								-attachForm		pivotMaxUField			"top"		0
+								-attachControl	pivotMaxUField			"left"		1	pivotMinUField
+								
+								-attachControl	pivotVText				"top"		1	pivotUText
+								-attachForm		pivotVText				"left"		0
+								
+								-attachControl	pivotMinVField			"top"		1	pivotMinUField
+								-attachControl	pivotMinVField			"left"		1	pivotVText
+								
+								-attachControl	pivotMaxVField			"top"		1	pivotMaxUField
+								-attachControl	pivotMaxVField			"left"		1	pivotMinVField
+							$pivotUVAreaForm;
+						}
+						setParent ..;
+						
+						formLayout -e
+							-attachForm		pivotSelectionRadio		"top"		0
+							-attachForm		pivotSelectionRadio		"left"		0
+							
+							-attachControl	pivotUVAreaRadio		"top"		0	pivotSelectionRadio
+							-attachForm		pivotUVAreaRadio		"left"		0
+							
+							-attachControl	$pivotUVAreaForm		"top"		0	pivotUVAreaRadio
+							-attachForm		$pivotUVAreaForm		"left"		8
+						$pivotboundarySelectorForm;
+						
+						formLayout -e -en true $pivotboundarySelectorForm;
+					}
+					string $editPivotRow = `rowLayout -nc 2`;
+					{
+						iconTextButton 
+						    -nbg false
+							-flat false
+							-st "textOnly" 
+							-w 80 -h 20 
+							-label (uiRes("m_uvTkBuildTransformOptions.kEditPivot"))
+							-ann (uiRes("m_uvTkBuildTransformOptions.kEditPivotAnn"))
+							-c "EnterEditMode"
+							editPivotBtn;
+						scriptJob -p editPivotBtn -e "ToolChanged" "updateEditPivot";
+						scriptJob -p editPivotBtn -e "EditModeChanged" "updateEditPivot";
+						updateEditPivot;
+							
+						iconTextButton 
+							-flat false 
+							-nbg false
+							-st "textOnly"
+							-w 80 -h 20 
+							-label (uiRes("m_uvTkBuildTransformOptions.kReset"))
+							-ann (uiRes("m_uvTkBuildTransformOptions.kResetAnn"))
+							-c "performResetPivot"
+							resetPivotBtn;
+							
+						setParent ..;
+					}
+					
+					formLayout -e
+						-attachForm		$pivotPositionForm			"top"		0
+						-attachForm		$pivotPositionForm			"left"		0
+						
+						-attachForm		$pivotboundarySelectorForm	"top"		0
+						-attachControl	$pivotboundarySelectorForm	"left"		10	$pivotPositionForm
+						
+						-attachControl	$editPivotRow				"top"		0	$pivotPositionForm
+						-attachForm		$editPivotRow				"left"		0
+					$pivotOptionsForm;
+					setParent ..;
+				}
+				
+				setParent ..;
+		formLayout -e 
+			-attachForm $pivotLabel	"top"  ($gUVTkSubAreaPad*2)
+			-attachForm $pivotLabel	"left" $gUVTkSubAreaPad
+			
+			-attachForm		$pivotOptionsForm "top"    $gUVTkSubAreaPad
+			-attachControl	$pivotOptionsForm "left"   0 $pivotLabel
+			-attachForm	    $pivotOptionsForm "bottom" $gUVTkSubAreaPad
+		$pivotForm;
+		setParent ..;
+		formLayout -e -af $pivotForm "top"    $gUVTkSubAreaPad
+				      -af $pivotForm "left"   5
+				      -af $pivotForm "right"  0
+				      -af $pivotForm "bottom" 0
+				   $pivotPadForm;
+				   
+		string $movePadForm = `formLayout`;
+		string $moveForm = `formLayout -bgc $gUVTkSubAreaBGColor[0] $gUVTkSubAreaBGColor[1] $gUVTkSubAreaBGColor[2]`;
+		    string $moveLabel = `text -l (uiRes("m_uvTkBuildTransformOptions.kMoveLabel")) -width $gUVTkSubAreaTitleWidth -align "center" `;
+			string $moveOptionsForm = `formLayout`;
+				{
+					string $nudgeForm = `formLayout`;
+					{
+						string $nudgeDirectionImages[] = 
+						{
+							"moveUVUpLeft.png",   // 0
+							"moveUVUp.png",       // 1
+							"moveUVUpRight.png",  // 2
+							"moveUVLeft.png",     // 3
+							"moveUVRight.png",    // 4
+							"moveUVDownLeft.png", // 5
+							"moveUVDown.png",     // 6
+							"moveUVDownRight.png" // 7
+						};
+						string $nudgeDirectionTexts[] = 
+						{
+							"",
+							(uiRes("m_uvTkBuildTransformOptions.kV")),
+							(uiRes("m_uvTkBuildTransformOptions.kUV")),
+							"",
+							(uiRes("m_uvTkBuildTransformOptions.kU")),
+							"",
+							"",
+							""
+						};
+						string $nudgeDirections[] = 
+						{
+							"upLeft",
+							"up",
+							"upRight",
+							"left",
+							"right",
+							"downLeft",
+							"down",
+							"downRight"
+						};
+						global string $gUVTkNudgeBtns[];
+						$gUVTkNudgeBtns = {};
+						for ($i = 0; $i < size($nudgeDirectionImages); $i++)
+						{
+							$gUVTkNudgeBtns[$i] = `iconTextButton  
+                                                       -st "iconOnly" 
+													   -nbg false
+                                                       -image $nudgeDirectionImages[$i]
+                                                       -label $nudgeDirectionTexts[$i]
+                                                       -w 26 -h 26
+                                                       -c ("uvTkNudgeFactorChangeCB;performPolyNudgeUVs " + $nudgeDirections[$i] + ";uvTkSelectionChanged;")`;								
+						}
+						
+						string $nudgeFactorBtn = `iconTextButton 
+													-w 17 -h 25
+													-ann (uiRes("m_uvTkBuildTransformOptions.kNudgeFactorsAnnot"))
+													-image ("popupMenuIcon.png")`;
+						
+						text
+							-w 16
+							-label (uiRes("m_uvTkBuildTransformOptions.kUVLabelU"))
+							uvTkUVLabelU;
+
+						floatField 
+							-precision 4 
+							-en true
+							-w 50 -h $gUVTkTwinBtnHgt
+							-ann ((uiRes("m_uvTkBuildTransformOptions.kUVPositionUAnn")))
+							-cc "uvTkUVPositionUChangeCB"
+							uvTkUVPositionFieldU;
+
+						text
+							-w 16
+							-label (uiRes("m_uvTkBuildTransformOptions.kUVLabelV"))
+							uvTkUVLabelV;
+
+						floatField 
+							-precision 4 
+							-en true
+							-w 50 -h $gUVTkTwinBtnHgt
+							-ann ((uiRes("m_uvTkBuildTransformOptions.kUVPositionVAnn")))
+							-cc "uvTkUVPositionVChangeCB"
+							uvTkUVPositionFieldV;
+
+						floatField 
+							-precision 4 
+							-en false
+							-w 40 -h $gUVTkTwinBtnHgt
+							-ann ((uiRes("m_uvTkBuildTransformOptions.kNudgeFactorAnn")) + "\n" + 
+							(uiRes("m_uvTkBuildTransformOptions.kSaveAsPreset")) )
+							-cc "uvTkNudgeFactorChangeCB"
+							uvTkNudgeFactorField;
+						floatField -e -en true uvTkNudgeFactorField;
+						uvTkCreateFloatCustomMenu($nudgeFactorBtn, {"1.0000", "0.1000", "0.0100"}, "uvTkNudgeFactor", 0.1); 
+						 
+						setParent ..;
+						
+						formLayout -e
+						    -af	uvTkUVLabelU top  5
+							-af	uvTkUVLabelU left 0
+
+						    -af	uvTkUVPositionFieldU top  2
+							-ac	uvTkUVPositionFieldU left 0 uvTkUVLabelU
+
+							-af $gUVTkNudgeBtns[0] top  0
+							-ac $gUVTkNudgeBtns[0] left 5 uvTkUVPositionFieldU
+
+							-af	$gUVTkNudgeBtns[1] top  0
+							-ac	$gUVTkNudgeBtns[1] left 18 $gUVTkNudgeBtns[0]
+							
+							-af	$gUVTkNudgeBtns[2] top  0
+							-ac	$gUVTkNudgeBtns[2] left 18 $gUVTkNudgeBtns[1]
+							                     
+						    -ac	uvTkUVLabelV top  8 $gUVTkNudgeBtns[0]
+							-af	uvTkUVLabelV left 0
+
+						    -ac	uvTkUVPositionFieldV top  5 $gUVTkNudgeBtns[0]
+							-ac	uvTkUVPositionFieldV left 0 uvTkUVLabelV
+
+							-ac	$gUVTkNudgeBtns[3] top  5 $gUVTkNudgeBtns[0]
+							-ac	$gUVTkNudgeBtns[3] left 5 uvTkUVPositionFieldU
+							
+						    -ac $nudgeFactorBtn   top  5 $gUVTkNudgeBtns[0]
+							-ac $nudgeFactorBtn   left 1 $gUVTkNudgeBtns[3]
+							
+							-ac uvTkNudgeFactorField   top  5 $gUVTkNudgeBtns[0]
+							-ac uvTkNudgeFactorField   left 1 $nudgeFactorBtn
+							
+							-ac	$gUVTkNudgeBtns[4] top  5 $gUVTkNudgeBtns[0]
+							-ac	$gUVTkNudgeBtns[4] left 5 uvTkNudgeFactorField
+							                     
+							-ac	$gUVTkNudgeBtns[5] top  5 $gUVTkNudgeBtns[3]
+							-ac	$gUVTkNudgeBtns[5] left 5 uvTkUVPositionFieldU
+							                     
+							-ac	$gUVTkNudgeBtns[6] top  5 $gUVTkNudgeBtns[3]
+							-ac	$gUVTkNudgeBtns[6] left 18 $gUVTkNudgeBtns[5]
+							                     
+							-ac	$gUVTkNudgeBtns[7] top  5 $gUVTkNudgeBtns[3]
+							-ac	$gUVTkNudgeBtns[7] left 18 $gUVTkNudgeBtns[6]
+						$nudgeForm;
+
+						scriptJob -parent $nudgeForm -event "SelectionChanged" "uvTkSelectionChanged";
+						scriptJob -parent $nudgeForm -event "activeTexHandleChanged" "uvTkSelectionChanged";
+						scriptJob -parent $nudgeForm -event "Undo" "uvTkSelectionChanged";
+						scriptJob -parent $nudgeForm -event "Redo" "uvTkSelectionChanged";					
+					}
+					string $moveStepSnapRow = `rowLayout -nc 4 -cw4 58 16 60 44`;
+					{
+						text
+							-w 58
+							-label (uiRes("m_uvTkBuildTransformOptions.kStepSnapLabel"))
+							-ann (uiRes("m_uvTkBuildTransformOptions.kMoveStepSnapAnn"))
+							moveStepSnapLabel;
+		
+						iconTextButton
+							-w 16 -h 26
+							-image "popupMenuIcon.png"
+							moveStepSnapButton;
+		
+						popupMenu -b 1 -p moveStepSnapButton;
+							menuItem -label (uiRes("m_uvTkBuildTransformOptions.kOff")) -c ("texMoveContext -e -snap 0 texMoveContext");
+							menuItem -label (uiRes("m_uvTkBuildTransformOptions.kOn")) -c ("texMoveContext -e -snap 1 texMoveContext");
+						string $snapToggle = `popupMenu -b 2 -p moveStepSnapButton`;
+						menu -e -pmc("texMoveContext -e -snap (!`texMoveContext -q -snap texMoveContext`) texMoveContext") $snapToggle;
+		
+						textField 
+							-ed false
+							-width 60
+							-height 20
+							moveStepSnapModeField;
+		
+						floatField 
+						    -en false
+							-w 44 
+							-precision 2 
+							-value 1.0
+							-cc  "texMoveContext -e -snapValue #1 texMoveContext"
+							moveStepSnapValueField;
+						floatField -e -en true moveStepSnapValueField;
+
+						setParent ..;
+						scriptJob -p moveStepSnapModeField -event "texMoveContextOptionsChanged" ("uvTkUpdateStepSnapOptions \"texMoveContext\"");
+					}
+					
+					rowLayout -e -en true $moveStepSnapRow;
+					checkBoxGrp
+						-ncb 1 
+						-label1 (uiRes("m_uvTkBuildTransformOptions.kRetainCompSpacing"))
+						-ann (uiRes("m_uvTkBuildTransformOptions.kRetainCompSpacingAnn"))
+						-value1 (`texMoveContext -q -snapComponentsRelative texMoveContext`)
+						-cc1 ("texMoveContext -e -snapComponentsRelative #1 texMoveContext")
+						retainCompSpacingCheckGrp;
+					scriptJob -p retainCompSpacingCheckGrp -event "texMoveContextOptionsChanged" ("uvTkUpdateCompSpacingOptions");
+					
+					$distributeUVsLayout = `formLayout`;
+					    $distributeBtn = 
+						`iconTextButton 
+							-flat false 
+							-nbg false
+							-st "iconAndTextHorizontal"
+							-image "UVDistributeUVs.png"
+							-ann (uiRes("m_uvTkBuildTransformOptions.kDistributeAnnot"))
+							-w ($gUVTkTwinBtnWth-38) -h $gUVTkTwinBtnHgt
+							-l (uiRes("m_uvTkBuildTransformOptions.kDistribute"))
+							-c "uvTkDoDistributeUVs 1"
+							-rpt 1
+							distributeUVBtn`;
+						popupMenu 
+							-b 3 
+							-p distributeUVBtn 
+							-pmc "uvTkDoDistributeUVs 2";
+						
+						iconTextRadioCollection;
+						
+						iconTextRadioButton
+							-ebg 1
+							-nbg false
+							-st "textOnly"
+							-label (uiRes("m_uvTkBuildTransformOptions.kU"))
+							-w ($gUVTkTwinBtnWth/4) -h $gUVTkTwinBtnHgt 
+							-onc "optionVar -intValue polyDistributeUVDirection 1"
+							uvTkDistributeUVUBtn;
+							
+						iconTextRadioButton
+							-ebg 1
+							-nbg false
+							-st "textOnly"
+							-label (uiRes("m_uvTkBuildTransformOptions.kV"))
+							-w ($gUVTkTwinBtnWth/4) -h $gUVTkTwinBtnHgt 
+							-onc "optionVar -intValue polyDistributeUVDirection 2"
+							uvTkDistributeUVVBtn;
+							
+					    setParent ..;
+						formLayout -e 
+						    -af $distributeBtn "top" 0
+							-af $distributeBtn "left" 0
+							
+							-af uvTkDistributeUVUBtn "top" 0
+							-ac uvTkDistributeUVUBtn "left" 1 $distributeBtn
+							
+							-af uvTkDistributeUVVBtn "top" 0
+							-ac uvTkDistributeUVVBtn "left" 1 uvTkDistributeUVUBtn
+							$distributeUVsLayout;
+					
+					formLayout -e
+						-af $nudgeForm "top"  0
+						-af $nudgeForm "left" 0
+						
+						-ac $moveStepSnapRow "top"  5 $nudgeForm
+						-af	$moveStepSnapRow "left" 0
+						
+						-ac	retainCompSpacingCheckGrp "top"  5 $moveStepSnapRow
+						-af	retainCompSpacingCheckGrp "left" 0
+						
+						-ac	$distributeUVsLayout "top"    5 retainCompSpacingCheckGrp
+						-af $distributeUVsLayout "left"   0
+						-af	$distributeUVsLayout "bottom" 5
+					$moveOptionsForm;
+					setParent ..;
+				}
+				
+			string $moveToolFrame = `frameLayout -bgc $gUVTkFrameHeadColor[0] $gUVTkFrameHeadColor[1] $gUVTkFrameHeadColor[2] -collapsable true -collapse true -label (uiRes("m_uvTkBuildTransformOptions.kMoveTools")) uvTkMoveToolsFrame`;
+				{
+					string $moveToolForm = `formLayout`;
+					string $moveToolLabels[] = 
+					{
+						(uiRes("m_uvTkBuildTransformOptions.kGrab")), 
+						(uiRes("m_uvTkBuildTransformOptions.kLattice")), 
+						(uiRes("m_uvTkBuildTransformOptions.kPinch")), 
+						(uiRes("m_uvTkBuildTransformOptions.kSmear")), 
+						(uiRes("m_uvTkBuildTransformOptions.kSymmetrize"))
+					};
+					int $btnRpts[] = 
+					{	
+						1,
+						0,
+						1,
+						1,
+						1
+					};
+					string $extraOpts = (uiRes("m_uvTkBuildTransformOptions.kExtraLMBOpts"));
+					string $moveToolAnnots[] = 
+					{
+						(uiRes("m_uvTkBuildTransformOptions.kGrabAnnot")) + "\n" + $extraOpts, 
+						(uiRes("m_uvTkBuildTransformOptions.kLatticeAnnot")) + "\n" + $extraOpts, 
+						(uiRes("m_uvTkBuildTransformOptions.kPinchAnnot")) + "\n" + $extraOpts, 
+						(uiRes("m_uvTkBuildTransformOptions.kSmearAnnot")) + "\n" + $extraOpts, 
+						(uiRes("m_uvTkBuildTransformOptions.kSymmetrizeAnnot")) + "\n" + $extraOpts
+					};
+					string $moveToolButtons[] = 
+					{
+						"UVGrabBtn",
+						"UVLatticeBtn",
+						"UVPinchBtn",
+						"UVSmearBtn",
+						"UVSymmetrizeBtn"
+					};
+					string $moveToolCmds[] = 
+					{
+						"texSculptCacheContext -e -m Grab -i1 \"UV_Grab_BrushLarge.png\" texSculptCacheContextObj; setToolTo texSculptCacheContextObj;",
+						"LatticeUVTool;",
+						"texSculptCacheContext -e -m Pinch -i1 \"UV_Pinch_BrushLarge.png\" texSculptCacheContextObj; setToolTo texSculptCacheContextObj;",
+						"texSculptCacheContext -e -m Smear -i1 \"UV_Smear_BrushLarge.png\" texSculptCacheContextObj; setToolTo texSculptCacheContextObj;",
+						"SymmetrizeUVContext -e -i1 \"UVSymmetrizeTool.png\" texSymmetrizeUVContext; setToolTo texSymmetrizeUVContext;"
+					};
+					string $btnImgs[] = 
+					{
+						"grabUVTool.png",
+						"UVLatticeTool.png",
+						"pinchUVTool.png",
+						"smearUVTool.png",
+						"symmetrizeUVTool.png"
+					};
+					string $shiftClickCmd = "if(`getModifiers`%2) toolPropertyWindow;";
+					for ($i = 0; $i < size($moveToolLabels); $i++)
+					{
+						iconTextButton 
+							-flat false 
+							-nbg false
+							-st "iconAndTextHorizontal"
+							-image $btnImgs[$i]
+							-ann $moveToolAnnots[$i]
+							-w ($gUVTkTwinBtnWth-5) -h $gUVTkTwinBtnHgt
+							-l $moveToolLabels[$i]
+							-c ($moveToolCmds[$i] + $shiftClickCmd)
+							-rpt 1
+							$moveToolButtons[$i];
+					}
+					setParent ..;
+					formLayout -e
+						-attachForm		UVGrabBtn			"top"	5
+						-attachForm		UVGrabBtn			"left"	5
+						
+						-attachForm		UVLatticeBtn		"top"	5
+						-attachControl	UVLatticeBtn		"left"	1	UVGrabBtn
+						
+						-attachControl	UVPinchBtn		"top"	1	UVGrabBtn
+						-attachForm		UVPinchBtn		"left"	5
+						
+						-attachControl	UVSmearBtn		"top"	1	UVLatticeBtn
+						-attachControl	UVSmearBtn		"left"	1	UVPinchBtn
+						
+						-attachControl	UVSymmetrizeBtn	"top"	1	UVPinchBtn
+						-attachForm		UVSymmetrizeBtn	"left"	5
+						-attachForm		UVSymmetrizeBtn	"bottom" 5
+					$moveToolForm;
+					setParent ..;
+				}
+				setParent ..;
+		formLayout -e 
+			-attachForm $moveLabel	"top"  ($gUVTkSubAreaPad*2)
+			-attachForm $moveLabel	"left" $gUVTkSubAreaPad
+
+			-attachForm     $moveOptionsForm "top"  $gUVTkSubAreaPad
+			-attachControl	$moveOptionsForm "left" 0 $moveLabel
+			
+			-attachControl $moveToolFrame "top"    0 $moveOptionsForm
+			-attachForm    $moveToolFrame "left"   5 
+			-attachForm    $moveToolFrame "right"  $gUVTkSubAreaPad
+			-attachForm	   $moveToolFrame "bottom" $gUVTkSubAreaPad
+		$moveForm;
+		setParent ..;
+		formLayout -e -af $moveForm "top"    0
+				      -af $moveForm "left"   5
+				      -af $moveForm "right"  0
+				      -af $moveForm "bottom" 0
+				   $movePadForm;
+				   
+		string $rotatePadForm = `formLayout`;
+		string $rotateForm = `formLayout -bgc $gUVTkSubAreaBGColor[0] $gUVTkSubAreaBGColor[1] $gUVTkSubAreaBGColor[2]`;
+		    string $rotateLabel = `text -l (uiRes("m_uvTkBuildTransformOptions.kRotateLabel")) -width $gUVTkSubAreaTitleWidth -align "center" `;
+			string $rotateOptionsForm = `formLayout`;
+				{
+					string $rotateForm = `formLayout`;
+					{
+						string $rotateFactorBtn = `iconTextButton
+													-w 17 -h 25
+													-ann (uiRes("m_uvTkBuildTransformOptions.kRotateFactorsAnnot"))
+													-image ("popupMenuIcon.png")`;
+													
+						string $rotateDirectionButtons[] = 
+						{
+							"rotateCCWBtn",
+							"rotateCWBtn"
+						};
+						string $rotateDirectionImages[] = 
+						{
+							"polyRotateUVCCW.png",
+							"polyRotateUVCW.png"
+						};
+						string $rotateDirectionAnnots[] = 
+						{
+							(uiRes("m_uvTkBuildTransformOptions.kRotateCCWAnnot")),
+							(uiRes("m_uvTkBuildTransformOptions.kRotateCWAnnot"))
+						};
+						string $rotateDirectionCmds[] =
+						{
+							"uvTkDoRotate(0,  0)",
+							"uvTkDoRotate(1,  0)",
+							"uvTkDoRotate(0, 45)",
+							"uvTkDoRotate(1, 45)",
+							"uvTkDoRotate(0, 15)",
+							"uvTkDoRotate(1, 15)"
+						};
+						for ($i = 0; $i < size($rotateDirectionButtons); $i++)
+						{
+							iconTextButton 
+								-flat false 
+								-st "iconOnly" 
+								-image $rotateDirectionImages[$i]
+								-ann $rotateDirectionAnnots[$i]
+								-w 24 -h 24 
+								-c $rotateDirectionCmds[$i]
+								-rpt 1
+								$rotateDirectionButtons[$i];
+							string $mmbCmd = $rotateDirectionCmds[$i + 2];
+							string $rmbCmd = $rotateDirectionCmds[$i + 4];
+							popupMenu -b 2 -p $rotateDirectionButtons[$i] -pmc ("addToRecentCommandQueue \""+$mmbCmd+"\" \"Rotate UVs\";"+$mmbCmd);
+							popupMenu -b 3 -p $rotateDirectionButtons[$i] -pmc ("addToRecentCommandQueue \""+$rmbCmd+"\" \"Rotate UVs\";"+$rmbCmd);
+						}
+						
+						floatField 
+						    -en false 
+							-precision 4 
+							-w 60 -h $gUVTkTwinBtnHgt
+							-ann (uiRes("m_uvTkBuildTransformOptions.kRotateFactorAnn"))
+							-cc "uvTkRotateFactorChangeCB"
+							uvTkRotateFactorField;
+						floatField -e -en true uvTkRotateFactorField;
+						uvTkCreateFloatCustomMenu($rotateFactorBtn, {"15.0000", "45.0000", "90.0000", "180.0000"}, "uvTkRotateFactor", 90.0);
+						
+						setParent ..;
+						
+						formLayout -e
+						    -af $rotateFactorBtn  top  2
+							-af $rotateFactorBtn  left 0
+							-af	uvTkRotateFactorField top  2
+							-ac	uvTkRotateFactorField left 0 $rotateFactorBtn
+							
+							-af	rotateCCWBtn      top  0
+							-ac	rotateCCWBtn      left 10 uvTkRotateFactorField 
+							-af	rotateCWBtn       top  0
+							-ac	rotateCWBtn       left 5 rotateCCWBtn
+						$rotateForm;
+					}
+					rowLayout -nc 4 -cw4 58 16 60 44 uvTkRotateStepSnapRowLayout;
+					{
+						text
+							-w 58
+							-label (uiRes("m_uvTkBuildTransformOptions.kStepSnapLabel"))
+							-ann (uiRes("m_uvTkBuildTransformOptions.kRotateStepSnapAnn"))
+							rotateStepSnapLabel;
+		
+						iconTextButton
+							-w 16 -h 26
+							-image "popupMenuIcon.png"
+							rotateStepSnapButton;
+		
+						popupMenu -b 1 -p rotateStepSnapButton;
+							menuItem -label (uiRes("m_uvTkBuildTransformOptions.kOff")) -c ("texRotateContext -e -snap 0 texRotateContext");
+							menuItem -label (uiRes("m_uvTkBuildTransformOptions.kOn")) -c ("texRotateContext -e -snap 1 texRotateContext");
+						string $snapToggle = `popupMenu -b 2 -p rotateStepSnapButton`;
+						menu -e -pmc("texRotateContext -e -snap (!`texRotateContext -q -snap texRotateContext`) texRotateContext") $snapToggle;
+		
+						textField 
+							-ed false
+							-width 60
+							-height 20
+							rotateStepSnapModeField;
+						
+						floatField 
+							-w 44 
+							-precision 2 
+							-cc "texRotateContext -e -snapValue #1 texRotateContext"
+							rotateStepSnapValueField;
+
+						setParent ..;
+
+						scriptJob -p rotateStepSnapModeField -event "texRotateContextOptionsChanged" ("uvTkUpdateStepSnapOptions \"texRotateContext\"");
+					}
+					rowLayout -e -en true uvTkRotateStepSnapRowLayout;
+					
+					formLayout -e
+						-attachForm		$rotateForm				"top"		0
+						-attachForm		$rotateForm				"left"		0
+						
+						-attachControl	uvTkRotateStepSnapRowLayout		"top"		5	$rotateForm
+						-attachForm		uvTkRotateStepSnapRowLayout		"left"		0
+						-attachForm		uvTkRotateStepSnapRowLayout		"bottom"	5
+					$rotateOptionsForm;
+					setParent ..;
+				}
+				setParent ..;
+		formLayout -e 
+			-attachForm $rotateLabel "top"  ($gUVTkSubAreaPad*2)
+			-attachForm $rotateLabel "left" $gUVTkSubAreaPad
+			            
+			-attachForm    $rotateOptionsForm "top"  $gUVTkSubAreaPad
+			-attachControl $rotateOptionsForm "left" 0 $rotateLabel
+		$rotateForm;
+		setParent ..;
+		formLayout -e -af $rotateForm "top"    0
+				      -af $rotateForm "left"   5
+				      -af $rotateForm "right"  0
+				      -af $rotateForm "bottom" 0
+				   $rotatePadForm;
+				   
+		string $scalePadForm = `formLayout`;
+		string $scaleForm = `formLayout -bgc $gUVTkSubAreaBGColor[0] $gUVTkSubAreaBGColor[1] $gUVTkSubAreaBGColor[2]`;
+		    string $scaleLabel = `text -l (uiRes("m_uvTkBuildTransformOptions.kScaleLabel")) -width $gUVTkSubAreaTitleWidth -align "center" `;
+			string $scaleOptionsForm = `formLayout`;
+				{
+					string $scaleForm = `formLayout`;
+					{
+						string $scaleFactorBtn = `iconTextButton
+													-w 17 -h 25
+													-ann (uiRes("m_uvTkBuildTransformOptions.kScaleFactorsAnnot"))
+													-image ("popupMenuIcon.png")`;
+													
+						floatField 
+							-precision 4 
+							-en false
+							-w 60 -h $gUVTkTwinBtnHgt
+							-ann (uiRes("m_uvTkBuildTransformOptions.kScaleFactor"))
+							-cc "uvTkScaleFactorChangeCB"
+							uvTkScaleFactorField;
+						floatField -e -en true uvTkScaleFactorField;
+						
+						uvTkCreateFloatCustomMenu($scaleFactorBtn, {"2.0000", "4.0000"}, "uvTkScaleFactor", 2.0);
+						
+						iconTextButton 
+							-flat false
+							-st "iconOnly"
+							-image "polyScaleUV.png"
+							-ann (uiRes("m_uvTkBuildTransformOptions.kScaleAnnot"))
+							-w 24 -h 24 
+							-c ( "uvTkDoScale 0" )
+							-rpt 1
+							uvTkScaleBtn;
+						popupMenu 
+							-b 3 
+							-p uvTkScaleBtn 
+							-pmc ("addToRecentCommandQueue \"uvTkDoScale 1\" \"Scale UVs\"; uvTkDoScale 1" );
+							
+						iconTextRadioCollection;
+			            iconTextCheckBox
+						    -ebg 1
+                            -nbg 0
+                            -st "textOnly"
+                            -w ($gUVTkTwinBtnWth/4) -h $gUVTkTwinBtnHgt
+                            -l (uiRes("m_uvTkBuildTransformOptions.kU"))
+                            -onc "uvTkToggleScaleDirection(\"U\", 1);"
+							-ofc "uvTkToggleScaleDirection(\"U\", 0);"
+                            -ann (uiRes("m_uvTkBuildTransformOptions.kScaleUVAnnot"))
+						    uvTkScaleUControlBtn;
+						   
+			            iconTextCheckBox
+			                -ebg 1
+							-nbg 0
+                            -st "textOnly"
+                            -w ($gUVTkTwinBtnWth/4) -h $gUVTkTwinBtnHgt
+                            -l (uiRes("m_uvTkBuildTransformOptions.kV"))
+                            -onc "uvTkToggleScaleDirection(\"V\", 1);"
+							-ofc "uvTkToggleScaleDirection(\"V\", 0);"
+                            -ann (uiRes("m_uvTkBuildTransformOptions.kScaleUVAnnot"))
+						    uvTkScaleVControlBtn;
+						
+						setParent ..;
+						formLayout -e 
+						-af $scaleFactorBtn top  2
+						-af $scaleFactorBtn left 0
+						-af uvTkScaleFactorField top  2
+						-ac uvTkScaleFactorField left 0 $scaleFactorBtn
+						-af uvTkScaleBtn top   0 
+						-ac uvTkScaleBtn left 10 uvTkScaleFactorField
+						-af uvTkScaleUControlBtn top  2 
+						-ac uvTkScaleUControlBtn left 5 uvTkScaleBtn
+						-af uvTkScaleVControlBtn top  2 
+						-ac uvTkScaleVControlBtn left 1 uvTkScaleUControlBtn
+						$scaleForm;
+					}
+					rowLayout -nc 4 -cw4 58 16 60 44 uvTkScaleStepSnapRowLayout;
+					{
+						text
+							-w 58
+							-label (uiRes("m_uvTkBuildTransformOptions.kStepSnapLabel"))
+							-ann (uiRes("m_uvTkBuildTransformOptions.kScaleStepSnapAnn"))
+							scaleStepSnapLabel;
+		
+						iconTextButton
+							-w 16 -h 26
+							-image "popupMenuIcon.png"
+							scaleStepSnapButton;
+		
+						popupMenu -b 1 -p scaleStepSnapButton;
+							menuItem -label (uiRes("m_uvTkBuildTransformOptions.kOff")) -c ("texScaleContext -e -snap 0 texScaleContext");
+							menuItem -label (uiRes("m_uvTkBuildTransformOptions.kOn"))  -c ("texScaleContext -e -snap 1 texScaleContext");
+						string $snapToggle = `popupMenu -b 2 -p scaleStepSnapButton`;
+						menu -e -pmc("texScaleContext -e -snap (!`texScaleContext -q -snap texScaleContext`) texScaleContext") $snapToggle;
+
+						textField 
+							-ed false
+							-width 60
+							-height 20
+							scaleStepSnapModeField;
+		
+						floatField 
+							-w 44 
+							-precision 2 
+							-cc "texScaleContext -e -snapValue #1 texScaleContext"
+							scaleStepSnapValueField;
+
+						setParent ..;
+
+						scriptJob -p uvTkScaleStepSnapRowLayout -event "texScaleContextOptionsChanged" ("uvTkUpdateStepSnapOptions \"texScaleContext\"");
+					}	
+
+					rowLayout -e -en true uvTkScaleStepSnapRowLayout;
+					
+					checkBoxGrp
+						-ncb 1 
+						-label1 (uiRes("m_uvTkBuildTransformOptions.kPreventNegativeScale"))
+						-annotation (uiRes("m_uvTkBuildTransformOptions.kPreventNegativeScaleAnnot"))
+						-cc1 ("texScaleContext -e -preventNegativeScale #1 texScaleContext")
+						preventNegativeScaleCheckGrp;
+						
+					string $flipRow = `rowLayout -nc 4 -cw3 106 37 37`;
+					{
+						iconTextButton 
+							-flat false
+							-nbg false
+							-st "iconAndTextHorizontal"
+							-image "polyFlipUV.png"
+							-label (uiRes("m_uvTkBuildTransformOptions.kFlip"))
+							-ann (uiRes("m_uvTkBuildTransformOptions.kFlipAnnot"))
+							-w ($gUVTkTwinBtnWth-10) -h $gUVTkTwinBtnHgt
+							-c ( "uvTkDoFlipUVs 1" )
+							-rpt 1
+							flipBtn;
+						popupMenu 
+							-b 3 
+							-p flipBtn 
+							-pmc ( "uvTkDoFlipUVs 2" );
+
+						iconTextRadioCollection flipUVDirectionCollection;
+						iconTextRadioButton
+							-ebg 1
+							-nbg false
+							-st "textOnly"
+							-label (uiRes("m_uvTkBuildTransformOptions.kU"))
+							-ann (uiRes("m_uvTkBuildTransformOptions.kFlipUAnnot"))
+							-w ($gUVTkTwinBtnWth/4) -h $gUVTkTwinBtnHgt 
+							-onc "optionVar -intValue polyUVFlipDirection 1"
+							flipUControlBtn;
+							
+						iconTextRadioButton
+							-ebg 1
+							-nbg false
+							-st "textOnly"
+							-label (uiRes("m_uvTkBuildTransformOptions.kV"))
+							-ann (uiRes("m_uvTkBuildTransformOptions.kFlipVAnnot"))
+							-w ($gUVTkTwinBtnWth/4) -h $gUVTkTwinBtnHgt 
+							-onc "optionVar -intValue polyUVFlipDirection 2"
+							flipVControlBtn;
+							
+						setParent ..;
+					}
+					formLayout -e
+						-attachForm		$scaleForm			"top"		0
+						-attachForm		$scaleForm			"left"		0
+						
+						-attachControl	uvTkScaleStepSnapRowLayout	"top"		5	$scaleForm
+						-attachForm		uvTkScaleStepSnapRowLayout	"left"		0
+						
+						-attachControl  preventNegativeScaleCheckGrp "top"  5 uvTkScaleStepSnapRowLayout
+						-attachForm     preventNegativeScaleCheckGrp "left" 0
+						
+						-attachControl	$flipRow			"top"		5	preventNegativeScaleCheckGrp
+						-attachForm		$flipRow			"left"		0
+						-attachForm		$flipRow			"bottom"	5
+					$scaleOptionsForm;
+					setParent ..;
+				}
+				
+				setParent ..;
+		formLayout -e 
+			-attachForm $scaleLabel "top" ($gUVTkSubAreaPad*2)
+			-attachForm $scaleLabel "left" $gUVTkSubAreaPad
+			            
+			-attachForm    $scaleOptionsForm "top" $gUVTkSubAreaPad
+			-attachControl $scaleOptionsForm "left" 0 $scaleLabel
+		$scaleForm;
+		setParent ..;
+		formLayout -e -af $scaleForm "top"    0
+				      -af $scaleForm "left"   5
+				      -af $scaleForm "right"  0
+				      -af $scaleForm "bottom" 0
+				   $scalePadForm;
+
+		string $texelDensityPadForm = `formLayout`;
+		string $texelDensityForm = `formLayout -bgc $gUVTkSubAreaBGColor[0] $gUVTkSubAreaBGColor[1] $gUVTkSubAreaBGColor[2]`;
+		    string $texelDensityLabel = `text -l (uiRes("m_uvTkBuildTransformOptions.kTexelDensityLabel")) -width $gUVTkSubAreaTitleWidth -align "center" texelDensityLabel`;
+			string $texelDensityOptionsForm = `formLayout`;
+				{
+					string $texelDensityRow = `rowLayout -nc 4`;
+					{
+						iconTextButton 
+							-flat false
+							-nbg false
+							-st "textOnly"
+							-label (uiRes("m_uvTkBuildTransformOptions.kGet"))
+							-ann (uiRes("m_uvTkBuildTransformOptions.kGetAnnot"))
+							-c "uvTkDoGetTexelDensity"
+							-w 46 -h $gUVTkTwinBtnHgt
+							getTexelDensityBtn;
+						
+						string $TexelFactorBtn = `iconTextButton -w 17 -h 25 -image ("popupMenuIcon.png") texelDensityPopupBtn`;
+						
+						floatField 
+						    -en false
+							-precision 4
+							-w 62 -h $gUVTkTwinBtnHgt 
+							-ann (uiRes("m_uvTkBuildTransformOptions.kTexelDensityAnnot"))
+							-cc "uvTkTexelDensityChangeCB"
+							uvTkTexelDensityField;
+						floatField -e -en true uvTkTexelDensityField;
+						uvTkCreateFloatCustomMenu($TexelFactorBtn, {"8.0000", "16.0000", "32.0000"}, "uvTkTexelDensity", 32.0);
+							
+						iconTextButton
+						    -nbg false
+							-flat false 
+							-st "textOnly"
+							-label (uiRes("m_uvTkBuildTransformOptions.kSet"))
+							-ann (uiRes("m_uvTkBuildTransformOptions.kSetAnnot"))
+							-c "uvTkDoSetTexelDensity"
+							-w 46 -h $gUVTkTwinBtnHgt 
+							setTexelDensityBtn;
+							
+						setParent ..;
+					}
+					string $mapSizeRow = `rowLayout -nc 2 -cw2 60 120`;
+					{
+						text
+							-w 58
+							-label (uiRes("m_uvTkBuildTransformOptions.kMapSize"))
+							mapSizeLabel;
+							
+						intField 
+						    -en false
+							-w 120
+							-cc "uvTkTexelDensityChangeCB"
+							-ann (uiRes("m_uvTkBuildTransformOptions.kMapSizeInput"))
+							uvTkTexelDensityMapSizeField;
+						intField -e -en true uvTkTexelDensityMapSizeField;
+
+						setParent ..;
+					}
+
+					formLayout -e
+						-attachForm		$texelDensityRow		"top"		0
+						-attachForm		$texelDensityRow		"left"		0
+						
+						-attachControl	$mapSizeRow			"top"		5	$texelDensityRow
+						-attachForm		$mapSizeRow			"left"		0
+						-attachForm		$mapSizeRow			"bottom"	5
+					$texelDensityOptionsForm;
+					setParent ..;
+				}
+				
+				setParent ..;
+		formLayout -e 
+			-attachForm $texelDensityLabel "top"  ($gUVTkSubAreaPad*2)
+			-attachForm $texelDensityLabel "left" $gUVTkSubAreaPad
+			-attachForm $texelDensityOptionsForm    "top"  $gUVTkSubAreaPad
+			-attachControl $texelDensityOptionsForm "left" 0 $texelDensityLabel
+		$texelDensityForm;
+		
+		setParent ..;
+		formLayout -e -af $texelDensityForm "top"    0
+				      -af $texelDensityForm "left"   5
+				      -af $texelDensityForm "right"  0
+				      -af $texelDensityForm "bottom" $gUVTkSubAreaPad
+				   $texelDensityPadForm;
+
+	uvTkUpdateTransformOptions();
+	uvTkUpdateStepSnapOptions("texMoveContext");
+	uvTkUpdateStepSnapOptions("texRotateContext");
+	uvTkUpdateStepSnapOptions("texScaleContext");
+	uvTkUpdateCompSpacingOptions();
+	
+	return $layout;
+}
+
+global proc uvTkTexelDensityChangeCB()
+{
+	if(`intField -q -ex uvTkTexelDensityMapSizeField`)
+	{
+		int $mapSize =`intField -q -v uvTkTexelDensityMapSizeField`;
+		optionVar -iv polyUVTexelDensityMapSize $mapSize;
+	}
+	if(`floatField -q -ex uvTkTexelDensityField`)
+	{
+		float $value =`floatField -q -v uvTkTexelDensityField`;
+		uvTkSaveToogleFloatValue("uvTkTexelDensity");
+		optionVar -fv polyUVTexelDensity $value;
+	}
+}
+
+global proc uvTkDoGetTexelDensity()
+{
+	uvTkSetTransformOptionVars(0);
+	uvTkTexelDensityChangeCB(); //Save optionVar before perform command
+	int $mapSize = `optionVar -q polyUVTexelDensityMapSize`;
+	float $value = texGetTexelDensity($mapSize);
+	if(`floatField -q -ex uvTkTexelDensityField`)
+		floatField -e -v $value uvTkTexelDensityField;
+}
+
+global proc uvTkDoSetTexelDensity()
+{
+    uvTkSetTransformOptionVars(0);
+	uvTkTexelDensityChangeCB(); //Save optionVar before perform command
+	int $mapSize = `optionVar -q polyUVTexelDensityMapSize`;
+	float $value = `optionVar -q polyUVTexelDensity`;
+	evalEcho("texSetTexelDensity " + $value + " " + $mapSize);
+}
+
+global proc uvTkUpdateStepSnapOptions(string $toolName)
+{
+	string $ctxName = `contextInfo -c $toolName`;
+	if ($ctxName == "texMove")
+	{
+		int $stepSnapMode = `texMoveContext -q -snap $toolName`;
+		if (`textField -ex moveStepSnapModeField`)
+		{
+			if ($stepSnapMode)
+				textField -e -tx (uiRes("m_uvTkBuildTransformOptions.kOn")) moveStepSnapModeField;
+			else
+				textField -e -tx (uiRes("m_uvTkBuildTransformOptions.kOff")) moveStepSnapModeField;
+		}
+	
+		if (`floatField -ex moveStepSnapValueField`)
+			floatField -e -en ($stepSnapMode != 0) -v (`texMoveContext -q -snapValue $toolName`) moveStepSnapValueField;
+	}
+	else if ($ctxName == "texRotate")
+	{
+		int $stepSnapMode = `texRotateContext -q -snap $toolName`;
+		if (`textField -ex rotateStepSnapModeField`)
+		{
+			if ($stepSnapMode)
+				textField -e -tx (uiRes("m_uvTkBuildTransformOptions.kOn")) rotateStepSnapModeField;
+			else
+				textField -e -tx (uiRes("m_uvTkBuildTransformOptions.kOff")) rotateStepSnapModeField;
+		}
+	
+		if (`floatField -ex rotateStepSnapValueField`)
+			floatField -e -en ($stepSnapMode != 0) -v (`texRotateContext -q -snapValue $toolName`) rotateStepSnapValueField;
+	}
+	else if ($ctxName == "texScale")
+	{
+		int $stepSnapMode = `texScaleContext -q -snap $toolName`;
+		if (`textField -ex scaleStepSnapModeField`)
+		{
+			if ($stepSnapMode)
+				textField -e -tx (uiRes("m_uvTkBuildTransformOptions.kOn")) scaleStepSnapModeField;
+			else
+				textField -e -tx (uiRes("m_uvTkBuildTransformOptions.kOff")) scaleStepSnapModeField;
+		}
+	
+		if (`floatField -ex scaleStepSnapValueField`)
+			floatField -e -en ($stepSnapMode != 0) -v(`texScaleContext -q -snapValue $toolName`) scaleStepSnapValueField;
+		
+		int $pns = `texScaleContext -q -preventNegativeScale $toolName`;
+        if (`checkBoxGrp -ex preventNegativeScaleCheckGrp`)
+			checkBoxGrp -e -value1 $pns preventNegativeScaleCheckGrp;
+	}
+}
+
+global proc uvTkUpdateCompSpacingOptions()
+{
+	if (`checkBoxGrp -ex retainCompSpacingCheckGrp`)
+		checkBoxGrp -e -v1 (`texMoveContext -q -snapComponentsRelative texMoveContext`) retainCompSpacingCheckGrp;
+}
+
+global proc uvTkDoDistributeUVs(int $distanceOption)
+{
+	uvTkSetTransformOptionVars(0);
+	int $distanceOptionOld = 1, $directionOld = 1;
+	if(`optionVar -ex distributeUVDistanceOption`)
+		$distanceOptionOld = `optionVar -q distributeUVDistanceOption`;
+	if(`optionVar -ex distributeUVDirection`)
+		$directionOld = `optionVar -q distributeUVDirection`;
+	optionVar -iv distributeUVDistanceOption $distanceOption;
+	optionVar -iv distributeUVDirection `optionVar -q polyDistributeUVDirection`;
+
+	DistributeUVs;
+
+	optionVar -iv distributeUVDirection $directionOld;
+	optionVar -iv distributeUVDistanceOption $distanceOptionOld;
+}
+
+global proc uvTkDoFlipUVs(int $space)
+{
+	string $originalSelection[] = `ls -sl`;
+
+	float $origPivot[] = uvTkGetUVPivot(); 
+	 
+	// get mesh 
+    string $mesh = ""; 
+    if(size($origPivot) == 2)
+    {
+        string $buffer[]; 
+        tokenize $originalSelection[0] "." $buffer; 
+        $mesh = $buffer[0]; 
+    	// Set pivot for flip undo. 
+        setAttr ($mesh + ".uvPivot") $origPivot[0] $origPivot[1];
+    }
+
+	uvTkSetTransformOptionVars(0);
+	int $direction = `optionVar -q polyUVFlipDirection`;
+
+	string $cmd = "polyFlipUV -flipType " + ($direction == 1? "0" : "1");
+    if($space == 1)
+    {
+    	$cmd += " -local on";
+    	float $pivot[] = uvTkGetUVPivot();
+    	$cmd += " -usePivot true -pivotU " + $pivot[0] + " -pivotV " + $pivot[1];
+    }
+    else
+    	$cmd += " -local off";
+
+	string $resultantSelection[] = rearrangeSelection($originalSelection);
+	
+	int $i;
+	for( $i = 0; $i < size($resultantSelection); $i++ )
+	{  	
+    	$newCmd = "";
+		$object = $resultantSelection[$i];
+
+    	$newCmd = $cmd + " " + $object;
+    	evalEcho($newCmd);
+    }
+
+	// Restore original selection
+	if (size($originalSelection[0]) > 0) 
+		select -r $originalSelection;
+	else
+		select -clear;
+
+     if(size($origPivot) == 2 && $mesh != "")
+     {
+    	// Set pivot to original, since reselection will change pivot position to center.
+    	setAttr ($mesh + ".uvPivot") $origPivot[0] $origPivot[1];
+     }
+}
+
+
+global proc float[] uvTkGetUVPivot()
+{
+	float $pivot[];
+	string $selection[] = `ls -selection`;
+	if(size($selection) == 0)
+		return $pivot;
+	string $currentContext = `currentCtx`;
+	string $ctxName = `contextInfo -c $currentContext`;
+	if($ctxName == "texMove" || $ctxName == "texRotate" || $ctxName == "texScale")
+	{
+		string $buffer[];
+		tokenize $selection[0] "." $buffer;
+		string $mesh = $buffer[0];
+		$pivot = `getAttr ($mesh + ".uvPivot")`;
+	}
+	else
+	{
+		float $uvBox[] = `polyEvaluate -bc2`; // Get bounding box coords
+		$pivot[0] = 0.5 * ($uvBox[0] + $uvBox[1]);
+		$pivot[1] = 0.5 * ($uvBox[2] + $uvBox[3]);
+	}
+	return $pivot;
+}
+
+global proc uvTkSelectionChanged()
+{
+	// Query the selected UV value (if there is only one) to set the UV textfields
+	if( `floatField -ex uvTkUVPositionFieldU` && `floatField -ex uvTkUVPositionFieldV` )
+	{
+		string $valid = `polyEvaluate -boundingBoxComponent2d -fmt`;
+		if( size(match("boundingBoxComponent2d", $valid)) > 0 )
+		{
+			float $bbox[] = `polyEvaluate -boundingBoxComponent2d`;
+			float $centerU = ($bbox[1] + $bbox[0]) * 0.5;
+			float $centerV = ($bbox[3] + $bbox[2]) * 0.5;
+
+			floatField -e -v $centerU uvTkUVPositionFieldU;
+			floatField -e -v $centerV uvTkUVPositionFieldV;
+		}
+		else
+		{
+			floatField -e -v 0 uvTkUVPositionFieldU;
+			floatField -e -v 0 uvTkUVPositionFieldV;
+		}
+	}
+}
+
+global proc uvTkUVPositionUChangeCB()
+{
+	float $oldValue = `optionVar -q polyNudgeUVFactor`;
+	optionVar -intValue polyNudgeUVAbsolute 1;
+	
+	float $uvalue = `floatField -q -v uvTkUVPositionFieldU`;
+	optionVar -floatValue polyNudgeUVFactor $uvalue;
+	performPolyNudgeUVs "right";
+	
+	optionVar -floatValue polyNudgeUVFactor $oldValue;
+	optionVar -intValue polyNudgeUVAbsolute 0;
+}
+
+global proc uvTkUVPositionVChangeCB()
+{
+	float $oldValue = `optionVar -q polyNudgeUVFactor`;
+	optionVar -intValue polyNudgeUVAbsolute 1;
+	
+	float $vvalue = `floatField -q -v uvTkUVPositionFieldV`;
+	optionVar -floatValue polyNudgeUVFactor $vvalue;
+	performPolyNudgeUVs "up";
+
+	optionVar -floatValue polyNudgeUVFactor $oldValue;
+	optionVar -intValue polyNudgeUVAbsolute 0;
+}
+
+global proc uvTkNudgeFactorChangeCB()
+{
+	if(`floatField -q -ex uvTkNudgeFactorField`)
+	{
+		float $value = `floatField -q -v uvTkNudgeFactorField`;
+		uvTkSaveToogleFloatValue("uvTkNudgeFactor");
+		optionVar -fv polyNudgeUVFactor $value;
+		optionVar -intValue polyNudgeUVAbsolute 0;
+	}
+}
+
+global proc uvTkRotateFactorChangeCB()
+{
+	if(`floatField -q -ex uvTkRotateFactorField`)
+	{
+		float $value = `floatField -q -v uvTkRotateFactorField`;
+		uvTkSaveToogleFloatValue("uvTkRotateFactor");
+		optionVar -fv polyRotateUVAngle $value;
+	}
+}
+
+global proc uvTkDoRotate(int $clockwise, float $angle)
+{
+	texCheckSelection("any");
+	uvTkRotateFactorChangeCB();
+	if($angle == 0)
+		$angle = `optionVar -q polyRotateUVAngle`;
+	evalEcho("polyRotateUVs " + ($clockwise ? -$angle : $angle) + " 1");
+}
+
+global proc uvTkScaleFactorChangeCB()
+{
+	if(`floatField -q -ex uvTkScaleFactorField`)
+	{
+		float $value = `floatField -q -v uvTkScaleFactorField`;
+		uvTkSaveToogleFloatValue("uvTkScaleFactor");
+		optionVar -fv polyScaleUVFactor $value;
+	}
+}
+
+global proc uvTkDoScale( int $inverted )
+{
+	texCheckSelection("any");
+	uvTkScaleFactorChangeCB();
+	float $prvot[] = uvTkGetUVPivot();
+	float $factor = `optionVar -q polyScaleUVFactor`;
+	if( $inverted )
+		$factor = 1 / $factor;
+	int $dir = `optionVar -q polyScaleDirection`;
+	float $su = ($dir == 2 ? 1 : $factor);
+	float $sv = ($dir == 1 ? 1 : $factor);
+	$cmd = "polyEditUV -pu " + $prvot[0] + " -pv " + $prvot[1] + " -su " + $su + " -sv " + $sv;
+	evalEcho($cmd);
+}

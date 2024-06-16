@@ -1,0 +1,49 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  14 Jan 2003
+//
+//  Procedure Name:
+//      polyChamferVtx
+//
+//  Description:
+//      Chamfer vertices, using the extrude vertex command.
+//         
+//  Input Arguments:
+//		int		$doHistory		Create history or not
+//      float	$width			Width of the chamfer
+//		int		$deleteFace		Should corner be removed
+//
+//  Return Value:
+//        The name of the node created, if history is on.
+//
+
+global proc string polyChamferVtx(int $doHistory, float $width, int $deleteFace) 
+{
+	string $sel[] = `ls -sl`;
+	string $cmd = "polyExtrudeVertex -ch " + $doHistory + " ";
+	$cmd += "-divisions 1 -width " + $width + ";";
+	string $newNode = "";
+	string $result[] = eval($cmd);
+	if (size($result) > 0) {
+		setAttr -lock on ($result[0]+".divisions");
+		setAttr -lock on ($result[0]+".length");
+		$newNode = `rename $result[0] "polyChamfer#"`;
+	}
+	select $sel;
+	if (1 == $deleteFace) {
+		getFaces; 
+		delete;
+	} else {
+		DeleteVertex;
+	}
+	return $newNode;
+}
+
+

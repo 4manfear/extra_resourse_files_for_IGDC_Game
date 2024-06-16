@@ -1,0 +1,72 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc AEcolorChannelEnumNew(string $attr)
+{
+    columnLayout;
+
+    string $buffer[];
+    int $ntoks = `tokenize $attr ".channel" $buffer`;
+
+    attrEnumOptionMenuGrp -l ((uiRes("m_AEchannelsTemplate.kChannel"))+$buffer[$ntoks-1])
+        -enumeratedItem 0 (uiRes("m_AEchannelsTemplate.kR"))
+        -enumeratedItem 1 (uiRes("m_AEchannelsTemplate.kG"))
+        -enumeratedItem 2 (uiRes("m_AEchannelsTemplate.kB"))
+        -enumeratedItem 3 (uiRes("m_AEchannelsTemplate.kA"))
+        channel;
+
+    setParent ..;
+
+    AEcolorChannelEnumReplace($attr);
+}
+
+global proc AEcolorChannelEnumReplace(string $attr)
+{
+    attrEnumOptionMenuGrp -e -at $attr channel;
+}
+
+global proc AEchannelsTemplate(string $node)
+{
+    AEswatchDisplay $node;
+    editorTemplate -beginScrollLayout;
+    editorTemplate -beginNoOptimize;
+
+    editorTemplate -beginLayout (uiRes("m_AEchannelsTemplate.kInputs")) -collapse 0;
+    editorTemplate -label (uiRes("m_AEchannelsTemplate.kColor")) -addControl "inColor";
+    editorTemplate -label (uiRes("m_AEchannelsTemplate.kAlpha")) -addControl "inAlpha";
+    editorTemplate -addSeparator;
+    editorTemplate -ccu
+        "AEcolorChannelEnumNew"
+        "AEcolorChannelEnumReplace"
+        "channelR";
+    editorTemplate -ccu
+        "AEcolorChannelEnumNew"
+        "AEcolorChannelEnumReplace"
+        "channelG";
+    editorTemplate -ccu
+        "AEcolorChannelEnumNew"
+        "AEcolorChannelEnumReplace"
+        "channelB";
+    editorTemplate -ccu
+        "AEcolorChannelEnumNew"
+        "AEcolorChannelEnumReplace"
+        "channelA";
+    editorTemplate -endLayout;
+
+    editorTemplate -addExtraControls;
+
+    editorTemplate -suppress "channelR";
+    editorTemplate -suppress "channelG";
+    editorTemplate -suppress "channelB";
+    editorTemplate -suppress "channelA";
+
+    editorTemplate -suppress "caching";
+    editorTemplate -suppress "nodeState";
+
+    editorTemplate -endNoOptimize;
+    editorTemplate -endScrollLayout;
+}

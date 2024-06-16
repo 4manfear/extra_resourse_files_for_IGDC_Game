@@ -1,0 +1,135 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+// Creation Date: 1996
+//
+//
+//<doc>
+//<name addNewShelfTab>
+//
+//<synopsis>
+//		addNewShelfTab (string $newName)
+//
+//<returns>
+//		string : The name of the shelf tab that was created
+//
+//<description>
+//		Adds a new shelf layout and tab to the top level shelves, 
+//      and creates new preferences so that it will be loaded again.
+//
+//<flags>
+//		string $newName Name of the new tab, or "" to automatically 
+//				assign a name.
+//
+//<examples>
+//	// Create a new shelf tab called "myTabName"
+//  addNewShelfTab "myTabName";
+//	// Result: myTabName //
+//
+//	// Create a new shelf tab with a default name
+//  addNewShelfTab "";
+//	// Result: shelfLayout1 //
+//
+//</doc>
+
+global proc string addNewShelfTab(string $newName) {
+//
+//  Description:
+//		This method adds the shelf layout to the tab layout. Due to the
+//		ornary nature of the shelf/grid it causes mutch geometry negotiations.
+//		As a workaround a separator widget is used as a place holder while the
+//		tab layout is unmanaged.  This causes a blink but this is far preferable
+//		to the resizing that takes place otherwise.
+//
+	global string $gShelfForm;
+	global string $gShelfTopLevel;
+
+	string $shelfName;
+	string $shelves[];
+	int $shelfHeight, $nShelves;
+
+	setParent $gShelfTopLevel;
+	$shelfHeight = `tabLayout -q -h $gShelfTopLevel`;
+	tabLayout -e -visible false $gShelfTopLevel;
+
+	setParent $gShelfForm;
+	separator -h $shelfHeight -style "single" spacingSeparator;
+
+	formLayout -e 
+		-af spacingSeparator top 0
+		-af spacingSeparator left 0
+		-af spacingSeparator bottom 0
+		-af spacingSeparator right 0
+		$gShelfForm;
+
+	tabLayout -e -manage false $gShelfTopLevel;
+	setParent $gShelfTopLevel;
+	
+	string $newShelfName;
+	if ($newName == "") {
+		$newShelfName = `shelfLayout`;
+	} else {
+		$newShelfName = `shelfLayout $newName`;
+	}
+
+	// Match the style of the other tabs
+	string $style = `getShelfStyle($gShelfTopLevel)`;
+	shelfStyle $style "Small" $newShelfName;
+
+	tabLayout -e -manage true -visible true $gShelfTopLevel;
+
+	$shelves = `tabLayout -q -ca $gShelfTopLevel`;	
+	$shelfName = $shelves[size($shelves)-1];
+	
+	if(!`exists shelfLabel_melToUI` ){
+		source "shelfLabel.mel";
+	}
+	
+	//
+	// If the user has created a new shelf with the same name as the 
+	// default shelves like Animation, Curves, Surfaces, Polygons ..., 
+	// edit the tab label to set the localized name in the UI
+	//
+	shelfTabLayout -edit -tabLabel $shelfName (shelfLabel_melToUI($shelfName)) $gShelfTopLevel;
+
+	deleteUI spacingSeparator;
+
+	//  Do that preference thang.
+	//
+	$nShelves = `shelfTabLayout -q -numberOfChildren $gShelfTopLevel`;
+	optionVar -category "Shelves"
+		-iv ("shelfLoad" + $nShelves) 0
+		-sv ("shelfName" + $nShelves) $shelfName
+		-sv ("shelfFile" + $nShelves) ("shelf_" + $shelfName)
+		-sv ("shelfAlign" + $nShelves) "left";
+	
+	// Save shelf file to shelves directory
+	//
+	string $PATH_SEPARATOR = `about -win`? ";" : ":";
+	string $shelfDir[] = stringToStringArray(`internalVar -userShelfDir`, $PATH_SEPARATOR);
+	// Make sure we are using the shelves directory.
+	int $position = 0;
+	for ($position = 0; $position < size($shelfDir); $position++) {
+		if ( ( startsWith($shelfDir[$position], (`internalVar -userPrefDir`)) ) && ( endsWith($shelfDir[$position], "/prefs/shelves/") ) ) {
+			// We have found the shelves directory.
+			break;
+		}
+	}
+	string $saveCmd = "saveShelf \"" + $newShelfName + "\" \"" + $shelfDir[$position] + "shelf_" + $shelfName + "\";";
+	evalDeferred ( $saveCmd );
+	
+	tabLayout -e -selectTab $shelfName $gShelfTopLevel;
+		
+	// Set the current shelf option var
+	int $shelfNum = `tabLayout -q -sti $gShelfTopLevel`;
+	optionVar -iv selectedShelf $shelfNum;
+
+	return $shelfName;
+}
+

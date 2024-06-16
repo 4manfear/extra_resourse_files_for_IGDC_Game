@@ -1,0 +1,25 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//	regionSelectKey : has no properties
+//
+
+global proc regionSelectKeyProperties () 
+{
+	string $parent = `toolPropertyWindow -q -location`;
+	setParent $parent;
+
+	setUITemplate -pushTemplate OptionsTemplate;
+
+	columnLayout -adj true regionSelectKey;
+		separator -style "none";
+		text -label (uiRes("m_regionSelectKeyProperties.kRegionSelectKeyNoSettingsDefined")) -align left text1;
+	setParent ..;
+
+	setUITemplate -popTemplate;
+}

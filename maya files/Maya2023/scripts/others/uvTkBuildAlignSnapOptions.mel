@@ -1,0 +1,589 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+
+// Initialize optionVars for Transform frame options
+global proc uvTkSetAlignSnapOptionVars(int $forceFactorySettings)
+{
+	optionVar -init $forceFactorySettings -category "UV Editor.Align and Snap"
+		-iv polyUVsnapMinU 0
+		-iv polyUVsnapMaxU 1
+		-iv polyUVsnapMinV 0
+		-iv polyUVsnapMaxV 1
+		-iv polySnapShellDirection 0 // 0: AB, 1: BA
+		-iv uvTkNormalizeDirection 0
+		;
+}
+
+global proc uvTkUpdateAlignSnapOptions()
+{	
+	int $snapMinU = `optionVar -q polyUVsnapMinU`;
+	if ( `intField -q -exists snapMinUField` )
+		intField -e -value $snapMinU snapMinUField;
+		
+	int $snapMaxU = `optionVar -q polyUVsnapMaxU`;
+	if ( `intField -q -exists snapMaxUField` )
+		intField -e -value $snapMaxU snapMaxUField;
+		
+	int $snapMinV = `optionVar -q polyUVsnapMinV`;
+	if ( `intField -q -exists snapMinVField` )
+		intField -e -value $snapMinV snapMinVField;
+		
+	int $snapMaxV = `optionVar -q polyUVsnapMaxV`;
+	if ( `intField -q -exists snapMaxVField` )
+		intField -e -value $snapMaxV snapMaxVField;
+	
+	int $snapShellDir = `optionVar -q polySnapShellDirection`;
+	if ( $snapShellDir == 0 )	// U
+	{
+		if(`iconTextRadioButton -q -exists snapABBtn`)
+			iconTextRadioButton -e -select snapABBtn;
+	}
+	else if( $snapShellDir == 1 )	//V
+	{
+		if(`iconTextRadioButton -q -exists snapBABtn`)
+			iconTextRadioButton -e -select snapBABtn;
+	}
+	
+	int $normalizeDirection = `optionVar -q uvTkNormalizeDirection`;
+	if(`iconTextCheckBox -q -exists normalizeUBtn`)
+		iconTextCheckBox -e -v ($normalizeDirection == 0 || $normalizeDirection == 1) normalizeUBtn;
+	if (`iconTextCheckBox -q -exists normalizeVBtn`)
+		iconTextCheckBox -e -v ($normalizeDirection == 0 || $normalizeDirection == 2) normalizeVBtn;
+}
+
+global proc performAlignUV(string $action)
+{
+	if ( `selectMode -q -co` )
+	{
+		if ( `selectType -q -msh` )
+			evalEcho("texAlignShells " + $action + " {} \"\"");
+		else
+			evalEcho("alignUV " + $action);
+	}
+}
+
+global proc performLinearAlignUV()
+{
+	if ( `selectMode -q -co` )
+	{
+		if ( `selectType -q -msh` )
+			evalEcho("texAlignShells linear {} \"\"");
+		else
+			evalEcho("texLinearAlignUVs");
+	}
+}
+
+global proc toggleNormalizeDirection(string $direction, int $status)
+{
+	uvTkSetAlignSnapOptionVars(0);
+	if($status)
+		optionVar -iv uvTkNormalizeDirection 0;
+	else
+	    optionVar -iv uvTkNormalizeDirection ($direction == "U" ? 2 : 1);
+	uvTkUpdateAlignSnapOptions();
+}
+
+global proc uvTkDoSnapShells(string $action)
+{
+	evalEcho("texSnapShells " + $action);
+}
+
+global proc uvTkDoSnapTogether()
+{
+    uvTkSetAlignSnapOptionVars(0);
+	int $snapDirection = `optionVar -q polySnapShellDirection`;
+	evalEcho("texSnapPoints " + $snapDirection);
+}
+
+global proc uvTkDoSnapStack()
+{
+	evalEcho("texSnapStackShells");
+}
+
+global proc uvTkDoNormalizeUV()
+{
+	int $normalizeDirection = `optionVar -q uvTkNormalizeDirection`;
+	$sel = `ls -sl`;
+	string $cmd = "polyNormalizeUV -normalizeType 1 -preserveAspectRatio on -centerOnTile on ";
+	$cmd += ("-normalizeDirection " + $normalizeDirection);
+	evalEcho($cmd);
+	select -r $sel;
+}
+
+global proc string uvTkBuildAlignSnapOptions(string $parentForm)
+{
+	global int $gUVTkTwinBtnWth;
+	global int $gUVTkTwinBtnHgt;
+	global int $gUVTkSubAreaTitleWidth;
+    global int $gUVTkSubAreaPad;
+    global float $gUVTkSubAreaBGColor[];
+	
+	uvTkSetAlignSnapOptionVars(0);
+	string $layout = `frameLayout -p $parentForm -collapsable true -collapse true -lv false`;
+	    string $alignPadForm = `formLayout`;
+		string $alignForm = `formLayout -bgc $gUVTkSubAreaBGColor[0] $gUVTkSubAreaBGColor[1] $gUVTkSubAreaBGColor[2]`;
+			string $alignLabel = `text -l (uiRes("m_uvTkBuildAlignSnapOptions.kAlignLabel")) -width $gUVTkSubAreaTitleWidth -align "center" `;
+			
+			string $alignOptionsForm = `formLayout`;
+			{
+				string $alignButtonForm = `formLayout`;
+				{
+					string $alignButtons[] = 
+					{
+						"alignLeftBtn",
+						"alignMiddleUBtn",
+						"alignRightBtn",
+						"alignTopBtn",
+						"alignMiddleVBtn",
+						"alignBottomBtn"
+					};
+					string $alignImages[] = 
+					{
+						"UVAlignLeft.png",
+						"UVAlignMiddleU.png",
+						"UVAlignRight.png",
+						"UVAlignTop.png",
+						"UVAlignMiddleV.png",
+						"UVAlignBottom.png"
+					};
+					string $alignAnnots[] = 
+					{
+						(uiRes("m_uvTkBuildAlignSnapOptions.kAlignLeftAnn")),
+						(uiRes("m_uvTkBuildAlignSnapOptions.kAlignMidleUAnn")),
+						(uiRes("m_uvTkBuildAlignSnapOptions.kAlignRightAnn")),
+						(uiRes("m_uvTkBuildAlignSnapOptions.kAlignTopAnn")),
+						(uiRes("m_uvTkBuildAlignSnapOptions.kAlignMiddleVAnn")),
+						(uiRes("m_uvTkBuildAlignSnapOptions.kAlignBottomAnn"))
+					};
+					string $alignCmds[] = 
+					{
+						"performAlignUV minU",
+						"performAlignUV avgU",
+						"performAlignUV maxU",
+						"performAlignUV maxV",
+						"performAlignUV avgV",
+						"performAlignUV minV"
+					};
+					for ($i = 0; $i < size($alignButtons); $i++)
+					{
+						iconTextButton  
+							-st "iconOnly" 
+							-image $alignImages[$i]
+							-w 26 -h 26
+							-ann $alignAnnots[$i]
+							-c $alignCmds[$i]
+							-rpt 1
+							$alignButtons[$i];
+					}
+					
+					setParent ..;
+					
+					formLayout -e
+						-attachForm		alignLeftBtn		"top"		0
+						-attachForm		alignLeftBtn		"left"		0
+						
+						-attachForm		alignMiddleUBtn		"top"		0
+						-attachControl	alignMiddleUBtn		"left"		5	alignLeftBtn
+						
+						-attachForm		alignRightBtn		"top"		0
+						-attachControl	alignRightBtn		"left"		5	alignMiddleUBtn
+						
+						-attachForm		alignTopBtn			"top"		0
+						-attachControl	alignTopBtn			"left"		5	alignRightBtn
+						
+						-attachForm		alignMiddleVBtn		"top"		0
+						-attachControl	alignMiddleVBtn		"left"		5	alignTopBtn
+						
+						-attachForm		alignBottomBtn		"top"		0
+						-attachControl	alignBottomBtn		"left"		5	alignMiddleVBtn
+					$alignButtonForm;
+				}
+				
+				iconTextButton 
+					-flat false
+					-nbg false
+					-st "iconAndTextHorizontal"
+					-image "polyAlignUVLinear.png"
+					-label (uiRes("m_uvTkBuildAlignSnapOptions.kLinearAlign"))
+					-w ($gUVTkTwinBtnWth-10) -h $gUVTkTwinBtnHgt
+					-ann (uiRes("m_uvTkBuildAlignSnapOptions.kLinearAlignAnn"))
+					-c "performLinearAlignUV"
+					-rpt 1
+					linearAlignBtn;
+					
+				formLayout -e
+					-attachForm		$alignButtonForm	"top"	 0
+					-attachForm		$alignButtonForm	"left"	 0
+					
+					-attachControl	linearAlignBtn		"top"    0  $alignButtonForm
+					-attachForm		linearAlignBtn		"left"   1
+					-attachForm		linearAlignBtn		"bottom" 5
+				$alignOptionsForm;
+				setParent ..;
+			}
+				
+			setParent ..;
+		formLayout -e 
+			-attachForm     $alignLabel      	"top"    ($gUVTkSubAreaPad*2)
+			-attachForm     $alignLabel      	"left"   $gUVTkSubAreaPad
+			-attachForm	    $alignOptionsForm	"top"    $gUVTkSubAreaPad
+			-attachControl  $alignOptionsForm	"left"   0 $alignLabel
+			-attachForm     $alignOptionsForm	"bottom" $gUVTkSubAreaPad
+		$alignForm;
+		setParent ..;
+		formLayout -e -af $alignForm "top"    $gUVTkSubAreaPad
+				      -af $alignForm "left"   5
+				      -af $alignForm "right"  0
+				      -af $alignForm "bottom" 0
+				   $alignPadForm;
+		
+		string $snapPadForm = `formLayout`;
+		string $snapForm = `formLayout -bgc $gUVTkSubAreaBGColor[0] $gUVTkSubAreaBGColor[1] $gUVTkSubAreaBGColor[2]`;
+			string $snapLabel = `text -l (uiRes("m_uvTkBuildAlignSnapOptions.kSnapLabel")) -width $gUVTkSubAreaTitleWidth -align "center" `;
+
+			string $snapOptionsForm = `formLayout`;
+				{
+					string $snapPositionForm = `formLayout`;
+					{
+						string $snapPositionButtons[] = 
+						{
+							"snapUpLeftBtn",
+							"snapUpBtn",
+							"snapUpRightBtn",
+							"snapLeftBtn",
+							"snapCenterBtn",
+							"snapRightBtn",
+							"snapBottomLeftBtn",
+							"snapBottomBtn",
+							"snapBottomRightBtn"
+						};
+						string $snapPositionImages[] = 
+						{
+							"UVSnapTopLeft.png",
+							"UVSnapTop.png",
+							"UVSnapTopRight.png",
+							"UVSnapLeft.png",
+							"UVSnapCenter.png",
+							"UVSnapRight.png",
+							"UVSnapBottomLeft.png",
+							"UVSnapBottom.png",
+							"UVSnapBottomRight.png"
+						};
+						string $snapPositionAnnots[] = 
+						{
+							(uiRes("m_uvTkBuildAlignSnapOptions.kSnapPositionUpLeft")),
+							(uiRes("m_uvTkBuildAlignSnapOptions.kSnapPositionUp")),
+							(uiRes("m_uvTkBuildAlignSnapOptions.kSnapPositionUpRight")),
+							(uiRes("m_uvTkBuildAlignSnapOptions.kSnapPositionLeft")),
+							(uiRes("m_uvTkBuildAlignSnapOptions.kSnapPositionCenter")),
+							(uiRes("m_uvTkBuildAlignSnapOptions.kSnapPositionRight")),
+							(uiRes("m_uvTkBuildAlignSnapOptions.kSnapPositionBottomLeft")),
+							(uiRes("m_uvTkBuildAlignSnapOptions.kSnapPositionBottom")),
+							(uiRes("m_uvTkBuildAlignSnapOptions.kSnapPositionBottomRight"))
+						};
+						string $snapPositionCmds[] = 
+						{
+							"uvTkDoSnapShells topLeft",
+							"uvTkDoSnapShells top",
+							"uvTkDoSnapShells topRight",
+							"uvTkDoSnapShells left",
+							"uvTkDoSnapShells center",
+							"uvTkDoSnapShells right",
+							"uvTkDoSnapShells bottomLeft",
+							"uvTkDoSnapShells bottom",
+							"uvTkDoSnapShells bottomRight"
+						};
+						for ($i = 0; $i < size($snapPositionButtons); $i++)
+						{
+							iconTextButton  
+								-st "iconOnly" 
+								-image $snapPositionImages[$i]
+								-w 26 -h 26 
+								-ann $snapPositionAnnots[$i]
+								-c $snapPositionCmds[$i]
+								-rpt 1
+								$snapPositionButtons[$i];
+						}
+						
+						iconTextStaticLabel 
+							-st "iconOnly"
+							-image "UVEditorVAxis.png"
+							-w 3 -h 83
+							snapFrameVLabel;
+							
+						iconTextStaticLabel 
+							-st "iconOnly"
+							-image "UVEditorUAxis.png"
+							-w 84 -h 3
+							snapFrameULabel;
+							
+						setParent ..;
+						
+						formLayout -e
+							-attachForm		snapFrameVLabel		"top"		2
+							-attachForm		snapFrameVLabel		"left"		0
+							
+							-attachControl	snapFrameULabel		"top"		0	snapFrameVLabel
+							-attachForm		snapFrameULabel		"left"		0
+							
+							-attachForm		snapUpLeftBtn		"top"		0
+							-attachControl	snapUpLeftBtn		"left"		2	snapFrameVLabel
+							
+							-attachForm		snapUpBtn			"top"		0
+							-attachControl	snapUpBtn			"left"		2	snapUpLeftBtn
+							
+							-attachForm		snapUpRightBtn		"top"		0
+							-attachControl	snapUpRightBtn		"left"		2	snapUpBtn
+							
+							-attachControl	snapLeftBtn			"top"		2	snapUpLeftBtn
+							-attachControl	snapLeftBtn			"left"		2	snapFrameVLabel
+							
+							-attachControl	snapCenterBtn		"top"		2	snapUpBtn
+							-attachControl	snapCenterBtn		"left"		2	snapLeftBtn
+							
+							-attachControl	snapRightBtn		"top"		2	snapUpRightBtn
+							-attachControl	snapRightBtn		"left"		2	snapCenterBtn
+							
+							-attachControl	snapBottomLeftBtn	"top"		2	snapLeftBtn
+							-attachControl	snapBottomLeftBtn	"left"		2	snapFrameVLabel
+							
+							-attachControl	snapBottomBtn		"top"		2	snapCenterBtn
+							-attachControl	snapBottomBtn		"left"		2	snapBottomLeftBtn
+							
+							-attachControl	snapBottomRightBtn	"top"		2	snapRightBtn
+							-attachControl	snapBottomRightBtn	"left"		2	snapBottomBtn
+							
+						$snapPositionForm;
+						
+						formLayout -e -en true $snapPositionForm;
+					}
+					string $snapControlForm = `formLayout`;
+					{
+						text
+							-label (uiRes("m_uvTkBuildAlignSnapOptions.kULabel"))
+							-w 20 -h 20
+							snapUText;
+							
+						text
+							-label (uiRes("m_uvTkBuildAlignSnapOptions.kVLabel"))
+							-w 20 -h 20
+							snapVText;
+							
+						string $snapUVRangeField[] = 
+						{
+							"snapMinUField",
+							"snapMaxUField",
+							"snapMinVField",
+							"snapMaxVField"
+						};
+						string $snapUVRangeOptionVars[] =
+						{
+							"polyUVsnapMinU",
+							"polyUVsnapMaxU",
+							"polyUVsnapMinV",
+							"polyUVsnapMaxV"
+						};
+						string $snapUVRangeAnnots[] =
+						{
+							(uiRes("m_uvTkBuildAlignSnapOptions.kSnapUVRangeMinU")),
+							(uiRes("m_uvTkBuildAlignSnapOptions.kSnapUVRangeMaxU")),
+							(uiRes("m_uvTkBuildAlignSnapOptions.kSnapUVRangeMinV")),
+							(uiRes("m_uvTkBuildAlignSnapOptions.kSnapUVRangeMaxV"))
+						};
+						for ($i = 0; $i < size($snapUVRangeField); $i++)
+						{
+							intField
+								-w 20 -h 20
+								-ann $snapUVRangeAnnots[$i]
+								-cc ("optionVar -intValue " + $snapUVRangeOptionVars[$i] + " #1")
+								$snapUVRangeField[$i];
+						}
+						setParent ..;
+						
+						formLayout -e
+							-attachForm		snapUText				"top"		0
+							-attachForm		snapUText				"left"		8
+							
+							-attachForm		snapMinUField			"top"		0
+							-attachControl	snapMinUField			"left"		1	snapUText
+							
+							-attachForm		snapMaxUField			"top"		0
+							-attachControl	snapMaxUField			"left"		1	snapMinUField
+							
+							-attachControl	snapVText				"top"		1	snapUText
+							-attachForm		snapVText				"left"		8
+							
+							-attachControl	snapMinVField			"top"		1	snapMinUField
+							-attachControl	snapMinVField			"left"		1	snapVText
+							
+							-attachControl	snapMaxVField			"top"		1	snapMaxUField
+							-attachControl	snapMaxVField			"left"		1	snapMinVField
+						$snapControlForm;
+						
+						formLayout -e -en true $snapControlForm;
+					}
+					
+					string $snapTogetherRow = `rowLayout -nc 3`;
+					{
+						iconTextButton 
+							-flat false
+							-nbg false
+							-st "iconAndTextHorizontal"
+							-image "polyUVSnapPoints.png"
+							-label (uiRes("m_uvTkBuildAlignSnapOptions.kSnapTogether"))
+							-w ($gUVTkTwinBtnWth-10) -h $gUVTkTwinBtnHgt
+							-ann (uiRes("m_uvTkBuildAlignSnapOptions.kSnapTogetherAnn"))
+							-c "uvTkDoSnapTogether"
+							-rpt 1
+							snapTogetherBtn;
+
+						iconTextRadioCollection snapShellDirectionCollection;
+						iconTextRadioButton
+							-ebg 1
+							-nbg 0
+							-st "textOnly"
+							-label (uiRes("m_uvTkBuildAlignSnapOptions.kSnapAB"))
+							-w ($gUVTkTwinBtnWth/4) -h $gUVTkTwinBtnHgt
+							-ann (uiRes("m_uvTkBuildAlignSnapOptions.kSnapABAnn"))
+							-onc "optionVar -intValue polySnapShellDirection 0"
+							snapABBtn;
+							
+						iconTextRadioButton
+							-ebg 1
+							-nbg 0
+							-st "textOnly"
+							-label (uiRes("m_uvTkBuildAlignSnapOptions.kBA"))
+							-w ($gUVTkTwinBtnWth/4) -h $gUVTkTwinBtnHgt
+							-ann (uiRes("m_uvTkBuildAlignSnapOptions.kSnapBAAnn"))
+							-onc "optionVar -intValue polySnapShellDirection 1"
+							snapBABtn;
+							
+						setParent ..;
+					}
+					
+					iconTextButton 
+						-flat false
+						-nbg false
+						-st "iconAndTextHorizontal"
+						-image "polyUVSnapStackShells.png"
+						-label (uiRes("m_uvTkBuildAlignSnapOptions.kSnapStack"))
+						-w ($gUVTkTwinBtnWth-10) -h $gUVTkTwinBtnHgt
+						-ann (uiRes("m_uvTkBuildAlignSnapOptions.kSnapStackAnn"))
+						-c "uvTkDoSnapStack"
+						-rpt 1
+						snapStackBtn;
+
+					iconTextButton 
+						-flat false
+						-nbg false
+						-st "iconAndTextHorizontal"
+						-image "polyGridUV.png"
+						-label (uiRes("m_uvTkBuildAlignSnapOptions.kMatchGrid"))
+						-w ($gUVTkTwinBtnWth-10) -h $gUVTkTwinBtnHgt
+						-ann (uiRes("m_uvTkBuildAlignSnapOptions.kMatchGridAnn"))
+						-c "if(`getModifiers`%2) GridUVOptions; else evalDeferred\"GridUV\";"
+						-rpt 1
+						matchGridBtn;
+						
+					iconTextButton 
+						-flat false
+						-nbg false
+						-st "iconAndTextHorizontal"
+						-image "polyMatchUV.png"
+						-label (uiRes("m_uvTkBuildAlignSnapOptions.kMatchUVs"))
+						-w ($gUVTkTwinBtnWth-10) -h $gUVTkTwinBtnHgt
+						-ann (uiRes("m_uvTkBuildAlignSnapOptions.kMatchUVsAnn"))
+						-c "if(`getModifiers`%2) MatchUVsOptions; else evalDeferred\"MatchUVs\";"
+						-rpt 1
+						matchUVsBtn;
+						
+					string $normalizeRow = `rowLayout -nc 3`;
+					{
+						iconTextButton 
+							-flat false
+							-nbg false
+							-st "iconAndTextHorizontal"
+							-image "polyNormalizeUV.png"
+							-label (uiRes("m_uvTkBuildAlignSnapOptions.kNormalize"))
+							-w ($gUVTkTwinBtnWth-10) -h $gUVTkTwinBtnHgt
+							-ann (uiRes("m_uvTkBuildAlignSnapOptions.kNormalizeUVsAnn"))
+							-c "uvTkDoNormalizeUV"
+							-rpt 1
+							normalizeBtn;
+						popupMenu 
+							-b 3 
+							-p normalizeBtn 
+							-pmc "UnitizeUVs";
+
+						iconTextCheckBox
+							-bgc 0.37 0.37 0.37
+							-st "textOnly"
+							-label (uiRes("m_uvTkBuildAlignSnapOptions.kU"))
+							-w ($gUVTkTwinBtnWth/4) -h $gUVTkTwinBtnHgt
+							-ann (uiRes("m_uvTkBuildAlignSnapOptions.kNormalizeUAnn"))
+							-onc "toggleNormalizeDirection(\"U\", 1);"
+							-ofc "toggleNormalizeDirection(\"U\", 0);"
+							normalizeUBtn;
+							
+						iconTextCheckBox
+							-bgc 0.37 0.37 0.37
+							-st "textOnly"
+							-label (uiRes("m_uvTkBuildAlignSnapOptions.kV"))
+							-w ($gUVTkTwinBtnWth/4) -h $gUVTkTwinBtnHgt
+							-ann (uiRes("m_uvTkBuildAlignSnapOptions.kNormalizeVAnn"))
+							-onc "toggleNormalizeDirection(\"V\", 1);"
+							-ofc "toggleNormalizeDirection(\"V\", 0);"
+							normalizeVBtn;
+							
+						setParent ..;
+					}
+
+					formLayout -e
+						-attachForm		$snapPositionForm	"top"	 0
+						-attachForm		$snapPositionForm	"left"	 0
+						                                             
+						-attachForm		$snapControlForm	"top"	 20
+						-attachControl	$snapControlForm	"left"	 10  $snapPositionForm
+						
+						-attachControl	$snapTogetherRow	"top"	 0  $snapPositionForm
+						-attachForm		$snapTogetherRow	"left"	 0  
+						
+						-attachControl	snapStackBtn        "top"    0  $snapTogetherRow
+						-attachForm		snapStackBtn        "left"   1  
+						
+						-attachControl	matchGridBtn        "top"    5  snapStackBtn
+						-attachForm		matchGridBtn        "left"   1  
+						
+						-attachControl	matchUVsBtn			"top"	 1  matchGridBtn
+						-attachForm		matchUVsBtn			"left"	 1  
+						
+						-attachControl	$normalizeRow		"top"	 0  matchUVsBtn
+						-attachForm		$normalizeRow		"left"	 0  
+						-attachForm		$normalizeRow		"bottom" 5
+					$snapOptionsForm;
+					setParent ..;
+				}
+				
+				setParent ..;
+		formLayout -e 
+			-attachForm		$snapLabel       "top"	($gUVTkSubAreaPad*2)
+			-attachForm		$snapLabel       "left"	$gUVTkSubAreaPad
+			-attachForm		$snapOptionsForm "top"	$gUVTkSubAreaPad
+			-attachControl	$snapOptionsForm "left"	0 $snapLabel
+			-attachForm	    $snapOptionsForm "bottom" 0
+		$snapForm;
+		setParent ..;
+		formLayout -e -af $snapForm "top"    0
+				      -af $snapForm "left"   5
+				      -af $snapForm "right"  0
+				      -af $snapForm "bottom" $gUVTkSubAreaPad
+				   $snapPadForm;
+		
+	uvTkUpdateAlignSnapOptions();
+	return $layout;
+}

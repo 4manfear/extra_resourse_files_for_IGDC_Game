@@ -1,0 +1,104 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+// Creation Date:  14 January 1999
+//
+//
+//  Procedure Name:
+//      closeSurfaceToolScript
+//
+//  Description:
+//	create wrapper around the closeSurface command
+//
+//  Input Arguments:
+//		0 ==> do the command.
+//		1 ==> show the tool/action option box
+//		2 ==> return the command
+//		3 ==> show tool/action option box
+//		4 ==> enter the tool
+//
+//  Return Value:
+//      None.
+//
+
+global proc closeSurfaceToolSetup( int $forceFactorySettings,
+									string $goToTool )
+{
+	optionVar -init $forceFactorySettings -category "Modeling.Surfaces.Open/Close"
+		-iv closeSurfaceEuc 0
+		-iv closeSurfaceLac 1
+		;
+
+	if( "" != $goToTool ) {
+		scriptCtx -e -euc `optionVar -q closeSurfaceEuc` $goToTool;
+		scriptCtx -e -lac `optionVar -q closeSurfaceLac` $goToTool;
+	}
+}
+
+global proc closeSurfaceValues ( string $toolName ) 
+{
+	performSurfaceClose 3 $toolName;
+	scriptCtxCommonValues( $toolName );
+}
+
+global proc closeSurfaceProperties()
+{
+	scriptCtxCommonProperties;
+}
+
+proc createCloseSurfaceContext( string $tool )
+{
+	if( ! `scriptCtx -exists $tool` ) {
+		closeSurfaceToolSetup( 0, "" );
+		scriptCtx -i1 "openCloseSurface.png"
+		  -title (uiRes("m_closeSurfaceToolScript.kOpenCloseSurfaceTool"))
+		  -bcn "closeSurface"
+
+		  -exitUponCompletion `optionVar -q closeSurfaceEuc`
+		  -totalSelectionSets 1
+		  -expandSelectionList true
+		  -fcs ("closeSurfaceToolScript 0")
+
+		  -setNoSelectionPrompt ((uiRes("m_closeSurfaceToolScript.kSelectToOpenClose")) )
+		  -setSelectionPrompt ((uiRes("m_closeSurfaceToolScript.kSelectAdditionalOrOpenClose")) )
+		  -setDoneSelectionPrompt ((uiRes("m_closeSurfaceToolScript.kEnterToOpenClose")) )
+
+		  -setAutoToggleSelection true
+		  -setAutoComplete `optionVar -q closeSurfaceLac`
+		  -setAllowExcessCount true
+		  -showManipulators true
+
+		  -setSelectionCount 0
+		  -nurbsSurface true
+		  -isoparm true
+		$tool;
+	}
+}
+
+global proc string closeSurfaceToolScript( int $setToTool )
+//
+//	Description :
+//		0 ==> do the command.
+//		1 ==> show the action option box
+//		2 ==> return the command
+//		3 ==> show tool/action option box
+//		4 ==> enter the tool/do the command
+{
+	string $tool = "";
+	if( $setToTool > 2 ) {
+		if( !`optionVar -q modelWithToolCloseSurface` ) {
+			$setToTool = 4 - $setToTool;
+		}
+		else {
+			$tool = "closeSurfaceContext";
+			createCloseSurfaceContext $tool;
+		}
+	}
+	return scriptToolScript( "performSurfaceClose", $setToTool, $tool );
+}

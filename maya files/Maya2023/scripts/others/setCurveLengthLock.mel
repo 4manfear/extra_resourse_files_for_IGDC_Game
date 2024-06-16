@@ -1,0 +1,36 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  2003
+//
+// Description:  
+//	 This walks through the selected curves and sets the lengthLock
+// 	 attribute state on the curves. If the lengthLock attribute does
+//   not exists it is created.
+//
+global proc setCurveLengthLock( int $doLock ){
+	if( warnIfOutputCurvesSelected( true ) ){
+		return;
+	}
+	
+	string $curves[] = `ls -sl -o -dag -type nurbsCurve`;
+	for( $i = 0; $i < size( $curves ); $i++ ){
+		string $curve = $curves[$i];
+		int $lockAttrExists = `attributeExists "lockLength" $curve`;
+		if( $lockAttrExists ){
+			setAttr ($curve + ".lockLength") $doLock;
+		} else {
+			if( $doLock ){
+				// create the attribute
+				addAttr -ln lockLength -sn ll -at bool -k true  $curve;
+				setAttr ($curve + ".lockLength") true;
+			}
+		}
+	}
+}

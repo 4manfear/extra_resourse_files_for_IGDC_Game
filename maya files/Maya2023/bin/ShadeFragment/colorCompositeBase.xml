@@ -1,0 +1,435 @@
+<!--
+===========================================================================
+Copyright 2015 Autodesk, Inc. All rights reserved.
+
+Use of this software is subject to the terms of the Autodesk license
+agreement provided at the time of installation or download, or which
+otherwise accompanies this software in either electronic or hard copy form.
+===========================================================================
+-->
+
+<fragment uiName="colorCompositeBase" name="colorCompositeBase" type="plumbing" class="ShadeFragment" version="1.0">
+	<description><![CDATA[Color operation shade fragment]]></description>
+	<properties>
+		<float3 name="colorA" />
+		<float3 name="colorB" />
+		<int name="operation" />
+		<float name="factor" />
+	</properties>
+	<values>
+		<float3 name="colorA" value="1.0,0.0,0.0" />
+		<float3 name="colorB" value="0.0,0.0,1.0" />
+		<int name="operation" value="0" />
+		<float name="factor" value="1.0" />
+	</values>
+	<outputs>
+		<float3  name="outColor" />
+	</outputs>
+	<implementation>
+	<implementation render="OGSRenderer" language="Cg" lang_version="2.1">
+		<function_name val="colorCompositeBase" />
+		<source>
+		<![CDATA[
+float3 colorCompositeBase(float3 colorA, float3 colorB, int operation, float factor)
+{
+	float3 retColor = float3(0.0f, 0.0f, 0.0f);
+
+	if (operation==0)
+	{
+		if ( factor <= 0.0f )
+		{
+			retColor = colorA;
+		}
+		else
+		{
+			retColor[0] = colorA[0] + (colorB[0] * factor);
+			retColor[1] = colorA[1] + (colorB[1] * factor);
+			retColor[2] = colorA[2] + (colorB[2] * factor);
+		}
+	}
+	else if (operation==1)
+	{
+		if ( factor <= 0.0f )
+		{
+			retColor = colorA;
+		}
+		else
+		{
+			retColor[0] = colorA[0] + ((colorB[0] - 1) * factor);
+			retColor[1] = colorA[1] + ((colorB[1] - 1) * factor);
+			retColor[2] = colorA[2] + ((colorB[2] - 1) * factor);
+		}
+	}
+	else if (operation==2)
+	{
+		if ( factor <= 0.0f )
+		{
+			retColor = colorA;
+		}
+		else if ( factor >= 1.0f )
+		{
+			retColor = colorB;
+		}
+		else
+		{
+			retColor[0] = lerp(colorA[0], colorB[0], factor);
+			retColor[1] = lerp(colorA[1], colorB[1], factor);
+			retColor[2] = lerp(colorA[2], colorB[2], factor);
+		}
+	}
+	else if (operation==3)
+	{
+		if ( factor <= 0.0f )
+		{
+			retColor = colorA;
+		}
+		else
+		{
+			retColor[0] = colorA[0] * (colorB[0] * factor + (1 - factor));
+			retColor[1] = colorA[1] * (colorB[1] * factor + (1 - factor));
+			retColor[2] = colorA[2] * (colorB[2] * factor + (1 - factor));
+		}
+	}
+	else if (operation==4)
+	{
+		if ( factor <= 0.0f )
+		{
+			retColor = colorA;
+		}
+		else
+		{
+	        retColor[0] = 1 - ((1 - colorA[0]) * (1 - colorB[0] * factor));
+	        retColor[1] = 1 - ((1 - colorA[1]) * (1 - colorB[1] * factor));
+	        retColor[2] = 1 - ((1 - colorA[2]) * (1 - colorB[2] * factor));
+	    }
+	}
+	else if (operation==5)
+	{
+		if ( factor <= 0.0f )
+		{
+			retColor = colorA;
+		}
+		else
+		{
+			retColor[0] = colorB[0] > 0.5 ? (2 * colorA[0] * colorB[0] * factor ) + colorA[0] * (1 - factor): 1 - ((1 - colorA[0]) * (1 - colorB[0] * factor)) * (2 - (1 - factor));
+			retColor[1] = colorB[1] > 0.5 ? (2 * colorA[1] * colorB[1] * factor ) + colorA[1] * (1 - factor): 1 - ((1 - colorA[1]) * (1 - colorB[1] * factor)) * (2 - (1 - factor));
+			retColor[2] = colorB[2] > 0.5 ? (2 * colorA[2] * colorB[2] * factor ) + colorA[2] * (1 - factor): 1 - ((1 - colorA[2]) * (1 - colorB[2] * factor)) * (2 - (1 - factor));
+		}
+	}
+	else if (operation==6)
+	{
+		if ( factor <= 0.0f )
+		{
+			retColor = colorA;
+		}
+		else
+		{
+	        retColor[0] = abs(colorA[0] - (colorB[0] * factor));
+	        retColor[1] = abs(colorA[1] - (colorB[1] * factor));
+	        retColor[2] = abs(colorA[2] - (colorB[2] * factor));
+    	}
+	}
+	else if (operation==7)
+	{
+		if ( factor <= 0.0f )
+		{
+			retColor = colorA;
+		}
+		else
+		{
+	        retColor[0] = clamp(lerp(colorA[0], colorA[0] / max(1 - colorB[0], 0.00001), factor), colorA[0], colorB[0]);
+	        retColor[1] = clamp(lerp(colorA[1], colorA[1] / max(1 - colorB[1], 0.00001), factor), colorA[1], colorB[1]);
+	        retColor[2] = clamp(lerp(colorA[2], colorA[2] / max(1 - colorB[2], 0.00001), factor), colorA[2], colorB[2]);
+	    }
+	}
+	else if (operation==8)
+	{
+		if ( factor <= 0.0f )
+		{
+			retColor = colorA;
+		}
+		else
+		{
+	        retColor[0] = clamp(lerp(colorA[0], 1 - (colorA[0] / max(1 - colorB[0], 0.00001)), factor), colorA[0], colorB[0]);
+	        retColor[1] = clamp(lerp(colorA[1], 1 - (colorA[1] / max(1 - colorB[1], 0.00001)), factor), colorA[1], colorB[1]);
+	        retColor[2] = clamp(lerp(colorA[2], 1 - (colorA[2] / max(1 - colorB[2], 0.00001)), factor), colorA[2], colorB[2]);
+	    }
+	}
+
+	return retColor;
+}
+		]]>
+		</source>
+	</implementation>
+	<implementation render="OGSRenderer" language="HLSL" lang_version="11.0">
+		<function_name val="colorCompositeBase" />
+		<source>
+		<![CDATA[
+float3 colorCompositeBase(float3 colorA, float3 colorB, int operation, float factor)
+{
+	float3 retColor = float3(0.0f, 0.0f, 0.0f);
+
+	if (operation==0)
+	{
+		if ( factor <= 0.0f )
+		{
+			retColor = colorA;
+		}
+		else
+		{
+			retColor[0] = colorA[0] + (colorB[0] * factor);
+			retColor[1] = colorA[1] + (colorB[1] * factor);
+			retColor[2] = colorA[2] + (colorB[2] * factor);
+		}
+	}
+	else if (operation==1)
+	{
+		if ( factor <= 0.0f )
+		{
+			retColor = colorA;
+		}
+		else
+		{
+			retColor[0] = colorA[0] + ((colorB[0] - 1) * factor);
+			retColor[1] = colorA[1] + ((colorB[1] - 1) * factor);
+			retColor[2] = colorA[2] + ((colorB[2] - 1) * factor);
+		}
+	}
+	else if (operation==2)
+	{
+		if ( factor <= 0.0f )
+		{
+			retColor = colorA;
+		}
+		else if ( factor >= 1.0f )
+		{
+			retColor = colorB;
+		}
+		else
+		{
+			retColor[0] = lerp(colorA[0], colorB[0], factor);
+			retColor[1] = lerp(colorA[1], colorB[1], factor);
+			retColor[2] = lerp(colorA[2], colorB[2], factor);
+		}
+	}
+	else if (operation==3)
+	{
+		if ( factor <= 0.0f )
+		{
+			retColor = colorA;
+		}
+		else
+		{
+			retColor[0] = colorA[0] * (colorB[0] * factor + (1 - factor));
+			retColor[1] = colorA[1] * (colorB[1] * factor + (1 - factor));
+			retColor[2] = colorA[2] * (colorB[2] * factor + (1 - factor));
+		}
+	}
+	else if (operation==4)
+	{
+		if ( factor <= 0.0f )
+		{
+			retColor = colorA;
+		}
+		else
+		{
+	        retColor[0] = 1 - ((1 - colorA[0]) * (1 - colorB[0] * factor));
+	        retColor[1] = 1 - ((1 - colorA[1]) * (1 - colorB[1] * factor));
+	        retColor[2] = 1 - ((1 - colorA[2]) * (1 - colorB[2] * factor));
+	    }
+	}
+	else if (operation==5)
+	{
+		if ( factor <= 0.0f )
+		{
+			retColor = colorA;
+		}
+		else
+		{
+			retColor[0] = colorB[0] > 0.5 ? (2 * colorA[0] * colorB[0] * factor ) + colorA[0] * (1 - factor): 1 - ((1 - colorA[0]) * (1 - colorB[0] * factor)) * (2 - (1 - factor));
+			retColor[1] = colorB[1] > 0.5 ? (2 * colorA[1] * colorB[1] * factor ) + colorA[1] * (1 - factor): 1 - ((1 - colorA[1]) * (1 - colorB[1] * factor)) * (2 - (1 - factor));
+			retColor[2] = colorB[2] > 0.5 ? (2 * colorA[2] * colorB[2] * factor ) + colorA[2] * (1 - factor): 1 - ((1 - colorA[2]) * (1 - colorB[2] * factor)) * (2 - (1 - factor));
+		}
+	}
+	else if (operation==6)
+	{
+		if ( factor <= 0.0f )
+		{
+			retColor = colorA;
+		}
+		else
+		{
+	        retColor[0] = abs(colorA[0] - (colorB[0] * factor));
+	        retColor[1] = abs(colorA[1] - (colorB[1] * factor));
+	        retColor[2] = abs(colorA[2] - (colorB[2] * factor));
+    	}
+	}
+	else if (operation==7)
+	{
+		if ( factor <= 0.0f )
+		{
+			retColor = colorA;
+		}
+		else
+		{
+	        retColor[0] = clamp(lerp(colorA[0], colorA[0] / max(1 - colorB[0], 0.00001), factor), colorA[0], colorB[0]);
+	        retColor[1] = clamp(lerp(colorA[1], colorA[1] / max(1 - colorB[1], 0.00001), factor), colorA[1], colorB[1]);
+	        retColor[2] = clamp(lerp(colorA[2], colorA[2] / max(1 - colorB[2], 0.00001), factor), colorA[2], colorB[2]);
+	    }
+	}
+	else if (operation==8)
+	{
+		if ( factor <= 0.0f )
+		{
+			retColor = colorA;
+		}
+		else
+		{
+	        retColor[0] = clamp(lerp(colorA[0], 1 - (colorA[0] / max(1 - colorB[0], 0.00001)), factor), colorA[0], colorB[0]);
+	        retColor[1] = clamp(lerp(colorA[1], 1 - (colorA[1] / max(1 - colorB[1], 0.00001)), factor), colorA[1], colorB[1]);
+	        retColor[2] = clamp(lerp(colorA[2], 1 - (colorA[2] / max(1 - colorB[2], 0.00001)), factor), colorA[2], colorB[2]);
+	    }
+	}
+
+	return retColor;
+}
+		]]>
+		</source>
+		</implementation>
+		<implementation render="OGSRenderer" language="GLSL" lang_version="3.0">
+			<function_name val="colorCompositeBase" />
+			<source>
+				<![CDATA[
+vec3 colorCompositeBase(vec3 colorA, vec3 colorB, int operation, float factor)
+{
+	vec3 retColor = vec3(0.0f, 0.0f, 0.0f);
+
+	if (operation==0)
+	{
+		if ( factor <= 0.0f )
+		{
+			retColor = colorA;
+		}
+		else
+		{
+			retColor[0] = colorA[0] + (colorB[0] * factor);
+			retColor[1] = colorA[1] + (colorB[1] * factor);
+			retColor[2] = colorA[2] + (colorB[2] * factor);
+		}
+	}
+	else if (operation==1)
+	{
+		if ( factor <= 0.0f )
+		{
+			retColor = colorA;
+		}
+		else
+		{
+			retColor[0] = colorA[0] + ((colorB[0] - 1) * factor);
+			retColor[1] = colorA[1] + ((colorB[1] - 1) * factor);
+			retColor[2] = colorA[2] + ((colorB[2] - 1) * factor);
+		}
+	}
+	else if (operation==2)
+	{
+		if ( factor <= 0.0f )
+		{
+			retColor = colorA;
+		}
+		else if ( factor >= 1.0f )
+		{
+			retColor = colorB;
+		}
+		else
+		{
+			retColor[0] = mix(colorA[0], colorB[0], factor);
+			retColor[1] = mix(colorA[1], colorB[1], factor);
+			retColor[2] = mix(colorA[2], colorB[2], factor);
+		}
+	}
+	else if (operation==3)
+	{
+		if ( factor <= 0.0f )
+		{
+			retColor = colorA;
+		}
+		else
+		{
+			retColor[0] = colorA[0] * (colorB[0] * factor + (1 - factor));
+			retColor[1] = colorA[1] * (colorB[1] * factor + (1 - factor));
+			retColor[2] = colorA[2] * (colorB[2] * factor + (1 - factor));
+		}
+	}
+	else if (operation==4)
+	{
+		if ( factor <= 0.0f )
+		{
+			retColor = colorA;
+		}
+		else
+		{
+	        retColor[0] = 1 - ((1 - colorA[0]) * (1 - colorB[0] * factor));
+	        retColor[1] = 1 - ((1 - colorA[1]) * (1 - colorB[1] * factor));
+	        retColor[2] = 1 - ((1 - colorA[2]) * (1 - colorB[2] * factor));
+	    }
+	}
+	else if (operation==5)
+	{
+		if ( factor <= 0.0f )
+		{
+			retColor = colorA;
+		}
+		else
+		{
+			retColor[0] = colorB[0] > 0.5 ? (2 * colorA[0] * colorB[0] * factor ) + colorA[0] * (1 - factor): 1 - ((1 - colorA[0]) * (1 - colorB[0] * factor)) * (2 - (1 - factor));
+			retColor[1] = colorB[1] > 0.5 ? (2 * colorA[1] * colorB[1] * factor ) + colorA[1] * (1 - factor): 1 - ((1 - colorA[1]) * (1 - colorB[1] * factor)) * (2 - (1 - factor));
+			retColor[2] = colorB[2] > 0.5 ? (2 * colorA[2] * colorB[2] * factor ) + colorA[2] * (1 - factor): 1 - ((1 - colorA[2]) * (1 - colorB[2] * factor)) * (2 - (1 - factor));
+		}
+	}
+	else if (operation==6)
+	{
+		if ( factor <= 0.0f )
+		{
+			retColor = colorA;
+		}
+		else
+		{
+	        retColor[0] = abs(colorA[0] - (colorB[0] * factor));
+	        retColor[1] = abs(colorA[1] - (colorB[1] * factor));
+	        retColor[2] = abs(colorA[2] - (colorB[2] * factor));
+    	}
+	}
+	else if (operation==7)
+	{
+		if ( factor <= 0.0f )
+		{
+			retColor = colorA;
+		}
+		else
+		{
+	        retColor[0] = clamp(mix(colorA[0], colorA[0] / max(1 - colorB[0], 0.00001), factor), colorA[0], colorB[0]);
+	        retColor[1] = clamp(mix(colorA[1], colorA[1] / max(1 - colorB[1], 0.00001), factor), colorA[1], colorB[1]);
+	        retColor[2] = clamp(mix(colorA[2], colorA[2] / max(1 - colorB[2], 0.00001), factor), colorA[2], colorB[2]);
+	    }
+	}
+	else if (operation==8)
+	{
+		if ( factor <= 0.0f )
+		{
+			retColor = colorA;
+		}
+		else
+		{
+	        retColor[0] = clamp(mix(colorA[0], 1 - (colorA[0] / max(1 - colorB[0], 0.00001)), factor), colorA[0], colorB[0]);
+	        retColor[1] = clamp(mix(colorA[1], 1 - (colorA[1] / max(1 - colorB[1], 0.00001)), factor), colorA[1], colorB[1]);
+	        retColor[2] = clamp(mix(colorA[2], 1 - (colorA[2] / max(1 - colorB[2], 0.00001)), factor), colorA[2], colorB[2]);
+	    }
+	}
+
+	return retColor;
+}
+		]]>
+		</source>
+	</implementation>
+	</implementation>
+</fragment>

@@ -1,0 +1,30 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc AEAddMashCheckboxControl ( string $attr, string $controlName, int $newMode, string $label )
+{
+    // base the layout name on the node type as can at least guarentee the control name will be unique for this type.
+    string $nodeName[];
+    tokenize($attr, ".", $nodeName);
+    string $nodeType = `nodeType($nodeName[0])`;
+    string $layoutName = $controlName+$nodeType;
+    rowLayout -vis $newMode $layoutName;
+    checkBox -label $label -vis $newMode  $controlName;
+    connectControl $controlName $attr;
+    setParent..;
+}
+
+global proc AEAddMashCheckboxControlEdit ( string $attr, string $controlName, int $newMode)
+{
+    string $nodeName[];
+    tokenize($attr, ".", $nodeName);
+    string $nodeType = `nodeType($nodeName[0])`;
+    string $layoutName = $controlName+$nodeType;
+    rowLayout -e -vis $newMode $layoutName;
+    checkBox -e -vis $newMode  $controlName;
+    connectControl $controlName $attr;
+}

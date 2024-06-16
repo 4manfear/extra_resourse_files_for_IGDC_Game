@@ -1,0 +1,47 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+// Script:    polyVertexNormalEditValues.mel
+//
+
+global proc polyVertexNormalEditValues ( string $toolName ) {
+
+	print $toolName;
+
+	string $parent = (`toolPropertyWindow -q -location` + "|polyVertexNormalEdit");
+
+	print $parent;
+
+	setParent $parent;
+
+	// Initialize settings
+	// Recast the values to the selected items
+	int  $manipMode  = `polyVertexNormalCtx -q -rot $toolName`;	
+	switch ($manipMode)
+	{
+		case 0:
+			radioButtonGrp -e -sl 1 polyVertexNormalRotateMode;
+			break;
+		case 1:
+			radioButtonGrp -e -sl 2  polyVertexNormalRotateMode;
+			break;
+	}
+	radioButtonGrp -e 
+		-on1 ("polyVertexNormalCtx -e -rot 0 " + $toolName)
+		-on2 ("polyVertexNormalCtx -e -rot 1 " + $toolName)
+		polyVertexNormalRotateMode;
+
+	string $icon;
+	string $helpTag;
+
+	$icon = "vertexNormalEdit.png";
+	$helpTag = "polyVertexNormalEdit";
+	
+	toolPropertySetCommon $toolName $icon $helpTag;
+	toolPropertySelect "polyVertexNormalEdit";
+}

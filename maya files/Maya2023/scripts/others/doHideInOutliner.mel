@@ -1,0 +1,38 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//	Procedure Name:
+//		doHideInOutliner
+//
+//	Description:
+//      Sets the 'hiddenInOutliner' attribute
+//		for the selected nodes.
+//
+
+
+global proc
+doHideInOutliner( int $hide )
+{
+	// apply to all selected DAG nodes
+	string $sel[] = `ls -sl -dag -o`;
+	
+	// (un)hide the items
+	for ( $item in $sel )
+	{
+		// set the attribute to true
+		setAttr ( $item + ".hiddenInOutliner" ) $hide;
+	}
+
+	// refresh any outliner editors
+	string $eds[] = `lsUI -editors`;
+	for ( $ed in $eds )
+	{
+		if ( `outlinerEditor -exists $ed` )
+			outlinerEditor -e -refresh $ed;
+	}
+}

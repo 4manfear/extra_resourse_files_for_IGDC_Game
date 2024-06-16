@@ -1,0 +1,31 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  10 Oct 2000
+//
+//  Description:
+//		Provide a unique name among all diskCache nodes.
+//
+global proc string uniqueCacheName(string $objectName, string $ext)
+{
+   	string $dir = `diskCache -q -tmp` + "/";
+	string $pre = "hidden";
+	string $fullPre = $dir + $pre;
+   	string $post = ("_" + $objectName + $ext);
+   	int    $index = 1;
+   	string $fullCacheName = $fullPre + $index + $post;
+   	while (`file -q -ex $fullCacheName`) {
+   	    $index++;
+       	$fullCacheName = $fullPre + $index + $post;
+   	}
+	string $cacheName = $pre + $index + $post;
+	$cacheName = substituteAllString( $cacheName, "|", "_" );
+	$cacheName = substituteAllString( $cacheName, ":", "_" );
+	return $cacheName;
+}

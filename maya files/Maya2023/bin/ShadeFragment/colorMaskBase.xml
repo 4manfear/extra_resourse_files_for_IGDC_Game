@@ -1,0 +1,93 @@
+<!--
+===========================================================================
+Copyright 2012 Autodesk, Inc. All rights reserved.
+
+Use of this software is subject to the terms of the Autodesk license
+agreement provided at the time of installation or download, or which
+otherwise accompanies this software in either electronic or hard copy form.
+===========================================================================
+
+Main fragment for color mask plugin
+-->
+
+<fragment uiName="colorMaskBase" name="colorMaskBase" type="plumbing" class="ShadeFragment" version="1.0">
+	<description><![CDATA[Color with color mask fragment]]></description>
+	<properties>
+		<float3 name="inColor" />
+		<float3 name="mask" />
+		<float name="maskAlpha" />
+	</properties>
+	<values>
+		<float3 name="inColor" value="0.3,0.3,0.3" />
+		<float3 name="mask" value="0.0,0.0,1.0" />
+		<float name="maskAlpha" value="0.0" />
+	</values>
+	<outputs>
+		<float3  name="outColor" />
+	</outputs>
+	<implementation>
+	<implementation render="OGSRenderer" language="Cg" lang_version="2.1">
+		<function_name val="colorMaskBase" />
+		<source>
+		<![CDATA[
+float3 colorMaskBase(float3 inColor, float3 mask, float maskAlpha)
+{
+	float3 result = inColor;
+	float kFloatEpsilon = 0.0001f;
+
+	if ( maskAlpha > kFloatEpsilon )
+	{
+		result[0] = inColor[0] * (1 - maskAlpha); // + mask[0] * maskAlpha;
+		result[1] = inColor[1] * (1 - maskAlpha); // + mask[1] * maskAlpha;
+		result[2] = inColor[2] * (1 - maskAlpha); // + mask[2] * maskAlpha;
+	}
+
+	return result;
+}
+		]]>
+		</source>
+	</implementation>
+	<implementation render="OGSRenderer" language="HLSL" lang_version="11.0">
+		<function_name val="colorMaskBase" />
+		<source>
+		<![CDATA[
+float3 colorMaskBase(float3 inColor, float3 mask, float maskAlpha)
+{
+	float3 result = inColor;
+	float kFloatEpsilon = 0.0001f;
+
+	if ( maskAlpha > kFloatEpsilon )
+	{
+		result[0] = inColor[0] * (1 - maskAlpha); // + mask[0] * maskAlpha;
+		result[1] = inColor[1] * (1 - maskAlpha); // + mask[1] * maskAlpha;
+		result[2] = inColor[2] * (1 - maskAlpha); // + mask[2] * maskAlpha;
+	}
+
+	return result;
+}
+		]]>
+		</source>
+		</implementation>
+		<implementation render="OGSRenderer" language="GLSL" lang_version="3.0">
+			<function_name val="colorMaskBase" />
+			<source>
+				<![CDATA[
+vec3 colorMaskBase(vec3 inColor, vec3 mask, float maskAlpha)
+{
+	vec3 result = inColor;
+	float kFloatEpsilon = 0.0001f;
+
+	if ( maskAlpha > kFloatEpsilon )
+	{
+		result[0] = inColor[0] * (1 - maskAlpha); // + mask[0] * maskAlpha;
+		result[1] = inColor[1] * (1 - maskAlpha); // + mask[1] * maskAlpha;
+		result[2] = inColor[2] * (1 - maskAlpha); // + mask[2] * maskAlpha;
+	}
+
+	return result;
+}
+		]]>
+		</source>
+	</implementation>
+	</implementation>
+</fragment>

@@ -1,0 +1,20 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc selectLayerMembers( string $layer )
+{
+	//
+	// Description:
+	//	Selects all the objects on $layer, which can be either
+	//  a display or render layer
+	//	
+	
+	if (`nodeType $layer` == "displayLayer")
+		select -add `editDisplayLayerMembers -fullNames -query $layer`;
+	else if (`nodeType $layer` == "renderLayer")
+		select -add `editRenderLayerMembers -fullNames -query $layer`;
+}

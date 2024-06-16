@@ -1,0 +1,20 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+// Description:  This procedure is called to show a bake set in
+//  the attribute editor.  
+//
+global proc showBakeSetAE(string $bakeSet)
+{
+    //  If the option to show the attribute editor is on, then
+    //  display the attribute editor for the object's bakeSet.
+    //
+    if (`optionVar -q AEpopupWhenCreatingShaders`) {
+        string $cmd = ("showEditor " + $bakeSet);
+        evalDeferred -lowestPriority $cmd;
+    }
+}

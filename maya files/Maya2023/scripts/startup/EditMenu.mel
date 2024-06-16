@@ -1,0 +1,39 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+// Creation Date:  14 July 1996
+//
+//
+//  Procedure Name:
+//      EditMenu
+//
+//  Description:
+//		This procedure creates the main menubar Edit menu.
+//
+//  Input Arguments:
+//      None.
+//
+//  Return Value:
+//      None.
+//
+
+{
+	global string $gMainEditMenu;
+	global string $gMainWindow;
+	
+	string $menu = `menu -l (uiRes("m_EditMenu.kEdit")) 
+		-aob true -to true -p $gMainWindow
+		-familyImage "menuIconEdit.png"
+		$gMainEditMenu`;
+
+	menu -e -postMenuCommand ("buildEditMenu(\"" + $menu + "\")") $gMainEditMenu;
+	
+	setParent -m ..;
+}
+

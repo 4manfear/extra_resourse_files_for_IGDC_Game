@@ -1,0 +1,40 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc buildStrokeDisplayQualitySubmenu( string $parent )
+//
+//	Build the Stroke Display Quality submenu contents
+{
+	setParent -m $parent;				
+		menuItem -label (uiRes("m_buildStrokeDisplayQualitySubmenu.kPercent0")) 
+			-annotation (uiRes("m_buildStrokeDisplayQualitySubmenu.kStrokeDisplayQuality0Annotation"))
+			-c "setStrokeQuality 0.0;"
+			strqltyItem1;
+		menuItem -label (uiRes("m_buildStrokeDisplayQualitySubmenu.kPercent25")) 
+			-annotation (uiRes("m_buildStrokeDisplayQualitySubmenu.kStrokeDisplayQuality25Annotation"))
+			-c "setStrokeQuality 25.0;"
+			strqltyItem2;
+		menuItem -label (uiRes("m_buildStrokeDisplayQualitySubmenu.kPercent50")) 
+			-annotation (uiRes("m_buildStrokeDisplayQualitySubmenu.kStrokeDisplayQuality50Annotation"))
+			-c "setStrokeQuality 50.0;"
+			strqltyItem3;
+		menuItem -label (uiRes("m_buildStrokeDisplayQualitySubmenu.kPercent75")) 
+			-annotation (uiRes("m_buildStrokeDisplayQualitySubmenu.kStrokeDisplayQuality75Annotation"))
+			-c "setStrokeQuality 75.0;"
+			strqltyItem4;
+		menuItem -label (uiRes("m_buildStrokeDisplayQualitySubmenu.kPercent100")) 
+			-annotation (uiRes("m_buildStrokeDisplayQualitySubmenu.kStrokeDisplayQuality100Annotation"))
+			-c "setStrokeQuality 100.0;"
+			strqltyItem5;
+		menuItem -label (uiRes("m_buildStrokeDisplayQualitySubmenu.kStrokeDisplayQualityCustom")) 
+			-annotation (uiRes("m_buildStrokeDisplayQualitySubmenu.kStrokeDisplayQualityCustomAnnotation"))
+			-c "strokeQualityWin" strqltyItem6;
+
+	// Delete the -pmc now that the submenu contents are built
+	//
+	menuItem -e -pmc "" $parent;
+}

@@ -1,0 +1,168 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc shelf_MASH () {
+    global string $gBuffStr;
+    global string $gBuffStr0;
+    global string $gBuffStr1;
+
+	string $label;
+	string $annot;
+	string $format = "^1s: ^2s";
+
+	$label = getPluginResource("MASH", "kCreateMASHNetwork");
+	$annot = getPluginResource("MASH", "kCreateMASHNetworkAnnot");
+    shelfButton
+		-label $label
+		-annotation `format -s $label -s $annot $format`
+        -image1 "MASH_CreateNetwork.png" 
+        -command "MASHnewNetwork(\"MASH#\");" 
+    ;
+
+	addShelfSeparator();
+
+	$label = getPluginResource("MASH", "kMASHOutliner");
+	$annot = getPluginResource("MASH", "kMASHOutlinerAnnot");
+    shelfButton
+		-label $label
+		-annotation `format -s $label -s $annot $format`
+        -image1 "MASH_Editor.png" 
+        -command "MASHOutliner;" 
+    ;
+
+	$label = getPluginResource("MASH", "kConnectToType");
+	$annot = getPluginResource("MASH", "kConnectToTypeAnnot");
+    shelfButton
+		-label $label
+		-annotation `format -s $label -s $annot $format`
+        -image1 "MASH_ConnectToType.png" 
+        -command "MASHconnectToType;" 
+    ;
+
+	$label = getPluginResource("MASH", "kSwitchGeometryType");
+	$annot = getPluginResource("MASH", "kSwitchGeometryTypeAnnot");
+    shelfButton
+		-label $label
+		-annotation `format -s $label -s $annot $format`
+        -image1 "MASH_SwitchGeometryType.png" 
+        -command "MASHswitchGeometryType;" 
+    ;
+
+	$label = getPluginResource("MASH", "kCacheThisNetwork");
+	$annot = getPluginResource("MASH", "kCacheThisNetworkAnnot");
+    shelfButton
+		-label $label
+		-annotation `format -s $label -s $annot $format`
+        -image1 "MASH_CacheNetwork.png" 
+        -command "MASHcacheRedirection;" 
+    ;
+
+	$label = getPluginResource("MASH", "kConnectTrailsToParticles");
+	$annot = getPluginResource("MASH", "kConnectTrailsToParticlesAnnot");
+    shelfButton
+		-label $label
+		-annotation `format -s $label -s $annot $format`
+        -image1 "MASH_AddTrailsToParticles.png" 
+        -command "MASHaddTrailsToParticles;" 
+    ;
+
+	$label = getPluginResource("MASH", "kCreateMeshFromPoints");
+	$annot = getPluginResource("MASH", "kCreateMeshFromPointsAnnot");
+    shelfButton
+		-label $label
+		-annotation `format -s $label -s $annot $format`
+        -image1 "MASH_CreateMeshFromPoints.png" 
+        -command "MASHcreateMeshFromPointsEntry;" 
+    ;
+
+	$label = getPluginResource("MASH", "kCreatePointsNode");
+	$annot = getPluginResource("MASH", "kCreatePointsNodeAnnot");
+    shelfButton
+		-label $label
+		-annotation `format -s $label -s $annot $format`
+        -image1 "MASH_CreatePointsNode.png" 
+        -command "MASHaddPointsNode;" 
+    ;
+
+	addShelfSeparator();
+
+	$label = getPluginResource("MASH", "kPolyType");
+	$annot = getRunTimeCommandAnnotation("CreatePolygonType") ;
+	shelfButton
+		-label $label
+		-annotation `format -s $label -s $annot $format`
+		-image1 "polyType.png"
+		-command ("CreatePolygonType");
+
+	$label = getPluginResource("MASH", "kSVG");
+	$annot = getRunTimeCommandAnnotation("CreatePolygonSVG") ;
+	shelfButton
+		-label $label
+		-annotation `format -s $label -s $annot $format`
+		-image1 "polySVG.png"
+		-command ("CreatePolygonSVG");
+
+	addShelfSeparator();
+
+	if (`pluginInfo -query -loaded "curveWarp"`) {
+		$label = getPluginResource("MASH", "kCurveWarp");
+		$annot = getPluginResource("MASH", "kCurveWarpAnnot");
+		shelfButton
+			-label $label
+			-annotation `format -s $label -s $annot $format`
+			-image1 "CurveWarp.png" 
+			-command ("createCurveWarp");
+	}
+
+	$label = getPluginResource("MASH", "kCreateMASHDeformer");
+	$annot = getPluginResource("MASH", "kCreateMASHDeformerAnnot");
+    shelfButton
+		-label $label
+		-annotation `format -s $label -s $annot $format`
+        -image1 "MASH_CreateDeformer.png" 
+        -command "MASHaddDeformer;" 
+    ;
+
+	$label = getPluginResource("MASH", "kCreateJiggleDeformer");
+	$annot = getPluginResource("MASH", "kCreateJiggleDeformerAnnot");
+    shelfButton
+		-label $label
+		-annotation `format -s $label -s $annot $format`
+        -image1 "MASH_CreateJiggleDeformer.png" 
+        -command "MASHaddJiggleDeformer;" 
+    ;
+
+	$label = getPluginResource("MASH", "kCreateBlendDeformer");
+	$annot = getPluginResource("MASH", "kCreateBlendDeformerAnnot");
+    shelfButton
+		-label $label
+		-annotation `format -s $label -s $annot $format`
+        -image1 "MASH_CreateBlendDeformer.png" 
+        -command "MASHaddBlendDeformer;" 
+    ;
+
+	$label = getPluginResource("MASH", "kCreateTextureDeformer");
+	$annot = getPluginResource("MASH", "kCreateTextureDeformerAnnot");
+    shelfButton
+		-label $label
+		-annotation `format -s $label -s $annot $format`
+        -image1 "paintTextureDeformer.png" 
+        -command "CreateTextureDeformer" 
+    ;
+
+	addShelfSeparator();
+
+	$label = getPluginResource("MASH", "kImportAlembic");
+	$annot = getRunTimeCommandAnnotation("AlembicImport");
+    shelfButton
+		-label $label
+		-annotation `format -s $label -s $annot $format`
+        -image1 "importAlembic.png" 
+        -command "AlembicImport" 
+        -doubleClickCommand "AlembicImportOptions" 
+    ;
+} 

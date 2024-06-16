@@ -1,0 +1,27 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+// Resources for Plug-in: dgProfiler
+// 
+// ----------------------------
+// Registered string resources:
+// ----------------------------
+setPluginResource( "dgProfiler", "kComputeInclusiveTime", "计算包含(秒)");
+setPluginResource( "dgProfiler", "kComputeSelfTime", "计算自身(秒)");
+setPluginResource( "dgProfiler", "kDirtyInclusive", "脏包含(秒)");
+setPluginResource( "dgProfiler", "kDirtySelf", "脏自身(秒)");
+setPluginResource( "dgProfiler", "kNodeName", "节点名称");
+setPluginResource( "dgProfiler", "kNodeType", "节点类型");
+setPluginResource( "dgProfiler", "kNumberOfComputes", "计算次数");
+setPluginResource( "dgProfiler", "kPercentOfRunTime", "运行时的 %");
+// 
+// --------------------------
+// Registered node resources:
+// --------------------------
+// 
+//  (Plugin has no registered nodes)
+// 

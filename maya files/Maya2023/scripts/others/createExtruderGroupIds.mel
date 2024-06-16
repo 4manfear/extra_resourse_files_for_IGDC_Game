@@ -1,0 +1,17 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+
+global proc createExtruderGroupIds( string $extruder, int $nbGroupId )
+{
+    for( $i = 0; $i < $nbGroupId; $i++ )
+    {
+        string $grpName = `createNode -ss groupId`;
+        connectAttr -na ($grpName + ".groupId") ($extruder + ".charGroupId");            
+    }    
+}
+

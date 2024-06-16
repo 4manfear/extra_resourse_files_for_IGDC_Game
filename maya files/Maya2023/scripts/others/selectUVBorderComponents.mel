@@ -1,0 +1,85 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+
+//  Procedure: selectUVBorderComponents(string $polys[], string $type, int $doSelect)
+//
+//  Description:        
+//
+//      Select components on UV shell border
+//
+//  Input arguments
+//      $polys    - Input polys, use high light list if empty
+//
+//      $type     - "" : current component select type
+//                  "facet" : face
+//                  "edge" : edge
+//                  "vertex" : vertex
+//                  "polymeshUV" : uv
+//
+//      $doSelect - 0 : only return selection result
+//                  1 : change current selection
+//  Return value
+//      Result components list
+//
+global proc string[] selectUVBorderComponents(string $polys[], string $type, int $doSelect)
+{
+    if($type == "")
+        $type = getComponentMask();
+    int $typeId = 0;
+    string $compStr = "";
+    switch ($type) {
+        case "polymeshUV":
+            $typeId = 0x0010;
+            $compStr = ".map[*]\" ";
+            break;
+        case "vertex":
+            $typeId = 0x0001;
+            $compStr = ".vtx[*]\" ";
+            break;
+        case "edge":
+            $typeId = 0x8000;
+            $compStr = ".e[*]\" ";
+            break;
+        case "facet":
+            $typeId = 0x0008;
+            $compStr = ".f[*]\" ";
+            break;
+        default:
+            return {}; //Not support yet
+    }
+    
+    if(size($polys) == 0)
+        $polys = `ls -hilite -dag -s -ni`;
+    string $components = "";
+    for($poly in $polys)
+    {
+        if(`nodeType $poly` != "mesh")
+            continue;
+        $components += "\"";
+        $components += $poly;
+        $components += $compStr;
+    }
+    
+    // Select all corresponding components
+    $sel = `ls -sl`;
+    eval("select -r " + $components);
+    
+    int $ufo[] = `polySelectConstraint -uvc 1 -q -ufo`;
+    int $bo    = `polySelectConstraint -uvc 1 -q -bo`;
+    int $ubs   = `polySelectConstraint -uvc 1 -q -ubs`;
+    int $uv    = `polySelectConstraint -uvc 1 -q -uv`;
+    polySelectConstraint -uvc 1 -t $typeId -ufo 0 -bo 1 -ubs 0 -uv 0 -m 2;
+    polySelectConstraint -uvc 1 -t 0 -ufo $ufo[0] -bo $bo -ubs $ubs -uv $uv -m 1;
+    
+    $newSel = `ls -sl`;
+    if(!$doSelect)
+        select -r $sel;
+    else
+        select -r $newSel;
+    return $newSel;
+}

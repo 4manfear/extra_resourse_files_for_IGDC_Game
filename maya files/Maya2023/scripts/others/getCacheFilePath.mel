@@ -1,0 +1,27 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  2005
+//
+//  Description:
+//		
+//
+
+global proc string getCacheFilePath( string $cacheDirectory,
+									 string $cacheBaseName )
+{
+	string $fullPath = $cacheBaseName;
+	if( $cacheDirectory != "" ) {
+		if( !endsWith( $cacheDirectory, "/" ) )
+			$cacheDirectory += "/";
+		$fullPath = $cacheDirectory + $cacheBaseName;
+		$fullPath += ".xml";
+	}
+	return $fullPath;
+}

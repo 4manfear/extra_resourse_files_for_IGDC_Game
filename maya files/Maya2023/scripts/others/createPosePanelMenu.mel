@@ -1,0 +1,199 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc buildPoseContextHelpItems(string $nameRoot, string $menuParent)
+//
+//  Description:
+//		Build context sensitive menu items
+//		
+//  Input Arguments:
+//		$nameRoot - name to use as the root of all item names
+//		$menuParent - the name of the parent of this menu
+//
+//  Return Value:
+//      None
+//
+{
+	menuItem -label (uiRes("m_createPosePanelMenu.kHelpPose"))
+		-annotation (uiRes("m_createPosePanelMenu.kHelpPoseAnnot"))
+		-enableCommandRepeat false
+		-command "showHelp PoseEditor";
+}
+ 
+global proc createPosePanelMenu( string $panel )
+//
+//  Procedure Name:
+//      createPosePanelMenu
+//
+//  Description:
+// 		Create a new pose panel with the menu bar
+//
+//  Input Arguments:
+//      string $panel - the name of the panel
+//
+//  Return Value:
+//      None.
+//
+{
+	// if this menu has already been built, return
+	//
+	{
+		string $panelControl = `panel -query -control $panel`;
+		if ( `menuBarLayout -exists $panelControl` ){
+			string $ma[] = `menuBarLayout -query -menuArray $panelControl`;
+			for ( $name in $ma ){
+				if ( $name == "Panels" ) {
+					return;
+				}
+				if ( $name == ($panel+"PosesMenu")) {
+					return;
+				}
+			}
+			setParent $panelControl;
+		}
+	}
+
+    //	Add support for the Context Sensitive Help Menu.
+	//
+	addContextHelpProc $panel "buildPoseContextHelpItems";
+		
+	// By the time we get here, we know the menu bar
+	// of the posePanel is the current menu bar
+	//
+	// Get the name of the pose editor in this panel
+	//
+ 	string $ed = `posePanel -query -poseEditor $panel`;
+ 	string $itemName = `menu -tearOff true -label (uiRes("m_createPosePanelMenu.kFile"))
+		($panel+"FileMenu")`;
+		menuItem -label (uiRes("m_createPosePanelMenu.kImport"))
+			-annotation (uiRes("m_createPosePanelMenu.kImportAnnot"))
+			-command "poseInterpolatorImportNodes"
+			fileImport;
+		//menuItem -label _L10N(kImportNewSkinning, "Import New Skinning")
+		//	-annotation _L10N(kImportNewSkinningAnnot, "Import skinning for the selected mesh and update pose shapes")
+		//	-command ""
+		//	fileImportNewSkinning;
+		menuItem -divider true;
+		menuItem -label (uiRes("m_createPosePanelMenu.kExportAll"))	
+			-annotation (uiRes("m_createPosePanelMenu.kExportAllAnnot"))
+			-command "poseInterpolatorExportAllNodes"
+			fileExportAll;
+		menuItem -label (uiRes("m_createPosePanelMenu.kExportSelection"))
+			-annotation (uiRes("m_createPosePanelMenu.kExportSelectionAnnot"))
+			-enable `isPoseEditorExportSelectionEnabled`
+			-command "performExportSelection"
+			fileExportSelection;
+				
+		scriptJob -permanent -parent fileExportSelection
+				-event "poseEditorTreeviewSelectionChanged" ("menuItem -e -enable `isPoseEditorExportSelectionEnabled` fileExportSelection");
+				
+ 	$itemName = `menu -tearOff true -label (uiRes("m_createPosePanelMenu.kEdit"))
+		($panel+"EditMenu")`;
+		string $cmd = "PoseInterpolatorNewGroup";
+		menuItem -label (uiRes("m_createPosePanelMenu.kNewGroup"))
+			-annotation (getRunTimeCommandAnnotation($cmd))
+			-enable `isPoseEditorGroupSelectedPIEnabled`
+			-c $cmd
+			editMIGroup;
+	scriptJob -permanent -parent editMIGroup
+				-event "poseEditorTreeviewSelectionChanged" ("menuItem -e -enable `isPoseEditorGroupSelectedPIEnabled` editMIGroup");
+	
+	$itemName = `menu -tearOff true -label (uiRes("m_createPosePanelMenu.kPoses"))
+		($panel+"PosesMenu")`;
+		menuItem -label (uiRes("m_createPosePanelMenu.kCreatePoseInterpolator"))
+			-annotation (uiRes("m_createPosePanelMenu.kCreatePoseInterpolatorAnnot"))
+			-enable true
+			-command "performInterpolatorAdd 0"
+			posesMICreatePI;
+			menuItem -optionBox true 
+				-annotation (uiRes("m_createPosePanelMenu.kCreatePoseInterpolatorOptionAnnot"))
+				-command "performInterpolatorAdd 1"
+				posesMICreatePIDialog;
+		menuItem -divider true;
+		menuItem -label (uiRes("m_createPosePanelMenu.kAddPose"))
+			-annotation (uiRes("m_createPosePanelMenu.kAddPoseAnnot"))
+			-enable `isPoseEditorAddPoseEnabled`
+			-command "performPoseAdd 0"
+			posesMIAddPose;
+			menuItem -optionBox true 
+				-annotation (uiRes("m_createPosePanelMenu.kAddPoseOptionAnnot"))
+				-command "performPoseAdd 1"
+				posesMIAddPoseDialog;
+				
+		scriptJob -permanent -parent posesMIAddPose
+				-event "poseEditorTreeviewSelectionChanged" ("menuItem -e -enable `isPoseEditorAddPoseEnabled` posesMIAddPose");
+				
+		menuItem -label (uiRes("m_createPosePanelMenu.kAddNeutralPoses"))
+			-annotation (uiRes("m_createPosePanelMenu.kAddNeutralPosesAnnot"))
+			-enable `isPoseEditorAddNeutralPosesEnabled`
+			-command "performNeutralPosesAdd"
+			posesMIAddNeutralPoses;
+			
+		scriptJob -permanent -parent posesMIAddNeutralPoses
+				-event "poseEditorTreeviewSelectionChanged" ("menuItem -e -enable `isPoseEditorAddNeutralPosesEnabled` posesMIAddNeutralPoses");
+				
+		menuItem -label (uiRes("m_createPosePanelMenu.kUpdatePose"))
+			-annotation (uiRes("m_createPosePanelMenu.kUpdatePoseAnnot"))
+			-enable `isPoseEditorUpdatePosesEnabled`
+			-command "performPoseUpdate 0"
+			posesMIUpdatePose;
+			menuItem -optionBox true
+				-annotation (uiRes("m_createPosePanelMenu.kUpdatePoseOptionAnnot"))
+				-command "performPoseUpdate 1"
+				posesMIUpdatePoseDialog;
+
+		scriptJob -permanent -parent posesMIUpdatePose
+				-event "poseEditorTreeviewSelectionChanged" ("menuItem -e -enable `isPoseEditorUpdatePosesEnabled` posesMIUpdatePose");
+
+		menuItem -divider true;
+
+		menuItem -label (uiRes("m_createPosePanelMenu.kMirrorPose"))
+			-annotation (uiRes("m_createPosePanelMenu.kMirrorPoseAnnot"))
+			-enable `isPoseEditorPIorPoseMirrorEnabled`
+			-command "performPoseMirror 2 0"
+			posesMIMirrorPose;
+			menuItem -optionBox true
+				-annotation (uiRes("m_createPosePanelMenu.kMirrorPoseOptionAnnot"))
+				-command "performPoseMirror 1 0"
+				posesMIMirrorPoseDialog;
+
+		scriptJob -permanent -parent posesMIMirrorPose
+			-event "poseEditorTreeviewSelectionChanged" ("menuItem -e -enable `isPoseEditorPIorPoseMirrorEnabled` posesMIMirrorPose");
+
+	$itemName = `menu -tearOff true -label (uiRes("m_createPosePanelMenu.kView"))
+		($panel+"ViewMenu")`;
+		menuItem -label (uiRes("m_createPosePanelMenu.kDefault"))
+			-annotation (uiRes("m_createPosePanelMenu.kDefaultAnnot"))
+			-command "condition -e -state true isPoseEditorAdvancedLayoutSet;condition -e -state false isPoseEditorAdvancedLayoutSet"
+			viewMIDefault;
+		menuItem -label (uiRes("m_createPosePanelMenu.kAdvanced"))
+			-annotation (uiRes("m_createPosePanelMenu.kAdvancedAnnot"))
+			-command "condition -e -state false isPoseEditorAdvancedLayoutSet;condition -e -state true isPoseEditorAdvancedLayoutSet"
+			viewMIAdvanced;
+
+	$itemName = `menu -tearOff true -label (uiRes("m_createPosePanelMenu.kOptions"))
+		($panel+"OptionsMenu")`;
+		menuItem -label (uiRes("m_createPosePanelMenu.kShowFullPoseNames"))
+			-annotation (uiRes("m_createPosePanelMenu.kShowFullPoseNamesAnnot"))
+			-command "poseEditorToggleShowFullPoseNames"
+			-checkBox `checkPoseEditorShowFullPoseName`
+			optionsMIShowFullPoseNames;
+
+	buildPanelPopupMenu( $panel );
+}
+
+global proc poseEditorToggleShowFullPoseNames()
+//
+//  Description:
+//		Toggles show full pose names
+//		
+{
+	if(`condition -q -state isPoseEditorShowingPoseFullName`)
+		condition -e -state false isPoseEditorShowingPoseFullName;
+	else
+		condition -e -state true isPoseEditorShowingPoseFullName;
+}

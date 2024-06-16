@@ -1,0 +1,105 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+// Creation Date:  14 January 1999
+//
+//
+//  Procedure Name:
+//      filletCurveToolScript
+//
+//  Description:
+//	create wrapper around the filletCurve command
+//
+//  Input Arguments:
+//		0 ==> do the command.
+//		1 ==> show the tool/action option box
+//		2 ==> return the command
+//		3 ==> show tool/action option box
+//		4 ==> enter the tool
+//
+//  Return Value:
+//      None.
+//
+
+global proc filletCurveToolSetup( int $forceFactorySettings,
+								  string $goToTool )
+{
+	global int $gStartWithAutoComplete;
+
+	optionVar -init $forceFactorySettings -category "Modeling.Curves.Fillet"
+		-iv filletCurveEuc 0
+		-iv filletCurveLac $gStartWithAutoComplete
+		;
+
+	if( "" != $goToTool ) {
+		scriptCtx -e -euc `optionVar -q filletCurveEuc` $goToTool;
+		scriptCtx -e -lac `optionVar -q filletCurveLac` $goToTool;
+	}
+}
+
+global proc filletCurveValues ( string $toolName ) 
+{
+	performFilletCurve 3 $toolName;
+	scriptCtxCommonValues( $toolName );
+}
+
+global proc filletCurveProperties()
+{
+	scriptCtxCommonProperties;
+}
+
+proc createFilletCurveContext( string $tool )
+{
+	if( ! `scriptCtx -exists $tool` ) {
+		filletCurveToolSetup( 0, "" );
+		scriptCtx -i1 "fillet.png"
+		  -title (uiRes("m_filletCurveToolScript.kFilletcurveTool"))
+		  -bcn "filletCurve"
+
+		  -exitUponCompletion `optionVar -q filletCurveEuc`
+		  -totalSelectionSets 1
+		  -expandSelectionList true
+		  -fcs ("filletCurveToolScript 0")
+
+		  -setNoSelectionPrompt (uiRes("m_filletCurveToolScript.kSelectTwoCurves"))
+		  -setSelectionPrompt (uiRes("m_filletCurveToolScript.kSelectSecondCurve"))
+		  -setDoneSelectionPrompt (uiRes("m_filletCurveToolScript.kComputeFilletCurve"))
+
+		  -setAutoToggleSelection true
+		  -setAutoComplete `optionVar -q filletCurveLac`
+		  -showManipulators true
+
+		  -setSelectionCount 2
+		  -nurbsCurve true
+		  -curveParameterPoint true
+		$tool;
+	}
+}
+
+global proc string filletCurveToolScript( int $setToTool )
+//
+//	Description :
+//		0 ==> do the command.
+//		1 ==> show the action option box
+//		2 ==> return the command
+//		3 ==> show tool/action option box
+//		4 ==> enter the tool/do the command
+{
+	string $tool = "";
+	if( $setToTool > 2 ) {
+		if( !`optionVar -q modelWithToolFilletCurve` ) {
+			$setToTool = 4 - $setToTool;
+		}
+		else {
+			$tool = "filletCurveContext";
+			createFilletCurveContext $tool;
+		}
+	}
+	return scriptToolScript( "performFilletCurve", $setToTool, $tool );
+}

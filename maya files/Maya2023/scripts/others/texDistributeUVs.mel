@@ -1,0 +1,153 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+// ===========================================================================
+//
+//  Procedure Name:
+//      texDistributeUVs
+//
+//  Description:
+//      UV workflow function used for distributing a selection of UVs evenly
+//      along either the U or the V axis. Same as 3ds Max "space evenly".
+//
+//  Input Arguments
+//      axis                 - String - Axis to spread out along.
+//
+//  Return Value:
+//      None.
+//
+//  Notes:
+//  This script is part of the implementation of Nightshade UV Editor into
+//  Autodesk Maya.
+//
+// ===========================================================================
+
+global proc texDistributeUVs(string $axis, float $distance)
+{
+	// Validate and save UV selection
+	texCheckSelection("UV");
+	string $selection[] = `ls -selection -flatten`;
+	float $distanceU = $distance;
+	float $distanceV = $distance;
+	if ($distance < 0)
+	{
+		float $uvBox[] = `polyEvaluate -boundingBoxComponent2d`;
+		$distanceU = $uvBox[1] - $uvBox[0];
+		$distanceV = $uvBox[3] - $uvBox[2];
+	}
+	int $uvCount = `size($selection)`;
+	int $stepCount = $uvCount - 1;
+	float $stepDistanceU = $distanceU / $stepCount;
+	float $stepDistanceV = $distanceV / $stepCount;
+
+	// MEL has no dictionaries so we will use the UV position value as a prefix to the string.
+	// But sorting string arrays starting with a negative numerical value will fail since items
+	// like -0.05 will appear before -0.5, even though the latter is actually a smaller number.
+	// Fix: Offset all values by the lowest position before adding the position prefix.
+	float $offset = 5.0; // Extra offset padding
+	float $position[]; // Bug with polyEditUV. Querying the uValue returns a float[] instead of a float
+	float $prefixNumber;
+	string $prefixString;
+
+	// Add positions as prefixes to the component list
+	if ($axis == "U")
+	{
+		for ($i = 0; $i < size($selection); $i++){
+			$position = `polyEditUV -query $selection[$i]`; 
+			if ($position[0] < $offset) $offset += $position[0];
+		}
+		for ($i = 0; $i < size($selection); $i++){
+			$position = `polyEditUV -query $selection[$i]`;
+			$prefixNumber = $position[0] + $offset;
+			$prefixNumber = texRoundOff($prefixNumber, 8);
+			$prefixString = $prefixNumber;
+			if (`gmatch $prefixString "*.*"` == false){ // Whole number - missing decimal point
+				$prefixString += ".0";
+			}
+			$selection[$i] = ($prefixString + " " + $selection[$i]);
+		}
+	} else { // V
+		for ($i = 0; $i < size($selection); $i++){
+			$position = `polyEditUV -query $selection[$i]`; 
+			if ($position[1] < $offset) $offset += $position[1];
+		}
+		for ($i = 0; $i < size($selection); $i++){
+			$position = `polyEditUV -query $selection[$i]`;
+			$prefixNumber = $position[1] + $offset;
+			$prefixNumber = texRoundOff($prefixNumber, 8);
+			$prefixString = $prefixNumber;
+			if (`gmatch $prefixString "*.*"` == false){ // Whole number - missing decimal point
+				$prefixString += ".0";
+			}
+			$selection[$i] = ($prefixString + " " + $selection[$i]);
+		}
+	}
+
+	// Sort the list and remove prefix
+	string $sortedList[] = `sort($selection)`;
+	for ($i = 0; $i < size($sortedList); $i++)
+	{
+		string $regex = "[^ ]+ *";
+		$sortedList[$i] = `substitute $regex $sortedList[$i] ""`;
+	}
+
+	// Check if we need to reverse the sorted list by comparing the positions of the first and last entries
+	float $first[] = `polyEditUV -query $sortedList[0]`;
+	float $last[] = `polyEditUV -query $sortedList[$uvCount - 1]`;
+	if ($axis == "U"){
+		if ($first[0] > $last[0]){
+			$sortedList = texReverseStringArray($sortedList);
+		}
+	} else { // V
+		if ($first[1] > $last[1]){
+			$sortedList = texReverseStringArray($sortedList);
+		}
+	}
+
+	// Start distributing
+	float $currentPosition[], $lastPosition[], $translateDistance;
+	if ($axis == "U")
+	{
+		for ($i = 0; $i < size($sortedList); $i++)
+		{
+			// Get the current UV position
+			float $currentPosition[] = `polyEditUV -query $sortedList[$i]`;
+			if ($i == 0){ // Always skip first UV
+				$lastPosition[0] = $currentPosition[0];
+				continue;
+			}
+			$translateDistance = $stepDistanceU - ($currentPosition[0] - $lastPosition[0]);
+			float $lol = $currentPosition[0] + $translateDistance;
+			polyEditUV
+				-relative true
+				-uValue $translateDistance
+				$sortedList[$i]
+			;
+			float $temp[] = `polyEditUV -query $sortedList[$i]`;
+			$lastPosition[0] = $temp[0];
+		}
+	} else { // V
+		for ($i = 0; $i < size($sortedList); $i++)
+		{
+			// Get the current UV position
+			float $currentPosition[] = `polyEditUV -query $sortedList[$i]`;
+			if ($i == 0){ // Always skip first UV
+				$lastPosition[1] = $currentPosition[1];
+				continue;
+			}
+			$translateDistance = $stepDistanceV - ($currentPosition[1] - $lastPosition[1]);
+			float $lol = $currentPosition[1] + $translateDistance;
+			polyEditUV
+				-relative true
+				-vValue $translateDistance
+				$sortedList[$i]
+			;
+			float $temp[] = `polyEditUV -query $sortedList[$i]`;
+			$lastPosition[1] = $temp[1];
+		}
+	}
+}

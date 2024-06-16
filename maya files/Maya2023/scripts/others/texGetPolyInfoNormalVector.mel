@@ -1,0 +1,55 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+// ===========================================================================
+//
+//  Creation Date: November 13, 2016
+//
+//  Procedure Name:
+//      texGetPolyInfoNormalVector
+//
+//  Description:
+//      General utility function for parsing the string returned from the
+//      polyInfo command when retrieving the face normal.
+//
+//  Input Arguments
+//      vectorString         - String - Info string returned from polyInfo -fn
+//
+//  Return Value:
+//      Vector               - Vector format of the face normal
+//
+//  Notes:
+//  This script is part of the implementation of Nightshade UV Editor into
+//  Autodesk Maya. This script is sourced by other scripts. Do not run it
+//  directly.
+//
+// ===========================================================================
+
+global proc vector texGetPolyInfoNormalVector(string $vectorString)
+{
+    float $x, $y, $z;
+    vector $normalVector;
+
+    // Tokenize vector string
+    string $tokens[];
+    int $tokenCount = `tokenize $vectorString " " $tokens`;
+
+    // Check to confirm that we have polyInfo data
+    if (($tokenCount > 3) && ($tokens[0] == "FACE_NORMAL"))
+    {
+        // Assembly normal vector...
+        $x = ($tokens[$tokenCount-3]);
+        $y = ($tokens[$tokenCount-2]);
+        $z = ($tokens[$tokenCount-1]);
+        $normalVector = << $x, $y, $z >>;
+
+        // ...and normalize it.
+        $normalVector = `unit $normalVector`;
+    }
+
+    return $normalVector;
+}

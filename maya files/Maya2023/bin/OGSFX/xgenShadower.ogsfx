@@ -1,0 +1,124 @@
+//**************************************************************************/
+// Copyright 2014 Autodesk, Inc.  
+// All rights reserved.
+// Use of this software is subject to the terms of the Autodesk license 
+// agreement provided at the time of installation or download, or which 
+// otherwise accompanies this software in either electronic or hard copy form.   
+//**************************************************************************/
+//
+// Sample shader to that can be used for shadow casting
+// 
+attribute vertexInS 
+{ 
+    vec3 Pm : POSITION; 
+    float width : TEXCOORD0; 
+    vec3 curveVec : TEXCOORD1; 
+    float offsetFlag : TEXCOORD2; 
+} 
+
+//  Declarations 
+
+attribute vertOutS 
+{ 
+    vec3 Pw : TEXCOORD1; 
+}
+
+// output structure.
+attribute pixelOut 
+{
+    vec4 colorOut: COLOR0;
+}
+
+//  Globals 
+
+uniform mat4 World : world; 
+uniform mat4 ViewProj : viewprojection; 
+uniform float DepthPriority : depthpriority; 
+uniform mat4 WorldViewProj : worldviewprojection; 
+uniform vec3 cameraDirection; 
+uniform bool camIsOrtho; 
+
+//  Fragments
+
+// Vertex Shader
+//
+GLSLShader VS
+{
+vec3 iPw( vec3 pm, mat4 world )
+{
+    return (world * vec4(pm, 1.0)).xyz;
+}
+
+vec4 iPcPriority( vec3 pm, float depthPriority, mat4 worldViewProjectionC )
+{
+    vec4 P = worldViewProjectionC * vec4(pm,1.0f);
+    P.z -= P.w * 2.0 * depthPriority;
+    return P;
+}
+
+vec3 xgenVSWidthVec(vec3 Pm, float width, vec3 curveVec, mat4 world, vec3 viewDirection, bool camIsOrtho)
+{
+    vec3 viewVec = viewDirection;
+    if (!camIsOrtho) {
+        vec3 pw = (world * vec4(Pm, 1.0f)).xyz;
+        // viewDirection is worldCameraPosition when camIsOrtho is false.
+        viewVec = pw - viewDirection;
+    }
+
+    return normalize(cross(viewVec, curveVec)) * width;
+}
+
+vec3 xgenVSOffset(vec3 Pm, float offsetFlag, vec3 widthVecFinal)
+{
+    return Pm + offsetFlag * widthVecFinal;
+}
+
+// Vertex Shader 
+//
+//vertOutS VS( vertexInS inputs ) 
+void main()
+{ 
+    vec3 widthVecFinal = xgenVSWidthVec( Pm, width, curveVec, World, cameraDirection, camIsOrtho ); 
+    vec3 pm3 = xgenVSOffset( Pm, offsetFlag, widthVecFinal ); 
+
+    Pw = iPw( pm3, World ); 
+    gl_Position = iPcPriority ( pm3, DepthPriority, WorldViewProj ); 
+
+} 
+}
+
+attribute fragInS 
+{ 
+    vec3 Pw : TEXCOORD1; 
+}
+
+// Pixel Shader 
+//
+GLSLShader FS
+{
+vec4 mayaCreateShadowMapPS( vec3 Pw, mat4 shadowViewProj )
+{
+	vec4 Pndc = shadowViewProj * vec4(Pw,1.0f);
+	float retZ = 0.5 + 0.5 * Pndc.z / Pndc.w;
+	retZ += fwidth(retZ);
+	return vec4(retZ, retZ, retZ, retZ);
+}
+
+//float4 FS( fragInS inputs ) : COLOR0
+void main()
+{
+	colorOut = mayaCreateShadowMapPS( Pw, ViewProj );
+} 
+}
+
+/////////////////////// Techniques ///////
+
+technique main
+{
+    pass P0
+    {
+        VertexShader (in vertexInS, out vertOutS) = VS;
+        PixelShader (in fragInS, out pixelOut) = FS;
+    }
+}
+ 

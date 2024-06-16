@@ -1,0 +1,74 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+// Resources for Plug-in: VectorRender
+// 
+// ----------------------------
+// Registered string resources:
+// ----------------------------
+// 
+//  (Plugin has no registered string resources)
+// 
+// 
+// --------------------------
+// Registered node resources:
+// --------------------------
+// 
+// Node: vectorRenderGlobals
+// 
+setNodeNiceNameResource( "vectorRenderGlobals", "ベクトル レンダー グローバル" );
+setAttrNiceNameResource( "vectorRenderGlobals", "fzn", "フリーズ" );
+setAttrNiceNameResource( "vectorRenderGlobals", "cf", "現在のフレーム" );
+setAttrNiceNameResource( "vectorRenderGlobals", "fr", "フレーム レート" );
+setAttrNiceNameResource( "vectorRenderGlobals", "sa", "Svg アニメーション" );
+setAttrNiceNameResource( "vectorRenderGlobals", "sc", "Svg 圧縮" );
+setAttrNiceNameResource( "vectorRenderGlobals", "fv", "Flash バージョン" );
+setAttrNiceNameResource( "vectorRenderGlobals", "bv", "ブラウザ ビュー" );
+setAttrNiceNameResource( "vectorRenderGlobals", "sb", "バックフェースの表示" );
+setAttrNiceNameResource( "vectorRenderGlobals", "sh", "シャドウ" );
+setAttrNiceNameResource( "vectorRenderGlobals", "hi", "ハイライト" );
+setAttrNiceNameResource( "vectorRenderGlobals", "hl", "ハイライト レベル" );
+setAttrNiceNameResource( "vectorRenderGlobals", "rf", "反射" );
+setAttrNiceNameResource( "vectorRenderGlobals", "rd", "反射深度" );
+setAttrNiceNameResource( "vectorRenderGlobals", "cfe", "塗り潰しとエッジの結合" );
+setAttrNiceNameResource( "vectorRenderGlobals", "ct", "カーブ許容値" );
+setAttrNiceNameResource( "vectorRenderGlobals", "scf", "二次 CF" );
+setAttrNiceNameResource( "vectorRenderGlobals", "dl", "詳細レベル" );
+setAttrNiceNameResource( "vectorRenderGlobals", "ie", "エッジを含める" );
+setAttrNiceNameResource( "vectorRenderGlobals", "rno", "レンダーの最適化" );
+setAttrNiceNameResource( "vectorRenderGlobals", "fo", "オブジェクト塗り潰し" );
+setAttrNiceNameResource( "vectorRenderGlobals", "fs", "塗り潰しスタイル" );
+setAttrNiceNameResource( "vectorRenderGlobals", "es", "エッジ スタイル" );
+setAttrNiceNameResource( "vectorRenderGlobals", "he", "非表示エッジ" );
+setAttrNiceNameResource( "vectorRenderGlobals", "ed", "エッジの詳細" );
+setAttrNiceNameResource( "vectorRenderGlobals", "oai", "交点のアウトライン" );
+setAttrNiceNameResource( "vectorRenderGlobals", "mea", "最小エッジ角度" );
+setAttrNiceNameResource( "vectorRenderGlobals", "ec", "エッジ カラー" );
+setAttrNiceNameResource( "vectorRenderGlobals", "ecr", "エッジ カラー R" );
+setAttrNiceNameResource( "vectorRenderGlobals", "ecg", "エッジ カラー G" );
+setAttrNiceNameResource( "vectorRenderGlobals", "ecb", "エッジ カラー B" );
+setAttrNiceNameResource( "vectorRenderGlobals", "ew", "エッジ ウェイト" );
+setAttrNiceNameResource( "vectorRenderGlobals", "inp", "イメージ名のプリフィックス" );
+setAttrNiceNameResource( "vectorRenderGlobals", "if", "イメージ フォーマット" );
+setAttrNiceNameResource( "vectorRenderGlobals", "par", "ピクセル アスペクト比" );
+setAttrNiceNameResource( "vectorRenderGlobals", "ff", "ファイル名のフォーマット" );
+setAttrNiceNameResource( "vectorRenderGlobals", "rl", "レンダー レイヤ" );
+setAttrNiceNameResource( "vectorRenderGlobals", "fza", "フリーズの影響を受ける" );
+setAttrEnumResource( "vectorRenderGlobals", "sa", 0, "ネイティブ" );
+setAttrEnumResource( "vectorRenderGlobals", "sa", 1, "HTML スクリプト" );
+setAttrEnumResource( "vectorRenderGlobals", "fv", 3, "3" );
+setAttrEnumResource( "vectorRenderGlobals", "fv", 4, "4" );
+setAttrEnumResource( "vectorRenderGlobals", "fv", 5, "5" );
+setAttrEnumResource( "vectorRenderGlobals", "fs", 1, "1 色" );
+setAttrEnumResource( "vectorRenderGlobals", "fs", 2, "2 色" );
+setAttrEnumResource( "vectorRenderGlobals", "fs", 3, "4 色" );
+setAttrEnumResource( "vectorRenderGlobals", "fs", 4, "フル カラー" );
+setAttrEnumResource( "vectorRenderGlobals", "fs", 5, "平均カラー" );
+setAttrEnumResource( "vectorRenderGlobals", "fs", 6, "エリア グラディエント" );
+setAttrEnumResource( "vectorRenderGlobals", "fs", 7, "メッシュ グラディエント" );
+setAttrEnumResource( "vectorRenderGlobals", "es", 1, "アウトライン" );
+setAttrEnumResource( "vectorRenderGlobals", "es", 2, "メッシュ全体" );

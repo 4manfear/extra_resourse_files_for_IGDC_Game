@@ -1,0 +1,76 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc launchImageApp(string $fileName, int $sequence, int $editImage) {
+//-----------------------------------------------------------------------------
+// Description
+// Starts fcheck or user defined application to edit/view an image.
+// $fileName is the absolute path to an image
+// $sequence = 0 is an image
+// $sequence = 1 is a sequence
+// $editImage = 0, launches image in fcheck or user defined viewer application
+// $editImage = 1, launches image in fcheck or user defined editor application
+//-----------------------------------------------------------------------------
+
+	// If we're loading a .psd file use the Photoshop image editing path
+	int $isImageEditorSpecified = 0;
+	string $imageEditor = "";
+	if (`gmatch $fileName "*.[pP][sS][dD]"`) {
+		$isImageEditorSpecified = size(`optionVar -q "PhotoshopDir"`);
+		$imageEditor = `optionVar -q PhotoshopDir`;
+	} else {
+		$isImageEditorSpecified = size(`optionVar -q "EditImageDir"`);
+		$imageEditor = `optionVar -q EditImageDir`;
+	}
+
+	int $isImageViewerSpecified = size(`optionVar -q "ViewImageDir"`);
+    string $imageViewer = `optionVar -q ViewImageDir`;
+    
+    string $winSystemCmd = "start ";
+    string $macSystemCmd = "open -a";
+    string $bashAmpOperator = " &";
+
+    if ($editImage && ($isImageEditorSpecified > 0)) {
+        if (`about -os` == "nt" || `about -os` == "win64") {
+            $fileName = substituteAllString($fileName, "/", "\\");
+            string $imageEditCmd = ($winSystemCmd + "\"" + $imageEditor + "\" \"" + $fileName + "\"");
+            system($imageEditCmd);
+        }
+        else if (`about -os` == "mac") {
+            string $imageEditCmd = ($macSystemCmd + "\"" + $imageEditor + "\" \"" + $fileName + "\"" + $bashAmpOperator);
+            system($imageEditCmd);
+        }
+        else if (`about -os` == "linux" || `about -os` == "linux64") {
+            string $imageEditCmd = ("\"" + $imageEditor + "\" \"" + $fileName + "\"" + $bashAmpOperator);
+            system($imageEditCmd);
+        }
+    }
+
+    else if (!$editImage && ($isImageViewerSpecified > 0)) {
+        if (`about -os` == "nt" || `about -os` == "win64"){
+            $fileName = substituteAllString($fileName, "/", "\\");
+            string $imageViewCmd = ($winSystemCmd + "\"" + $imageViewer + "\" \"" + $fileName + "\"");
+            system($imageViewCmd);
+        }
+        else if (`about -os` == "mac") {
+            string $imageViewCmd = ($macSystemCmd + "\"" + $imageViewer + "\" \"" + $fileName + "\"" + $bashAmpOperator);
+            system($imageViewCmd);
+        }
+        else if (`about -os` == "linux" || `about -os` == "linux64") {
+            string $imageViewCmd = ("\"" + $imageViewer + "\" \"" + $fileName + "\"" + $bashAmpOperator);
+            system($imageViewCmd);
+        }
+    }
+
+    else {
+        if (`about -os` == "mac") {
+            warning ((uiRes("m_launchImageApp.kFcheckNotSupported")));
+        } else {
+            launchFcheckCmd $fileName $sequence;
+        }
+    }
+}

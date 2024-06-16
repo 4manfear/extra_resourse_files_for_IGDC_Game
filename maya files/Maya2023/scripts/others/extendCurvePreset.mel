@@ -1,0 +1,53 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date: April 23, 1997
+//
+//  Description:
+//      The extendCurvePreset() procedure executes a extend curve operation on 
+//      a curve based on the extend option vars.
+//
+//  Input Arguments:
+//      None.
+//
+//  Return Value:
+//      None.
+//
+global proc extendCurvePreset(
+ 	int $history,
+	int $method,
+	int $extendType,
+	float $distance,
+	float $toPointX,
+	float $toPointY,
+	float $toPointZ,
+	int $start,
+	int $join,
+	int $removeMultKnots,
+	int $replaceOriginal )
+//
+//	ExtendCurve with the preset options.
+//	Use this proc when operation dragged to Shelf.
+//
+{
+	string $argList[];
+	$argList[0] = $history;
+	$argList[1] = $method;
+	$argList[2] = $extendType;
+	$argList[3] = $distance;
+	$argList[4] = $toPointX;
+	$argList[5] = $toPointY;
+	$argList[6] = $toPointZ;
+	$argList[7] = $start;
+	$argList[8] = $join;
+	$argList[9] = $removeMultKnots;
+	$argList[10] = $replaceOriginal;
+
+	extendCurvePresetArgList( "1", $argList );
+}

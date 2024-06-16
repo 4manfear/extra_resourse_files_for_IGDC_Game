@@ -1,0 +1,44 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+// Creation Date:
+//
+//  Procedure Name:
+//		deleteIfNotReferenced
+//
+//  Description:
+//		Helper proc to attempt to delete nodes but only if
+//		they are not locked and if they are not from
+//		referenced files.
+//
+//  Input Arguments: The name of the node to delete
+//
+//  Return Value:
+//		True if the node was deleted, false if not.
+//
+//
+global proc int deleteIfNotReferenced( string $nodeToDelete )
+{
+	int $result = 0;
+	if(( size( $nodeToDelete ) > 0 ) 
+	&& `objExists $nodeToDelete`
+	&& ! `reference -q -isNodeReferenced $nodeToDelete` )
+	{
+		int $isLocked[] = `lockNode -q -lock $nodeToDelete`;
+		if ( !$isLocked[0] ){
+
+			string $cmd = ("delete \"" + $nodeToDelete + "\"");
+			evalEcho( $cmd );
+			$result = 1;
+		}
+	}
+
+	return $result;
+}
+

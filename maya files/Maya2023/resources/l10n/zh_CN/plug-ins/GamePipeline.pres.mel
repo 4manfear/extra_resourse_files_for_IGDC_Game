@@ -1,0 +1,36 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+// Resources for Plug-in: GamePipeline
+// 
+// ----------------------------
+// Registered string resources:
+// ----------------------------
+setPluginResource( "GamePipeline", "kFlagsMutuallyExclusive", "下列标志互相排斥: ^1s ^2s");
+setPluginResource( "GamePipeline", "kOk", "确定");
+setPluginResource( "GamePipeline", "kSelect", "选择");
+setPluginResource( "GamePipeline", "kSelectUnityProject", "选择 Unity 项目以发送 FBX 资产");
+setPluginResource( "GamePipeline", "kSelectUnrealProject", "选择 Unreal 项目以发送 FBX 资产");
+setPluginResource( "GamePipeline", "kSendAll", "全部");
+setPluginResource( "GamePipeline", "kSendSelection", "选择");
+setPluginResource( "GamePipeline", "kSendToUnity", "发送到 Unity");
+setPluginResource( "GamePipeline", "kSendToUnityError", "发送到 Unity 的错误");
+setPluginResource( "GamePipeline", "kSendToUnityErrorMsgForProjectPath", "请选择有效的 Unity 项目。");
+setPluginResource( "GamePipeline", "kSendToUnityInvalidProjectWarning", "“%s”不是有效的 Unity 项目。");
+setPluginResource( "GamePipeline", "kSendToUnreal", "发送到 Unreal");
+setPluginResource( "GamePipeline", "kSendToUnrealError", "发送到 Unreal 的错误");
+setPluginResource( "GamePipeline", "kSendToUnrealErrorMsgForProjectPath", "请选择有效的 Unreal 项目。");
+setPluginResource( "GamePipeline", "kSendToUnrealInvalidProjectWarning", "“%s”不是有效的 Unreal 项目。");
+setPluginResource( "GamePipeline", "kSetUnityProject", "设置 Unity 项目");
+setPluginResource( "GamePipeline", "kSetUnrealProject", "设置 Unreal 项目");
+// 
+// --------------------------
+// Registered node resources:
+// --------------------------
+// 
+//  (Plugin has no registered nodes)
+// 

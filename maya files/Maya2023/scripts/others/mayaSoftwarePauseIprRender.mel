@@ -1,0 +1,64 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+// Description:  This procedure is called to pause the ipr render
+//      for maya software renderer.
+//
+global proc mayaSoftwarePauseIprRender(string $editor, int $pause)
+{
+    // If Ipr is running, toggle pause Ipr. 
+    //
+    if (isIprFileLoaded())
+    {
+        if (!$pause)
+        {
+            // We will unpause it by reenabling updating according 
+            // to the current settings of the optionVars which 
+            // specify which updating should be done.
+            //
+            iprEngine
+                -edit
+                -updateShading
+                    (`optionVar -query updateShadingAndLighting`)
+                defaultIprEngine;
+            iprEngine
+                -edit
+                -updateLightGlow (`optionVar -query updateLightGlow`)
+                defaultIprEngine;
+            iprEngine
+                -edit
+                -updateShaderGlow (`optionVar -query updateShaderGlow`)
+                defaultIprEngine;
+            iprEngine
+                -edit
+                -updateMotionBlur (`optionVar -query updateMotionBlur`)
+                defaultIprEngine;
+        }
+        else
+        {
+            // We will pause the tuning by disabling updating of 
+            // the various aspects of an IPR image.
+            //
+            iprEngine
+                -edit
+                -updateShading false
+                defaultIprEngine;
+            iprEngine
+                -edit
+                -updateLightGlow false
+                defaultIprEngine;
+            iprEngine
+                -edit
+                -updateShaderGlow false
+                defaultIprEngine;
+            iprEngine
+                -edit
+                -updateMotionBlur false
+                defaultIprEngine;
+        }
+    }
+}

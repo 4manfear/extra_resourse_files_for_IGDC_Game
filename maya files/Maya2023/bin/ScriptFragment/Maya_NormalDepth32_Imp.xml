@@ -1,0 +1,78 @@
+<!--
+Copyright 2016 Autodesk, Inc. All rights reserved. 
+
+Use of this software is subject to the terms of the Autodesk 
+license agreement provided at the time of installation or download, 
+or which otherwise accompanies this software in either electronic 
+or hard copy form.
+-->
+<fragment  uiName="Maya_NDRenderer_Front" name="Maya_NormalDepth32_Imp" type="sceneEffect" class="ScriptFragment" version="1.0" feature_level="30" >
+    <description>
+    <![CDATA[
+        Renders per-pixel normals and depth for SSAO.
+    ]]>
+    </description>
+    <properties>
+        <countedObject  name="holdOutList" />
+        <countedObject  name="postEffectList" />
+        <countedObject  name="advancedEffectList" />
+        <camera  name="camera" />
+        <float4  name="viewport" />
+        <target  name="finalDesc" />
+        <bool  name="FrontFaces" />
+        <bool  name="EnableNormalDepth32" />
+        <bool  name="SupportsClipping" />
+    </properties>
+    <values>
+        <float4 name="viewport" value="0.000000,0.000000,1.000000,1.000000"  />
+        <bool name="FrontFaces" value="true"  />
+        <bool name="EnableNormalDepth32" value="true"  />
+        <bool name="SupportsClipping" value="false"  />
+    </values>
+    <outputs>
+        <target  name="output" />
+        <target  name="output2" />
+    </outputs>
+    <parametershare>
+    </parametershare>
+    <implementation render="OGS" language="ScriptInterpreter" version="0.1" >
+        <scriptCommands>
+            <Call name="SetPassSemantic" arg0="normalDepthPass" arg1="TRUE" />
+            <AcquireTarget name="localNormalBuffer" format="EFORMAT_B8G8R8X8" size="@finalDesc.size" relSize="1.0,1.0" msaa="0" />
+            <AcquireTarget name="localDepthBuffer" format="EFORMAT_R32_FLOAT" size="@finalDesc.size" relSize="1.0,1.0" msaa="0" />
+            <SetCamera value="@camera" />
+            <Declare name="localState" type="stateSetter" />
+            <IfNot value="@FrontFaces" />
+                <SetStateCommand commandName="SetStateParameter" name="localState" parameter="CullMode" value="ECullFront" />
+            <EndIf />
+            <SetStateCommand commandName="CommitNewState" name="localState" />
+            <SetTarget index="0" value="localNormalBuffer" />
+            <SetTarget index="1" value="localDepthBuffer" />
+            <SetDepthStencil value="" />
+            <Clear color="0.0,0.0,0.0,0.0" depth="1.0" stencil="0" />
+            <Declare name="holdOutListEmpty" type="bool" />
+            <Call name="isListEmpty" arg0="@holdOutList" arg1="holdOutListEmpty" />
+            <IfNot value="holdOutListEmpty" />
+                <Declare name="localState2" type="stateSetter" />
+                <SetStateCommand commandName="SetStateParameter" name="localState2" parameter="SetWriteMask" value="None" />
+                <SetStateCommand commandName="CommitNewState" name="localState2" />
+                <Render name="@holdOutList" />
+                <SetStateCommand commandName="RestorePreviousState" name="localState2" />
+            <EndIf />
+
+            <Call name="mayaNormalDepthCB" arg0="begin" />
+            <Render name="@advancedEffectList" />
+            <Call name="mayaNormalDepthCB" arg0="end" />
+            
+            <SetEffect name="SSAO_NormalDepthEffect" path="SSAO_NormalDepth" technique="" macrolist="CLIPPING=@SupportsClipping" />
+            <Render name="@postEffectList" />
+            <SetTarget index="1" value="" />
+            <SetStateCommand commandName="RestorePreviousState" name="localState" />
+            <RestoreOverrideEffect />
+            <SetParameter name="@output" value="localNormalBuffer" />
+            <SetParameter name="@output2" value="localDepthBuffer" />
+            <Call name="SetPassSemantic" arg0="normalDepthPass" arg1="FALSE" />
+        </scriptCommands>
+    </implementation>
+</fragment>
+

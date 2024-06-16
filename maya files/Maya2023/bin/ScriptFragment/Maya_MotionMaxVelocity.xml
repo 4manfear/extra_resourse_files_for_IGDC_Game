@@ -1,0 +1,51 @@
+<!--
+Copyright 2016 Autodesk, Inc. All rights reserved. 
+
+Use of this software is subject to the terms of the Autodesk 
+license agreement provided at the time of installation or download, 
+or which otherwise accompanies this software in either electronic 
+or hard copy form.
+-->
+<fragment  uiName="Maya_MotionMaxVelocity" name="Maya_MotionMaxVelocity" type="sceneEffect" class="ScriptFragment" version="1.0" feature_level="0" >
+    <description>
+<![CDATA[
+Find the largest velocity vector per tile.]]>
+</description>
+    <properties>
+        <target  name="input" />
+        <float2  name="filterTargetSize" />
+        <float  name="shutterOpenFraction" />
+    </properties>
+    <values>
+        <float2 name="filterTargetSize" value="0.500000,0.500000"  />
+        <float name="shutterOpenFraction" value="1.000000"  />
+    </values>
+    <outputs>
+        <target  name="output" />
+    </outputs>
+    <parametershare>
+    </parametershare>
+    <implementation render="OGS" language="ScriptInterpreter" version="0.1" >
+        <scriptCommands>
+            <AcquireTarget name="localBuffer" format="@input.format" size="@filterTargetSize" relSize="1.0, 1.0" msaa="0" />
+            <SetViewport value="0.0, 0.0, 1.0, 1.0" />
+            <SetTarget index="0" value="localBuffer" />
+            <SetFragmentEffect name="maxVelocityPerTile" path="mayaMotionBlurTileMax" />
+            <SetEffectParameter effect="maxVelocityPerTile" name="shutterOpenFraction" value="@shutterOpenFraction" />
+            <SetTexture effect="maxVelocityPerTile" name="sourceVelocity" value="" texture="@input" />
+            <SetEffectParameter effect="maxVelocityPerTile" name="sourceVelocitySampler" value="PointClamp" />
+            <Render name="Quad" />
+            <SetTexture effect="maxVelocityPerTile" name="sourceVelocity" value="" texture="" />
+            <AcquireTarget name="localBuffer2" format="@input.format" size="@filterTargetSize" relSize="1.0, 1.0" msaa="0" />
+            <SetTarget index="0" value="localBuffer2" />
+            <SetFragmentEffect name="maxVelocityPerNeighbor" path="mayaMotionBlurNeighborMax" />
+            <SetTexture effect="maxVelocityPerNeighbor" name="sourceVelocity" value="" texture="localBuffer" />
+            <SetEffectParameter effect="maxVelocityPerNeighbor" name="sourceVelocitySampler" value="PointClamp" />
+            <Render name="Quad" />
+            <SetTexture effect="maxVelocityPerNeighbor" name="sourceVelocity" value="" texture="" />
+            <SetParameter name="@output" value="localBuffer2" />
+            <RestoreOverrideEffect />
+        </scriptCommands>
+    </implementation>
+</fragment>
+

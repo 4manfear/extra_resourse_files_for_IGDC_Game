@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 21.0.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<svg version="1.1" baseProfile="basic" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px"
+	 y="0px" viewBox="0 0 20 20" xml:space="preserve">
+<g id="Layer_2" display="none">
+	<rect x="-449" y="-142" display="inline" fill="#686868" width="583" height="202"/>
+</g>
+<g id="UI">
+</g>
+<g id="Layer_1">
+	<g>
+		<path fill="#3A3A3A" d="M7,4l4,2v5l-4,2l-4-2V6L7,4 M7,2.9L6.6,3.1l-4,2L2,5.4V6v5v0.6l0.6,0.3l4,2L7,14.1l0.4-0.2l4-2l0.6-0.3V11
+			V6V5.4l-0.6-0.3l-4-2L7,2.9L7,2.9z"/>
+		<path fill="#3A3A3A" d="M14,8l4,2v5l-4,2l-4-2v-5L14,8 M14,6.9l-0.4,0.2l-4,2L9,9.4V10v5v0.6l0.6,0.3l4,2l0.4,0.2l0.4-0.2l4-2
+			l0.6-0.3V15v-5V9.4l-0.6-0.3l-4-2L14,6.9L14,6.9z"/>
+		<g>
+			<polygon fill="#FFFFFF" points="3,11 7,13 7,8 3,6 			"/>
+			<polygon fill="#BDBDBD" points="3,6 7,4 11,6 11,11 7,13 7,8 			"/>
+			<polygon fill="#F15A5B" points="10,15 14,17 14,12 10,10 			"/>
+			<polygon fill="#BDBDBD" points="10,10 14,8 18,10 18,15 14,17 14,12 			"/>
+		</g>
+	</g>
+</g>
+<g id="Layer_3">
+</g>
+</svg>

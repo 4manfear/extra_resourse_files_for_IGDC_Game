@@ -1,0 +1,23 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc
+clearAndRemoveTrack (int $trackToRemove, string $sch)
+{
+	string $clipList[] = `clipSchedule -q -name $sch`;
+	
+	for( $clip in $clipList ) {
+		int $clipIndex = `clipSchedule -name $clip -q -clipIndex $sch`;
+		int $clipTrack = `clipSchedule -clipIndex $clipIndex -q -track $sch`;
+		if( $clipTrack == $trackToRemove ) {
+			clipSchedule -clipIndex $clipIndex -remove $sch;		
+		}
+	}
+	
+	clipSchedule -removeTrack $trackToRemove $sch;
+}
+

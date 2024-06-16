@@ -1,0 +1,17 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc applyCaddyAttribPreset(string $node)
+{
+	global string $gCaddyAttrPreset, $gAEAttrPresetCurrentTarget;
+	global float $gAEAttrPresetBlend;
+	if($gCaddyAttrPreset != "") {
+		$gAEAttrPresetCurrentTarget = $node;
+		$gAEAttrPresetBlend = 1.0;
+		eval($gCaddyAttrPreset);
+	}
+}

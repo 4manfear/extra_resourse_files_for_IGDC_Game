@@ -1,0 +1,16 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+// Global Maya compatibility file, version 8.0ff01
+////////////////////////////////////////////////////////////////////////////
+//
+// This version becomes effective as of the August 26, 2005 release.
+//
+////////////////////////////////////////////////////////////////////////////
+
+attrCompatibility -v "8.0ff01";

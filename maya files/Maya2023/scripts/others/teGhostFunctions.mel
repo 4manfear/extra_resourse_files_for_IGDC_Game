@@ -1,0 +1,460 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+// 
+//	Description:
+//	  Add/remove selected objects to the list in UserGhost dialog
+//  Argument:
+//    0: add selected
+//    1: add selected with children
+//    2: remove selected
+global proc teUpdateUserGhostObjectsFromSelectionDialog(int $updateOption)
+{
+	int $isAdd;
+	
+	if ($updateOption == 0 || $updateOption == 1)
+		$isAdd = true;
+	else
+		$isAdd = false;
+
+	string $currentGhostList[] = `textScrollList -q -allItems teUserDefinedGhostObjectNames`;
+	string $selectedNodes[] = `ls -sl -type node`; // only list depend node
+
+	string $transformArray[];
+
+	for($curSel in $selectedNodes)
+	{
+		// If selection is a transform, include it
+		// If it's a shape, include its transform instead
+
+		if (objectType("-isAType", "transform", $curSel))
+		{
+			stringArrayInsertAtIndex(size($transformArray), $transformArray, $curSel);
+		}
+		else if (objectType("-isAType", "shape", $curSel))
+		{
+			string $parents[] = listRelatives("-parent", "-path", $curSel);
+			if (size($parents) > 0)
+			{
+				if (objectType("-isAType", "transform", $parents[0]))
+					stringArrayInsertAtIndex(size($transformArray), $transformArray, $parents[0]);
+			}
+		}
+	}
+
+	if ($updateOption == 1)
+	{
+		// add children transforms to the list
+
+		string $childTransforms[] = `ls -dag -type transform $transformArray`;
+		$transformArray = stringArrayCatenate($transformArray, $childTransforms);
+	}
+
+	$transformArray = stringArrayRemoveDuplicates($transformArray);
+
+	if ($isAdd == true)
+		$transformArray = sort($transformArray);
+
+	for($curSel in $transformArray)
+	{
+		int $exist = false;
+		
+		// go thru every object in current list
+		// and check if it exists
+		if (stringArrayFind($curSel, 0, $currentGhostList) != -1)
+			$exist = true;
+		
+		// if we are adding, check that it doesnt exist before we add it
+		if($isAdd == true)
+		{
+			if($exist == false)
+			{
+				textScrollList -e -append $curSel teUserDefinedGhostObjectNames;
+			}
+		}
+		// else if removing, remove only if it exist
+		else if($exist == true)
+		{
+			textScrollList -e -removeItem $curSel teUserDefinedGhostObjectNames;
+		}	
+	}
+
+	// if removing, user might be selecting from the list box, so remove anything from it too 
+	if($isAdd == false)
+	{
+		string $currentListSelection[] = `textScrollList -q -selectItem teUserDefinedGhostObjectNames`;
+		
+		for($curSel in $currentListSelection)
+		{
+			textScrollList -e -removeItem $curSel teUserDefinedGhostObjectNames;
+		}
+	}
+}
+
+//  Description:
+//    Apply settings in the Ghost Root dialog to the target clips:
+//    Set the value of flags useDefaultGhost, enableGhost from the checkBox value
+//    Set the ghost targets of each clip from the items in the textScrollList
+global proc teApplyGhostRootDialogChanges(int $clipIdList[])
+{
+    // read back the value from checkbox and apply to clip's ghosting
+	int $useUserDefined = 1;
+	int $useDefault = `checkBox -q -value teDefaultGhostDialogCheckbox`;
+
+    teEditGhostFlagOnClips($clipIdList, "-userGhostRoot", $useUserDefined);
+    teEditGhostFlagOnClips($clipIdList, "-defaultGhostRoot", $useDefault);
+    
+	if ($useUserDefined == 1 || $useDefault == 1)
+	{
+		// if use tick either "Use default ghost" or "Use user-defined ghost", enable ghost
+		teEditGhostFlagOnClips($clipIdList, "-ghost", 1);
+	}
+
+	// get current object in list
+	// This list of ghost targets will be applied on all selected clips
+	string $objList[] = `textScrollList -q -allItems teUserDefinedGhostObjectNames`;
+	
+	int $id;
+	for ($id in $clipIdList)
+	{
+		// get current ghost list
+		string $ghostList[] = `timeEditorClip -q -listUserGhostRoot -clipId $id`;
+	
+		string $cmd = "timeEditorClip -e -clipId " + $id + " ";
+		int $hasChanges = false;
+	
+		// go thru all the object and check if it can be found in existing ghost list
+		// if it can't be found, we need to add it
+		for($curObj in $objList)
+		{
+			if (stringArrayFind($curObj, 0, $ghostList) == -1)
+			{		
+				// if not found, add it
+				$cmd += " -gra " + $curObj;
+				$hasChanges = true;			
+			}		
+		}
+	
+		// go thru all ghost and check if it can be found in obj list (the other way round)
+		// 
+		for($curGhost in $ghostList)
+		{
+			if (stringArrayFind($curGhost, 0, $objList) == -1)
+			{
+				// if not found, remove it
+				$cmd += " -grr " + $curGhost;
+				$hasChanges = true;			
+			}			
+		}
+		
+		// execute the ghost root command only if there's any changes
+		if($hasChanges)
+		{
+			$cmd += ";";
+			evalEcho($cmd);
+		}	
+	}
+
+    // close dialog box    
+    layoutDialog -dismiss "Apply Ghost Setting";
+}
+
+global proc teBuildUserDefinedGhostWindow(int $clipId)
+{
+	if(`window -exists teUserDefinedGhostWindow` == true)
+	{
+		deleteUI -window teUserDefinedGhostWindow;
+	}
+
+	// target clips are those on which the dialog changes are applied
+	int $targetClips[] = teGetClipSelection($clipId, 0);
+	string $targetClipListStr = "{" + intArrayToString($targetClips, ",") + "}";
+
+	string $closeCmd;
+
+	int $selectedClips[] = `timeEditor -selectedClips ""`;
+	if (size($selectedClips) > 0)
+	{
+		// If there are clips selected (possibly different than the target clips), we
+		// need to re-select them on dialog close event.
+		// To achieve this, we embed the selection command into the callback
+		string $selectedClipListStr = "{" + intArrayToString($selectedClips, ",") + "}";
+		$closeCmd = "teSelectClipsById " + $selectedClipListStr + "-r;";
+	}
+
+	string $window = `window -title (uiRes("m_teGhostFunctions.kCTEUserDefinedGhostWindowTitle")) -closeCommand $closeCmd teUserDefinedGhostWindow`;
+	setUITemplate -pushTemplate DefaultTemplate;
+
+	int $totalDivision = 100;
+		
+	string $mainForm = `formLayout -numberOfDivisions $totalDivision`;
+		int $leftEdge = 10;
+		int $rightEdge = $totalDivision - $leftEdge;
+		string $editForm = `formLayout -numberOfDivisions $totalDivision`;
+
+			string $userDefinedGhostLabel = `text -label (uiRes("m_teGhostFunctions.kCTEUserDefinedGhostLabel")) -align "left"`;
+		
+			// add/remove selected object from ghosting list
+			string $listForm = `formLayout -numberOfDivisions $totalDivision`;
+				// scrolling box to show the ghosted object
+				string $userGhostList = `textScrollList -allowMultiSelection 1 -numberOfRows 20 -selectCommand ("select -cl") teUserDefinedGhostObjectNames`;
+					// add existing user defined ghost to list
+					string $ghostList[] = teQueryGhostTargetsOnSelectedClips($clipId);
+					for($str in $ghostList)
+					{
+						textScrollList -e -append $str teUserDefinedGhostObjectNames;
+					}
+
+				string $addSelectedButton = `button -label (uiRes("m_teGhostFunctions.kCTEUserDefinedGhostAddSelectedLabel")) -command ("teUpdateUserGhostObjectsFromSelectionDialog 0")`;
+				string $removeSelectedButton = `button -label (uiRes("m_teGhostFunctions.kCTEUserDefinedGhostRemoveSelectedLabel")) -command ("teUpdateUserGhostObjectsFromSelectionDialog 2")`;
+				string $addWithChildrenButton = `button -label (uiRes("m_teGhostFunctions.kCTEUserDefinedGhostAddChildrenLabel")) -command ("teUpdateUserGhostObjectsFromSelectionDialog 1")`;
+				formLayout -edit	
+					-attachForm     		$userGhostList   "top"    0
+					-attachForm     		$userGhostList   "left"   0
+					-attachForm		 		$userGhostList   "right"  0
+					-attachControl     		$userGhostList   "bottom" 5 $addSelectedButton
+
+					-attachForm     		$addSelectedButton     "left"    0
+					-attachNone     		$addSelectedButton     "top"
+					-attachPosition	 		$addSelectedButton     "right"  5 33
+					-attachForm     		$addSelectedButton     "bottom" 0
+
+					-attachControl     		$addWithChildrenButton     "left"  5  $addSelectedButton
+					-attachNone     		$addWithChildrenButton     "top"
+					-attachPosition	 		$addWithChildrenButton     "right"  5 67
+					-attachForm     		$addWithChildrenButton     "bottom" 0
+					
+					-attachControl          $removeSelectedButton 	"left"    5 $addWithChildrenButton
+					-attachNone     		$removeSelectedButton   "top"
+					-attachForm		        $removeSelectedButton 	"right"  0
+					-attachForm         	$removeSelectedButton 	"bottom" 0		
+				$listForm;
+			setParent ..; //listForm
+			
+			
+			// toggle default ghost root button
+			int $defaultGhostState = teQueryGhostFlagOnSelectedClips($clipId, "-defaultGhostRoot");
+			string $defaultGhostCheckbox = `checkBox -label (uiRes("m_teGhostFunctions.kCTEDefaultGhostLabel")) -value $defaultGhostState teDefaultGhostDialogCheckbox`;
+			
+			formLayout -edit
+				-attachForm				$userDefinedGhostLabel			"top"		5
+				-attachPosition			$userDefinedGhostLabel			"left"		0	$leftEdge
+				-attachPosition			$userDefinedGhostLabel			"right"		0 	$rightEdge
+				-attachNone				$userDefinedGhostLabel			"bottom"	
+				
+				-attachControl			$listForm						"top"		5	$userDefinedGhostLabel
+				-attachPosition			$listForm						"left"		0	$leftEdge
+				-attachPosition			$listForm						"right"		0	$rightEdge
+				-attachControl			$listForm						"bottom"	5	$defaultGhostCheckbox		
+				
+				-attachNone				$defaultGhostCheckbox			"top"		
+				-attachPosition			$defaultGhostCheckbox			"left"		0	$leftEdge
+				-attachPosition			$defaultGhostCheckbox			"right"		0	$rightEdge
+				-attachForm				$defaultGhostCheckbox			"bottom"    0
+			$editForm;
+		setParent ..; // editForm
+		
+		string $buttonForm = `formLayout -numberOfDivisions 100`;
+			// apply ghost root
+			string $applyButton = `button -label (uiRes("m_teGhostFunctions.kCTEGhostDialogApplyLabel")) -command ("teApplyGhostRootDialogChanges " + $targetClipListStr)`;
+			// close dialogue
+			string $closeButton = `button -label (uiRes("m_teGhostFunctions.kCTEGhostDialogCloseLabel")) 
+									-command ($closeCmd + "; deleteUI -window teUserDefinedGhostWindow")`;
+			
+			formLayout -edit
+				-attachForm     		$applyButton     "top"    5
+				-attachForm     		$applyButton     "left"   0
+				-attachPosition 		$applyButton     "right"  5 50
+				-attachForm     		$applyButton     "bottom" 0
+				
+				-attachForm             $closeButton 	"top"    5
+				-attachControl          $closeButton 	"left"   5 $applyButton
+				-attachForm             $closeButton 	"right"  0	
+				-attachForm             $closeButton 	"bottom" 0
+			$buttonForm;
+		setParent ..; // buttonForm
+	setParent ..; // mainForm
+	
+	formLayout -edit
+		-attachForm				$editForm		"top"		5
+		-attachForm				$editForm		"left"		5
+		-attachForm				$editForm		"right"		5
+		-attachControl			$editForm		"bottom"	5 	$buttonForm		
+		
+		-attachNone				$buttonForm		"top"		
+		-attachForm				$buttonForm		"left"		5
+		-attachForm				$buttonForm		"right"		5
+		-attachForm				$buttonForm		"bottom"	5					
+	$mainForm;
+	
+	setUITemplate -popTemplate;
+	showWindow;
+}
+
+// 
+//	Description:
+//		Select the clips by given id
+//
+global proc teSelectClipsById(int $clipIdList[], string $selectFlags)
+{
+	string $plugs;
+
+	for ($id in $clipIdList)
+	{
+		if (`timeEditorClip -q -exists -clipId $id`)
+		{
+			string $clipNode = `timeEditorClip -q -clipNode -clipId $id`;
+			if ($clipNode != "")
+			{
+				$plugs = $plugs + $clipNode + ".clip[0] ";
+			}
+		}
+	}
+
+	if (size($plugs) > 0)
+	{
+		evalEcho("select " + $selectFlags + " " + $plugs);
+	}
+}
+
+// 
+//	Description:
+//		Check if clip is selected
+//
+global proc int teIsClipSelected(int $id)
+{
+	int $selectedClips[] = `timeEditor -selectedClips ""`;
+	return intArrayContains($id, $selectedClips);
+}
+
+global proc int teQueryGhostFlagOnSelectedClips(int $clipId, string $flag)
+// 
+//	Description:
+//		Query the state of the given flag on selected clips
+//
+//  Return:
+//		1: if all the flag is enabled on all clips
+//		0: otherwise
+//
+//	Input Param:
+//		clipId: clip id of the clip under mouse cursor, or -1 if there is none.
+//		flag: the flag of timeEditorClip command
+//		enabled: 1 or 0
+{
+	// Get the current selected clips
+	int $selectedClips[] = teGetClipSelection($clipId, 0);
+	
+	if(size($selectedClips) == 0)
+		return 0;
+
+	int $allEnabled = true;
+	int $id;
+	for ($id in $selectedClips)
+	{
+		int $status = `timeEditorClip -q $flag -clipId $id`;
+		if ($status == false)
+		{
+			$allEnabled = false;
+		}
+	}
+
+	return $allEnabled;
+
+}
+
+global proc teEditGhostFlagOnClips(int $clipIdList[], string $flag, int $enabled)
+// 
+//	Description:
+//		Enable or disable the given flag on the given clips
+//
+//	Input Param:
+//		clipIdList: list of clip id
+//		flag: the flag of timeEditorClip command
+//		enabled: 1 or 0
+{
+	string $cmdToRun = "timeEditorClip -e " + $flag + " " + $enabled + " -clipId " + intArrayToString($clipIdList, " -clipId ");
+	evalEcho($cmdToRun);
+}
+
+global proc teEditGhostFlagOnSelectedClips(int $clipId, string $flag, int $enabled)
+// 
+//	Description:
+//		Enable or disable the given flag on selected clips
+//
+//	Input Param:
+//		clipId: clip id of the clip under mouse cursor, or -1 if there is none.
+//		flag: the flag of timeEditorClip command
+//		enabled: 1 or 0
+{
+	// Get the current selected clips
+	int $selectedClips[] = teGetClipSelection($clipId, 0);
+	
+	if(size($selectedClips) == 0)
+		return;
+
+	teEditGhostFlagOnClips($selectedClips, $flag, $enabled);
+}
+
+global proc string[] teQueryGhostTargetsOnSelectedClips(int $clipId)
+// 
+//	Description:
+//		Query the ghost targets on selected clips
+//
+//  Return:
+//		The list of all targets (with no duplicates, and sorted alphabetically)
+//
+//	Input Param:
+//		clipId: clip id of the clip under mouse cursor, or -1 if there is none.
+{
+	string $allTargets[];
+
+	// Get the current selected clips
+	int $selectedClips[] = teGetClipSelection($clipId, 0);
+	
+	int $id;
+	for ($id in $selectedClips)
+	{
+		string $targets[] = `timeEditorClip -q -listUserGhostRoot -clipId $id`;
+		$allTargets = stringArrayCatenate($allTargets, $targets);
+	}
+
+	$allTargets = sort( stringArrayRemoveDuplicates($allTargets) );
+
+	return $allTargets;
+
+}
+
+global proc int teGhostSelectedTrackState()
+// 
+//	Description:
+//		Query the ghost state on selected track
+//
+//  Return:
+//		the state of the first track selected
+{
+	string $currComp = `timeEditorComposition -q -active`;
+	string $globalTracks = `timeEditorComposition -q -tracksNode $currComp`; // get global tracks node name
+	int $indices[] = `timeEditorTracks -q -selectedTracks $globalTracks`;
+	if(size($indices) > 0){
+		return `timeEditorTracks -q -trackGhost -trackIndex $indices[0] $globalTracks`;
+	}
+	return 0;
+}
+
+global proc teGhostSelectedTrack(int $on)
+// 
+//	Description:
+//		Set the ghost state on selected track
+//
+{
+	string $currComp = `timeEditorComposition -q -active`;
+	string $globalTracks = `timeEditorComposition -q -tracksNode $currComp`; // get global tracks node name
+	int $indices[] = `timeEditorTracks -q -selectedTracks $globalTracks`;
+	for($i in $indices){
+		timeEditorTracks -e -trackGhost $on -trackIndex $i $globalTracks;
+	}
+}

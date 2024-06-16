@@ -1,0 +1,90 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+// Attribute Editor Template for collection.
+//
+// For PR54 prototype purposes, the collection attribute editor will
+// simply show the attribute editor of the basic selector.  PPT, 21-May-2015.
+//
+
+proc string nodeFromAttr(string $attrName)
+{
+    string $buffer[];
+    tokenize $attrName "." $buffer;
+
+    return $buffer[0];
+}
+
+proc string getSelectorNode(string $attrName)
+{
+    // Get the selector from the collection.
+    string $selectorSrc = `connectionInfo -sfd $attrName`;
+    return nodeFromAttr($selectorSrc);
+}
+
+global proc AEcollectionPatternChange(string $attrName)
+{
+    string $pattern = `textFieldGrp -q -text patternTextField`;
+    setAttr $attrName -type "string" $pattern;
+}
+
+global proc AEcollectionStaticSelectionChange(string $attrName)
+{
+    string $staticSelection = `scrollField -q -text staticSelectionScrollField`;
+    setAttr $attrName -type "string" $staticSelection;
+}
+
+global proc AEcollectionSelectorNew(string $attrName)
+{
+    columnLayout;
+
+    textFieldGrp -label (uiRes("m_AEcollectionTemplate.kPattern")) patternTextField;
+
+    rowLayout -numberOfColumns 2 -adjustableColumn 2 -rowAttach 1 "top" 5;
+
+    text -label (uiRes("m_AEcollectionTemplate.kStaticSelection"));
+
+    scrollField staticSelectionScrollField;
+
+    setParent ..;
+
+    setParent ..;
+
+    AEcollectionSelectorReplace($attrName);
+}
+
+global proc AEcollectionSelectorReplace(string $attrName)
+{
+    string $selector = getSelectorNode($attrName);
+    string $selectorPattern = ($selector + ".pattern");
+    string $selectorStaticSelection = ($selector + ".staticSelection");
+
+    textFieldGrp -edit -text `getAttr $selectorPattern` -changeCommand
+        ("AEcollectionPatternChange \""  + $selectorPattern + "\"")
+        patternTextField;
+
+    scrollField -edit -text `getAttr $selectorStaticSelection` -changeCommand
+        ("AEcollectionStaticSelectionChange \""
+         + $selectorStaticSelection + "\"") staticSelectionScrollField;
+}
+
+global proc AEcollectionTemplate(string $nodeName) {
+	editorTemplate -beginScrollLayout;
+		editorTemplate -beginLayout (uiRes("m_AEcollectionTemplate.kOverrideProperties")) -collapse false;
+			editorTemplate -callCustom "AEcollectionSelectorNew"
+                "AEcollectionSelectorReplace" "selector";
+		editorTemplate -endLayout;
+		editorTemplate -suppress "parentList";
+		editorTemplate -suppress "previous";
+		editorTemplate -suppress "childLowest";
+		editorTemplate -suppress "childHighest";
+		editorTemplate -suppress "selfEnabled";
+		editorTemplate -suppress "parentEnabled";
+		editorTemplate -suppress "parentNumIsolatedChildren";
+		editorTemplate -addExtraControls;
+	editorTemplate -endScrollLayout;	
+}

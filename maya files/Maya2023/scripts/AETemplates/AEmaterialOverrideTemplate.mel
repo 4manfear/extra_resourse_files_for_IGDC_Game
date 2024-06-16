@@ -1,0 +1,50 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+// Attribute Editor Template for material override node.
+//
+
+global proc AEmaterialOverrideShadingGroupNew(string $attr)
+{
+	setUITemplate -pst attributeEditorTemplate;
+
+	attrNavigationControlGrp
+		-label (uiRes("m_AEmaterialOverrideTemplate.kOverrideShader"))
+		materialOverrideShadingGroupControl;
+
+	setUITemplate -ppt;
+
+	AEmaterialOverrideShadingGroupReplace $attr;
+}
+
+global proc AEmaterialOverrideShadingGroupReplace(string $attr)
+{
+	attrNavigationControlGrp -edit
+		-attribute $attr
+		-createNew ("materialOverrideNewNode " + $attr)
+		-connectToExisting ("connectionOverrideReplaceNode " + $attr)
+		materialOverrideShadingGroupControl;
+}
+
+global proc AEmaterialOverrideTemplate(string $nodeName) {
+	editorTemplate -beginScrollLayout;
+		editorTemplate -beginLayout (uiRes("m_AEmaterialOverrideTemplate.kOverrideProperties")) -collapse false;
+			editorTemplate -label (uiRes("m_AEmaterialOverrideTemplate.kEnabled")) -addControl "enabled";
+			editorTemplate -callCustom "AEmaterialOverrideShadingGroupNew" "AEmaterialOverrideShadingGroupReplace" "attrValue";
+			editorTemplate -suppress "attribute";
+		editorTemplate -endLayout;
+		editorTemplate -suppress "parentList";
+		editorTemplate -suppress "previous";
+		editorTemplate -suppress "selfEnabled";
+		editorTemplate -suppress "parentEnabled";
+		editorTemplate -suppress "parentNumIsolatedChildren";
+		editorTemplate -suppress "connectionStr";
+		editorTemplate -suppress "localRender";
+		editorTemplate -addExtraControls;
+	editorTemplate -endScrollLayout;
+}

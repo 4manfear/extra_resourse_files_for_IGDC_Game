@@ -1,0 +1,25 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+// loadRelatedReference.mel
+//
+// If we have the locator or annotation associated with
+// a reference node, we can load the reference.
+// Note that here we DON'T check if the reference is already loaded
+// when we build the RMB menus, we check if the reference is
+// already loaded, label this as a reload if it is - jp
+//
+global proc int loadRelatedReference ( string $strNode )
+{
+
+	string $refNode;
+	$refNode = `getRelatedReference $strNode`;
+	if(size($refNode) > 0 ) {
+		file -lr $refNode;
+	}
+	return 0;
+}

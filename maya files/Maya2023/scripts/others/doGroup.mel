@@ -1,0 +1,40 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  Jan 2013
+//
+//  Description:
+//		Group the selected objects.
+//
+//
+global proc doGroup( int $world, int $preserve, int $zeropiv )
+{
+	string $cmd = "group";
+	string $typeIvm = " -smg";
+	string $msgIvm = (uiRes("m_doGroup.kIvmGroupSuccess"));
+
+	if ($world) $cmd += " -w";
+	if (!$preserve) $cmd += " -r";
+	if (numSelectedObjects() == 0)
+	{
+		$cmd += " -em";
+		$typeIvm = " -amg";
+		$msgIvm = (uiRes("m_doGroup.kIvmGroupErr"));
+	}
+	if ($zeropiv) $cmd += "; xform -os -piv 0 0 0";
+	$cmd += ";";
+
+	// Perform the actual group command.
+	eval $cmd;
+
+	// Display the in-view message.
+	$cmd = "inViewMessage" + $typeIvm;
+	$cmd += " \"" + $msgIvm + "\" -fade";
+	eval($cmd);
+}

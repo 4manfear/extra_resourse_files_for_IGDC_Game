@@ -1,0 +1,63 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//  Description:
+//		Creates the controls for the Snap Together Tool property sheet.
+//
+//  Input Arguments:
+//		None.
+//
+//  Return Value:
+//		None.
+//
+global proc snapTogetherToolProperties()
+{
+	string $parent = `toolPropertyWindow -query -location`;
+
+	setUITemplate -pushTemplate OptionsTemplate;
+
+	setParent $parent;
+
+	columnLayout snapTogetherTool;
+		frameLayout
+			-width 400
+			-collapsable true
+			-collapse false
+			-label (uiRes("m_snapTogetherToolProperties.kSnapTogetherTool")) 
+			snapTogetherToolFrame;
+
+			columnLayout snapTogetherToolOptions;
+
+				$parent = `setParent -query`;
+				separator -style "none";
+
+				radioCollection moveRadioCollection;
+
+				radioButton
+					-label (uiRes("m_snapTogetherToolProperties.kMoveAndRotateObjects")) 
+					-collection moveRadioCollection
+					moveAndRotateBtn;
+
+				radioButton
+					-label (uiRes("m_snapTogetherToolProperties.kMoveObjectsOnly")) 
+					-collection moveRadioCollection
+					moveOnlyBtn;
+
+				checkBoxGrp 
+					-numberOfCheckBoxes 1
+					-label  "" 
+					-label1 (uiRes("m_snapTogetherToolProperties.kSnapToPolygonFace")) 
+					snapTogetherToolSnapPolygonFace;
+
+			setParent ..;
+		setParent ..;
+	setParent ..;
+
+	setUITemplate -popTemplate;
+
+}	//	snapTogetherToolProperties()

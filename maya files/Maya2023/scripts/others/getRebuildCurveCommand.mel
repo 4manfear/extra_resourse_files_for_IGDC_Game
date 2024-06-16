@@ -1,0 +1,64 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  Sep 29, 1998
+//
+//  Description:
+//      Take the options from the option box and return the string
+//      for rebuild command.
+//
+
+global proc string getRebuildCurveCommand( int $noObject )
+{
+	rebuildCurveSetOptionVars( false );
+
+	int $doHistory = `constructionHistory -q -tgl`;
+	int $rebuildType = `optionVar -q rebuildCurveType`;
+	int $replaceOriginal = !`optionVar -q rebuildCurveKeepOriginal`;
+	float $globalTol = `optionVar -q positionalTolerance`;
+
+	int $crvNumSpans = `optionVar -q rebuildCurveTypeUniformNumSpans`;
+	int $crvDegree = `optionVar -q rebuildCurveTypeUniformDegree`;
+	int $keepParmRange = `optionVar -q rebuildCurveKeepRange`;
+	int $endKnots = `optionVar -q rebuildCurveEndKnots`;
+	int $keepControlPoints = `optionVar -q rebuildCurveKeepControlPoints`;
+	int $keepEndPts = `optionVar -q rebuildCurveKeepEndPoints`;
+	int $keepTan = `optionVar -q rebuildCurveKeepEndTangents`;
+	int $crvUseGlobalTol = `optionVar -q rebuildCurveUseGlobalTolerance`;
+	float $crvLocalTol = `optionVar -q rebuildCurveLocalTolerance`;
+
+	string $cmd = "rebuildCurve" +
+		" -ch " + $doHistory + 
+		" -rt " + $rebuildType + 
+		" -end " + $endKnots +
+		" -kr " + $keepParmRange +
+		" -kcp " + $keepControlPoints +
+		" -kep " + $keepEndPts + 
+		" -kt " + $keepTan;
+
+	if( $noObject ) {
+		$cmd += " -rpo 0 -o 0";
+	}
+	else {
+		$cmd += " -rpo " + $replaceOriginal + " -o 1";
+	}
+
+	if( $rebuildType == 0 ) {
+		$cmd += " -s " + $crvNumSpans + " -d " + $crvDegree;
+	}
+	if( $crvUseGlobalTol ) {
+		$cmd += " -tol " + $globalTol;
+	}
+	else {
+		$cmd += " -tol " + $crvLocalTol;
+	}
+	$cmd += " ";
+
+    return $cmd;
+}

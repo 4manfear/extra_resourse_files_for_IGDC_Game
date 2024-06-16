@@ -1,0 +1,36 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+// ===========================================================================
+//
+//  Creation Date: October 27, 2016
+//
+//  Procedure Name:
+//      texGetTexelDensity
+//
+//  Description:
+//      UV workflow function used for retrieving the texel density value from
+//      a selection of faces.
+//
+//  Input Arguments
+//      mapSize              - Int - The size of the texture.
+//
+//  Return Values:
+//      Float                - The average texel density value.
+//
+//  Notes:
+//  This script is part of the implementation of Nightshade UV Editor into
+//  Autodesk Maya.
+//
+// ===========================================================================
+
+global proc float texGetTexelDensity(int $mapSize)
+{
+    texCheckSelection("any");
+    string $selectionFaces[] = `polyListComponentConversion -toFace`;
+    return texCalculateTexelDensity($selectionFaces, $mapSize, true);
+}

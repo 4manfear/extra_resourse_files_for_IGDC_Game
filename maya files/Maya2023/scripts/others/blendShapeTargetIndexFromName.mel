@@ -1,0 +1,27 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+ 
+// Find the 0-based index on the blendShape.
+// Returns -1 if it cannot find the index.
+//
+global proc int blendShapeTargetIndexFromName(string $blendShape, string $weightName)
+{    
+	string $attr = $blendShape + ".w";
+	int $validWeightIndices[] = `getAttr -multiIndices $attr`;
+	
+	for ($item in $validWeightIndices)
+	{
+		string $itemAttr = $attr + "[" + $item + "]";
+		string $aliasName = `aliasAttr -q $itemAttr`;
+		
+		if ($aliasName == $weightName)
+			return $item;
+	}
+	
+	return -1;
+}

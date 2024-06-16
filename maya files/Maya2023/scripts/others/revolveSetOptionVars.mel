@@ -1,0 +1,66 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  Mar. 14, 1997
+//
+//  Description:
+//      Global function to make sure the options for revolve are set.
+//
+//  Input Arguments:
+//      Force the factory setting or not.
+//
+//  Return Value:
+//      None.
+//
+
+global proc revolveSetOptionVars( int $forceFactorySettings )
+{
+	int $yup = (`upAxis -q -ax` == "y");
+
+	optionVar -init $forceFactorySettings -category "Modeling.Surfaces.Revolve"
+		// revolveUseAxis (int) - can be 0|1|2|3 for use X, use Y, use Z,
+		// or use Free axis.
+		-iv revolveUsePresetAxis ($yup ? 1 : 2)
+		// revolveAxisX, revolveAxisY, revolveAxisZ (float) - to define
+		// the axis of revolution.
+		-fv revolveAxisX 0.0
+		-fv revolveAxisY ($yup ? 1.0 : 0.0)
+		-fv revolveAxisZ ($yup ? 0.0 : 1.0)
+		// revolveUseLocalPivot (int) - can be 1|0 for use Local or use Global
+		// pivot point.
+		-iv revolveUseLocalPivot 1
+		// revolvePivotX, revolvePivotY, revolvePivotZ (float) - to define
+		// the pivot of revolution.  Only used when revolveUseLocalPivot is 0.
+		-fv revolvePivotX 0.0
+		-fv revolvePivotY 0.0
+		-fv revolvePivotZ 0.0
+		// revolveUseLocalPivot (int) - can be 1|0 for use Local or use Global
+		// pivot point.
+		// revolveStartSweepAngle, revolveEndSweepAngle (float) - to define
+		// the sweep angle of the revolution.
+		-fv revolveStartSweepAngle 0.0
+		-fv revolveEndSweepAngle 360.0
+		// revolveSurfaceDegree (int) - either 1|3 for linear or cubic
+		// surface degree on the resulting revolved surface
+		-iv revolveSurfaceDegree 3
+		// revolveUseTolerance (int) - either 1|0 for use tolerance or not.
+		// revolveTolerance (float) - the tolerance to use
+		-iv revolveUseGlobalTol 0
+		-iv revolveUseTolerance 0
+		-fv revolveTolerance 0.01
+		// revolveNumberOfSegments (int) - number of segments/spans for the
+		// resulting revolved surface
+		-iv revolveNumberOfSegments 8
+		// revolveCurveRangePartial (int) - either 0|1 for using the complete
+		// curve or only a partial curve for the revolution
+		-iv revolveCurveRangePartial 0
+		// revolveOutputPolygons (int) - either 0|1 for polygon or Nurbs output
+		-iv revolveOutputPolygons 0
+		;
+}

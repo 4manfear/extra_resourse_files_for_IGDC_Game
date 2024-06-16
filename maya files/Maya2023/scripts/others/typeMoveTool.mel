@@ -1,0 +1,47 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc int typeAnimationEnabled()
+{
+	string $node = typeTRSTool_GetFirstSelectedTypeNode();
+	if ("" == $node)
+		return 0;
+
+	string $connections[] = `listConnections -d true -s false ($node+".animationMessage")`;
+	if (0 == size($connections))
+		return 0;
+
+	return (`getAttr ($connections[0]+".enableAnimation")`);
+}
+
+global proc typeMoveTool() 
+{
+	if( !`pluginInfo -q -loaded "Type"`) {
+		return;
+	}
+
+	if ( !`typeManipContextCommand -q -exists TypeManipCtx`) {
+		typeManipContextCommand TypeManipCtx;
+	}
+
+	setToolTo TypeManipCtx;
+
+	if ( typeAnimationEnabled() )
+	{
+		string $warn = getPluginResource("Type", "kAnimWarning");
+		if (0 != `optionVar -q inViewMessageEnable`)
+		{
+			string $finalWarn = ("<hl>" + getPluginResource("Type", "kWarningLabel") + "</hl>");
+			$finalWarn += $warn;
+			inViewMessage -smg ($finalWarn) -fade -pos topCenter;
+		}
+		else
+		{
+			warning -noContext $warn;
+		}
+	}
+}

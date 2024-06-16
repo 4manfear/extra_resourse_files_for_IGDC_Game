@@ -1,0 +1,146 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  November 9, 2017
+//
+//  Description:
+//		doKeyReducerArgList is the actual proc that is executed from the
+//	Edit->Curves->Key Reducer Filter option box or menu
+//
+//  Input Arguments:
+//	$version: The version of this option box.  Used to know how to 
+//	interpret the $args array.
+//
+//	$args
+//	Version 1
+//	[0]		$whichRange				1: time range all   
+// 	                                2: use playback range
+// 	                                3: use $timeRange
+//									4: use selected keys
+//	[1]		$timeRange				startTime:endTime
+//	[2]		$precisionMode
+//	[3]		$precision
+//	[4]		$keySync
+//	[5]		$preserveFixed
+//	[6]		$preserveLinear
+//	[7]		$preserveFlat
+//	[8]		$preserveSmooth
+//	[9]		$preserveStep
+//	[10]		$preserveClamped
+//	[11]	$preservePlateau
+//	[12]	$preserveStepNext
+//	[13]	$preserveAuto
+//	[14]	$selectionConnection	name of selection connection to use
+//									unless $options has "bufferCurve" in which
+//									case this is the name of the editor
+//	[15]	$options				a ':' delimited list of options
+//									noOptions		an empty placeholder
+//									bufferCurve		create buffer curves
+//
+//  Return Value:
+//      The number of curves filtered.
+//
+global proc int doKeyReducerArgList (string $version, string $args[])
+{
+	int		$versionNum				= $version;
+
+	int		$whichRange				= $args[0];
+	string	$timeRange				= $args[1];
+	int		$precisionMode			= $args[2];
+	float	$precision				= $args[3];
+	float	$keySync				= $args[4];
+
+	int		$preserveFixed			= $args[5];
+	int		$preserveLinear			= $args[6];
+	int		$preserveFlat			= $args[7];
+	int		$preserveSmooth			= $args[8];
+	int		$preserveStep			= $args[9];
+	int		$preserveClamped		= $args[10];
+	int		$preservePlateau		= $args[11];
+	int		$preserveStepNext		= $args[12];
+	int		$preserveAuto			= $args[13];
+	string	$selectionConnection	= $args[14];
+	string	$options				= $args[15];
+
+	string $cmd = "filterCurve -f keyReducer ";
+
+	string $realConnection = $selectionConnection;
+
+	// Check for the bufferCurve option
+	//
+	if (match ("bufferCurve", $options) == "bufferCurve") {
+		$realConnection = `editor -query -mainListConnection $selectionConnection`;
+		// Check to see if we need to create buffer curves
+		//
+		if (`animCurveEditor -query -showBufferCurves $selectionConnection` == "on") {
+			$cmd = "bufferCurve -animation \"keys\" -overwrite false; " + $cmd;
+		}
+	}
+
+	// Get the target objects
+	//
+	string $members;
+	int $keyCount = 0;
+
+	// Get the target objects
+	//
+	$members = expandSelectionConnection ($realConnection);
+
+	if ($whichRange == 4) {
+		$cmd = ( $cmd + "-selectedKeys " );
+	} else if ($whichRange > 1) {
+		float $startTime = `playbackOptions -q -min`;
+		float $endTime = `playbackOptions -q -max`;
+
+		if ($whichRange > 2) {
+			string $buff[];
+			tokenize $timeRange ":" $buff;
+			$startTime = $buff[0];
+			$endTime = $buff[1];
+		}
+
+		$cmd = ( $cmd + "-startTime \"" + $startTime + "\" " );
+		$cmd = ( $cmd + "-endTime \"" + $endTime + "\" " );
+	}
+
+	// Add on the parameters
+	//
+	$cmd = $cmd + "-precisionMode " + ($precisionMode-1) + " ";
+	$cmd = $cmd + "-precision " + $precision + " ";
+	if( $keySync ) { $cmd = $cmd + "-keySync "; }
+
+	if( $preserveFixed )	{ $cmd = $cmd + "-preserveKeyTangent \"fixed\""; }
+	if( $preserveLinear )	{ $cmd = $cmd + "-preserveKeyTangent \"linear\""; }
+	if( $preserveFlat )		{ $cmd = $cmd + "-preserveKeyTangent \"flat\""; }
+	if( $preserveSmooth )	{ $cmd = $cmd + "-preserveKeyTangent \"smooth\""; }
+	if( $preserveStep )		{ $cmd = $cmd + "-preserveKeyTangent \"step\""; }
+	if( $preserveClamped )	{ $cmd = $cmd + "-preserveKeyTangent \"clamped\""; }
+	if( $preservePlateau )	{ $cmd = $cmd + "-preserveKeyTangent \"plateau\""; }
+	if( $preserveStepNext )	{ $cmd = $cmd + "-preserveKeyTangent \"stepnext\""; }
+	if( $preserveAuto )		{ $cmd = $cmd + "-preserveKeyTangent \"auto\""; }
+
+	// Add the selection connection to the cmd if there are no keyframes
+	// on the active list.
+	//
+	if ($keyCount == 0) {
+		if (($members == "") || ($members == "{}")) {
+			$cmd = "";
+			warning ( (uiRes("m_doKeyReducerArgList.kNoObjectsSelectedKeyReducer")) );
+		}
+		else {
+			$cmd = ($cmd + " " + $members);
+		}
+	} 
+
+	if ($cmd == "") {
+		return (0);
+	} else {
+		return evalEcho( $cmd );
+	}
+}

@@ -1,0 +1,36 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//<doc>
+//<name CBG>
+//
+//<synopsis>
+//		string CBG(string $callProc, string $parent, string $whichCallback)
+//
+//<description>
+//  	Generate a string for control callbacks in the form:
+//			callbackProc "parent" "whichCallback"
+//
+//<flags>
+//		string	$callProc	Name of procedure to be called
+//		string	$parent		Parent widget of control where callback will live
+//		string	$whichCall	Name of callback
+//
+//<returns>
+//		string	: Control callback string, ready for execution
+//
+//<examples>
+//  string $cb = CBG("CallMe", "MyWidget", "AfterIHappen");
+//  // Result : CallMeCallback "MyWidget" "AfterIHappen" //
+//
+//</doc>
+
+global proc string CBG (string $callbackProc, string $parent, string $whichCallback)
+{
+
+    return ($callbackProc + "Callback" + " \"" + $parent + "\" \"" + $whichCallback + "\"");
+}

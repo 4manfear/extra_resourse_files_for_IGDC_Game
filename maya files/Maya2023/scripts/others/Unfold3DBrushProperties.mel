@@ -1,0 +1,96 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+
+global proc Unfold3DBrushProperties ()
+{
+	setUITemplate -pushTemplate OptionsTemplate;
+
+	string $parent = `toolPropertyWindow -q -location`;
+    setParent $parent;
+
+	string $layoutLabel = (uiRes("m_Unfold3DBrushProperties.kU3DBrushOpotions"));
+	string $mode = (uiRes("m_Unfold3DBrushProperties.kMode")),
+		$unfoldMode = (uiRes("m_Unfold3DBrushProperties.kUnfoldMode")),
+		$optimizeMode = (uiRes("m_Unfold3DBrushProperties.kOptimizeMode")),
+		$brushSize = (uiRes("m_Unfold3DBrushProperties.kBrushSize")),
+		$pressure = (uiRes("m_Unfold3DBrushProperties.kBrushPressure")),
+		$srfAngle = (uiRes("m_Unfold3DBrushProperties.kSrfAngle"));
+
+	columnLayout Unfold3DBrush;
+		frameLayout -cll true -cl false -l $layoutLabel unfold3DBrushFrame;
+			columnLayout Unfold3DBrushOptions;
+
+				// Mode
+				radioButtonGrp
+					-label $mode
+					-numberOfRadioButtons 2
+					-la2 $unfoldMode $optimizeMode
+					-vr
+					mode;
+				separator;
+					
+				// brush size
+				floatSliderGrp
+					-label $brushSize
+					-annotation (uiRes("m_Unfold3DBrushProperties.kSizeAnnotation"))
+					-field true
+					-minValue 0.0 -maxValue 2.0
+                    -fieldMinValue 0.0 -fieldMaxValue 100.0
+					brushSize;
+				// brush pressure
+				floatSliderGrp
+					-label $pressure
+					-annotation (uiRes("m_Unfold3DBrushProperties.kStrengthAnnotation"))
+					-field true
+					-minValue 0.0 -maxValue 1.0
+                    -fieldMinValue 0.0 -fieldMaxValue 1.0
+					brushPressure;
+				separator;
+
+				// surfangle
+				floatSliderGrp
+					-label $srfAngle
+					-annotation (uiRes("m_Unfold3DBrushProperties.kSurfaceAngleAnnotation"))
+					-field true
+					-minValue 0.0 -maxValue 1.0
+                    -fieldMinValue 0.0 -fieldMaxValue 1.0
+					surfangle;
+
+			setParent ..; // Unfold3DBrushOptions
+		setParent ..; // Unfold3DBrushFrame
+	setParent ..; // Unfold3DBrush
+
+	setUITemplate -popTemplate;
+
+	Unfold3DBrushSetCallbacks($parent);
+}
+
+//	Description:
+//		associate control events with callbacks
+global proc Unfold3DBrushSetCallbacks(string $parent)
+{
+	setParent	$parent;
+	string		$whichCtx = `currentCtx`;
+	
+	radioButtonGrp -e
+		-on1 ("setToolTo " + $whichCtx + "; Unfold3DContext -e -unfold " + $whichCtx)
+		-on2 ("setToolTo " + $whichCtx + "; Unfold3DContext -e -optimize " + $whichCtx)
+		mode;
+	
+	floatSliderGrp -e
+		-cc ("Unfold3DContext -e -sizeuv #1 " + $whichCtx)
+		brushSize;
+		
+	floatSliderGrp -e
+		-cc ("Unfold3DContext -e -pressure #1 " + $whichCtx)
+		brushPressure;
+		
+	floatSliderGrp -e
+		-cc ("Unfold3DContext -e -sa #1 " + $whichCtx)
+		surfangle;
+}

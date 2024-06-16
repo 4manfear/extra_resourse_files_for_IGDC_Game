@@ -1,0 +1,55 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc doCombinationShapeModifyDrivers(int $addDriver)
+//
+//  Description:
+// 		Add drivers to a combination target.
+//
+//  Input Arguments:
+//      addDriver - 1 to add driver, 0 to remove driver;
+//
+{
+	int $drivenTargetIndex = getLastSelectedTargetIndex();
+    if($drivenTargetIndex < 0)
+    return;
+    
+    string $targets[] = stringArrayRemove(getShapeEditorTreeviewSelection(20), getShapeEditorTreeviewSelection(24));
+    int $targetNum = size($targets);
+    if($targetNum == 0)
+        return;
+    string $oneBSD;
+    int $driverTargetIndexes[];
+
+    for ($i = 0; $i < $targetNum; ++$i)
+    {
+        string $subStrings[] = stringToStringArray($targets[$i], ".");
+        if($i == 0) 
+            $oneBSD = $subStrings[0];
+        if($oneBSD != $subStrings[0])
+            return; 
+        intArrayInsertAtIndex( 0, $driverTargetIndexes, $subStrings[1] );
+    }
+   
+    string $coShape = blendShapeTargetGetCombinationShape($oneBSD, $drivenTargetIndex);
+    
+	string $cmd = "combinationShape -e -bs " + $oneBSD + " -cti " + $drivenTargetIndex;
+	$cmd += $addDriver ? " -addDriver" : " -removeDriver";
+	for($driverTargetIndex in $driverTargetIndexes)
+	{
+		$cmd += " -dti ";
+		$cmd += $driverTargetIndex;
+	}
+	evalEcho($cmd);
+
+	//Rollback if cause cycle warning
+	if($addDriver && evalEcho("cycleCheck " + $coShape + ".ow"))
+	{
+		undo;
+		error( (uiRes("m_doCombinationShapeModifyDrivers.kCauseCycleWarning")));
+	}
+}

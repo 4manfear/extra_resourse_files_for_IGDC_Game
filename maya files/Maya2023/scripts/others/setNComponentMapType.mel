@@ -1,0 +1,26 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//	setNComponentMapType
+//
+//	Description:
+//		This method sets the nComponent map type for the selected constraint or
+//  the constraint related the selected mesh.
+//
+global proc setNComponentMapType(string $attr, int $mapType)
+{
+	// The 0 to getNComponentToEdit means we do not accept component
+	// selections, the user must select an nCloth
+	//
+	string $nComp = `getNComponentToEdit 0`;
+	if ($nComp != "") {
+		string $mapTypeAttr = ($attr+"MapType");
+		string $cmd = ("setAttr "+$nComp+"."+$mapTypeAttr+" "+$mapType);
+		eval $cmd;
+	}
+}

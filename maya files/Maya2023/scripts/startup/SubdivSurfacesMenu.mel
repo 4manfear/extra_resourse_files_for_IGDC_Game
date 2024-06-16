@@ -1,0 +1,294 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  Nov 11, 1998
+//
+//
+//
+//  Description:
+//      This implements the "Subdiv Surface" menu on the modeling menubar.
+//
+
+
+//////////////////////////////////////////////////////////////////////
+global proc string SubdivSurfacesMenuItemToShelf (string $item)
+{
+    return $item;
+}
+
+global proc SubdivSurfacesMenu(string $parent)
+//
+// Description:
+//		Subdiv Surfaces menu
+//
+{
+
+	if (! `isTrue "SubdivUIExists"`) return;
+
+	setParent -m $parent;
+	string $cmd;
+
+	if (`menu -q -ni $parent` == 0) {
+
+		// Texture
+		//
+		string $textItem=`menuItem -label (uiRes("m_SubdivSurfacesMenu.kTexture"))  -sm 1 -to 1 -aob true subdTexturesItem`;
+		SubdTextureMenu $textItem 0 "ls -sl";
+		setParent -m ..;
+		
+		menuItem -divider true;
+		// Crease mesh edge or mesh point
+		//
+		$cmd = "FullCreaseSubdivSurface";
+		menuItem -label (uiRes("m_SubdivSurfacesMenu.kFullCrease"))  -ecr true 
+			-annotation (getRunTimeCommandAnnotation($cmd))
+			-image subdivCrease.png
+			-echoCommand true
+			-c $cmd
+			subdivCreaseItem;
+
+		$cmd = "PartialCreaseSubdivSurface";
+		menuItem -label (uiRes("m_SubdivSurfacesMenu.kPartialCrease"))  -ecr true 
+			-annotation (getRunTimeCommandAnnotation($cmd))
+			-image subdivPartialCrease.png
+			-echoCommand true
+			-c $cmd
+			subdivCreaseSimpleItem;
+
+		// UnCrease mesh edge or mesh point
+		//
+		$cmd = "UncreaseSubdivSurface";
+		menuItem -label (uiRes("m_SubdivSurfacesMenu.kUncrease"))  -ecr true 
+			-annotation (getRunTimeCommandAnnotation($cmd))
+			-image subdivUncrease.png
+			-echoCommand true
+			-c $cmd
+			subdivUnCreaseItem;
+		menuItem -divider true;
+        
+	  $cmd = "MirrorSubdivSurface";
+ 	  menuItem -label (uiRes("m_SubdivSurfacesMenu.kMirror"))  -ecr true 
+ 		-annotation (getRunTimeCommandAnnotation($cmd))
+		-image subdivMirror.png
+ 		-c $cmd
+ 		subdivMirrorItem;
+	  $cmd = "MirrorSubdivSurfaceOptions";
+ 	  menuItem -optionBox 1 
+ 		-label (uiRes("m_SubdivSurfacesMenu.kMirrorOption"))  -ecr false 
+ 		-annotation (getRunTimeCommandAnnotation($cmd))
+		-image subdivMirror.png
+ 		-c $cmd 
+		subdivMirrorOptionItem;
+
+	  $cmd = "AttachSubdivSurface";
+ 	  menuItem -label (uiRes("m_SubdivSurfacesMenu.kAttach"))  -ecr true 
+		  -annotation (getRunTimeCommandAnnotation($cmd))
+		-image subdivAttach.png
+ 		-c $cmd
+ 		subdivAttachItem;
+	  $cmd = "AttachSubdivSurfaceOptions";
+ 	  menuItem -optionBox 1 
+ 		-label (uiRes("m_SubdivSurfacesMenu.kAttachOption"))  -ecr false 
+ 		-annotation (getRunTimeCommandAnnotation($cmd))
+		-image subdivAttach.png
+ 		-c $cmd 
+		subdivAttachOptionItem;
+
+		menuItem -divider true;
+ 
+		$cmd = "SubdivSurfaceMatchTopology";
+		menuItem -label (uiRes("m_SubdivSurfacesMenu.kMatch")) 
+			-ecr true
+			-annotation (getRunTimeCommandAnnotation($cmd))
+			-image subdivMatchToplogy.png
+			-c $cmd
+			subdivMatchTopoItem;
+
+		$cmd = "SubdivSurfaceCleanTopology";
+		menuItem -label (uiRes("m_SubdivSurfacesMenu.kClean")) 
+			-ecr true
+			-annotation (getRunTimeCommandAnnotation($cmd))
+			-image subdivCleanToplogy.png
+			-c $cmd
+			subdivCleanTopoItem;            
+
+		menuItem -divider true;
+        
+	  $cmd = "CollapseSubdivSurfaceHierarchy";
+ 	  menuItem -label (uiRes("m_SubdivSurfacesMenu.kCollapse"))  -ecr true 
+ 		-annotation (getRunTimeCommandAnnotation($cmd))
+		-image subdivCollapseHierearchy.png
+ 		-c $cmd
+ 		subdivCollapseItem;
+	  $cmd = "CollapseSubdivSurfaceHierarchyOptions";
+ 	  menuItem -optionBox 1 
+ 		-label (uiRes("m_SubdivSurfacesMenu.kCollapseOption"))  -ecr false 
+ 		-annotation (getRunTimeCommandAnnotation($cmd))
+		-image subdivCollapseHierearchy.png
+ 		-c $cmd 
+		subdivCollapseOptionItem;
+
+		menuItem -divider true;
+
+		$cmd = "SubdivSurfaceHierarchyMode";
+		menuItem -label (uiRes("m_SubdivSurfacesMenu.kStandard")) 
+			-ecr true
+			-annotation (getRunTimeCommandAnnotation($cmd))
+			-image subdivStandardMode.png
+			-c $cmd
+			subdivHierItem;
+
+		$cmd = "SubdivSurfacePolygonProxyMode";
+		menuItem -label (uiRes("m_SubdivSurfacesMenu.kProxy")) 
+			-ecr true
+			-annotation (getRunTimeCommandAnnotation($cmd))
+			-image subdivPolyMode.png
+			-c $cmd
+			subdivPolyItem;
+
+	  menuItem -divider true;
+	    // Artisan: Sculpt Geometry Tool.
+	    menuItem
+		    -label (uiRes("m_SubdivSurfacesMenu.kSculpt")) 
+			-annotation (getRunTimeCommandAnnotation("SculptGeometryTool"))
+		    -image "putty.png"
+		    -command "SculptGeometryTool"
+		    -dragDoubleClickCommand "SculptGeometryToolOptions"
+		    ;
+	  
+		menuItem -optionBox true
+			-annotation (getRunTimeCommandAnnotation("SculptGeometryToolOptions"))
+			-image "putty.png"
+			-command "SculptGeometryToolOptions"
+			;
+
+		menuItem -divider true;
+	  
+		// Subdiv Convert Selection  - use PolySelectConvert because
+		// it does both poly and subd conversion
+		//
+		menuItem -label (uiRes("m_SubdivSurfacesMenu.kToFaces"))  -ecr false 
+			-c ("PolySelectConvert 1")
+			-echoCommand true
+			-annotation (uiRes("m_SubdivSurfacesMenu.kToFacesAnnot"))  
+			-image "polyConvertToFace.png"
+			-dmc "SubdivSurfacesMenuItemToShelf \"PolySelectConvert 1\""	
+			subdivConvertSelectionFacesItem;
+		menuItem -label (uiRes("m_SubdivSurfacesMenu.kToEdges"))  -ecr false 
+			-c ("PolySelectConvert 2")
+			-echoCommand true
+			-annotation (uiRes("m_SubdivSurfacesMenu.kToEdgesAnnot"))  
+			-image "polyConvertToEdge.png"
+			-dmc "SubdivSurfacesMenuItemToShelf \"PolySelectConvert 2\""	
+			subdivConvertSelectionEdgesItem;
+		menuItem -label (uiRes("m_SubdivSurfacesMenu.kToVerts"))  -ecr false 
+			-c ("PolySelectConvert 3")
+			-echoCommand true
+			-image "polyConvertToVertices.png"
+			-annotation (uiRes("m_SubdivSurfacesMenu.kToVertsAnnot"))  
+			-dmc "SubdivSurfacesMenuItemToShelf \"PolySelectConvert 3\""	
+			subdivConvertSelectionVertsItem;
+		menuItem -label (uiRes("m_SubdivSurfacesMenu.kToUVs"))  -ecr false 
+			-c ("PolySelectConvert 4")
+			-echoCommand true
+			-annotation (uiRes("m_SubdivSurfacesMenu.kToUVsAnnot"))  
+			-image "polyConvertToUVs.png"
+			-dmc "SubdivSurfacesMenuItemToShelf \"PolySelectConvert 4\""	
+			subdivConvertSelectionUVsItem;
+		// Subdiv refine 
+		//
+		$cmd = "RefineSelectedComponents";
+		menuItem -label (uiRes("m_SubdivSurfacesMenu.kRefine"))  -ecr true 
+			-c ($cmd)
+			-echoCommand true
+			-annotation (getRunTimeCommandAnnotation($cmd))
+			-image subdivRefineRegion.png
+			subdivCreateAndRefineRegionItem;
+
+		// Subdiv coarsen 
+		//
+		$cmd = "CoarsenSelectedComponents";
+		menuItem -label (uiRes("m_SubdivSurfacesMenu.kCoarser"))  -ecr true 
+			-c ($cmd)
+			-echoCommand true
+			-annotation (getRunTimeCommandAnnotation($cmd))
+			-image subdivSelectCoarser.png
+			subdivCoarsenRegionItem;
+
+		// Subdiv Expand Region
+		//
+		$cmd = "ExpandSelectedComponents";
+		menuItem -label (uiRes("m_SubdivSurfacesMenu.kExpand"))  -ecr true 
+			-c ($cmd)
+			-echoCommand true
+			-annotation (getRunTimeCommandAnnotation($cmd))
+			-image subdivExpandRegion.png
+			subdivExpandRegionItem;
+
+		menuItem -divider true;
+		
+		menuItem -label (uiRes("m_SubdivSurfacesMenu.kDispLevel"))  -sm 1 -to 1 -aob true;
+
+		// Finer Mesh Display
+		//
+		$cmd = "FineLevelComponentDisplay";
+		menuItem -label (uiRes("m_SubdivSurfacesMenu.kFiner"))  -ecr true 
+			-c $cmd
+			-echoCommand true
+			-annotation (getRunTimeCommandAnnotation($cmd))
+			-image subdivFineMesh.png
+			subdivFinerMeshItem;
+
+		// Coarser Mesh Display
+		//
+		$cmd = "CoarseLevelComponentDisplay";
+		menuItem -label (uiRes("m_SubdivSurfacesMenu.kCoarserDisp"))  -ecr true 
+			-c $cmd
+			-echoCommand true
+			-annotation (getRunTimeCommandAnnotation($cmd))
+			-image subdivCoarseMesh.png
+			subdivCoaserMeshItem;
+
+		// Base Mesh Display
+		//
+		$cmd = "BaseLevelComponentDisplay";
+		menuItem -label (uiRes("m_SubdivSurfacesMenu.kBase"))  -ecr true 
+			-c $cmd
+			-echoCommand true
+			-annotation (getRunTimeCommandAnnotation($cmd))
+			-image subdivBaseMesh.png
+			subdivBaseMeshItem;
+
+		setParent -m ..;
+
+		menuItem -label (uiRes("m_SubdivSurfacesMenu.kCDF"))  -sm 1 -to 1 -aob true;
+
+		// Show all at current level
+		//
+		$cmd = "ShowAllComponents";
+		menuItem -label (uiRes("m_SubdivSurfacesMenu.kAll"))  -ecr true 
+			-c $cmd
+			-annotation (getRunTimeCommandAnnotation($cmd))
+			-image "subdivDisplayAll.png"
+			-echoCommand true
+			subdivShowAllCurrentLevelItem;
+
+		// Show editted mesh points at current level
+		//
+		$cmd = "ShowAllEditedComponents";
+		menuItem -label (uiRes("m_SubdivSurfacesMenu.kEdits"))  -ecr true 
+			-c $cmd
+			-annotation (getRunTimeCommandAnnotation($cmd))
+			-image "subdivDisplayEditsOnly.png"
+			-echoCommand true
+			subdivShowEditsCurrentLevelItem;
+		setParent -m ..;
+	}
+}
+

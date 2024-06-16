@@ -1,0 +1,37 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc birailHistoryLink( string $parent, string $node, string $numberProfiles )
+{
+	setParent $parent;
+
+	// transform control on the profiles ( generation curves ).
+	//
+	connectControl transformControl($node + ".tm" ) ;
+ 
+	// continuity control on Rail curves
+   	// continuity on rails futured.
+	//
+   	//connectControl -index 2 birailTangentRails_checkBoxGrp($node + ".tr1") ;
+   	//connectControl -index 3 birailTangentRails_checkBoxGrp($node + ".tr2") ;
+
+	// continuity control on Profile curves.
+	//
+	connectControl -index 2 birailBlendingProfiles_CheckBoxGrp($node + ".tp1") ;	
+	if( $numberProfiles == "twoProfiles" || $numberProfiles == "twoPlusProfiles" ) {
+		connectControl -index 3 birailBlendingProfiles_CheckBoxGrp($node + ".tp2") ;	
+	}
+
+	if ($numberProfiles == "twoProfiles")
+	{
+		// slider for the blend control.
+		//
+		connectControl dpBirailBlend($node + ".bl") ;
+	}
+
+}
+

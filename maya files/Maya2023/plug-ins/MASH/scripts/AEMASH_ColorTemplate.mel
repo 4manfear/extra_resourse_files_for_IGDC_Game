@@ -1,0 +1,138 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+
+global proc MASHcheckColourMode ( string $nodeName )
+{
+        if ( `objExists $nodeName` == 0 )
+            return;
+
+        string $nodeAttr = $nodeName + ".enableBackgroundColor";
+        int $value = `getAttr $nodeAttr`;
+
+        $nodeAttr = $nodeName + ".uvTileMode";
+        int $uvMode = `getAttr $nodeAttr`;
+        //using background colour
+        if ($value) {
+            editorTemplate  -dimControl $nodeName "backgroundColor" false;
+        } else {
+            editorTemplate  -dimControl $nodeName "backgroundColor" true;
+        }
+
+        //unique UVs or by id
+        if ($uvMode == 3 || $uvMode == 2) {
+            editorTemplate  -dimControl $nodeName "enableMaxTiles" false;
+            editorTemplate  -dimControl $nodeName "maxTiles" false;
+            if ($uvMode == 3) {
+                editorTemplate  -dimControl $nodeName "randomUVTile" false;
+            } else {
+                editorTemplate  -dimControl $nodeName "randomUVTile" true;
+            }
+        } else {
+            editorTemplate  -dimControl $nodeName "enableMaxTiles" true;
+            editorTemplate  -dimControl $nodeName "maxTiles" true;
+            editorTemplate  -dimControl $nodeName "randomUVTile" true;
+        }
+
+}
+
+global proc AEMASH_ColorTemplate( string $nodeName )
+    {
+
+    editorTemplate -beginScrollLayout;
+    python("import MASH.nodeHeaders; MASH.nodeHeaders.addHeader('" + $nodeName + "', 'Color')")
+    editorTemplate -endLayout;
+
+    editorTemplate  -label (getPluginResource("MASH", "kColor")) -addControl "color";
+    editorTemplate -callCustom "MASHcolourUVHelperBuildQt" "MASHcolourUVHelperUpdateQt" "";
+    editorTemplate  -label (getPluginResource("MASH", "kColorSetName")) -addControl "colorSetName";
+    editorTemplate  -label (getPluginResource("MASH", "kRandomHUE")) -addControl "hueRandom";
+    editorTemplate  -label (getPluginResource("MASH", "kSaturateRandom")) -addControl "saturationRandom";
+    editorTemplate  -label (getPluginResource("MASH", "kValRandom")) -addControl "valueRandom";
+    editorTemplate -addSeparator;
+    editorTemplate  -label (getPluginResource("MASH", "kRandSeed")) -addControl "randomSeed";
+    editorTemplate  -label (getPluginResource("MASH", "kUseVelocity")) -addControl "enableVelocity";
+
+
+    editorTemplate -addSeparator;
+    editorTemplate  -label (getPluginResource("MASH", "kBlendMode")) -addControl "blendMode";
+    editorTemplate -addSeparator;
+    editorTemplate  -label (getPluginResource("MASH", "kEnableBackColor")) -addControl "enableBackgroundColor" "MASHcheckColourMode";
+    editorTemplate  -label (getPluginResource("MASH", "kBackColour")) -addControl "backgroundColor";
+
+    editorTemplate -beginLayout (getPluginResource("MASH", "kUVSettings")) -collapse 0;
+    editorTemplate  -label (getPluginResource("MASH", "kUVMode")) -addControl "uvTileMode" "MASHcheckColourMode";
+    editorTemplate  -label (getPluginResource("MASH", "kEnableMaxTiles")) -addControl "enableMaxTiles";
+    editorTemplate  -label (getPluginResource("MASH", "kRandomUVTile")) -addControl "randomUVTile";
+    editorTemplate  -label (getPluginResource("MASH", "kMaxTiles")) -addControl "maxTiles";
+    editorTemplate -endLayout;
+
+    editorTemplate -beginLayout (getPluginResource("MASH", "kStrength")) -collapse 1;
+    editorTemplate  -label (getPluginResource("MASH", "kStrength")) -addControl "Envelope";
+    editorTemplate  -label (getPluginResource("MASH", "kRandStrength")) -addControl "randEnvelope";
+    editorTemplate  -label (getPluginResource("MASH", "kStepStrength")) -addControl "StepEnvelope";
+    editorTemplate -addSeparator;
+    editorTemplate  -label (getPluginResource("MASH", "kStrengthMap")) -addControl "mColour";
+    editorTemplate  -label (getPluginResource("MASH", "kMapProjAxis")) -addControl "mapDirection";
+    editorTemplate -callCustom "MASHmapHelperButton" "MASHmapHelperButtonEdit" "";
+    editorTemplate -endLayout;
+
+    editorTemplate -beginLayout (getPluginResource("MASH", "kFalloffObject")) -collapse 1;
+    editorTemplate -callCustom "MASHfalloffButtons" "MASHfalloffButtonsEdit" "";
+    editorTemplate -endLayout;
+
+	editorTemplate -endLayout;
+
+    AEdependNodeTemplate $nodeName;
+    editorTemplate -addExtraControls;
+    editorTemplate -endScrollLayout;
+
+    editorTemplate -suppress "grpsize";
+    editorTemplate -suppress "Envelope";
+    editorTemplate -suppress "Envelope";
+    editorTemplate -suppress "randEnvelope";
+    editorTemplate -suppress "StepEnvelope";
+    editorTemplate -suppress "falloffX";
+    editorTemplate -suppress "falloffY";
+    editorTemplate -suppress "falloffZ";
+    editorTemplate -suppress "inputPoints";
+    editorTemplate -suppress "inMapMatrix";
+    editorTemplate -suppress "strengthPP";
+    editorTemplate -suppress "stringOff";
+    editorTemplate -suppress "stringOn";
+    editorTemplate -suppress "inFrames";
+    }
+
+global proc MASHcolourUVHelperBuildQt(string $nodeName)
+{
+    string $buffer[];
+    tokenize($nodeName, ".", $buffer);
+    $nodeName = $buffer[0];
+    string $nodeType = `nodeType($nodeName)`;
+    string $layout = ($nodeType+"ColourUVHelperLayout");
+
+    python("import MASHsingleInputQtWidget");
+    rowLayout -numberOfColumns 2 -columnWidth2 139 250 $layout;
+    text -w 105 -h 20 -vis 1
+    -label (getPluginResource("MASH", "kUVMesh"))
+    -align "right" -font "plainLabelFont" ;
+    //get python to create the widget, include the desired nodeType as an arguement
+    python("MASHsingleInputQtWidget.build_qt_widget('" + $layout + "', '" + $nodeName + "', 'transform', 'uvMatrix', 'worldMatrix[0]', '')");
+    setParent..;
+}
+
+global proc MASHcolourUVHelperUpdateQt(string $nodeName )
+{
+    string $buffer[];
+    tokenize($nodeName, ".", $buffer);
+    $nodeName = $buffer[0];
+    string $nodeType = `nodeType($nodeName)`;
+    string $layout = ($nodeType+"ColourUVHelperLayout");
+
+    python("import MASHsingleInputQtWidget");
+    python("MASHsingleInputQtWidget.update_qt_widget('" + $layout + "', '" + $nodeName + "', 'transform', 'uvMatrix', 'worldMatrix[0]', '')");
+}

@@ -1,0 +1,105 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+proc setOptionVars (int $forceFactorySettings)
+{
+	string $DefaultCreaseSetsName = (uiRes("m_performPolyCreateCreaseSet.kDefaultCreaseSetName"));
+
+	optionVar -init $forceFactorySettings -category "Edit Polygons.Create Crease Selection Set"
+		-sv DefaultCreaseSetsName $DefaultCreaseSetsName
+		;
+}
+
+global proc performPolyCreateCreaseSetSetup (string $parent, int $forceFactorySettings)
+{
+	setOptionVars($forceFactorySettings);
+	setParent $parent;
+
+	string $name = `optionVar -query DefaultCreaseSetsName`;
+	textFieldGrp -e -text $name polyCreaseSetName_TFG;
+}
+
+global proc performPolyCreateCreaseSetCallback (string $parent, int $doIt)
+{
+	setParent $parent;
+
+	optionVar -stringValue DefaultCreaseSetsName
+		`textFieldGrp -q -text polyCreaseSetName_TFG`;
+
+	if ($doIt) 
+	{
+		performPolyCreateCreaseSet 0;
+		addToRecentCommandQueue "performPolyCreateCreaseSet 0" "CreateCreaseSet";
+	}
+}
+
+proc polyCreateCreaseSetOptionBox()
+{
+	global int $gOptionBoxTemplateFrameSpacing;
+	
+	string $commandName = "performPolyCreateCreaseSet";
+	string $callback = ($commandName + "Callback");
+	string $setup = ($commandName + "Setup");
+	   
+	string $layout = getOptionBox();
+	setParent $layout;
+	setUITemplate -pushTemplate OptionBoxTemplate;
+	
+	columnLayout;
+	
+	// Form layout
+	string $parent = `formLayout polyCreateCreaseSetOptions`;
+
+    textFieldGrp
+		-label (uiRes("m_performPolyCreateCreaseSet.kDefaultCreaseName"))
+		polyCreaseSetName_TFG;
+
+	string $applyBtn = getOptionBoxApplyBtn();
+	button -edit -label (uiRes("m_performPolyCreateCreaseSet.kSmoothButton"))
+	       -command ($callback + " " + $parent + " " + 1)
+		$applyBtn;
+
+	string $saveBtn = getOptionBoxSaveBtn();
+	button -edit 
+		-command ($callback + " " + $parent + " " + 0 + "; hideOptionBox")
+		$saveBtn;
+
+	string $resetBtn = getOptionBoxResetBtn();
+	button -edit 
+		-command ($setup + " " + $parent + " " + 1)
+		$resetBtn;
+
+	setOptionBoxTitle( (uiRes("m_performPolyCreateCreaseSet.kCreateCreaseSetOptions")) );
+
+	setOptionBoxHelpTag( "PolyCreateCreaseSet" );
+
+	eval (($setup + " " + $parent + " " + 0));      
+	showOptionBox();
+}
+
+global proc string performPolyCreateCreaseSet(int $option)
+{
+	string $cmd = "";
+
+	switch ($option) 
+	{
+	case 1:
+		// display option box
+		polyCreateCreaseSetOptionBox;
+		break;
+	case 0:
+	default:
+		// execute command
+		setOptionVars(false);
+		string $name = `optionVar -query DefaultCreaseSetsName`;
+		$cmd = ("polyCreaseCtx -edit -createSet \"" + $name + "\" polyCreaseContext;");
+		evalEcho ($cmd);
+	}
+
+	return $cmd;
+}
+

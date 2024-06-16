@@ -1,0 +1,46 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//	Creation Date:	July 3, 2003
+//
+//<doc>
+//<name basenameEx>
+//
+//<synopsis>
+//		string basenameEx(string $path)
+//
+//<returns>
+//		string : the path's basename
+//
+//<description>
+//		An extension of basename(), this convenience procedure returns the
+//		base name of $path, without the directory or the file extension.
+//		See also basename() and fileExtension().
+//
+//<examples>
+//		basenameEx("/usr/people/gamera/gamera.mel");
+//		// Result: gamera //
+//
+//		basenameEx("C:/aw/godzilla/hello.c");
+//		// Result: hello //
+//
+//</doc>
+
+global proc string basenameEx(string $path)
+{
+	string $extension = fileExtension($path);
+	if ("" != $extension)
+	{
+		$extension = "." + $extension;
+	}
+
+	return basename($path, $extension);
+}
+
+//	=== END OF FILE basenameEx.mel ===========================================

@@ -1,0 +1,241 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc MASHplacerModeType ( string $nodeName )
+{
+        if ( `objExists $nodeName` == 0 )
+            return;
+
+        string $nodeAttr = $nodeName + ".brushType";
+        int $value = `getAttr $nodeAttr`;
+
+        $nodeAttr = $nodeName + ".idMode";
+        int $idMode = `getAttr $nodeAttr`;
+        if ($idMode == 1) {
+            editorTemplate  -dimControl $nodeName "paintId" false;
+            editorTemplate  -dimControl $nodeName "randomId" true;
+        } else {
+            editorTemplate  -dimControl $nodeName "paintId" true;
+            editorTemplate  -dimControl $nodeName "randomId" false;
+        }
+
+        $nodeAttr = $nodeName + ".rotationMode";
+        int $rotMode = `getAttr $nodeAttr`;
+
+        if ($rotMode == 2 && $value == 1) {
+            editorTemplate  -dimControl $nodeName "leanAmount" false;
+        } else {
+            editorTemplate  -dimControl $nodeName "leanAmount" true;
+        }
+
+        //fixed
+        if ($value == 1) {
+            editorTemplate  -dimControl $nodeName "brushRadius" false;
+            editorTemplate  -dimControl $nodeName "brushSpacing" false;
+            editorTemplate  -dimControl $nodeName "scatter" false;
+            editorTemplate  -dimControl $nodeName "scatterDensity" false;
+            editorTemplate  -dimControl $nodeName "brushStrength" false;
+            editorTemplate  -dimControl $nodeName "collideOnCreate" false;
+            editorTemplate  -dimControl $nodeName "rotationMode" false;
+            editorTemplate  -dimControl $nodeName "randomScale" false;
+            editorTemplate  -dimControl $nodeName "randomRotation" false;
+            editorTemplate  -dimControl $nodeName "randomSeed" false;
+            editorTemplate  -dimControl $nodeName "alignBrushAxis" false;
+            editorTemplate  -dimControl $nodeName "idMode" false;
+            editorTemplate  -dimControl $nodeName "pushAlongNormal" false;
+        } else {
+            editorTemplate  -dimControl $nodeName "scatterDensity" true;
+            editorTemplate  -dimControl $nodeName "brushSpacing" true;
+            editorTemplate  -dimControl $nodeName "scatter" true;
+            editorTemplate  -dimControl $nodeName "brushStrength" true;
+            editorTemplate  -dimControl $nodeName "collideOnCreate" true;
+            editorTemplate  -dimControl $nodeName "rotationMode" true;
+            editorTemplate  -dimControl $nodeName "randomScale" true;
+            editorTemplate  -dimControl $nodeName "randomRotation" true;
+            editorTemplate  -dimControl $nodeName "paintId" true;
+            editorTemplate  -dimControl $nodeName "randomSeed" true;
+            editorTemplate  -dimControl $nodeName "alignBrushAxis" true;
+            editorTemplate  -dimControl $nodeName "idMode" true;
+            editorTemplate  -dimControl $nodeName "randomId" true;
+            editorTemplate  -dimControl $nodeName "pushAlongNormal" true;
+        }
+
+        if ($value == 4) {
+            editorTemplate  -dimControl $nodeName "paintId" false;
+        }
+
+        // manips have no radius
+        // stick on mesh is unique to the manipulators
+        if ($value == 5 || $value == 6 || $value == 7) {
+            editorTemplate  -dimControl $nodeName "brushRadius" true;
+        }
+
+        // stick on mesh is unique to the move manipulators
+        if ($value == 5) {
+            editorTemplate  -dimControl $nodeName "stickToMesh" false;
+            $nodeAttr = $nodeName + ".stickToMesh";
+            int $stick = `getAttr $nodeAttr`;
+            if ($stick) {
+                editorTemplate  -dimControl $nodeName "rotationMode" false;
+                editorTemplate  -dimControl $nodeName "pushAlongNormal" false;
+                editorTemplate  -dimControl $nodeName "leanAmount" false;
+            } else {
+                editorTemplate  -dimControl $nodeName "rotationMode" true;
+                editorTemplate  -dimControl $nodeName "pushAlongNormal" true;
+                editorTemplate  -dimControl $nodeName "leanAmount" true;
+            }
+        } else {
+            editorTemplate  -dimControl $nodeName "stickToMesh" true;
+        }
+
+        // nudge mode
+        if ($value == 8) {
+            editorTemplate  -dimControl $nodeName "leanAmount" false;
+            editorTemplate  -dimControl $nodeName "rotationMode" false;
+            editorTemplate  -dimControl $nodeName "brushRadius" false;
+            editorTemplate  -dimControl $nodeName "pushAlongNormal" false;
+        }
+
+}
+
+global proc AEMASH_PlacerTemplate( string $nodeName )
+        {
+
+
+        editorTemplate -beginScrollLayout;
+        
+        python("import MASH.nodeHeaders; MASH.nodeHeaders.addHeader('" + $nodeName + "', 'Placer', False)")
+        editorTemplate -endLayout;
+
+        if (`contextInfo -exists "paintPointsContext1"`) {
+            deleteUI("paintPointsContext1");
+        }
+        paintPointsContext paintPointsContext1;
+
+        editorTemplate -callCustom "MASHplacerToolsBuildQt" "MASHplacerToolsUpdateQt" "";
+        editorTemplate -endLayout;
+
+        editorTemplate -addSeparator;
+        editorTemplate -addSeparator;
+        editorTemplate -addSeparator;
+
+        editorTemplate  -addControl -label (getPluginResource("MASH", "kBrushRadius")) "brushRadius";
+        editorTemplate  -addControl -label (getPluginResource("MASH", "kBrushSpacing")) "brushSpacing";
+        editorTemplate  -addControl -label (getPluginResource("MASH", "kBrushStrength")) "brushStrength";
+        editorTemplate  -bn;
+        editorTemplate  -addControl -label (getPluginResource("MASH", "kScatter")) "scatter";
+        editorTemplate  -addControl -label (getPluginResource("MASH", "kScatterDensity")) "scatterDensity";
+        editorTemplate  -addControl -label (getPluginResource("MASH", "kCollideOnCreate")) "collideOnCreate";
+        editorTemplate  -addControl -label (getPluginResource("MASH", "kRotationMode")) "rotationMode" "MASHplacerModeType";
+        editorTemplate  -addControl -label (getPluginResource("MASH", "kLeanAmount")) "leanAmount";
+        editorTemplate  -addControl -label (getPluginResource("MASH", "kPushAlingNormal")) "pushAlongNormal";
+        editorTemplate  -addControl -label (getPluginResource("MASH", "kAlignBrushAxis")) "alignBrushAxis";
+        editorTemplate  -en;
+        editorTemplate  -addControl -label (getPluginResource("MASH", "kRandomScale")) "randomScale";
+        editorTemplate  -addControl -label (getPluginResource("MASH", "kRandomRotation")) "randomRotation";
+        editorTemplate  -addControl -label (getPluginResource("MASH", "kRandSeed")) "randomSeed";
+        editorTemplate  -addControl -label (getPluginResource("MASH", "kIdMode")) "idMode" "MASHplacerModeType";
+        editorTemplate  -addControl -label (getPluginResource("MASH", "kPaintId")) "paintId";
+        editorTemplate  -addControl -label (getPluginResource("MASH", "kRandomId")) "randomId";
+        editorTemplate -callCustom "MASHplacerIdFeedbackBuildQt" "MASHplacerIdFeedbackUpdateQt" "";
+
+        editorTemplate  -addControl -label (getPluginResource("MASH", "kStickToMesh")) "stickToMesh"  "MASHplacerModeType";
+        editorTemplate -callCustom "MASHpaintMeshListWidgetBuildQt" "MASHpaintMeshListWidgetUpdateQt" "";
+
+        editorTemplate -suppress "brushType";
+        editorTemplate -suppress "inIterations";
+        editorTemplate -suppress "time";
+        editorTemplate -suppress "Envelope";
+        editorTemplate -suppress "randEnvelope";
+        editorTemplate -suppress "StepEnvelope";
+        AEdependNodeTemplate $nodeName;
+        editorTemplate -addExtraControls;
+        editorTemplate -endScrollLayout;
+}
+
+global proc MASHplacerIdFeedbackBuildQt(string $nodeName)
+{
+    string $buffer[];
+    tokenize($nodeName, ".", $buffer);
+    $nodeName = $buffer[0];
+
+    string $parent = `setParent -q`;
+    python("import MASH.idFeedbackWidget");
+    python("MASH.idFeedbackWidget.buildQtWidget('" + $parent + "', '" + $nodeName + "', ['paintId', 'randomId0', 'randomId1'], 'idMode')");
+    setParent..;
+
+}
+
+global proc MASHplacerIdFeedbackUpdateQt(string $nodeName )
+{
+    string $buffer[];
+    tokenize($nodeName, ".", $buffer);
+    $nodeName = $buffer[0];
+    string $parent = `setParent -q`;
+    python("import MASH.idFeedbackWidget");
+    python("MASH.idFeedbackWidget.updateQtWidget('" + $parent + "', '" + $nodeName + "', ['paintId', 'randomId0', 'randomId1'], 'idMode')");
+}
+
+global proc MASHplacerToolsBuildQt(string $nodeName)
+{
+    string $buffer[];
+    tokenize($nodeName, ".", $buffer);
+    $nodeName = $buffer[0];
+
+    python("import PlacerToolButtons");
+    string $parent = `setParent -q`;
+    //get python to create the widget, include the desired nodeType as an arguement
+    python("PlacerToolButtons.build_qt_widget('" + $parent + "', '" + $nodeName + "')");
+    setParent..;
+
+}
+
+global proc MASHplacerToolsUpdateQt(string $nodeName )
+{
+    string $buffer[];
+    tokenize($nodeName, ".", $buffer);
+    $nodeName = $buffer[0];
+    string $parent = `setParent -q`;
+    python("import PlacerToolButtons");
+    python("PlacerToolButtons.update_qt_widget('" + $parent + "', '" + $nodeName + "')");
+}
+
+
+global proc MASHpaintMeshListWidgetBuildQt(string $nodeName)
+{
+    string $buffer[];
+    tokenize($nodeName, ".", $buffer);
+    $nodeName = $buffer[0];
+
+    python("import MASHlistQtWidget");
+    string $parent = `setParent -q`;
+    //get python to create the widget, include the desired nodeType as an arguement
+    python("MASHlistQtWidget.build_qt_widget('" + $parent + "', '" + $nodeName + "', 'mesh', 'paintMeshes', 'worldMesh[0]', '', 'kPaintMeshes')");
+    setParent..;
+
+}
+
+global proc MASHpaintMeshListWidgetUpdateQt(string $nodeName )
+{
+    string $buffer[];
+    tokenize($nodeName, ".", $buffer);
+    $nodeName = $buffer[0];
+    string $parent = `setParent -q`;
+    python("import MASHlistQtWidget");
+    python("MASHlistQtWidget.update_qt_widget('" + $parent + "', '" + $nodeName + "', 'mesh', 'paintMeshes', 'worldMesh[0]', '', 'kPaintMeshes')");
+}
+
+global proc AEMASHPlacerSetTool ( string $attr, int $tool )
+{
+
+    setAttr ($attr+"brushType") $tool;
+    string $node = `substring $attr 1 (size($attr)-1)`;
+    MASHplacerModeType($node);
+    select -add $node;
+    MASHplacePoints();
+}
+

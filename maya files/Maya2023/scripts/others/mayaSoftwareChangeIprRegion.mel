@@ -1,0 +1,43 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+// Description:  This procedure is called to change the IPR render
+//  region for mayaSoftware.
+//
+global proc mayaSoftwareChangeIprRegion(string $renderPanel)
+{
+     if (isIprFileLoaded())
+     {
+         global int $gIprTuningPaused;
+
+         if ($gIprTuningPaused)
+         {
+             renderWindowMenuCommand("togglePauseTuning", $renderPanel);
+         }
+
+         // Tell the IPR engine what the current marquee is
+         //
+         int $top;
+         int $left;
+         int $bottom;
+         int $right;
+
+         string $renderGlobals[] = `ls -renderGlobals`;
+
+         $bottom = `getAttr ($renderGlobals[0] + ".bottomRegion")`;
+         $left   = `getAttr ($renderGlobals[0] + ".leftRegion")`;
+         $top    = `getAttr ($renderGlobals[0] + ".topRegion")`;
+         $right  = `getAttr ($renderGlobals[0] + ".rightRegion")`;
+
+         iprEngine
+             -edit
+             -region $left $bottom $right $top
+             defaultIprEngine;
+
+         loadSamples($renderPanel);
+     }
+} 

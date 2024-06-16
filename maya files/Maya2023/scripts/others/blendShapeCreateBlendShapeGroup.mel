@@ -1,0 +1,122 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc blendShapeCreateBlendShapeGroup(string $bsdsAndBsdGroups[])
+//
+//  Description:
+//		Create a new blendShape group containing all the items in
+//		$bsdsAndBsdGroups (-1/-2/blendshape1/blendshape2/-3...)
+//
+{
+	// 1. Gather child items for the new created group
+	string $groupItems[];
+	for ($item in $bsdsAndBsdGroups)
+	{
+		if (startsWith($item, "-"))
+			// blendShape group
+			$groupItems[size($groupItems)] = $item;
+		else
+		{
+			// blendShape
+			int $id = `getAttr ($item + ".midLayerId")`;
+			if ($id >= 0)
+				$groupItems[size($groupItems)] = $id;
+		}
+	}
+
+	// 2. Set child items for the new created group
+	int $directoryIndex = unusedBlendShapeDirectoryIndex();
+	setBlendShapeDirectoryChildren($directoryIndex, $groupItems);
+	
+	// 3. Update parents for the items of the new group
+	int $groupItemParents[];
+	for ($item in $bsdsAndBsdGroups)
+	{
+		string $parentIndexAttr;
+		if (startsWith($item, "-"))
+			// blendShape group
+			$parentIndexAttr = "shapeEditorManager.blendShapeDirectory[" + stringRemovePrefix($item, "-") + "].parentIndex";
+		else
+			// blendShape
+			$parentIndexAttr = $item + ".midLayerParent";
+
+		int $parentIndex = `getAttr $parentIndexAttr`;
+		if ($parentIndex < 0)
+			$parentIndex = 0;
+		if (!intArrayContains($parentIndex, $groupItemParents))
+			$groupItemParents[size($groupItemParents)] = $parentIndex;
+
+		setAttr $parentIndexAttr $directoryIndex;
+	}
+	if (size($groupItemParents) == 0)
+		$groupItemParents[0] = 0;
+	setAttr ("shapeEditorManager.blendShapeDirectory[" + $directoryIndex + "].parentIndex") $groupItemParents[0];
+
+	// 3. Insert the new group into the grand parent, and remove the group items from their old parent
+	for ($i = 0; $i < size($groupItemParents); $i++)
+	{
+		int $childIndices[] = `getAttr ("shapeEditorManager.blendShapeDirectory[" + $groupItemParents[$i] + "].childIndices")`;
+		string $buffer[] = stringToStringArray(intArrayToString($childIndices, ","), ",");
+		if ($i == 0)
+		{
+			if (size($groupItems) > 0)
+			{
+				int $indexToInsert = stringArrayFind($groupItems[0], 0, $buffer);
+				stringArrayInsertAtIndex($indexToInsert, $buffer, stringAddPrefix($directoryIndex, "-"));
+			}
+			else
+				$buffer[size($buffer)] = stringAddPrefix($directoryIndex, "-");
+		}
+		$buffer = stringArrayRemove($groupItems, $buffer);
+		setBlendShapeDirectoryChildren($groupItemParents[$i], $buffer);
+	}
+
+	// 4. Set the new group's name
+	string $directoryName = unusedBlendShapeDirectoryName($groupItemParents[0]);
+	setAttr ("shapeEditorManager.blendShapeDirectory[" + $directoryIndex + "].directoryName") -type "string" $directoryName;
+}
+
+global proc int unusedBlendShapeDirectoryIndex()
+{
+	int $result = 0;
+	int $indexArray[] = `getAttr -multiIndices "shapeEditorManager.blendShapeDirectory"`;
+	for ($index in $indexArray)
+	{
+		if ($index > $result)
+			return $result;
+		$result = $index + 1;
+	}
+	return $result;
+}
+
+global proc string unusedBlendShapeDirectoryName(string $parentIndex)
+{
+	string $usedNames[];
+	int $childIndices[] = `getAttr ("shapeEditorManager.blendShapeDirectory[" + $parentIndex + "].childIndices")`;
+	for ($child in $childIndices)
+	{
+		if ($child < 0)
+			$usedNames[size($usedNames)] = `getAttr ("shapeEditorManager.blendShapeDirectory[" + (-$child) + "].directoryName")`;
+	}
+
+	for ($i = 1; ; $i++) {
+		string $name = "Group " + $i;
+		if (!stringArrayContains($name, $usedNames))
+			return $name;
+	}
+}
+
+global proc setBlendShapeDirectoryChildren(string $directoryIndex, string $childItems[])
+{
+	string $setChildCmd = "setAttr shapeEditorManager.blendShapeDirectory[" + $directoryIndex + "].childIndices -type Int32Array " + size($childItems);
+	for ($item in $childItems)
+	{
+		$setChildCmd += " " + $item;
+	}
+	$setChildCmd += ";";
+	eval($setChildCmd);
+}

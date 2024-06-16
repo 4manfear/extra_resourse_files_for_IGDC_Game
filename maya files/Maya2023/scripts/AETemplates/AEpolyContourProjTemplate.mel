@@ -1,0 +1,52 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Procedure Name:
+//	AEpolyContourProjTemplate
+//
+//  Description Name;
+//	Creates the attribute editor controls for the polyContourProj Node
+// 
+
+global proc AEpolyContourProjTemplate ( string $nodeName )
+{
+	editorTemplate -beginScrollLayout;
+		editorTemplate -beginLayout (uiRes("m_AEpolyContourProjTemplate.kPolyContourStretchProjectionAttributes")) -collapse 0;
+		
+			editorTemplate -addControl "method";
+			editorTemplate -addControl "userDefinedCorners";
+			editorTemplate -suppress "cornerVertices";
+		
+			editorTemplate -beginLayout (uiRes("m_AEpolyContourProjTemplate.kCurveAttributes")) -collapse 1;
+
+				editorTemplate -addControl "smoothness0";
+				editorTemplate -addControl "smoothness1";
+				editorTemplate -addControl "smoothness2";
+				editorTemplate -addControl "smoothness3";
+				editorTemplate -addControl "offset0";
+				editorTemplate -addControl "offset1";
+				editorTemplate -addControl "offset2";
+				editorTemplate -addControl "offset3";
+
+				editorTemplate -addControl "flipRails";
+
+				editorTemplate -addControl "reduceShear";
+	
+			editorTemplate -endLayout;
+		
+			// include/call base class/node attributes		
+			// AEpolyModifierCommon $nodeName;
+			editorTemplate -suppress "worldSpace";
+		editorTemplate -endLayout;		
+		// include/call base class/node attributes		
+		AEpolyModifierInclude $nodeName;
+
+	editorTemplate -addExtraControls;
+	editorTemplate -endScrollLayout;
+}

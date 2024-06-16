@@ -1,0 +1,38 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//  Creation Date:  05 Jul 1999
+//
+//
+//  Description:
+//     This displays the Template Brush settings window.
+//
+
+global proc brushToolSettings(){
+	if ( !`window -exists PaintEffectsBrushWindow` ){
+
+		window
+			-title (uiRes("m_brushToolSettings.kPaintEffectsBrushSettings"))
+			-width 510 -height 600
+			PaintEffectsBrushWindow;
+
+		// string $lName = `frameLayout -bv 0 -cl 0 -cll 0 -lv 0`;
+		string $cmd = "getDefaultBrush( )";
+		string $defName = `eval $cmd`;
+
+		string $lName = `paneLayout`;
+
+		createEditor $lName $defName;
+
+		setParent ..;
+		frameLayout;
+		nameField -ncc ("brushNameCallback " + $lName) -o $defName;
+	}
+
+	showWindow PaintEffectsBrushWindow;
+}

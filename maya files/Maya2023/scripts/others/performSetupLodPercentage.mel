@@ -1,0 +1,85 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc string[] performSetupLodPercentage( int $mergeTransforms )
+//
+//	Description:
+//		This script sets up a "lod" node and connects a 
+//		camera with initial threshold values based on the current
+//		camera.  Threshold values are chosen such that
+//		the high detail object is seen if the screen height is 64%, and
+//		subsequent levels of details are shown when the height is 32%, 16%,
+//		8%, etc.
+//
+//		The user must select:
+//			1. zero or one camera. If zero, the current camera is taken
+//			2. at least 1 transform as lod Level
+//				The transforms must be selected in
+//				order: highest to lowest resolution.
+//			3. If multiple transforms are selected, and $mergeTransforms is
+//			   true, these objects will be merged under LOD_0.
+//
+{
+	string $result[];
+	if( !`exists createLodGroup` ){
+		eval("source \"lodUtils.mel\"");
+	}
+	$result = createLodGroup( true, $mergeTransforms );
+	if( size($result) < 2 ){
+		return $result;
+	}
+	string $camera = $result[0];
+	string $lodGroup = $result[1];
+	int $isOrtho = `getAttr ($camera + ".orthographic")`;
+	int $numTransforms = size(`listRelatives -children $lodGroup`);
+
+	if( $isOrtho ) {
+		// connect the orthographic camera to the lod group.
+		//
+		connectOrthoToLod( $camera, ($lodGroup + ".cameraMatrix") );
+
+	} else {
+		// connect camera's world space matrix to lodGroup node
+		string $cameraSh[] = `listRelatives -children $camera`;
+		connectAttr ($cameraSh[0] + ".worldMatrix") 
+			($lodGroup + ".cameraMatrix");
+		connectAttr ($cameraSh[0] + ".focalLength") 
+			($lodGroup + ".focalLength");
+	}
+
+	float $cameraDistance = getAttr ($lodGroup + ".distance");
+
+	// Set highest level of detail at 64%, and keep cutting in two for each
+	// lower level of detail
+	//
+	if ( $numTransforms > 1 ) {
+
+		// set the thresholds putting the middle resolution node in the middle
+		//
+		int $maxThreshold = $numTransforms - 1;
+		for( $i = 0; $i < $maxThreshold; $i++ ) {
+			setPercentageThreshold( $i, $lodGroup, false );
+		}
+	}
+
+	// initialize each transform's LOD lodVisibility to Off
+	for( $i = 0; $i < $numTransforms; $i ++ ) {
+		setAttr ($lodGroup + ".displayLevel[" + $i + "]") 0;
+	}
+
+	// enable worldspace setting by default so grouping the lod node
+	// will still work as expected
+	setAttr ($lodGroup + ".worldSpace") 1;
+
+	// explicitly select the threshold node and group 
+	select -r $lodGroup;
+
+	// return the group
+	string $retval[];
+	$retval[0] = $lodGroup;
+	return $retval;
+}

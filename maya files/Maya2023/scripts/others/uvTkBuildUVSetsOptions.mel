@@ -1,0 +1,568 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//  Procedure Name:
+//      uvTkBuildUVSetsOptions
+//
+//  Description:
+//		Build UV Sets options for UV toolkit
+//
+//  Input Arguments:
+//      $parentForm - Parent forms
+//
+//  Return Value:
+//      Layout to be added into form
+//
+global proc string uvTkBuildUVSetsOptions(string $parentForm)
+{
+    global float $gUVTkFrameHeadColor[];
+    string $layout = `frameLayout -p $parentForm -bgc $gUVTkFrameHeadColor[1] $gUVTkFrameHeadColor[1] $gUVTkFrameHeadColor[2] -collapsable true -collapse true -label (uiRes("m_uvTkBuildUVSetsOptions.kUVSetsFrame"))`;
+       string $form = `formLayout`;
+           string $btnIcons[] = {"polyPropagateUVSet.png",
+                                 "polyDuplicateUVSet.png",
+								 "polyCopyUV.png",
+                                 "polyCreateUVSet.png",
+                                 "UVEditorSnapshot.png",
+								 "UVLinkingEditor.png",
+								 "polyShareInstances.png",
+								 "polyShareInstancesSelect.png"
+								 };
+           string $btnAnns[] = {(uiRes("m_uvTkBuildUVSetsOptions.kPropSetAnnot")),
+                                (uiRes("m_uvTkBuildUVSetsOptions.kDuplicateSetAnnot")),
+                                (uiRes("m_uvTkBuildUVSetsOptions.kCopyUVsToUVSet")),
+								(uiRes("m_uvTkBuildUVSetsOptions.kEmptySetAnnot")),
+								(uiRes("m_uvTkBuildUVSetsOptions.kCreateSnapshotAnnot")) + getRunTimeCommandAnnotation("UVCreateSnapshot"),
+								(uiRes("m_uvTkBuildUVSetsOptions.kRelationshipEditorAnnot")),
+								(uiRes("m_uvTkBuildUVSetsOptions.kShareInst")),
+								(uiRes("m_uvTkBuildUVSetsOptions.kSelSharedInst"))};
+           string $btnCmds[] = {"uvTkDoPropagateUVSet",
+                                "uvTkDoDuplicateSelectedUVSets",
+                                "",
+								"if(`getModifiers`%2){uvTkDoCreateUVSet(1);}else{evalDeferred\"uvTkDoCreateUVSet(0)\";}",
+                                "UVCreateSnapshot",
+								"UVCentricUVLinkingEditor",
+								"ShareUVInstances",
+								"SelectSharedUVInstances"};
+								
+		   // Use strings in this array to find buttons
+		   string $btnNames[] = {"uvTkUVSetPropagateBtn",
+                                 "uvTkUVSetDuplicateBtn",
+                                 "uvTkUVSetCopyToBtn",
+								 "uvTkUVSetCreateBtn",
+                                 "uvTkUVSetSnapshotBtn",
+								 "uvTkUVSetLinkEditorBtn",
+								 "uvTkUVSetShaInsBtn",
+								 "uvTkUVSetSelShaInsBtn"};
+           	
+           for ($i = 0; $i < size($btnIcons); $i++) 
+           {
+			   iconTextButton -p $form
+			                  -st "iconOnly"
+           					  -i $btnIcons[$i]
+           					  -ann $btnAnns[$i]
+           					  -w 25 -h 25 -mw 2 -mh 2
+           					  -c $btnCmds[$i]
+							  $btnNames[$i];
+           }
+		   
+		   string $relEditorMenu = `popupMenu -b 3 -p uvTkUVSetLinkEditorBtn`; 
+		   menu -e -pmc "TextureCentricUVLinkingEditor" $relEditorMenu; 
+
+		   string $copyUVsToUVSetMenu1 = `popupMenu -b 1 -p uvTkUVSetCopyToBtn`;
+		   copyUVsToUVSetsPopupMenu($copyUVsToUVSetMenu1, "uvTkPop1");
+		   string $copyUVsToUVSetMenu2 = `popupMenu -b 3 -p uvTkUVSetCopyToBtn`;
+		   copyUVsToUVSetsPopupMenu($copyUVsToUVSetMenu2, "uvTkPop2");
+		   
+		   iconTextCheckBox -p $form
+		                    -st "iconOnly"
+							-ann (uiRes("m_uvTkBuildUVSetsOptions.kAutoLoadTexAnnt"))
+							-i1 "loadLinkedTextureAutomatic.png"
+							-cc "textureWindowToggleAutoLoadTextures 1;"
+							-value `textureWindowToggleAutoLoadTextures 0`
+							uvTkUVSetAutoLoadBtn;
+			
+		   $treePane = `paneLayout -cn "vertical2" uvTkUVSetTreePane`;
+			   $objectTreeForm = `formLayout`; 
+			       $objectTreeLabel = `text -height 20 -bgc 0.365 0.365 0.365 -label (uiRes("m_uvTkBuildUVSetsOptions.kObject"))`;
+				   treeView -p $objectTreeForm
+							-h 30
+							-allowDragAndDrop false
+							-selectionChangedCommand "uvTkObjectTreeItemSelect"
+							-itemDblClickCommand "uvTkObjectTreeItemDoubleClicked"
+							uvTkObjectTree;
+			   setParent ..;
+		       formLayout -e 
+			       -af $objectTreeLabel top 0
+				   -af $objectTreeLabel left 0
+				   -af $objectTreeLabel right 0
+				   -ac uvTkObjectTree top 0 $objectTreeLabel
+				   -af uvTkObjectTree left 0
+				   -af uvTkObjectTree right 0
+				   -af uvTkObjectTree bottom 0
+			       $objectTreeForm;
+			   
+			   $uvSetTreeForm = `formLayout`;
+			       text -height 20 -bgc 0.365 0.365 0.365 uvTkUVSetsTreeLabel;
+				   treeView -p $uvSetTreeForm 
+							-h 30
+							-allowDragAndDrop false
+							-selectionChangedCommand "uvTkUVSetTreeItemSelect"
+							-itemRenamedCommand "uvTkUVSetTreeItemRename"
+							-contextMenuCommand "uvTkUVSetTreeRMBAction"
+							uvTkUVSetTree;
+				   setParent ..;
+			   formLayout -e 
+			       -af uvTkUVSetsTreeLabel top 0
+				   -af uvTkUVSetsTreeLabel left 0
+				   -af uvTkUVSetsTreeLabel right 0
+				   -ac uvTkUVSetTree top 0 uvTkUVSetsTreeLabel
+				   -af uvTkUVSetTree left 0
+				   -af uvTkUVSetTree right 0
+				   -af uvTkUVSetTree bottom 0
+			       $uvSetTreeForm;
+		   setParent ..;
+		   popupMenu -b 3 -p uvTkUVSetTree uvTkUVSetTreeRMBMenu;
+		   
+		   formLayout -e
+		        // Top buttons
+    		    -af uvTkUVSetPropagateBtn top     5
+    		    -af uvTkUVSetPropagateBtn right   1
+    		    -af uvTkUVSetDuplicateBtn top     5
+    		    -ac uvTkUVSetDuplicateBtn right   1 uvTkUVSetPropagateBtn
+    		    -af uvTkUVSetCopyToBtn top        5
+				-ac uvTkUVSetCopyToBtn right      1 uvTkUVSetDuplicateBtn
+    		    -af uvTkUVSetCreateBtn top        5
+    		    -ac uvTkUVSetCreateBtn right      1 uvTkUVSetCopyToBtn
+				// Bottom right buttons           
+    		    -af uvTkUVSetSnapshotBtn bottom   5
+    		    -af uvTkUVSetSnapshotBtn right    1
+				-af uvTkUVSetAutoLoadBtn bottom   5
+				-ac uvTkUVSetAutoLoadBtn right    1 uvTkUVSetSnapshotBtn
+				-af uvTkUVSetLinkEditorBtn bottom 5
+				-ac uvTkUVSetLinkEditorBtn right  1 uvTkUVSetAutoLoadBtn
+				// Bottom left buttons
+				-af uvTkUVSetShaInsBtn left       1
+				-af uvTkUVSetShaInsBtn bottom     5
+				-ac uvTkUVSetSelShaInsBtn left    1 uvTkUVSetShaInsBtn
+				-af uvTkUVSetSelShaInsBtn bottom  5
+				// treeviews
+				-ac uvTkUVSetTreePane top         5 uvTkUVSetPropagateBtn
+				-af uvTkUVSetTreePane left        1
+				-af uvTkUVSetTreePane right       1
+				-ac uvTkUVSetTreePane bottom      5 uvTkUVSetSnapshotBtn
+    		    $form;
+           setParent ..;
+        setParent ..;
+	uvTkResolveAndUpdateTrees;
+	scriptJob -p uvTkUVSetTree -e "SelectionChanged" "uvTkResolveAndUpdateTrees";
+	scriptJob -p uvTkUVSetTree -e "PolyUVSetChanged" "uvTkUpdateUVSetTree";
+    return $layout;
+}
+
+global proc string copyUVsToUVSetsPopupMenuTarget()
+{
+	global string $gUVTkUVSetObjs[];
+	int $selectObjNum = size($gUVTkUVSetObjs);
+	
+	string $selectObj = "";
+	if($selectObjNum == 1)
+		$selectObj = $gUVTkUVSetObjs[0];
+		
+	return $selectObj;
+}
+
+global proc copyUVsToUVSetsPopupMenu(string $menuItem, string $prefix)
+{
+	string $pmc = "string $target = copyUVsToUVSetsPopupMenuTarget();" + 
+				  "buildCopyUVsToUVSetMenu " + $menuItem + " \"" + $prefix + "\" 1 $target;";
+	menu -e -pmc $pmc $menuItem;
+	
+	menuItem -divider true;
+	
+	menuItem -label (uiRes("m_uvTkBuildUVSetsOptions.kCopyIntoNewUVSet")) -ecr true
+		-annotation (uiRes("m_uvTkBuildUVSetsOptions.kCopyIntoNewUVSetAnnot")) 
+		-image "polyCreateUVSet.png"
+		-command "CopyUVsToUVSet"
+		( $prefix + "copyCurrentUVSetMenu" ) ;
+
+	menuItem -optionBox 1 -ecr false
+		-annotation (uiRes("m_uvTkBuildUVSetsOptions.kCopyIntoNewUVSetOptionsAnnot")) 
+		-image "polyCreateUVSet.png"
+		-command "CopyUVsToUVSetOptions"
+		( $prefix + "copyCurrentUVSetOBTexturePanel" ) ;
+	setParent -m ..;
+}
+
+global proc uvTkUVSetResolveActiveObjs()
+{
+	// Get active objects, and try to resolve one root object for UV set Panel to consume
+    global string $gUVTkUVSetObjs[];
+    global string $gUVTkUVSetActiveObjs[];
+
+	string $selectObjList[] = `ls -dag -ni -o -g -sl`;
+	string $hiliteList[] = `ls -dag -ni -o -g -hl`;
+	string $selCompObj[] = `listRelatives -p -pa -type "mesh"`;
+	$gUVTkUVSetActiveObjs = $selectObjList;
+	$gUVTkUVSetActiveObjs = stringArrayCatenate( $gUVTkUVSetActiveObjs, $hiliteList );
+	$gUVTkUVSetActiveObjs = stringArrayCatenate( $gUVTkUVSetActiveObjs, $selCompObj );
+	$gUVTkUVSetActiveObjs = stringArrayRemoveDuplicates( $gUVTkUVSetActiveObjs );
+	$gUVTkUVSetActiveObjs = sort($gUVTkUVSetActiveObjs);
+	
+	// Remove non-exists objs
+	string $ObjsNew[];
+	for($obj in $gUVTkUVSetObjs)
+	{
+		if(stringArrayFind($obj, 0, $gUVTkUVSetActiveObjs) >= 0)
+			$ObjsNew[size($ObjsNew)] = $obj;
+	}
+	$gUVTkUVSetObjs = $ObjsNew;
+	
+	// Only resolve gUVTkUVSetObjs when selection changed, otherwise it will reset object tree selection
+	global string $gUVTkPreviousSelection;
+	$sel = stringArrayToString(`ls -sl`, " ");
+	if($sel == $gUVTkPreviousSelection)
+	    return;
+	$gUVTkPreviousSelection = $sel;
+	
+	// Selection changed, refresh gUVTkUVSetObjs if first component obj not in it
+	if(size($gUVTkUVSetActiveObjs) > 0 && size($selCompObj) > 0)
+	{
+		if(stringArrayFind($selCompObj[0], 0, $gUVTkUVSetObjs) < 0)
+		{
+			$gUVTkUVSetObjs = {};
+			$gUVTkUVSetObjs[0] = $selCompObj[0];
+		}
+
+	}
+	// In object mode, refresh gUVTkUVSetObjs if first select obj not in it
+	else if(`getComponentMask` == "none" && size($selectObjList) > 0 && size($gUVTkUVSetActiveObjs) > 0)
+	{
+		if(stringArrayFind($selectObjList[0], 0, $gUVTkUVSetObjs) < 0)
+		{
+			$gUVTkUVSetObjs = {};
+			$gUVTkUVSetObjs[0] = $selectObjList[0];
+		}
+	}
+}
+
+global proc uvTkResolveAndUpdateTrees()
+{
+	uvTkUVSetResolveActiveObjs(); 
+	uvTkUpdateObjectTree();
+	uvTkUpdateUVSetTree();
+	global string $gUVTkUVSetActiveObjs[];
+	for($activeObj in $gUVTkUVSetActiveObjs)
+		scriptJob -runOnce true -parent uvTkUVSetTree -nodeNameChanged $activeObj "uvTkResolveAndUpdateTrees";
+}
+
+global proc uvTkUpdateObjectTree()
+{
+	if(!`treeView -q -ex uvTkObjectTree`)
+		return;
+	global string $gUVTkUVSetActiveObjs[];
+    global string $gUVTkUVSetObjs[];
+	treeView -e -removeAll uvTkObjectTree;
+	for($obj in $gUVTkUVSetActiveObjs)
+	{
+	   treeView -e -ai $obj "" uvTkObjectTree;
+	   if(stringArrayFind($obj, 0, $gUVTkUVSetObjs) >= 0)
+	       treeView -e -si $obj true uvTkObjectTree;
+	}
+}
+
+global proc uvTkObjectTreeItemDoubleClicked(string $item)
+{
+	// A placeholder that block renaming action
+}
+
+global proc uvTkObjectTreeItemSelect()
+{
+	$selObjs = `treeView -q -si uvTkObjectTree`;
+	if(size($selObjs) == 0) 
+	{
+		// Recover to default selection
+		uvTkUpdateObjectTree;
+		return;
+	}
+	global string $gUVTkUVSetObjs[];
+	$gUVTkUVSetObjs = {};
+	for($sel in $selObjs)
+	{
+		$gUVTkUVSetObjs[size($gUVTkUVSetObjs)] = $sel;
+		uvTkUpdateUVSetTree;
+	}
+}
+
+global proc uvTkUpdateUVSetTree()
+{	
+    //Load UV Sets
+	if(!`treeView -q -ex uvTkUVSetTree`)
+		return;
+	
+    global string $gUVTkUVSetObjs[];
+	
+	int $selectObjNum = size($gUVTkUVSetObjs);
+	
+	// Update buttons
+	iconTextButton -e -en ($selectObjNum == 1) uvTkUVSetPropagateBtn;
+	iconTextButton -e -en ($selectObjNum != 0) uvTkUVSetDuplicateBtn;
+	iconTextButton -e -en ($selectObjNum == 1) uvTkUVSetCopyToBtn;
+	iconTextButton -e -en ($selectObjNum != 0) uvTkUVSetCreateBtn;
+	iconTextButton -e -en ($selectObjNum == 1) uvTkUVSetLinkEditorBtn;
+	
+	// Update tree label
+	text -e -label (uiRes("m_uvTkBuildUVSetsOptions.kUVSet")) uvTkUVSetsTreeLabel;
+	if($selectObjNum == 0) // No current object
+	{
+		treeView -e -removeAll uvTkUVSetTree;
+		return;
+	}
+	string $sets[] = `polyUVSet -pi 1 -q -allUVSets $gUVTkUVSetObjs[0]`;
+	string $firstObjSets[];
+	for( $set in $sets )
+	{
+		string $perInstUVSet[] = `polyUVSet -uvSet $set -q -pi $gUVTkUVSetObjs[0]`;
+		if (size($perInstUVSet[0]) > 0) {
+			$firstObjSets[size($firstObjSets)] = $perInstUVSet[0];
+		} else {
+			continue;
+		}
+	}
+	string $currentSet[] = `polyUVSet -q -cuv $gUVTkUVSetObjs[0]`;
+	
+	if($selectObjNum == 1)
+	{
+		//Check if update is required
+		string $items[] = `treeView -q -ch null uvTkUVSetTree`;
+		string $selItems[] = `treeView -q -si uvTkUVSetTree`;
+		int $updateRequired = 0;
+		if(size($firstObjSets) == size($items))
+		{
+			for($i = 0; $i < size($firstObjSets); $i++)
+			{
+				if($firstObjSets[$i] != $items[$i])
+					$updateRequired = 1;
+			}
+			if(!$updateRequired)
+				$updateRequired = (stringArrayFind($currentSet[0], 0, $selItems) < 0);
+		}
+		else
+			$updateRequired = 1;
+		if(!$updateRequired)
+			return;
+
+		//Update tree
+		treeView -e -removeAll uvTkUVSetTree;
+		for($set in $firstObjSets)
+		{
+		   treeView -e -ai $set "" uvTkUVSetTree;
+		   if($currentSet[0] == $set) //Select current set
+			   treeView -e -si $set true uvTkUVSetTree;
+		}
+	}
+	else if($selectObjNum > 1)
+	{
+		// Update tree label
+		text -e -label (uiRes("m_uvTkBuildUVSetsOptions.kSharedUVSet")) uvTkUVSetsTreeLabel;
+		for($i = 1; $i < $selectObjNum; $i++)
+		{
+			string $otherObjSets[] = `polyUVSet -pi 1 -q -allUVSets $gUVTkUVSetObjs[$i]`;
+			string $objCurrentSet[] = `polyUVSet -q -cuv $gUVTkUVSetObjs[$i]`;
+			
+			//If currentUVSets are not the same, don't highlight any of it
+			if($currentSet[0] != "" && $objCurrentSet[0] != $currentSet[0])
+				$currentSet[0] = "";
+			string $otherObjsSets[];
+			for( $set in $otherObjSets )
+			{
+				string $perInstUVSet[] = `polyUVSet -uvSet $set -q -pi $gUVTkUVSetObjs[$i]`;
+				if (size($perInstUVSet[0]) > 0) {
+					$otherObjsSets[size($otherObjsSets)] = $perInstUVSet[0];
+				} else {
+					continue;
+				}
+			}
+			string $newSets[];
+			for($set in $firstObjSets)
+			{
+				if(stringArrayFind($set, 0, $otherObjsSets) >= 0)
+					$newSets[size($newSets)] = $set;
+			}
+			$firstObjSets = $newSets;
+			if(size($firstObjSets) == 0)
+				break;
+		}
+		
+		//Check if update is required
+		string $items[] = `treeView -q -ch null uvTkUVSetTree`;
+		string $selItems[] = `treeView -q -si uvTkUVSetTree`;
+		int $updateRequired = 0;
+		if(size($firstObjSets) == size($items))
+		{
+			for($i = 0; $i < size($firstObjSets); $i++)
+			{
+				if($firstObjSets[$i] != $items[$i])
+					$updateRequired = 1;
+			}
+			if(!$updateRequired)
+				$updateRequired = (stringArrayFind($currentSet[0], 0, $selItems) < 0);
+		}
+		else
+			$updateRequired = 1;
+		if(!$updateRequired)
+			return;
+		
+		treeView -e -removeAll uvTkUVSetTree;
+		for($set in $firstObjSets)
+		{
+			treeView -e -ai $set "" uvTkUVSetTree;
+			if($currentSet[0] == $set) //Select current set
+			    treeView -e -si $set true uvTkUVSetTree;
+		}
+	}
+	string $items[] = `treeView -q -ch null uvTkUVSetTree`;
+	if(size($items) > 0)
+		treeView -e -itemAnnotation $items[0] (uiRes("m_uvTkBuildUVSetsOptions.kDefaultUVSet")) uvTkUVSetTree;
+}
+
+global proc uvTkDoPropagateUVSet()
+{
+	evalEcho("string $selSets[] = `treeView -q -si uvTkUVSetTree`; uvSetEditCmd propagate $selSets;");
+}
+
+global proc uvTkUVSetTreeItemSelect()
+{
+	$selUVSet = `treeView -q -si uvTkUVSetTree`;
+	global string $gUVTkUVSetObjs[];
+	if(size($selUVSet) == 1)
+	{
+		for ($selObj in $gUVTkUVSetObjs)
+		{
+			polyUVSet -currentUVSet -uvSet $selUVSet[0] $selObj;
+			// MAYA-81085 Re-select for hack fixing active components issue,  
+			// since we don't have a proper way to fix select-> meshShape_evaluate->active_wrong_issue essentially now.
+			string $selection[] = `ls -sl`;
+			select -r $selection;
+		}
+	}
+	else if(size($selUVSet) == 0) // Reset tree if user deselect all UV sets
+		uvTkUpdateUVSetTree;
+}
+
+global proc uvTkUVSetTreeItemRename(string $oldName, string $newName)
+{
+	if($oldName != $newName)
+	{
+	    global string $gUVTkUVSetObjs[];
+		for($obj in $gUVTkUVSetObjs)
+			evalEcho("polyUVSet -rename -uvSet \"" + $oldName + "\" -newUVSet \"" + $newName + "\" " + $obj);
+	    uvTkUpdateUVSetTree();
+	}
+}
+
+global proc uvTkDoDuplicateSelectedUVSets()
+{
+	global string $gUVTkUVSetObjs[];
+	$sel = `treeView -q -si uvTkUVSetTree`;
+	for($obj in $gUVTkUVSetObjs)
+	{
+		for($item in $sel)
+			evalEcho("polyUVSet -copy -uvSet \"" + $item + "\" " + $obj);
+	}
+}
+
+global proc uvTkDoDeleteSelectedUVSets()
+{
+	global string $gUVTkUVSetObjs[];
+	$sel = `treeView -q -si uvTkUVSetTree`;
+	for($obj in $gUVTkUVSetObjs)
+	{
+		for($item in $sel)
+			evalEcho("polyUVSet -delete -uvSet \"" + $item + "\" " + $obj);
+	}
+}
+
+global proc uvTkMoveSelectedUVSet(string $direction)
+{
+	global string $gUVTkUVSetObjs[];
+	string $items[] = `treeView -q -ch null uvTkUVSetTree`;
+	string $selItems[] = `treeView -q -si uvTkUVSetTree`;
+
+	if(size($selItems) == 1)
+	{
+		int $index = stringArrayFind( $selItems[0], 0, $items );
+		int $size = size($items);
+		if( $direction == "Top" )
+		{
+			int $destIndex = $index - 1;
+			while ($destIndex >= 0)
+			{
+				evalEcho("polyUVSet -reorder -uvSet " + $items[$index] + " -nuv " + $items[$destIndex] + " " + $gUVTkUVSetObjs[0]);
+				$destIndex--;
+			}
+		}
+		else
+		{
+			int $destIndex = $direction == "Up" ? $index - 1 : $index + 1;
+			if($destIndex >=0 && $destIndex < $size)
+			{
+				evalEcho("polyUVSet -reorder -uvSet " + $selItems[0] + " -nuv " + $items[$destIndex] + " " + $gUVTkUVSetObjs[0]);
+			}
+		}
+		uvTkUpdateUVSetTree();
+	}
+}
+
+global proc int uvTkUVSetTreeRMBAction(string $item)
+{
+	menu -e -dai uvTkUVSetTreeRMBMenu;
+	if($item == "")
+	{
+		menuItem -p uvTkUVSetTreeRMBMenu -label (uiRes("m_uvTkBuildUVSetsOptions.kCreateEmptyUVSet")) -c "CreateEmptyUVSet";
+		return 1;
+	}
+	
+	global string $gUVTkUVSetObjs[];
+	$selectObjNum = size($gUVTkUVSetObjs);
+	string $items[] = `treeView -q -ch null uvTkUVSetTree`;
+	string $sel[] = `treeView -q -si uvTkUVSetTree`;
+	if(size($sel) > 1 || $selectObjNum > 1)
+	{
+		menuItem -p uvTkUVSetTreeRMBMenu -label (uiRes("m_uvTkBuildUVSetsOptions.kDuplicate")) -c "uvTkDoDuplicateSelectedUVSets";
+		menuItem -p uvTkUVSetTreeRMBMenu -label (uiRes("m_uvTkBuildUVSetsOptions.kDelete")) -c "uvTkDoDeleteSelectedUVSets";
+	}
+	else
+	{
+		int $index = stringArrayFind( $sel[0], 0, $items );
+		menuItem -p uvTkUVSetTreeRMBMenu -en ( $index == 0 ? false : true ) -label (uiRes("m_uvTkBuildUVSetsOptions.kMoveToTop")) -c "uvTkMoveSelectedUVSet(\"Top\")";
+		menuItem -p uvTkUVSetTreeRMBMenu -en ( $index == 0 ? false : true ) -label (uiRes("m_uvTkBuildUVSetsOptions.kMoveUp")) -c "uvTkMoveSelectedUVSet(\"Up\")";
+		menuItem -p uvTkUVSetTreeRMBMenu -en ( $index == size($items) - 1 ? false : true )-label (uiRes("m_uvTkBuildUVSetsOptions.kMoveDown")) -c "uvTkMoveSelectedUVSet(\"Down\")";
+		menuItem -p uvTkUVSetTreeRMBMenu -divider true;
+		string $copyUVsToUVSetMenu = `menuItem -p uvTkUVSetTreeRMBMenu -label (uiRes("m_uvTkBuildUVSetsOptions.kCopyUVsToUVSet")) -subMenu true`;
+		copyUVsToUVSetsPopupMenu($copyUVsToUVSetMenu, "uvTkUVSetTree");
+		menuItem -p uvTkUVSetTreeRMBMenu -label (uiRes("m_uvTkBuildUVSetsOptions.kDuplicate")) -c "uvTkDoDuplicateSelectedUVSets";
+		menuItem -p uvTkUVSetTreeRMBMenu -en ( $index == 0 ? false : true ) -label (uiRes("m_uvTkBuildUVSetsOptions.kDelete")) -c "uvTkDoDeleteSelectedUVSets";
+		menuItem -p uvTkUVSetTreeRMBMenu -divider true;
+		menuItem -p uvTkUVSetTreeRMBMenu -label (uiRes("m_uvTkBuildUVSetsOptions.kSnapshot")) -c "UVCreateSnapshot";
+	}
+	return 1;
+}
+
+global proc uvTkDoCreateUVSet(int $optionBox)
+{
+	// Only effect objects that selected in object tree view
+	if($optionBox)
+		performCreateUVSet "1" {"1", "uvTkCreateUVSetTargets", "0"} "";
+	else
+		performCreateUVSet "1" {"0", "uvTkCreateUVSetTargets", "0"} "";
+}
+
+global proc string[] uvTkCreateUVSetTargets()
+{
+	global string $gUVTkUVSetObjs[];
+	return $gUVTkUVSetObjs;
+}

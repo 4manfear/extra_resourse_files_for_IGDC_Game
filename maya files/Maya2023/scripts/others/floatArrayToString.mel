@@ -1,0 +1,55 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//<doc>
+//<name floatArrayToString>
+//
+//<synopsis>
+//	string floatArrayToString( float $array[], string $separationString )
+//
+//<description>
+//	Return a string that combines all the float elements of $array,
+//	each separated by the separation string.
+//
+//<flags>
+//  float  $array[]          The float array.
+//  string $separationString Defines the characters to place between 
+//                           each float element.
+//
+//<returns>
+//  string : A string combining all the individual float elements.
+//
+//
+//<examples>
+//
+//	floatArrayToString( { 1.0, 2.5, 3.2 }, "");
+//	// Result: 12.53.2 //
+//
+//	floatArrayToString({ 1.0, 2.5, 3.2 }, ", ");
+//	// Result: 1, 2.5, 3.2 //
+//
+//	floatArrayToString({ 1.0, 2.5, 3.2 }, "/");
+//	// Result: 1/2.5/3.2 //
+//
+//</doc>
+//
+global proc string floatArrayToString(float $array[], string $separationString)
+{
+	string $output = "";
+
+	int $count = size($array);
+	if ($count)
+	{
+		int $index;
+		$output = $array[0];
+		for ($index = 1; $index < $count; $index++)
+			$output += ($separationString + $array[$index]);
+	}
+
+	return $output;
+}

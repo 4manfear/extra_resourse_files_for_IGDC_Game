@@ -1,0 +1,37 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:	May 16, 1997
+//
+//  Procedure Name:
+//	AElambertCommonInclude
+//
+//  Description Name;
+//	Calls the attribute editor controls to include 
+//	for the lambert Node
+//
+//  Input Value:
+//	nodeName 
+//
+//  Output Value:
+//	None
+// 
+
+
+global proc AElambertCommonInclude ( string $nodeName )
+{
+
+
+	// include/call base class/node attributes
+	AEdependNodeTemplate $nodeName;
+
+	editorTemplate -beginLayout (uiRes("m_AElambertCommonInclude.kHardwareShading")) ;
+		editorTemplate -addControl "hardwareShader";
+	editorTemplate -endLayout;
+}

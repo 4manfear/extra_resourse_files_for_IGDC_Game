@@ -1,0 +1,241 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+// provided at the time of installation or download, or which otherwise accompanies 
+
+// Functionality to modify the image format control on the Common tab in Render Settings.
+// Clears the item list and adds formats supported by Turtle.
+
+global string $gIlrImgFormat[]; // Image format
+global string $gIlrImgExt[];    // Image format extension
+global int $gIlrImgExtNum[];    // Image format index number
+
+//
+// This procedure is called to created the image extension array for Turtle.
+//
+global proc ilrCreateImageFormats()
+{
+	global string $gIlrImgFormat[];
+	global string $gIlrImgExt[];
+	global int $gIlrImgExtNum[];
+
+	// NOTE: When adding a new image format, don't forget to add it to ilroptionsnode, ilruserinterface.mel and ilrbakelayer as well!
+	// also make sure you update ilrUpdateImageFormatControl.
+	$gIlrImgFormat[0] = "tga";
+	$gIlrImgFormat[1] = "ppm";
+	$gIlrImgFormat[2] = "exr";
+	$gIlrImgFormat[3] = "tif8";
+	$gIlrImgFormat[4] = "tif16";
+	$gIlrImgFormat[5] = "tif32";
+	$gIlrImgFormat[6] = "iff";
+	$gIlrImgFormat[7] = "exrml";
+	$gIlrImgFormat[8] = "bmp";
+	$gIlrImgFormat[9] = "png";
+
+	$gIlrImgExt[0] = "tga";
+	$gIlrImgExt[1] = "ppm";
+	$gIlrImgExt[2] = "exr";
+	$gIlrImgExt[3] = "tif";
+	$gIlrImgExt[4] = "tif";
+	$gIlrImgExt[5] = "tif";
+	$gIlrImgExt[6] = "iff";
+	$gIlrImgExt[7] = "exr";
+	$gIlrImgExt[8] = "bmp";
+	$gIlrImgExt[9] = "png";
+	
+	// Set this according to Maya (buildimageformatsmenu.mel)
+	//
+	$gIlrImgExtNum[0] = 19;
+	$gIlrImgExtNum[1] = 51;
+	$gIlrImgExtNum[2] = 51;
+	$gIlrImgExtNum[3] = 3;
+	$gIlrImgExtNum[4] = 51;
+	$gIlrImgExtNum[5] = 51;
+	$gIlrImgExtNum[6] = 7;
+	$gIlrImgExtNum[7] = 51;
+	$gIlrImgExtNum[8] = 20;
+	$gIlrImgExtNum[9] = 32;
+}
+
+global proc ilrChangeImageFormat()
+{
+//
+//  Description:
+//		This procedure is called when the user changes the type of 
+//		image that will be written out.  It sets the internal 
+//		representation and then updates the example to show the changes.
+//
+	if (!`objExists defaultRenderGlobals` || !`objExists TurtleRenderOptions` || currentRenderer() != "turtle") {
+		return;
+	}
+	
+	global string $gIlrImgFormat[];
+	global string $gIlrImgExt[];
+	global int $gIlrImgExtNum[];
+
+	int $item = `getAttr TurtleRenderOptions.imageFormat`;
+	
+	// Set the image format so that Maya updates the file preview
+	//
+	setAttr defaultRenderGlobals.imageFormat $gIlrImgExtNum[$item];
+	setAttr defaultRenderGlobals.imfkey -type "string" $gIlrImgExt[$item];
+	
+	// Disable compression button for Turtle
+	// But make sure to check if the UI exists first
+	//
+	if (`window -exists unifiedRenderGlobalsWindow`) {
+		setParent unifiedRenderGlobalsWindow;
+		if (`button -exists renderGlobalsCompression`) {
+			button -edit -enable 0 renderGlobalsCompression;
+		}
+	}
+}
+
+global proc ilrSetImageFormat(string $format)
+{
+	if (!`objExists TurtleRenderOptions`) {
+		return;
+	}
+	
+	// Fix to support both 'tif' and tif8', when setting 8bit TIFF output
+	if ($format == "tif") {
+		$format = "tif8";
+	}
+
+	global string $gIlrImgFormat[];
+	
+	int $numFormats = size($gIlrImgFormat);
+	if ($numFormats == 0) {
+		ilrCreateImageFormats();
+		$numFormats = size($gIlrImgFormat);
+	}
+
+	for ($i = 0; $i < $numFormats; $i = $i + 1) {
+		if ($gIlrImgFormat[$i] == $format) {
+			setAttr TurtleRenderOptions.imageFormat $i;
+			ilrChangeImageFormat();
+			break;
+		}
+	}
+}
+
+global proc ilrUpdateUnifiedRenderGlobalsWindowSpecifiedUI()
+{
+	evalDeferred -lp "updateUnifiedRenderGlobalsWindowSpecifiedUI; ilrModifyCommonTab;";
+}
+
+global proc ilrTakeOverRenderGlobalsWindow()
+{
+	global string $gMasterLayerRendererName;
+
+	if( currentRenderer() != "turtle" || !`window -exists unifiedRenderGlobalsWindow`) {
+		return;
+	}
+
+	setParent unifiedRenderGlobalsWindow;
+
+	// Remove the other renderers' tabs and their scriptjobs that are interfering with Turtle's Common tab.
+	string $renderer = isDisplayingAllRendererTabs() ? $gMasterLayerRendererName : "turtle";
+	string $tabLayout;
+	string $tabLayouts[] = `formLayout -query -childArray tabForm`;	
+	for ($tabLayout in $tabLayouts)
+	{
+		if ($tabLayout != rendererTabLayoutName($renderer)) {
+			deleteUI $tabLayout;
+		}
+	}
+
+	// Exchange script jobs on layer menu. (New in Maya 2009)
+	if (ilrGetMayaVersion() >= 2009) {
+	
+		string $layer;
+		string $layers[] = `listConnections renderLayerManager.renderLayerId`;
+		
+		int $jobsReplaced = false;
+
+		for ($layer in $layers) {
+			if ($jobsReplaced) {
+				scriptJob -parent unifiedRenderGlobalsRenderLayerOptionMenu
+					-nodeNameChanged $layer ilrUpdateUnifiedRenderGlobalsWindowSpecifiedUI;
+			} else {
+				scriptJob -replacePrevious -parent unifiedRenderGlobalsRenderLayerOptionMenu
+					-nodeNameChanged $layer ilrUpdateUnifiedRenderGlobalsWindowSpecifiedUI;
+				$jobsReplaced = true;
+			}
+		}
+	}	
+	
+	// Exchange script jobs on window.
+    scriptJob -replacePrevious -parent unifiedRenderGlobalsWindow
+		-event SceneOpened unifiedRenderGlobalsWindowSceneOpenedCallback;
+	scriptJob -parent unifiedRenderGlobalsWindow
+		-event renderLayerManagerChange ilrUpdateUnifiedRenderGlobalsWindowSpecifiedUI;
+	scriptJob -parent unifiedRenderGlobalsWindow
+		-event renderLayerChange ilrUpdateUnifiedRenderGlobalsWindowSpecifiedUI;
+		
+	// Modify the gui stuff.
+	ilrModifyCommonTab;
+}
+
+global proc ilrModifyCommonTab()
+{
+	if( currentRenderer() != "turtle" || !`window -exists unifiedRenderGlobalsWindow`) {
+		return;
+	}
+
+	// Make sure the default nodes exists
+	ilrDefaultNodes();
+
+	setParent unifiedRenderGlobalsWindow;	
+	setParentToCommonTab;
+
+	// Remake image format control.
+	setParent imageFileOutputSW;
+	setParent imageMenuMayaSW;
+	setParent ..;
+	
+	string $parent = `setParent -q`;
+
+	global string $gIlrImgExt[];
+	if (size( $gIlrImgExt ) == 0) {
+		// If the file format array has not been initialized yet, do so.
+		ilrCreateImageFormats();
+	}
+
+	optionMenuGrp -e -changeCommand "" imageMenuMayaSW;
+
+	string $item;
+	string $items[] = `optionMenuGrp -q -itemListLong imageMenuMayaSW`;
+	for ($item in $items) {
+		deleteUI $item;
+	}
+
+	string $menu = $parent + "|imageMenuMayaSW|OptionMenu";
+
+	menuItem -parent $menu -label "Targa (tga)" -data 0;
+//	menuItem -parent $menu -label "Portable Pixelmap (ppm)" -data 1;
+	menuItem -parent $menu -label "OpenEXR (exr)" -data 2;
+	menuItem -parent $menu -label "TIFF (tif)" -data 3;
+	menuItem -parent $menu -label "TIFF16 (tif)" -data 4;
+	menuItem -parent $menu -label "TIFF32 (tif)" -data 5;
+	menuItem -parent $menu -label "Maya IFF (iff)" -data 6;
+	menuItem -parent $menu -label "OpenEXR MultiLayer (exr)" -data 7;
+	menuItem -parent $menu -label "Windows Bitmap (bmp)" -data 8;
+	menuItem -parent $menu -label "PNG (png)" -data 9;
+
+	connectControl -index 1 imageMenuMayaSW TurtleRenderOptions.imageFormat;
+	connectControl -index 2 imageMenuMayaSW TurtleRenderOptions.imageFormat;
+
+	scriptJob
+		-parent $parent
+		-replacePrevious
+		-attributeChange "TurtleRenderOptions.imageFormat"
+		"ilrChangeImageFormat";
+
+	ilrChangeImageFormat;
+}

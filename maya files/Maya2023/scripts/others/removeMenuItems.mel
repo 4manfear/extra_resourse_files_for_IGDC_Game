@@ -1,0 +1,47 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//////////////////////////////////////////////////////////////////////
+//
+//  Procedure Name: 
+//		removeMenuItems
+//
+//  Description:
+//		This procedure can be used to remove all menuItems that are
+//		in between two other menuItems.
+//		
+//  Input Arguments:
+//		$removeItemsAfter - the menu item to delete from (exclusivly).
+//		$removeItemsUpTo - the menu item to delete to (exclusivly).
+//
+
+global proc removeMenuItems(string $removeItemsAfter, string $removeItemsUpTo)
+{
+	string $parent = `setParent -q -menu`;
+	string $allMenuItems[] = `menu -q -itemArray $parent`;
+	
+	int $firstItemFoundAt = 0;
+	int $lastItemFoundAt  = 0;
+	
+	$firstItemFoundAt = stringArrayFind($removeItemsAfter, 0, $allMenuItems);
+	if($firstItemFoundAt >= 0)
+	{
+		$lastItemFoundAt = stringArrayFind($removeItemsUpTo, $firstItemFoundAt, $allMenuItems);
+		if($lastItemFoundAt == -1)
+		{
+			$lastItemFoundAt = `size($allMenuItems)`;
+		}
+	}
+	
+	$firstItemFoundAt = $firstItemFoundAt + 1;
+	$lastItemFoundAt  = $lastItemFoundAt  - 1;
+	int $i = 0;
+	for($i = $firstItemFoundAt; $i <= $lastItemFoundAt; $i++)
+	{
+		deleteUI -menuItem $allMenuItems[$i];
+	}
+}

@@ -1,0 +1,246 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//  Creation Date:  12 July 2019
+//
+
+
+proc setOptionVars (int $forceFactorySettings)
+{			   
+	optionVar -init $forceFactorySettings -category "Modeling.Mesh.Remesh"
+		-fv polyRemeshMaxEdgeLength 1.0
+		-iv polyRemeshMaxEdgeLengthSetting 1
+		-fv polyRemeshCollapseThreshold 20.0
+		-fv polyRemeshSmoothStrength 0.0
+		-iv polyRemeshTessellateBorders 1
+		-iv polyRemeshInterpolationType 2
+		-iv polyRemeshMaxTriangleCount 5000000
+		;
+}
+
+global proc performPolyRemeshSetup (string $parent, int $forceFactorySettings)
+{
+	setOptionVars($forceFactorySettings);
+	setParent $parent;
+
+    float $fval;
+    int $ival, $maxEdgeEnable;
+	
+    $ival = `optionVar -query polyRemeshMaxEdgeLengthSetting`;
+	if (1 == $ival) {
+		radioButtonGrp -edit -select $ival polyRemeshMaxEdgeLengthSetting_RBG;
+		$maxEdgeEnable = 0;
+	} else {
+		radioButtonGrp -edit -select 2 polyRemeshMaxEdgeLengthSetting_RBG;
+		$maxEdgeEnable = 1;
+	}
+
+    $fval = `optionVar -query polyRemeshMaxEdgeLength`;
+    floatSliderGrp -edit -enable $maxEdgeEnable -value $fval polyRemeshMaxEdgeLength_FS;
+
+    $fval = `optionVar -query polyRemeshCollapseThreshold`;
+    floatSliderGrp -edit -value $fval polyRemeshCollapseThreshold_FSG;
+
+    $ival = `optionVar -query polyRemeshTessellateBorders`;
+    checkBoxGrp -edit -value1 $ival polyRemeshTessellateBorders_CBG;
+
+    //$ival = `optionVar -query polyRemeshMaxTriangleCount`;
+    //intSliderGrp -edit -value $ival polyRemeshMaxTriangleCount_ISG;
+}
+
+global proc performPolyRemeshCallback (string $parent, int $doIt)
+{
+	setParent $parent;
+	
+	optionVar -floatValue polyRemeshMaxEdgeLength
+		`floatSliderGrp -query -value polyRemeshMaxEdgeLength_FS`;
+
+	optionVar -intValue polyRemeshMaxEdgeLengthSetting
+		`radioButtonGrp -query -select polyRemeshMaxEdgeLengthSetting_RBG`;
+
+	optionVar -floatValue polyRemeshCollapseThreshold
+		`floatSliderGrp -query -value polyRemeshCollapseThreshold_FSG`;
+
+	optionVar -intValue polyRemeshTessellateBorders
+		`checkBoxGrp -query -value1 polyRemeshTessellateBorders_CBG`;
+
+	//optionVar -intValue polyRemeshMaxTriangleCount
+	//	`intSliderGrp -query -value polyRemeshMaxTriangleCount_ISG`;
+
+	if ($doIt) {
+		performPolyRemesh 0;
+		addToRecentCommandQueue "performPolyRemesh 0" "PolyRemesh";
+	}
+}
+
+global proc remeshUpdateCustomField()
+{
+	int $sel = `radioButtonGrp -query -select polyRemeshMaxEdgeLengthSetting_RBG`;
+	floatSliderGrp -e -enable (2 == $sel) polyRemeshMaxEdgeLength_FS;
+}
+
+proc performPolyRemeshOptions ()
+{
+	// Global template variables for form spacing
+	global int $gOptionBoxTemplateDescriptionMarginWidth;
+	global int $gOptionBoxTemplateFrameSpacing;
+	
+	string $commandName = "performPolyRemesh";
+	string $callback = ($commandName + "Callback");
+	string $setup = ($commandName + "Setup");
+	   
+	string $layout = getOptionBox();
+	setParent $layout;
+	setUITemplate -pushTemplate OptionBoxTemplate;
+	waitCursor -state 1;
+	
+    scrollLayout;
+
+	// Form layout
+	string $parent = `formLayout polyRemeshOptions`;
+		// Description frame
+		string $descriptionFrame = 
+		`frameLayout -label (uiRes("m_performPolyRemesh.kDescriptionFrame")) -mw $gOptionBoxTemplateDescriptionMarginWidth`;	
+		
+		columnLayout;
+        string $desc1 = (uiRes("m_performPolyRemesh.kDescription1"));
+        string $desc2 = (uiRes("m_performPolyRemesh.kDescription2"));
+        string $descriptionText = $desc1 + " " + $desc2;
+
+		text -wordWrap 1 $descriptionText;
+
+		setParent $parent;
+
+		// Settings frame
+		string $settingsFrame = 
+		`frameLayout -label (uiRes("m_performPolyRemesh.kSettingsFrame"))`;
+
+			columnLayout;
+
+			string $maxEdgeLabel = (uiRes("m_performPolyRemesh.kMaxEdgeLength"));
+			string $autoLabel = (uiRes("m_performPolyRemesh.kAutomatic"));
+			string $customLabel = (uiRes("m_performPolyRemesh.kCustom"));
+			string $maxEdgeToolTip = (uiRes("m_performPolyRemesh.kMaxEdgeLengthAnn"));
+
+			radioButtonGrp -numberOfRadioButtons 2 -vertical -label $maxEdgeLabel -changeCommand "remeshUpdateCustomField"
+				-annotation $maxEdgeToolTip
+				-labelArray2 $autoLabel $customLabel polyRemeshMaxEdgeLengthSetting_RBG;
+
+			floatSliderGrp
+				-annotation $maxEdgeToolTip
+                -min 0.1 -max 100.0 
+                polyRemeshMaxEdgeLength_FS;
+
+
+            floatSliderGrp -label (uiRes("m_performPolyRemesh.kCollapseThreshold")) 
+				-annotation (uiRes("m_performPolyRemesh.kCollapseThresholdAnn"))
+                -min 0.0 -max 100.0 
+                polyRemeshCollapseThreshold_FSG;
+
+			//intSliderGrp -label _L10N( kMaxTriangleCount, "Max triangle count:" ) 
+			//	-annotation _L10N(kMaxTriangleCountAnn, "This sets the maximum number of triangles that can be created")
+   //             -min 0 -max 5000000
+   //             polyRemeshMaxTriangleCount_ISG;
+
+			checkBoxGrp -label (uiRes("m_performPolyRemesh.kTessellateBorders")) 
+				-annotation (uiRes("m_performPolyRemesh.kTessellateBordersAnn"))
+                polyRemeshTessellateBorders_CBG;
+
+		setParent $parent;	
+		
+	setParent ..;
+    setParent ..;
+
+	// Attach frame to form layout
+	formLayout -e
+		-af $descriptionFrame "top" $gOptionBoxTemplateFrameSpacing
+		-af $descriptionFrame "left" $gOptionBoxTemplateFrameSpacing
+		-af $descriptionFrame "right" $gOptionBoxTemplateFrameSpacing
+		-an $descriptionFrame "bottom"
+
+		-ac $settingsFrame "top" $gOptionBoxTemplateFrameSpacing $descriptionFrame
+		-af $settingsFrame "left" $gOptionBoxTemplateFrameSpacing
+		-af $settingsFrame "right" $gOptionBoxTemplateFrameSpacing
+		-an $settingsFrame "bottom" 
+	$parent;
+	
+	waitCursor -state 0;
+	setUITemplate -popTemplate;
+	   
+	string $applyBtn = getOptionBoxApplyBtn();
+	button -edit -label (uiRes("m_performPolyRemesh.kRemeshButton"))
+	       -command ($callback + " " + $parent + " " + 1)
+		$applyBtn;
+	string $saveBtn = getOptionBoxSaveBtn();
+	button -edit 
+		-command ($callback + " " + $parent + " " + 0 + "; hideOptionBox")
+		$saveBtn;
+	string $resetBtn = getOptionBoxResetBtn();
+	button -edit 
+		-command ($setup + " " + $parent + " " + 1)
+		$resetBtn;
+			 
+	setOptionBoxTitle( (uiRes("m_performPolyRemesh.kRemeshOptions")) );
+
+	//	Customize the 'Help' menu item text.
+	//
+	setOptionBoxHelpTag( "PolyRemesh" );
+
+	eval (($setup + " " + $parent + " " + 0));      
+	showOptionBox();
+}
+
+proc string assembleCmd()
+{
+    string $cmd = "polyRemesh";
+	
+	$cmd += (" -caching 1");
+	$cmd += (" -constructionHistory " + `constructionHistory -q -toggle`);
+	
+	float $refine = 1.0;
+	int $useRelative = (1 == `optionVar -query polyRemeshMaxEdgeLengthSetting`);
+	if (!$useRelative) {
+		$refine = `optionVar -query polyRemeshMaxEdgeLength`;
+	}
+
+    $cmd += (" -maxEdgeLength " + $refine);
+	$cmd += (" -useRelativeValues " + $useRelative);
+    $cmd += (" -collapseThreshold " + `optionVar -query polyRemeshCollapseThreshold`);
+    $cmd += (" -smoothStrength " + `optionVar -query polyRemeshSmoothStrength`);
+    $cmd += (" -tessellateBorders " + `optionVar -query polyRemeshTessellateBorders`);
+    $cmd += (" -interpolationType " + `optionVar -query polyRemeshInterpolationType`);
+    //$cmd += (" -maxTriangleCount " + `optionVar -query polyRemeshMaxTriangleCount`);
+
+	return $cmd;
+}
+
+global proc string performPolyRemesh (int $option)
+{
+	string $cmd="";
+
+	switch ($option) {
+	case 0:
+        setOptionVars(false);
+        $cmd = assembleCmd();
+
+        string $res[] = `evalEcho $cmd`;
+		    if (size($res) > 0)
+			    select -add $res;
+      	setToolTo ShowManips;
+
+      	break;
+	case 1: 
+        performPolyRemeshOptions; 
+        break;
+	default:
+        setOptionVars(false);
+        $cmd = assembleCmd();
+	}
+	return $cmd;
+}
+

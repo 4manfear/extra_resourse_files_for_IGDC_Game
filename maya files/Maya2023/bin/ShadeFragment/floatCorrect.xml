@@ -1,0 +1,135 @@
+<!--
+===========================================================================
+Copyright 2015 Autodesk, Inc. All rights reserved.
+
+Use of this software is subject to the terms of the Autodesk license
+agreement provided at the time of installation or download, or which
+otherwise accompanies this software in either electronic or hard copy form.
+===========================================================================
+-->
+
+<fragment uiName="floatCorrect" name="floatCorrect" type="plumbing" class="ShadeFragment" version="1.0">
+	<description><![CDATA[Constant color texture fragment]]></description>
+	<properties>
+		<float name="inFloat" />
+		<float name="gain" />
+		<float name="offset" />
+		<float name="gammaScale" />
+		<bool name="clampOutput" />
+		<float name="clampMin" />
+		<float name="clampMax" />
+</properties>
+	<values>
+		<float name="inFloat" value="0.0" />
+		<float name="gain" value="1.0" />
+		<float name="offset" value="0.0" />
+		<float name="gammaScale" value="1.0" />
+		<bool name="clampOutput" value="false" />
+		<float name="clampMin" value="0.0" />
+		<float name="clampMax" value="1.0" />
+</values>
+	<outputs>
+		<float  name="outFloat" />
+	</outputs>
+	<implementation>
+	<implementation render="OGSRenderer" language="Cg" lang_version="2.1">
+		<function_name val="floatCorrect" />
+		<source>
+		<![CDATA[
+float floatCorrect(float inFloat, float gain, float offset, float gammaScale, bool clampOutput, float clampMin, float clampMax)
+{
+	float resFloat = inFloat;
+
+	if ( gain != 1.0 )
+	{
+		resFloat *= gain;
+	}
+
+	if ( offset != 0.0 )
+	{
+		resFloat += offset;
+	}
+
+	if ( gammaScale != 1.0 )
+	{
+		resFloat = pow(resFloat, float(1.0 / gammaScale));
+	}
+
+	if ( clampOutput )
+	{
+		resFloat = clamp(resFloat, clampMin, clampMax);
+	}
+
+	return resFloat;
+}
+		]]>
+		</source>
+	</implementation>
+	<implementation render="OGSRenderer" language="HLSL" lang_version="11.0">
+		<function_name val="floatCorrect" />
+		<source>
+		<![CDATA[
+float floatCorrect(float inFloat, float gain, float offset, float gammaScale, bool clampOutput, float clampMin, float clampMax)
+{
+	float resFloat = inFloat;
+
+	if ( gain != 1.0 )
+	{
+		resFloat *= gain;
+	}
+
+	if ( offset != 0.0 )
+	{
+		resFloat += offset;
+	}
+
+	if ( gammaScale != 1.0 )
+	{
+		resFloat = pow(resFloat, float(1.0 / gammaScale));
+	}
+
+	if ( clampOutput )
+	{
+		resFloat = clamp(resFloat, clampMin, clampMax);
+	}
+
+	return resFloat;
+}
+		]]>
+		</source>
+		</implementation>
+		<implementation render="OGSRenderer" language="GLSL" lang_version="3.0">
+			<function_name val="floatCorrect" />
+			<source>
+				<![CDATA[
+float floatCorrect(float inFloat, float gain, float offset, float gammaScale, bool clampOutput, float clampMin, float clampMax)
+{
+	float resFloat = inFloat;
+
+	if ( gain != 1.0 )
+	{
+		resFloat *= gain;
+	}
+
+	if ( offset != 0.0 )
+	{
+		resFloat += offset;
+	}
+
+	if ( gammaScale != 1.0 )
+	{
+		resFloat = pow(resFloat, float(1.0 / gammaScale));
+	}
+
+	if ( clampOutput )
+	{
+		resFloat = clamp(resFloat, clampMin, clampMax);
+	}
+
+	return resFloat;
+}
+		]]>
+		</source>
+	</implementation>
+	</implementation>
+</fragment>

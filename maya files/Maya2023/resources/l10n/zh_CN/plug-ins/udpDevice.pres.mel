@@ -1,0 +1,27 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+// Resources for Plug-in: udpDevice
+// 
+// ----------------------------
+// Registered string resources:
+// ----------------------------
+// 
+//  (Plugin has no registered string resources)
+// 
+// 
+// --------------------------
+// Registered node resources:
+// --------------------------
+// 
+// Node: udpDevice
+// 
+setNodeNiceNameResource( "udpDevice", "UDP 设备" );
+setAttrNiceNameResource( "udpDevice", "ot", "输出平移" );
+setAttrNiceNameResource( "udpDevice", "otx", "输出平移 X" );
+setAttrNiceNameResource( "udpDevice", "oty", "输出平移 Y" );
+setAttrNiceNameResource( "udpDevice", "otz", "输出平移 Z" );

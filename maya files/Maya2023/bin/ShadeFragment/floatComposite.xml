@@ -1,0 +1,381 @@
+<!--
+===========================================================================
+Copyright 2015 Autodesk, Inc. All rights reserved.
+
+Use of this software is subject to the terms of the Autodesk license
+agreement provided at the time of installation or download, or which
+otherwise accompanies this software in either electronic or hard copy form.
+===========================================================================
+-->
+
+<fragment uiName="floatComposite" name="floatComposite" type="plumbing" class="ShadeFragment" version="1.0">
+	<description><![CDATA[Float math shade fragment]]></description>
+	<properties>
+		<float name="floatA" />
+		<float name="floatB" />
+		<int name="operation" />
+		<float name="factor" />
+	</properties>
+	<values>
+		<float name="floatA" value="1.0" />
+		<float name="floatB" value="0.0" />
+		<int name="operation" value="1" />
+		<float name="factor" value="1.0" />
+	</values>
+	<outputs>
+		<float  name="outFloat" />
+	</outputs>
+	<implementation>
+	<implementation render="OGSRenderer" language="Cg" lang_version="2.1">
+		<function_name val="floatComposite" />
+		<source>
+		<![CDATA[
+float floatComposite(float floatA, float floatB, int operation, float factor) 
+{
+	float resultFloat = 0.0f;
+
+	if (operation==0)
+	{
+		if ( factor <= 0.0f )
+		{
+			resultFloat = floatA;
+		}
+		else
+		{
+			resultFloat = floatA + (floatB * factor);
+		}
+	}
+	else if (operation==1)
+	{
+		if ( factor <= 0.0f )
+		{
+			resultFloat = floatA;
+		}
+		else
+		{
+			resultFloat = floatA + ((floatB - 1) * factor);
+		}
+	}
+	else if (operation==2)
+	{
+		if ( factor <= 0.0f )
+		{
+			resultFloat = floatA;
+		}
+		else if ( factor >= 1.0f )
+		{
+			resultFloat = floatB;
+		}
+		else
+		{
+			resultFloat = lerp(floatA, floatB, factor);
+		}
+	}
+	else if (operation==3)
+	{
+		if ( factor <= 0.0f )
+		{
+			resultFloat = floatA;
+		}
+		else
+		{
+			resultFloat = floatA * (floatB * factor + (1 - factor));
+		}
+	}
+	else if (operation==4)
+	{
+		if ( factor <= 0.0f )
+		{
+			resultFloat = floatA;
+		}
+		else
+		{
+	        resultFloat = 1 - ((1 - floatA) * (1 - floatB * factor));
+		}
+	}
+	else if (operation==5)
+	{
+		if ( factor <= 0.0f )
+		{
+			resultFloat = floatA;
+		}
+		else
+		{
+			resultFloat = floatB > 0.5 ? (2 * floatA * floatB * factor ) + floatA * (1 - factor): 1 - ((1 - floatA) * (1 - floatB * factor)) * (2 - (1 - factor));
+		}
+	}
+	else if (operation==6)
+	{
+		if ( factor <= 0.0f )
+		{
+			resultFloat = floatA;
+		}
+		else
+		{
+	        resultFloat = abs(floatA - (floatB * factor));
+    	}
+	}
+	else if (operation==7)
+	{
+		if ( factor <= 0.0f )
+		{
+			resultFloat = floatA;
+		}
+		else
+		{
+	        resultFloat = clamp(lerp(floatA, floatA / max(1 - floatB, 0.00001), factor), floatA, floatB);
+	    }
+	}
+	else if (operation==8)
+	{
+		if ( factor <= 0.0f )
+		{
+			resultFloat = floatA;
+		}
+		else
+		{
+	        resultFloat = clamp(lerp(floatA, 1 - (floatA / max(1 - floatB, 0.00001)), factor), floatA, floatB);
+	    }
+	}
+
+	return resultFloat;
+}
+		]]>
+		</source>
+	</implementation>
+	<implementation render="OGSRenderer" language="HLSL" lang_version="11.0">
+		<function_name val="floatComposite" />
+		<source>
+		<![CDATA[
+float floatComposite(float floatA, float floatB, int operation, float factor)
+{
+	float resultFloat = 0.0f;
+
+	if (operation==0)
+	{
+		if ( factor <= 0.0f )
+		{
+			resultFloat = floatA;
+		}
+		else
+		{
+			resultFloat = floatA + (floatB * factor);
+		}
+	}
+	else if (operation==1)
+	{
+		if ( factor <= 0.0f )
+		{
+			resultFloat = floatA;
+		}
+		else
+		{
+			resultFloat = floatA + ((floatB - 1) * factor);
+		}
+	}
+	else if (operation==2)
+	{
+		if ( factor <= 0.0f )
+		{
+			resultFloat = floatA;
+		}
+		else if ( factor >= 1.0f )
+		{
+			resultFloat = floatB;
+		}
+		else
+		{
+			resultFloat = lerp(floatA, floatB, factor);
+		}
+	}
+	else if (operation==3)
+	{
+		if ( factor <= 0.0f )
+		{
+			resultFloat = floatA;
+		}
+		else
+		{
+			resultFloat = floatA * (floatB * factor + (1 - factor));
+		}
+	}
+	else if (operation==4)
+	{
+		if ( factor <= 0.0f )
+		{
+			resultFloat = floatA;
+		}
+		else
+		{
+	        resultFloat = 1 - ((1 - floatA) * (1 - floatB * factor));
+		}
+	}
+	else if (operation==5)
+	{
+		if ( factor <= 0.0f )
+		{
+			resultFloat = floatA;
+		}
+		else
+		{
+			resultFloat = floatB > 0.5 ? (2 * floatA * floatB * factor ) + floatA * (1 - factor): 1 - ((1 - floatA) * (1 - floatB * factor)) * (2 - (1 - factor));
+		}
+	}
+	else if (operation==6)
+	{
+		if ( factor <= 0.0f )
+		{
+			resultFloat = floatA;
+		}
+		else
+		{
+	        resultFloat = abs(floatA - (floatB * factor));
+    	}
+	}
+	else if (operation==7)
+	{
+		if ( factor <= 0.0f )
+		{
+			resultFloat = floatA;
+		}
+		else
+		{
+	        resultFloat = clamp(lerp(floatA, floatA / max(1 - floatB, 0.00001), factor), floatA, floatB);
+	    }
+	}
+	else if (operation==8)
+	{
+		if ( factor <= 0.0f )
+		{
+			resultFloat = floatA;
+		}
+		else
+		{
+	        resultFloat = clamp(lerp(floatA, 1 - (floatA / max(1 - floatB, 0.00001)), factor), floatA, floatB);
+	    }
+	}
+
+	return resultFloat;
+}
+		]]>
+		</source>
+		</implementation>
+		<implementation render="OGSRenderer" language="GLSL" lang_version="3.0">
+			<function_name val="floatComposite" />
+			<source>
+				<![CDATA[
+float floatComposite(float floatA, float floatB, int operation, float factor)
+{
+	float resultFloat = 0.0f;
+
+	if (operation==0)
+	{
+		if ( factor <= 0.0f )
+		{
+			resultFloat = floatA;
+		}
+		else
+		{
+			resultFloat = floatA + (floatB * factor);
+		}
+	}
+	else if (operation==1)
+	{
+		if ( factor <= 0.0f )
+		{
+			resultFloat = floatA;
+		}
+		else
+		{
+			resultFloat = floatA + ((floatB - 1) * factor);
+		}
+	}
+	else if (operation==2)
+	{
+		if ( factor <= 0.0f )
+		{
+			resultFloat = floatA;
+		}
+		else if ( factor >= 1.0f )
+		{
+			resultFloat = floatB;
+		}
+		else
+		{
+			resultFloat = mix(floatA, floatB, factor);
+		}
+	}
+	else if (operation==3)
+	{
+		if ( factor <= 0.0f )
+		{
+			resultFloat = floatA;
+		}
+		else
+		{
+			resultFloat = floatA * (floatB * factor + (1 - factor));
+		}
+	}
+	else if (operation==4)
+	{
+		if ( factor <= 0.0f )
+		{
+			resultFloat = floatA;
+		}
+		else
+		{
+	        resultFloat = 1 - ((1 - floatA) * (1 - floatB * factor));
+		}
+	}
+	else if (operation==5)
+	{
+		if ( factor <= 0.0f )
+		{
+			resultFloat = floatA;
+		}
+		else
+		{
+			resultFloat = floatB > 0.5 ? (2 * floatA * floatB * factor ) + floatA * (1 - factor): 1 - ((1 - floatA) * (1 - floatB * factor)) * (2 - (1 - factor));
+		}
+	}
+	else if (operation==6)
+	{
+		if ( factor <= 0.0f )
+		{
+			resultFloat = floatA;
+		}
+		else
+		{
+	        resultFloat = abs(floatA - (floatB * factor));
+    	}
+	}
+	else if (operation==7)
+	{
+		if ( factor <= 0.0f )
+		{
+			resultFloat = floatA;
+		}
+		else
+		{
+	        resultFloat = clamp(mix(floatA, floatA / max(1 - floatB, 0.00001), factor), floatA, floatB);
+	    }
+	}
+	else if (operation==8)
+	{
+		if ( factor <= 0.0f )
+		{
+			resultFloat = floatA;
+		}
+		else
+		{
+	        resultFloat = clamp(mix(floatA, 1 - (floatA / max(1 - floatB, 0.00001)), factor), floatA, floatB);
+	    }
+	}
+
+	return resultFloat;
+}
+		]]>
+		</source>
+	</implementation>
+	</implementation>
+</fragment>

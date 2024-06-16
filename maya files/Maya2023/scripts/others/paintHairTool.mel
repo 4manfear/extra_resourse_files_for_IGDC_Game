@@ -1,0 +1,75 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  2003 
+//
+//  Description:
+//      setup Tool to paint dynamic hairs on objects 
+//		
+//
+
+
+// This was copied from initContexts.mel
+//
+proc rememberCtxSettings( string $ctxName )
+//
+// This method sees if an optionVar has been defined
+// for the tool.  If it has, the string it contains
+// is evaluated to set the tool settings.  SuperContexts
+// should not be saved this way, since they have no
+// particular settings.
+//
+{
+	if ( `optionVar -exists $ctxName` ){
+		string $cmd = `optionVar -q $ctxName`;
+		catch( `eval($cmd)` );
+	} else {
+		// create an empty option var so that this
+		// will be saved.
+		optionVar -sv $ctxName "";
+	}
+}
+
+global string $gPaintHairAttrToolCtx = "";
+
+global proc paintHairTool(
+	int		$showToolProperties
+)
+{
+	global string $gPaintHairAttrToolCtx;
+	// we have to couch all uses of userPaintCtx within eval's since
+	// the userPaintCtx command may not exist when this script is
+	// interpreted
+	//
+	if ( $gPaintHairAttrToolCtx == "" ) {
+		$gPaintHairAttrToolCtx=`eval "artUserPaintCtx -i1 \"hairPaint.png\" -cf false -whichTool \"userPaint\" -dl true -fp true hairPaintContext"`;
+		rememberCtxSettings $gPaintHairAttrToolCtx;			
+	}
+
+	string	$cmd;
+
+	$cmd  = "artUserPaintCtx -e";
+	$cmd += " -tsc \"hairCurvePaint\"";
+	$cmd += " -tcc \"cleanupHairPaint\"";
+	$cmd += " -i1 \"hairPaint.png\"";
+	$cmd += " -ic \"initHairPaint\"";
+	$cmd += " -fc \"finishHairPaint\"";
+	$cmd += " -svc \"setHairPaintValue\"";
+	$cmd += " -gvc \"getHairPaintValue\"";
+	$cmd += " -gac \"\" -cc \"\" -gsc \"\"";
+	$cmd +=	$gPaintHairAttrToolCtx;
+	eval $cmd;
+
+	setToolTo $gPaintHairAttrToolCtx;
+	if ( $showToolProperties ) {
+		toolPropertyWindow;
+	}
+}
+
+

@@ -1,0 +1,58 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+// Resources for Plug-in: meshReorder
+// 
+// ----------------------------
+// Registered string resources:
+// ----------------------------
+setPluginResource( "meshReorder", "kAcceptingVertex", "接受顶点“^1s”。");
+setPluginResource( "meshReorder", "kErrorParsingArgs", "解析参数时出错。");
+setPluginResource( "meshReorder", "kErrorProcessingAllFaces", "无法处理所有网格面。");
+setPluginResource( "meshReorder", "kExactlyOneVertex", "一次只能选择一个顶点。");
+setPluginResource( "meshReorder", "kInternalError", "内部错误。");
+setPluginResource( "meshReorder", "kIvmSelect1stVertex", "选择<hl>第一个</hl>、第二个和第三个顶点，为选定的网格重新排列顶点 ID 的顺序。按 <hl>ESC</hl> 键退出。");
+setPluginResource( "meshReorder", "kIvmSelect2ndVertex", "选择第一个、<hl>第二个</hl>和第三个顶点，为选定的网格重新排列顶点 ID 的顺序。按 <hl>ESC</hl> 键退出。");
+setPluginResource( "meshReorder", "kIvmSelect3rdVertex", "选择第一个、第二个和<hl>第三个</hl>顶点，为选定的网格重新排列顶点 ID 的顺序。按 <hl>ESC</hl> 键退出。");
+setPluginResource( "meshReorder", "kMeshHasHistory", "目标网格具有历史记录，无法修改其几何体。");
+setPluginResource( "meshReorder", "kMeshRemap6Vertices", "必须指定 6 个顶点。");
+setPluginResource( "meshReorder", "kMeshRemapComplete", "网格重映射完成。");
+setPluginResource( "meshReorder", "kMeshRemapErrorCopyMesh", "无法将顶点顺序传递到目标网格");
+setPluginResource( "meshReorder", "kMeshRemapHelp1st", "在源网格上选择第一个顶点。");
+setPluginResource( "meshReorder", "kMeshRemapHelp2nd", "在源网格上选择第二个顶点，该顶点应连接到第一个顶点并与之位于相同面。");
+setPluginResource( "meshReorder", "kMeshRemapHelp3rd", "在源网格上选择第三个顶点，该顶点应连接到第二个顶点并与之位于相同面。");
+setPluginResource( "meshReorder", "kMeshRemapHelp4th", "在目标网格上选择第一个顶点。");
+setPluginResource( "meshReorder", "kMeshRemapHelp5th", "在目标网格上选择第二个顶点，该顶点应连接到第一个顶点并与之位于相同面。");
+setPluginResource( "meshReorder", "kMeshRemapHelp6th", "在目标网格上选择第三个顶点，该顶点应连接到第二个顶点并与之位于相同面。");
+setPluginResource( "meshReorder", "kMeshRemapNotOnSameFace", "无法传递顶点顺序。请确保在源网格和目标网格上沿同一多边形选择 3 个相邻顶点。");
+setPluginResource( "meshReorder", "kMeshRemapSuccess", "源网格的顶点顺序已成功复制到目标网格。");
+setPluginResource( "meshReorder", "kMeshRemapToolName", "网格重映射工具。");
+setPluginResource( "meshReorder", "kMeshReorder3Vertices", "必须指定 3 个顶点。");
+setPluginResource( "meshReorder", "kMeshReorderComplete", "网格重新排序完成。");
+setPluginResource( "meshReorder", "kMeshReorderHelp1st", "在网格上选择第一个顶点。");
+setPluginResource( "meshReorder", "kMeshReorderHelp2nd", "选择第二个顶点，该顶点应连接到第一个顶点并与之位于相同面。");
+setPluginResource( "meshReorder", "kMeshReorderHelp3rd", "选择第三个顶点，该顶点应连接到第二个顶点并与之位于相同面。");
+setPluginResource( "meshReorder", "kMeshReorderNotOnSameFace", "无法对顶点重新排序。请确保沿同一多边形选择 3 个相邻顶点。");
+setPluginResource( "meshReorder", "kMeshReorderToolName", "网格重新排序工具。");
+setPluginResource( "meshReorder", "kNoComponent", "^1s: 没有此类组件。");
+setPluginResource( "meshReorder", "kNotAComponent", "^1s: 不是组件。");
+setPluginResource( "meshReorder", "kNotAMesh", "^1s: 类型无效！必须指定网格或其变换。");
+setPluginResource( "meshReorder", "kNotAVertex", "选定项目不是顶点。");
+setPluginResource( "meshReorder", "kRemapIvmSelect1stVertex", "在<hl>源</hl>网格上选择单个多边形的<hl>第一个</hl>、第二个和第三个顶点。");
+setPluginResource( "meshReorder", "kRemapIvmSelect2ndVertex", "在<hl>源</hl>网格上选择单个多边形的第一个、<hl>第二个</hl>和第三个顶点。");
+setPluginResource( "meshReorder", "kRemapIvmSelect3rdVertex", "在<hl>源</hl>网格上选择单个多边形的第一个、第二个和<hl>第三个</hl>顶点。");
+setPluginResource( "meshReorder", "kRemapIvmSelect4thVertex", "现在，在<hl>目标</hl>网格上选择对应多边形的<hl>第一个</hl>、第二个和第三个顶点以传递顶点顺序。");
+setPluginResource( "meshReorder", "kRemapIvmSelect5thVertex", "现在，在<hl>目标</hl>网格上选择对应多边形的第一个、<hl>第二个</hl>和第三个顶点以传递顶点顺序。");
+setPluginResource( "meshReorder", "kRemapIvmSelect6thVertex", "现在，在<hl>目标</hl>网格上选择对应多边形的第一个、第二个和<hl>第三个</hl>顶点以传递顶点顺序。");
+setPluginResource( "meshReorder", "kSelectionNotAMesh", "必须选择网格或其变换。");
+// 
+// --------------------------
+// Registered node resources:
+// --------------------------
+// 
+//  (Plugin has no registered nodes)
+// 

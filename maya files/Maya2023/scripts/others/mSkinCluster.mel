@@ -1,0 +1,82 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//
+//
+//
+//
+//	Creation Date:  3 Aug 1998
+//
+//  Procedure Name:
+//      mSkinCluster
+//
+//  Description:
+//     Executes the skinCluster command with the selected arguments
+//     for multiple geometries.
+//
+//     Example:
+//        Select a few of the already skinCluster-bound geometries and 
+//        execute:
+//   
+//           mSkinCluster "-e -mi 6"    
+//
+//           OR
+//  
+//           mSkinCluster "-e -ai transform1"
+// 
+//
+global proc string[] mSkinCluster(string $args)
+{
+	// Get the currenly selected objects
+	//
+	string $result[];
+
+	string $sel[] = `ls -sl`;
+	if (!size($sel)) {
+		error( (uiRes("m_mSkinCluster.kSelectGeometries")));
+		return $result;
+	}
+
+	int $i;
+	string $cmd;
+	string $item;
+	string $res;
+	int $execCount = 0;
+
+
+	for($i=0;$i<size($sel);$i++)
+	{	
+		$item = $sel[$i];
+		// Find all the DAG leaved under the selected transform
+		//
+		string $allShapes[] = `ls -lf -dag $item`;
+		string $shape;
+		for ($shape in $allShapes)
+		{
+			// Check if the object still exists
+			//
+			string $exists[] = `ls $shape`;
+			if (size($exists) == 0)
+				continue;
+
+			// Ignore intermediate objects
+			//
+			int $io = `getAttr ($shape+".io")`;
+			if ($io == 1)
+				continue;
+			
+			$cmd = "skinCluster "+$args+" "+$shape;
+			print($cmd+"\n");
+			if (!catch($res = eval($cmd)))
+				$result[$execCount++] = $res;
+		}
+	}
+	return $result;
+}
+	

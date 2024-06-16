@@ -1,0 +1,552 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//  Description:
+//		Initialize the option values.
+//
+//  Input Arguments:
+//		Whether to set the options to default values.
+//
+//  Return Value:
+//      None.
+//
+global proc teCreateImportOptionVars(int $reset_default)
+{
+	optionVar -init $reset_default -category "Time Editor"
+		-iv cteImportFBXTakesDest 0
+		;
+}
+
+//  Description:
+//		Updates the Option Vars
+//
+//  Input Arguments:
+//		None.
+//
+//  Return Value:
+//      None.
+//
+global proc teImportSaveOptions()
+{
+	$val = (`radioButtonGrp -q -select cteImportTakesRadioGroup`) - 1;
+	optionVar -intValue cteImportFBXTakesDest $val;
+}
+
+//  Description:
+//		Reset Values in Option Box
+//
+//  Input Arguments:
+//		None.
+//
+//  Return Value:
+//      None.
+//
+global proc teImportResetOptions()
+{
+	// reset the option vars
+	teCreateImportOptionVars 1;
+
+	// update the UI widgets
+	// Assumption - All UI widgets are created
+	//
+	radioButtonGrp -e -select (`optionVar -q cteImportFBXTakesDest` + 1) cteImportTakesRadioGroup;
+}
+
+//  Description:
+//		Generates the Option Box UI
+//
+//  Input Arguments:
+//		$startTime - Specify the start time
+//		$rootClipId - ID of the root clip
+//		$files - The file full names to import
+//		$trackString - Track to import to
+//
+//
+//  Return Value:
+//      None.
+//
+global proc teCreateImportOptionBox(float $startTime, int $rootClipId, string $files[], string $trackString)
+{
+	string $layout = getOptionBox();
+	setParent $layout;
+	
+	setUITemplate -pushTemplate DefaultTemplate;
+	waitCursor -state 1;
+	tabLayout -tabsVisible 0 -scrollable 1 -innerMarginWidth 4;
+	string $parent = `columnLayout -adjustableColumn 1 -rowSpacing 4`;
+
+	frameLayout -visible true -label (uiRes("m_teImportOptions.kCTEImportTakeOptions")) -collapsable false -collapse false;				
+		columnLayout;
+			radioButtonGrp -vr -numberOfRadioButtons 3 -label (uiRes("m_teImportOptions.kCTEImportTakes"))
+			-labelArray3 (uiRes("m_teImportOptions.kCTEImportTakeToGroup"))
+						 (uiRes("m_teImportOptions.kCTEImportTakeToCompositions")) 
+						 (uiRes("m_teImportOptions.kCTEImportTakeToClipSequence"))
+			cteImportTakesRadioGroup;
+		setParent ..;		
+	setParent ..;	// frameLayout
+
+	radioButtonGrp -e -select (`optionVar -q cteImportFBXTakesDest`+1) cteImportTakesRadioGroup;
+
+    waitCursor -state 0;
+    setUITemplate -popTemplate;
+
+	string $applyBtn = getOptionBoxApplyBtn();
+	button -edit -enable 0 $applyBtn;
+	
+    string $importCmd = "teImportSaveOptions; tePerformImportAnimFiles(1,";
+	string $filesStr = "";
+	for($file in $files)
+	{
+		if($filesStr != "")
+			$filesStr += ",";
+		$filesStr += "\"" + $file + "\"";
+	}
+    $importCmd += "{" +  $filesStr + "},";
+    $importCmd +=   "\"" + $trackString + "\"," + $startTime + "," +  $rootClipId + ");";
+	
+
+	string $applyCloseBtn = getOptionBoxApplyAndCloseBtn();
+	button -edit -command("hideOptionBox; "+$importCmd) $applyCloseBtn; // hiding box immediately to prevent a need for double undo to undo creation of clip
+
+	string $resetBtn = getOptionBoxResetBtn();
+	button -edit -command("teImportResetOptions") $resetBtn;
+
+	string $saveBtn = getOptionBoxSaveBtn();
+	button -edit -command("teImportSaveOptions; hideOptionBox;") $saveBtn;
+
+	setOptionBoxTitle((uiRes("m_teImportOptions.kCTEImportOptionsTitle")));
+	setOptionBoxHelpTag("");
+    
+    showOptionBox();	
+}
+
+//  Description:
+//		Generate the fbx specific arguments for importing
+//
+//  Input Arguments:
+//		None.
+//
+//  Return Value:
+//      Argument string.
+//
+global proc string teGenerateFbxImportArguments()
+{	
+	string $populateArgs = "-ipo \"";
+	
+	$populateArgs += "curves;";
+	$populateArgs += "\"";
+		
+	int $takesDest = `optionVar -q cteImportFBXTakesDest`;
+	$populateArgs += " -importAllFbxTakes -importTakeDestination " + $takesDest;
+
+	return $populateArgs;
+}
+
+//  Description:
+//		Import animation form a fbx file
+//
+//  Input Arguments:
+//		$startTime - start time
+//		$rootClipId - root clip id
+//		$file - filename of file to import
+//		$trackString - track to import to (if empty string is passed in, a new track will be created)
+//
+//  Return Value:
+//      The IDs of newly created clips.
+//
+global proc int[] teFbxImportOneFile(float $startTime, int $rootClipId, string $file, string $trackString)
+{
+	// Firstly, check if fbxmaya plugin is loaded.
+	int $hasFbxPluginLoaded = `pluginInfo -q -loaded fbxmaya`;
+	if ($hasFbxPluginLoaded == 0)
+	{
+		error( (uiRes("m_teImportOptions.kCTECreateContainerNoFbxPluginLoaded")) );
+		return {};
+	}
+
+	string $populateType = teGenerateFbxImportArguments();	
+	
+
+	string $importCmd = "timeEditorClip -showAnimSourceRemapping -importOption generate -importFbx \"" + $file + "\" ";
+
+    $importCmd += $populateType + " ";
+
+	$importCmd += "-startTime " + $startTime + " ";
+	if ($rootClipId > 0)
+		$importCmd += "-rootClipId " + $rootClipId + " ";
+
+    // empty string is passed in if there's a need to create a new track
+	if($trackString == "")
+	{
+		// when creating new track, we need to inform it which track node to create
+		$importCmd += "-track \"" + teGetActiveTabNewTrackIdString() + "\" ";
+	}
+	// else just use the given track
+	else
+	{
+		$importCmd += "-track \"" + $trackString + "\" ";
+	}
+    
+    string $clipName = basenameEx($file);
+	$importCmd += "\"" + $clipName + "\";";
+	
+	// Execute the command
+	int $newClipIds[];
+    catch($newClipIds = `evalEcho($importCmd)`);	
+     	
+	return $newClipIds;
+}
+
+
+//  Description:
+//		import animation from the given files 
+//
+//  Input Arguments:
+//		$startTiem:		The start of the clip. If multiple files are imported at once, this start time is used to be the start of the first clip.
+//						All clips are placed as a sequence
+//		$rootClipId:	The id of root clip
+//		$files:			Given file full names
+//		$trackString:	A string containing the track number and tracks node in the format: "trackNode:trackIndex" indicates the track where the clips should place
+//
+//  Return Value:
+//      None.
+//
+global proc teAnimImportAction(float $startTime, int $rootClipId, string $files[], string $trackString)
+{
+	// Undo chunk for creating track and creating clip
+	undoInfo -openChunk;
+    
+	float $nextStartTime = $startTime;
+    int $newClipId = 0;
+    int $takesDest = `optionVar -q cteImportFBXTakesDest`;
+	int $trackIndex = teGetTrackIndex($trackString);	
+
+	
+
+	
+
+	if(size($files) > 1){
+		string $result = `confirmDialog -title (uiRes("m_teImportOptions.kCTEWarnImportClipDialogTitle"))
+								   -message (uiRes("m_teImportOptions.kCTEWarnImportClipDialogMsg"))
+								   -button (uiRes("m_teImportOptions.kCTEWarnImportClipDialogOK"))
+								   -button (uiRes("m_teImportOptions.kCTEWarnImportClipDialogCancel"))
+								   -defaultButton (uiRes("m_teImportOptions.kCTEWarnImportClipDialogOK"))
+								   -cancelButton  (uiRes("m_teImportOptions.kCTEWarnImportClipDialogCancel"))
+								   -dismissString (uiRes("m_teImportOptions.kCTEWarnImportClipDialogCancel"))`;
+		if($result != uiRes("m_teImportOptions.kCTEWarnImportClipDialogOK")){
+			return;
+		}
+
+	}
+	$files = {$files[0]};//remove other file from the array since we dont support proper workflow for now (each imported file we need to be able to use remap window)
+
+	for($fileName in $files)
+    {        
+		string $ext = fileExtension($fileName);
+        $ext = `tolower $ext`;
+        if($ext == "fbx")
+        {          
+			// Firstly, check if fbxmaya plugin is loaded.
+			int $hasFbxPluginLoaded = `pluginInfo -q -loaded fbxmaya`;
+			if ($hasFbxPluginLoaded == 0)
+			{
+				error(uiRes( "m_teImportOptions.kCTECreateContainerNoFbxPluginLoaded" ));
+				continue;
+			}
+            // Check no. of FBX Takes
+            FBXRead -f $fileName;
+            int $numTakes = `FBXGetTakeCount`;
+            FBXClose;
+
+            int $retClipIds[] = teFbxImportOneFile($numTakes > 1 && $takesDest == 1? $startTime : $nextStartTime, $rootClipId, $fileName, $trackString);
+            int $numRetClips = size($retClipIds);
+            // Automatically create a group on the top if the takes are imported as a sequence of clips, while
+			// importing multile files as once. Because we will place all clips per file as sequence
+			//
+            if($numRetClips > 1)
+            {
+                if($takesDest == 2/*Sequence clips*/ && size($files) > 1)
+                {				
+					string $compTrack;
+					if($trackIndex == -1)
+						$compTrack = teCreateNewTrack(0);
+					else
+						$compTrack = $trackString;
+                    string $cmdStr = "timeEditorClip -group -track \"" + $compTrack + "\"";
+
+                    for($clipId in $retClipIds)
+                    {
+                        $cmdStr += " -clipId " + $clipId;
+                    }
+
+					string $clipName = basenameEx($fileName);
+                    $cmdStr += " " + $clipName;
+                    $newClipId = `eval($cmdStr)`;
+                }         
+            }
+            else if($numRetClips == 1)
+            {
+                $newClipId = $retClipIds[0];
+            }
+                    
+        }
+		else if($ext == "ma" || $ext == "mb")
+        {
+			// The importOption should be either 'generate' or 'connect'.
+			//
+			// connect:  Only connect with nodes already existing in the scene.
+			//           Importing an animation source which doesn't match with any element 
+			//           of the current scene will not create any clip.
+			//
+			// generate: Import everything and generate new nodes for items not existing in the scene.
+            string $clipName = basenameEx($fileName);
+            string $importCmd = "timeEditorClip -showAnimSourceRemapping -importOption connect -track \"" + $trackString + 
+                                "\" -importMayaFile \"" + $fileName + "\" -startTime " + $nextStartTime;
+            if ($rootClipId > 0)
+                $importCmd += " -rootClipId " + $rootClipId + " ";
+			$importCmd +=  " \"" + $clipName + "\";";
+            $newClipId = `evalEcho($importCmd)`;
+        }
+        if($newClipId != 0)
+        {
+			// Place the clip per file as sequence. So treat the end of current clip as the start of next newly created clip.
+			//
+            $nextStartTime += `timeEditorClip -q -duration $newClipId`;
+
+			// Place all clips in same track as a sequence.
+			if($trackIndex == -1)  
+			{
+				$trackString =	`timeEditorClip -q -track $newClipId`; 
+				$trackIndex = 0;
+			}
+        }
+    }
+   
+	undoInfo -closeChunk;
+}
+
+
+//  Description:
+//		Imports animation from the given files
+//		Do not create clips, just create animation sources
+//
+//  Input Arguments:
+//		$files - The file full names to import
+//
+//  Return Value:
+//      None.
+//
+global proc tePerformImportAnimFilesAsSources( string $files[] )
+{
+    
+	// set the optionVars first
+	teCreateImportOptionVars(false);
+
+	for($fileName in $files)
+    {       
+		string $baseName = basenameEx($fileName); 
+		string $ext = fileExtension($fileName);
+        $ext = `tolower $ext`;
+
+        if($ext == "fbx")
+        {          
+			// Firstly, check if fbxmaya plugin is loaded.
+			int $hasFbxPluginLoaded = `pluginInfo -q -loaded fbxmaya`;
+			if ($hasFbxPluginLoaded == 0)
+			{
+				error(uiRes( "m_teImportOptions.kCTECreateContainerNoFbxPluginLoaded" ));
+				continue;
+			}
+
+            string $importCmd = "timeEditorAnimSource \""+$baseName+"\" -importOption generate -importFbx \"" + $fileName + "\" -ipo curves";
+
+            // Check no. of FBX Takes
+            FBXRead -f $fileName;
+            int $numTakes = `FBXGetTakeCount`;
+            FBXClose;
+
+			if( $numTakes > 1 )
+			{
+				$importCmd += " -importAllFbxTakes";
+			}
+
+			evalEcho($importCmd);
+        }
+		else if($ext == "ma" || $ext == "mb")
+        {
+            
+            string $importCmd = "timeEditorAnimSource \""+$baseName+"\" -importOption connect -importMayaFile \"" + $fileName + "\"";
+            evalEcho($importCmd);
+        }
+	}
+}
+
+
+//  Description:
+//		Imports animation from the given files
+//		Only pop up fbx option box once if imporing multiple fbx files which contains multiple takes. Same settings should be applied. 
+//
+//  Input Arguments:
+//		$action - Which action to execute
+//		$files - The file full names to import
+//		$startTime - Specify the start time
+//		$trackString - Track to import to
+//		$rootClipId - ID of the root clip
+//
+//  Return Value:
+//      None.
+//
+global proc tePerformImportAnimFiles(int $action, string $files[], string $trackString, float $startTime, int $rootClipId)
+{
+    
+	// set the optionVars first
+	teCreateImportOptionVars(false);
+    if($trackString == "")
+    {
+        // add new or use selected track
+		$trackString = teGetTrackForClipCreation(0, 1);	// Get an Audio Track
+		if($trackString == "")
+		{
+			// Pass a special string to tell the command to create new track
+			$trackString = teGetActiveTabNewTrackIdString();
+		}
+    }
+	if($trackString == "")
+	{
+		error((uiRes("m_teImportOptions.kNoTrackCreated")) );
+		return;
+	}
+
+    int $trackIndex = teGetTrackIndex($trackString);		
+	string $tracksNode = teParseTrackNode($trackString);
+        
+    if( $trackIndex != -1 && `timeEditorTracks -q -trackType -trackIndex $trackIndex $tracksNode` != 0)
+	{
+		error( (uiRes("m_teImportOptions.kNoCorrectTrackType1")) );
+        return;
+	}      
+
+	if($action == 1) 
+	{
+		// run the command use current settings
+		teAnimImportAction($startTime, $rootClipId, $files, $trackString);
+	} 
+	else if ($action == 2) 
+	{
+		int $hasMultiTakesFBxFile = 0;
+        for($fileName in $files)
+        {
+            string $ext = fileExtension($fileName);
+			$ext = `tolower $ext`;
+            if($ext == "fbx" && $hasMultiTakesFBxFile == 0)
+            {        
+				// Firstly, check if fbxmaya plugin is loaded.
+				int $hasFbxPluginLoaded = `pluginInfo -q -loaded fbxmaya`;
+				if ($hasFbxPluginLoaded == 0)
+				{
+					error(uiRes( "m_teImportOptions.kCTECreateContainerNoFbxPluginLoaded" ));
+					continue;
+				} 
+                // Check no. of FBX Takes
+                FBXRead -f $fileName;
+                int $numTakes = `FBXGetTakeCount`;
+                FBXClose;
+                
+                // Show option box when dealing with more than 1 Take
+                if ( $numTakes > 1 )
+                {              
+                    $hasMultiTakesFBxFile = 1;
+					break;
+                }
+            }
+        }
+       
+        if($hasMultiTakesFBxFile)
+        {
+            teCreateImportOptionBox($startTime, $rootClipId, $files, $trackString);
+        }
+        else
+        {
+             // Default is to create Clip directly
+            optionVar -intValue cteImportFBXTakesDest 0;
+            teAnimImportAction($startTime, $rootClipId, $files, $trackString);
+        }
+	}
+}
+
+//  Description:
+//		Imports audios from the given files
+//		All audio clips will be placed as sequence.
+//
+//  Input Arguments:
+//		$files - The file full names to import
+//		$trackString - Track to import to
+//		$startTime - Specify the start time
+//		$rootClipId - ID of the root clip
+//
+//  Return Value:
+//      None.
+//
+global proc tePerformImportAudioFiles(string $files[], string $trackString, float $startTime, int $rootClipId)
+{
+    undoInfo -openChunk;
+	int $trackIndex = -1;		// create new one
+	string $tracksNode = "";
+	
+    if($trackString == "")
+	{
+		// use selected track
+		$trackString = teGetTrackForClipCreation(0, 1);	// Get an Audio Track
+		if($trackString != "")
+		{
+			$trackIndex = teGetTrackIndex($trackString);		
+			$tracksNode = teParseTrackNode($trackString);
+			
+			if(`timeEditorTracks -q -trackType -trackIndex $trackIndex $tracksNode` != 1)
+			{
+				error( (uiRes("m_teImportOptions.kNoCorrectTrackType2")) );
+				undoInfo -closeChunk;
+				return;
+			}      
+		}
+		else
+		{				
+			$trackIndex = -1;			// use a first empty audio track or create a new one
+			$tracksNode = `timeEditorComposition -q -active`;
+			
+			if ($tracksNode == "")
+			{
+				error( (uiRes("m_teImportOptions.kNoActiveComposition")) );
+				undoInfo -closeChunk;
+				return;
+			}
+		}
+		
+		$trackString = $tracksNode + ":" + $trackIndex;
+	}  
+    
+	
+
+	// create container with audio
+    int $newClipId = 0;
+    for($fileName in $files)
+    {
+        string $clipName = basenameEx($fileName);
+        string $importCmd = "timeEditorClip -audio \"" + $fileName + "\" -track \"" + $trackString + "\" -startTime " + $startTime;
+        if ($rootClipId > 0)
+            $importCmd += " -rootClipId " + $rootClipId;        
+        $importCmd += " \"" + $clipName + "\"";
+        $newClipId = `eval($importCmd)`;
+        
+        if($newClipId != 0)
+        {
+            $startTime = `timeEditorClip -q -endTime -truncated $newClipId`; 
+        }
+    }
+
+    undoInfo -closeChunk;
+}

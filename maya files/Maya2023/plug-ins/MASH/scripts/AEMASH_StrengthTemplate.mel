@@ -1,0 +1,168 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+
+global proc AEMASH_StrengthTemplate( string $nodeName )
+    {
+
+    editorTemplate -beginScrollLayout;
+    python("import MASH.nodeHeaders; MASH.nodeHeaders.addHeader('" + $nodeName + "', 'kStrength')")
+    editorTemplate -endLayout;
+    
+    editorTemplate -bn;
+
+    editorTemplate -beginLayout (getPluginResource("MASH", "kPosition")) -collapse 0;
+    editorTemplate  -label (getPluginResource("MASH", "kPositionStrength")) -addControl "positionStrength";
+    editorTemplate  -label (getPluginResource("MASH", "kPositionDelay")) -addControl "positionDelay";
+    editorTemplate  -label (getPluginResource("MASH", "kRandomisePositionDelay")) -addControl "positionRandomise";
+    editorTemplate  -label (getPluginResource("MASH", "kReversePositionDelay")) -addControl "reversePosition";
+    editorTemplate  -label (getPluginResource("MASH", "kStrengthMap")) -addControl "positionStrengthMap";
+    editorTemplate  -label (getPluginResource("MASH", "kStrengthMap")) -addControl "posMapDirection";
+    editorTemplate -callCustom "MASHstrengthPosMapHelperBuildQt" "MASHstrengthPosMapHelperUpdateQt" "";
+    editorTemplate -endLayout;
+    editorTemplate -beginLayout (getPluginResource("MASH", "kRotation")) -collapse 1;
+    editorTemplate  -label (getPluginResource("MASH", "kRotationStrength")) -addControl "rotationStrength";
+    editorTemplate  -label (getPluginResource("MASH", "kRotationDelay")) -addControl "rotationDelay";
+    editorTemplate  -label (getPluginResource("MASH", "kRandomiseRotationDelay")) -addControl "rotationRandomise";
+    editorTemplate  -label (getPluginResource("MASH", "kReverseRotationDelay")) -addControl "reverseRotation";
+    editorTemplate  -label (getPluginResource("MASH", "kStrengthMap")) -addControl "rotationStrengthMap";
+    editorTemplate  -label (getPluginResource("MASH", "kStrengthMap")) -addControl "rotMapDirection";
+    editorTemplate -callCustom "MASHstrengthRotMapHelperBuildQt" "MASHstrengthRotMapHelperUpdateQt" "";
+    editorTemplate -endLayout;
+    editorTemplate -beginLayout (getPluginResource("MASH", "kScale")) -collapse 1;
+    editorTemplate  -label (getPluginResource("MASH", "kScaleStrength")) -addControl "scaleStrength";
+    editorTemplate  -label (getPluginResource("MASH", "kScaleDelay")) -addControl "scaleDelay";
+    editorTemplate  -label (getPluginResource("MASH", "kRandomiseScaleDelay")) -addControl "scaleRandomise";
+    editorTemplate  -label (getPluginResource("MASH", "kReverseScaleDelay")) -addControl "reverseScale";
+    editorTemplate  -label (getPluginResource("MASH", "kStrengthMap")) -addControl "scaleStrengthMap";
+    editorTemplate  -label (getPluginResource("MASH", "kStrengthMap")) -addControl "scaleMapDirection";
+    editorTemplate -callCustom "MASHstrengthScaleMapHelperBuildQt" "MASHstrengthScaleMapHelperUpdateQt" "";
+    editorTemplate -endLayout;
+    editorTemplate -en;
+    editorTemplate  -label (getPluginResource("MASH", "kRandSeed")) -addControl "randomSeed";
+
+    editorTemplate  -label (getPluginResource("MASH", "kTime")) -addControl "time";
+
+    editorTemplate -beginLayout (getPluginResource("MASH", "kFalloffObject")) -collapse 1;
+    editorTemplate -bn;
+    editorTemplate  -label (getPluginResource("MASH", "kEnablePos")) -addControl "affectsPosition";
+    editorTemplate  -label (getPluginResource("MASH", "kEnableRot")) -addControl "affectsRotation";
+    editorTemplate  -label (getPluginResource("MASH", "kEnableScale")) -addControl "affectsScale";
+    editorTemplate -en;
+    editorTemplate -callCustom "MASHfalloffButtons" "MASHfalloffButtonsEdit" "";
+    editorTemplate -endLayout;
+
+    AEdependNodeTemplate $nodeName;
+    editorTemplate -addExtraControls;
+    editorTemplate -endScrollLayout;
+
+    editorTemplate -suppress "grpsize";
+    editorTemplate -suppress "Envelope";
+    editorTemplate -suppress "Envelope";
+    editorTemplate -suppress "randEnvelope";
+    editorTemplate -suppress "StepEnvelope";
+    editorTemplate -suppress "falloffX";
+    editorTemplate -suppress "falloffY";
+    editorTemplate -suppress "falloffZ";
+    editorTemplate -suppress "inputPoints";
+    editorTemplate -suppress "inMapMatrix";
+    editorTemplate -suppress "strengthPP";
+    editorTemplate -suppress "stringOff";
+    editorTemplate -suppress "stringOn";
+    editorTemplate -suppress "inFrames";
+    }
+
+global proc MASHstrengthPosMapHelperBuildQt(string $nodeName)
+{
+    string $buffer[];
+    tokenize($nodeName, ".", $buffer);
+    $nodeName = $buffer[0];
+    string $nodeType = `nodeType($nodeName)`;
+    string $layout = ($nodeType+"PosMapHelperLayout");
+
+    python("import MASHsingleInputQtWidget");
+    rowLayout -numberOfColumns 2 -columnWidth2 139 250 $layout;
+    text -w 105 -h 20 -vis 1
+    -label (getPluginResource("MASH", "kMapHelper"))
+    -align "right" -font "plainLabelFont" ;
+    //get python to create the widget, include the desired nodeType as an arguement
+    python("MASHsingleInputQtWidget.build_qt_widget('" + $layout + "', '" + $nodeName + "', 'transform', 'positionMapMatrix', 'worldMatrix[0]', 'PosMapSwitchToUVMode')");
+    setParent..;
+}
+
+global proc MASHstrengthPosMapHelperUpdateQt(string $nodeName )
+{
+    string $buffer[];
+    tokenize($nodeName, ".", $buffer);
+    $nodeName = $buffer[0];
+    string $nodeType = `nodeType($nodeName)`;
+    string $layout = ($nodeType+"PosMapHelperLayout");
+
+    python("import MASHsingleInputQtWidget");
+    python("MASHsingleInputQtWidget.update_qt_widget('" + $layout + "', '" + $nodeName + "', 'transform', 'positionMapMatrix', 'worldMatrix[0]', 'PosMapSwitchToUVMode')");
+}
+
+
+global proc MASHstrengthScaleMapHelperBuildQt(string $nodeName)
+{
+    string $buffer[];
+    tokenize($nodeName, ".", $buffer);
+    $nodeName = $buffer[0];
+    string $nodeType = `nodeType($nodeName)`;
+    string $layout = ($nodeType+"ScaleMapHelperLayout");
+
+    python("import MASHsingleInputQtWidget");
+    rowLayout -numberOfColumns 2 -columnWidth2 139 250 $layout;
+    text -w 105 -h 20 -vis 1
+    -label (getPluginResource("MASH", "kMapHelper"))
+    -align "right" -font "plainLabelFont" ;
+    //get python to create the widget, include the desired nodeType as an arguement
+    python("MASHsingleInputQtWidget.build_qt_widget('" + $layout + "', '" + $nodeName + "', 'transform', 'scaleMapMatrix', 'worldMatrix[0]', 'ScaleMapSwitchToUVMode')");
+    setParent..;
+}
+
+global proc MASHstrengthScaleMapHelperUpdateQt(string $nodeName )
+{
+    string $buffer[];
+    tokenize($nodeName, ".", $buffer);
+    $nodeName = $buffer[0];
+    string $nodeType = `nodeType($nodeName)`;
+    string $layout = ($nodeType+"ScaleMapHelperLayout");
+
+    python("import MASHsingleInputQtWidget");
+    python("MASHsingleInputQtWidget.update_qt_widget('" + $layout + "', '" + $nodeName + "', 'transform', 'scaleMapMatrix', 'worldMatrix[0]', 'ScaleMapSwitchToUVMode')");
+}
+
+global proc MASHstrengthRotMapHelperBuildQt(string $nodeName)
+{
+    string $buffer[];
+    tokenize($nodeName, ".", $buffer);
+    $nodeName = $buffer[0];
+    string $nodeType = `nodeType($nodeName)`;
+    string $layout = ($nodeType+"RotMapHelperLayout");
+
+    python("import MASHsingleInputQtWidget");
+    rowLayout -numberOfColumns 2 -columnWidth2 139 250 $layout;
+    text -w 105 -h 20 -vis 1
+    -label (getPluginResource("MASH", "kMapHelper"))
+    -align "right" -font "plainLabelFont" ;
+    //get python to create the widget, include the desired nodeType as an arguement
+    python("MASHsingleInputQtWidget.build_qt_widget('" + $layout + "', '" + $nodeName + "', 'transform', 'rotationMapMatrix', 'worldMatrix[0]', 'RotMapSwitchToUVMode')");
+    setParent..;
+}
+
+global proc MASHstrengthRotMapHelperUpdateQt(string $nodeName )
+{
+    string $buffer[];
+    tokenize($nodeName, ".", $buffer);
+    $nodeName = $buffer[0];
+    string $nodeType = `nodeType($nodeName)`;
+    string $layout = ($nodeType+"RotMapHelperLayout");
+
+    python("import MASHsingleInputQtWidget");
+    python("MASHsingleInputQtWidget.update_qt_widget('" + $layout + "', '" + $nodeName + "', 'transform', 'rotationMapMatrix', 'worldMatrix[0]', 'RotMapSwitchToUVMode')");
+}

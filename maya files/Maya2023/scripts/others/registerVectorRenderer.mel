@@ -1,0 +1,85 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//  Creation Date:  23 December 2002
+//
+//  Procedure Name:
+//		registerVectorRender	
+//
+//  Description:
+// 		This script registers Vector renderer with 
+//		other renderers in Maya.
+//
+//  Input Arguments:
+//		None
+//  Return Value:
+//		None
+//
+
+///////////////////////////////////////////////////////////////////////////////
+// Description: This procedure is called to register the 
+// 				vector renderer with other renderers in Maya.
+///////////////////////////////////////////////////////////////////////////////
+
+global proc registerVectorRenderer()
+{
+    renderer
+		-rendererUIName						(uiRes("m_registerVectorRenderer.kMayaVector"))
+		-renderProcedure					"vectorRender"
+		-commandRenderProcedure				"vectorRenderExecuteBatch"
+		-batchRenderProcedure				"vectorRenderExecuteBatch"
+		-showRenderLogProcedure      		""
+		-batchRenderOptionsProcedure		""
+		-batchRenderOptionsStringProcedure  "vectorRenderBatchRenderOptionsString"
+		-cancelBatchRenderProcedure			"vectorRenderCancelBatch"
+		-showBatchRenderProcedure			""
+		-showBatchRenderLogProcedure 		""
+		-iprRenderProcedure					""
+		-iprOptionsProcedure				""
+		-startIprRenderProcedure			""
+		-stopIprRenderProcedure				""
+		-changeIprRegionProcedure			""
+		-iprOptionsMenuLabel			    ""
+		-iprOptionsSubMenuProcedure		    ""
+		-iprRenderSubMenuProcedure		    ""
+		-renderDiagnosticsProcedure			""
+		-renderRegionProcedure				""
+		-renderSequenceProcedure			"mayaRenderSequence"
+		-textureBakingProcedure				""
+		-polyPrelightProcedure				""
+		-renderingEditorsSubMenuProcedure	""
+		-logoImageName                      "VectorRenderRAViX3.xpm"
+        -logoCallbackProcedure              "vectorRenderLogoCallback"
+        mayaVector;
+
+	//
+	//The first argument of the "-addGlobalsTab" flag is used in creating layout names
+	//and should not be localized.
+	//
+	
+	renderer
+		-edit
+		-addGlobalsTab "Common" "createMayaSoftwareCommonGlobalsTab" 
+								"updateMayaSoftwareCommonGlobalsTab" 
+		mayaVector;
+	renderer
+        -edit
+        -addGlobalsTab  "Maya Vector"
+                        "createVectorGlobalsTab"
+                        "updateVectorGlobalsTab"
+        mayaVector;
+
+    renderer -edit -addGlobalsNode "vectorRenderGlobals" mayaVector;
+    renderer -edit -addGlobalsNode "defaultRenderGlobals" mayaVector;
+    renderer -edit -addGlobalsNode "defaultResolution" mayaVector;
+
+    // Load the user defined preferred preset for Vector render globals nodes
+    loadPreferredRenderGlobalsPreset("mayaVector");
+
+    source vectorRenderUtil.mel;
+}

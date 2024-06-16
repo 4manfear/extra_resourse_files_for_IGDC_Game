@@ -1,0 +1,60 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+// Resources for Plug-in: Unfold3D
+// 
+// ----------------------------
+// Registered string resources:
+// ----------------------------
+// 
+//  (Plugin has no registered string resources)
+// 
+// 
+// --------------------------
+// Registered node resources:
+// --------------------------
+// 
+// Node: Unfold3DUnfold
+// 
+setNodeNiceNameResource( "Unfold3DUnfold", "Unfold3D を展開" );
+setAttrNiceNameResource( "Unfold3DUnfold", "fzn", "フリーズ" );
+setAttrNiceNameResource( "Unfold3DUnfold", "im", "入力メッシュ" );
+setAttrNiceNameResource( "Unfold3DUnfold", "om", "出力メッシュ" );
+setAttrNiceNameResource( "Unfold3DUnfold", "ite", "反復" );
+setAttrNiceNameResource( "Unfold3DUnfold", "bi", "境界の交差" );
+setAttrNiceNameResource( "Unfold3DUnfold", "trif", "三角形の反転" );
+setAttrNiceNameResource( "Unfold3DUnfold", "msiz", "マップ サイズ" );
+setAttrNiceNameResource( "Unfold3DUnfold", "pack", "パッキング" );
+setAttrNiceNameResource( "Unfold3DUnfold", "rspac", "ルーム スペース" );
+setAttrNiceNameResource( "Unfold3DUnfold", "mdp", "DAG パスをメッシュ" );
+setAttrNiceNameResource( "Unfold3DUnfold", "uvl", "選択した UV リスト" );
+setAttrNiceNameResource( "Unfold3DUnfold", "usn", "UV セット名" );
+setAttrNiceNameResource( "Unfold3DUnfold", "mue", "Memusexported" );
+setAttrNiceNameResource( "Unfold3DUnfold", "mve", "Memvsexported" );
+setAttrNiceNameResource( "Unfold3DUnfold", "miee", "Memisevereval" );
+setAttrNiceNameResource( "Unfold3DUnfold", "fza", "フリーズの影響を受ける" );
+// 
+// Node: Unfold3DOptimize
+// 
+setNodeNiceNameResource( "Unfold3DOptimize", "Unfold3D の最適化" );
+setAttrNiceNameResource( "Unfold3DOptimize", "fzn", "フリーズ" );
+setAttrNiceNameResource( "Unfold3DOptimize", "im", "入力メッシュ" );
+setAttrNiceNameResource( "Unfold3DOptimize", "om", "出力メッシュ" );
+setAttrNiceNameResource( "Unfold3DOptimize", "ite", "反復" );
+setAttrNiceNameResource( "Unfold3DOptimize", "bi", "境界の交差" );
+setAttrNiceNameResource( "Unfold3DOptimize", "trif", "三角形の反転" );
+setAttrNiceNameResource( "Unfold3DOptimize", "msiz", "マップ サイズ" );
+setAttrNiceNameResource( "Unfold3DOptimize", "rspac", "ルーム スペース" );
+setAttrNiceNameResource( "Unfold3DOptimize", "sa", "サーフェス角度" );
+setAttrNiceNameResource( "Unfold3DOptimize", "pow", "累乗" );
+setAttrNiceNameResource( "Unfold3DOptimize", "mdp", "DAG パスをメッシュ" );
+setAttrNiceNameResource( "Unfold3DOptimize", "uvl", "選択した UV リスト" );
+setAttrNiceNameResource( "Unfold3DOptimize", "usn", "UV セット名" );
+setAttrNiceNameResource( "Unfold3DOptimize", "mue", "Memusexported" );
+setAttrNiceNameResource( "Unfold3DOptimize", "mve", "Memvsexported" );
+setAttrNiceNameResource( "Unfold3DOptimize", "miee", "Memisevereval" );
+setAttrNiceNameResource( "Unfold3DOptimize", "fza", "フリーズの影響を受ける" );

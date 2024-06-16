@@ -1,0 +1,28 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  May 18, 2001
+//
+//  Description:
+//      This script closes the front window, as long as it is not the mainWindow.
+//
+//  Input Arguments:
+//      None.
+//
+//  Return Value:
+//      None.
+//
+
+global proc closeFrontWindow ()
+{
+	string $frontWindow = `window -query -frontWindow dummy`;
+	if (($frontWindow != "unknown") && !`window -query -mainWindow $frontWindow`) {
+		window -edit -visible false $frontWindow;
+	}
+}

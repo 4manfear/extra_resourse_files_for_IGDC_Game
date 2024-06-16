@@ -1,0 +1,41 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+
+
+global proc HIKPinning2StateAddControl (string $nodeName )
+{
+    string $labelPinT = (uiRes("m_AEHIKPinning2StateTemplate.kPinT"));
+    string $labelPinR = (uiRes("m_AEHIKPinning2StateTemplate.kPinR"));
+    string $labelPullOverride = (uiRes("m_AEHIKPinning2StateTemplate.kPullOverride"));
+    string $labelResistOverride = (uiRes("m_AEHIKPinning2StateTemplate.kResistOverride"));
+    
+	editorTemplate -beginLayout $nodeName -collapse 1;		
+		editorTemplate -label $labelPinT -addControl ($nodeName + "PinT");
+		editorTemplate -label $labelPinR -addControl ($nodeName + "PinR");
+		editorTemplate -label $labelPullOverride -addControl ($nodeName + "PullOverride");
+		editorTemplate -label $labelResistOverride -addControl ($nodeName + "ResistOverride");		
+	editorTemplate -endLayout;
+};
+	
+global proc AEHIKPinning2StateTemplate (string $nodeName )
+{	
+	editorTemplate -beginScrollLayout;
+		
+		editorTemplate -label (uiRes("m_AEHIKPinning2StateTemplate.kManipActive")) -addControl "manipActive";
+		
+		genericEffectorLayout "HIKPinning2StateAddControl";
+
+		editorTemplate -suppress "InputEffectorState";
+		editorTemplate -suppress "OutputEffectorState";		
+		
+	// include/call base class/node attributes
+	AEdependNodeTemplate $nodeName;
+		
+	editorTemplate -addExtraControls;		
+	editorTemplate -endScrollLayout;
+}

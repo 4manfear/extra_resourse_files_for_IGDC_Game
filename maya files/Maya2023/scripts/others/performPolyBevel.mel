@@ -1,0 +1,358 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  4 April 1997
+//
+//  Description:
+//
+//
+//  Procedure Name:
+//      performPolyBevel
+//
+//  Description:
+//        perform a bevel of the selected polygon edges
+//         
+//  Input Arguments:
+//        $option : Whether to set the options to default values.
+//  Return Value:
+//        command string iff $option==2
+//
+
+proc setOptionVars (int $forceFactorySettings)
+{			   
+	optionVar -init $forceFactorySettings -category "Modeling.Edit Mesh.Bevel"
+		-iv polyBevelOffsetAsFraction 0 // fraction is default
+		-iv polyBevelOffsetWorld 0 // world is default
+		-fv polyBevelOffset 0.5
+		-fv polyBevelRound 0.5
+		-fv polyBevelDepth 1.0
+		-iv polyBevelSegment 1
+		-iv polyBevelMitering 0
+		-iv polyBevelMiterAlong 0
+		-iv polyBevelChamfer 1
+		-iv polyBevelAutofit 1
+		-iv polyBevelSmoothingAngle 30
+		;
+}
+
+global proc performPolyBevelSetup (string $parent, int $forceFactorySettings)
+{
+	setOptionVars($forceFactorySettings);
+	setParent $parent;
+     
+	int $ival = `optionVar -query polyBevelOffsetAsFraction` + 1;
+    radioButtonGrp -edit -select $ival polyBevelOffsetAsFraction;
+	
+	$ival = `optionVar -query polyBevelOffsetWorld` + 1;
+    radioButtonGrp -edit -select $ival polyBevelOffsetWorld;
+	
+	float $fval = `optionVar -query polyBevelOffset`;
+	floatSliderGrp -edit -value $fval polyBevelOffset;
+	
+	$fval = `optionVar -query polyBevelRound`;
+	floatSliderGrp -edit -value $fval polyBevelRound;
+	
+	$fval = `optionVar -query polyBevelDepth`;
+	floatSliderGrp -edit -value $fval polyBevelDepth;
+	
+	$ival = `optionVar -query polyBevelSegment`;
+     intSliderGrp -edit -value $ival polyBevelSegment;
+	
+	$ival = `optionVar -query polyBevelMitering` + 1;
+     optionMenuGrp -edit -select $ival polyBevelMitering;
+	
+	$ival = `optionVar -query polyBevelMiterAlong` + 1;
+     optionMenuGrp -edit -select $ival polyBevelMiterAlong;
+	
+	$ival = `optionVar -query polyBevelChamfer`;
+     checkBoxGrp -edit -value1 $ival polyBevelChamfer;
+	
+	$ival = `optionVar -query polyBevelAutofit`;
+    checkBoxGrp -edit -value1 $ival polyBevelAutofit;
+	
+	$fval = `optionVar -query polyBevelSmoothingAngle`;
+	floatSliderGrp -edit -value $fval polyBevelSmoothingAngle;
+
+	if (`checkBoxGrp -query -value1 polyBevelAutofit` == 1) {
+		// disable roundness
+		floatSliderGrp -e -en 0 polyBevelRound;
+	} else {
+		// enable roundness
+		floatSliderGrp -e -en 1 polyBevelRound;
+	}
+
+	if (`radioButtonGrp -query -select polyBevelOffsetAsFraction` == 1) {
+		// disable space selection
+		radioButtonGrp -e -en 0 polyBevelOffsetWorld;
+	} else {
+		// enable space selection
+		radioButtonGrp -e -en 1 polyBevelOffsetWorld;
+	}
+}
+
+global proc performPolyBevelCallback (string $parent, int $doIt)
+{
+	setParent $parent;
+	
+	optionVar -intValue polyBevelOffsetAsFraction (`radioButtonGrp -query -select polyBevelOffsetAsFraction` - 1);
+	optionVar -intValue polyBevelOffsetWorld (`radioButtonGrp -query -select polyBevelOffsetWorld` - 1);
+	optionVar -floatValue polyBevelOffset `floatSliderGrp -query -value polyBevelOffset`;
+	optionVar -floatValue polyBevelRound `floatSliderGrp -query -value polyBevelRound`;
+	optionVar -floatValue polyBevelDepth `floatSliderGrp -query -value polyBevelDepth`;
+	optionVar -intValue polyBevelSegment `intSliderGrp -query -value polyBevelSegment`;
+	optionVar -intValue polyBevelMitering (`optionMenuGrp -query -select polyBevelMitering` - 1);
+	optionVar -intValue polyBevelMiterAlong (`optionMenuGrp -query -select polyBevelMiterAlong` - 1);
+	optionVar -intValue polyBevelChamfer `checkBoxGrp -query -value1 polyBevelChamfer`;
+	optionVar -intValue polyBevelAutofit `checkBoxGrp -query -value1 polyBevelAutofit`;
+	optionVar -floatValue polyBevelSmoothingAngle `floatSliderGrp -query -value polyBevelSmoothingAngle`;
+
+	if (`checkBoxGrp -query -value1 polyBevelChamfer` == 1) {
+		floatSliderGrp -e -en 1 polyBevelDepth;
+	} else {
+		floatSliderGrp -e -en 0 polyBevelDepth;
+	}
+	if (`checkBoxGrp -query -value1 polyBevelAutofit` == 1) {
+		// disable roundness
+		floatSliderGrp -e -en 0 polyBevelRound;
+	} else {
+		// enable roundness
+		floatSliderGrp -e -en 1 polyBevelRound;
+	}
+	if (`radioButtonGrp -query -select polyBevelOffsetAsFraction` == 1) {
+		// disable space selection
+		radioButtonGrp -e -en 0 polyBevelOffsetWorld;
+	} else {
+		// enable space selection
+		radioButtonGrp -e -en 1 polyBevelOffsetWorld;
+	}
+	if (`optionMenuGrp -query -select polyBevelMitering` == 5) {
+		// disable miter along
+		optionMenuGrp -e -en 0 polyBevelMiterAlong;
+	} else {
+		// enable miter along
+		optionMenuGrp -e -en 1 polyBevelMiterAlong;
+	}
+	if ($doIt) {
+		performPolyBevel 0;
+		addToRecentCommandQueue "performPolyBevel 0" "PolyBevel";
+	}
+}
+
+proc polyBevelOptions ()
+{
+	// Global template variables for form spacing
+	global int $gOptionBoxTemplateFrameSpacing;
+	
+	string $commandName = "performPolyBevel";
+	string $callback = ($commandName + "Callback");
+	string $setup = ($commandName + "Setup");
+	   
+	string $layout = getOptionBox();
+	setParent $layout;
+	setUITemplate -pushTemplate OptionBoxTemplate;
+	waitCursor -state 1;
+	
+	// Form layout
+	string $parent = `formLayout polyCutFaceOptions`;
+	
+		// Settings frame
+		string $settingsFrame = 
+		`frameLayout -label (uiRes("m_performPolyBevel.kSettingsFrame"))`;
+	
+			columnLayout;
+
+			radioButtonGrp -nrb 2 -vr -label (uiRes("m_performPolyBevel.kOffsetType"))
+				-l1 (uiRes("m_performPolyBevel.kOffsetType1"))
+				-l2 (uiRes("m_performPolyBevel.kOffsetType2")) 
+				-cc ($callback + " " + $parent + " " + 0) 
+				polyBevelOffsetAsFraction;
+			radioButtonGrp -nrb 2 -vr -label (uiRes("m_performPolyBevel.kOffsetSpace")) 
+				-l1 (uiRes("m_performPolyBevel.kOffsetSpace1"))
+				-l2 (uiRes("m_performPolyBevel.kOffsetSpace2"))
+				-cc ($callback + " " + $parent + " " + 0)
+				polyBevelOffsetWorld;
+
+			floatSliderGrp -label (uiRes("m_performPolyBevel.kWidth")) -min 0 -max 1.0 -fmx 100.0 -cc ($callback + " " + $parent + " " + 0) polyBevelOffset;
+
+			separator;
+
+			intSliderGrp -label (uiRes("m_performPolyBevel.kSegments")) -min 1 -max 12 -fmx 100 -cc ($callback + " " + $parent + " " + 0) polyBevelSegment;
+			floatSliderGrp -label (uiRes("m_performPolyBevel.kDepth")) -min -1.0 -max 1.0 -fmx 100.0 -cc ($callback + " " + $parent + " " + 0) polyBevelDepth;
+
+			optionMenuGrp -label (uiRes("m_performPolyBevel.kMitering")) -cc ($callback + " " + $parent + " " + 0) polyBevelMitering;
+				menuItem -label (uiRes("m_performPolyBevel.kMiteringAuto"));
+				menuItem -label (uiRes("m_performPolyBevel.kMiteringUniform"));
+				menuItem -label (uiRes("m_performPolyBevel.kMiteringPatch"));
+				menuItem -label (uiRes("m_performPolyBevel.kMiteringRadial"));
+				menuItem -label (uiRes("m_performPolyBevel.kMiteringNone"));
+			setParent -menu ..;
+				
+			optionMenuGrp -label (uiRes("m_performPolyBevel.kMiterAlong")) -cc ($callback + " " + $parent + " " + 0) polyBevelMiterAlong;
+				menuItem -label (uiRes("m_performPolyBevel.kMiterAlongAuto"));
+				menuItem -label (uiRes("m_performPolyBevel.kMiterAlongCenter"));
+				menuItem -label (uiRes("m_performPolyBevel.kMiterAlongEdge"));
+				menuItem -label (uiRes("m_performPolyBevel.kMiterAlongHardEdge"));
+			setParent -menu ..;
+				
+			checkBoxGrp 
+				-label1 (uiRes("m_performPolyBevel.kChamfer")) 
+				-cc ($callback + " " + $parent + " " + 0) 
+				polyBevelChamfer;
+
+			floatSliderGrp -label (uiRes("m_performPolyBevel.kSmoothingAngle")) -min 0 -max 180 -fmn 0.0 -fmx 100.0 -cc ($callback + " " + $parent + " " + 0) polyBevelSmoothingAngle;
+
+			checkBoxGrp 
+				-label1 (uiRes("m_performPolyBevel.kAutoFit")) 
+				-cc ($callback + " " + $parent + " " + 0) 
+				polyBevelAutofit;
+			floatSliderGrp -label (uiRes("m_performPolyBevel.kRoundness")) -min -0.5 -max 0.5 -fmn 0.0 -fmx 100.0 -cc ($callback + " " + $parent + " " + 0) polyBevelRound;
+
+			separator;
+
+		setParent $parent;	
+		
+	setParent ..;
+
+	// Attach frame to form layout
+	formLayout -e
+		-af $settingsFrame "top" $gOptionBoxTemplateFrameSpacing
+		-af $settingsFrame "left" $gOptionBoxTemplateFrameSpacing
+		-af $settingsFrame "right" $gOptionBoxTemplateFrameSpacing
+		-an $settingsFrame "bottom"
+	$parent;
+	
+	waitCursor -state 0;
+	setUITemplate -popTemplate;
+	   
+	string $applyBtn = getOptionBoxApplyBtn();
+	button -edit -label (uiRes("m_performPolyBevel.kBevelButton"))
+	       -command ($callback + " " + $parent + " " + 1)
+		$applyBtn;
+	string $saveBtn = getOptionBoxSaveBtn();
+	button -edit 
+		-command ($callback + " " + $parent + " " + 0 + "; hideOptionBox")
+		$saveBtn;
+	string $resetBtn = getOptionBoxResetBtn();
+	button -edit 
+		-command ($setup + " " + $parent + " " + 1)
+		$resetBtn;
+			 
+	setOptionBoxTitle( (uiRes("m_performPolyBevel.kBevelOptions")) );
+
+	setOptionBoxHelpTag( "PolygonsBevel" );
+
+	eval (($setup + " " + $parent + " " + 0));      
+	showOptionBox();
+}
+
+global proc string performPolyBevel (int $option)
+{
+	string $cmd="";
+	string $sel[];
+	int $asFraction, $world, $sg, $ival, $mitering, $miterAlong, $chamfer;
+	float $dist, $smoothingAngle, $depth;
+	switch ($option) {
+	case 3:
+		// in this mode, bevel should only operate on selection boundary if only faces are selected
+		string $faces[] = `polyListComponentConversion -fromFace -toFace`;
+		string $edges[] = `polyListComponentConversion -fromEdge -toEdge`;
+
+		if ( size($faces) > 0 && size($edges) == 0 ) {
+			string $borderEdges[];
+			string $containedFaces[];
+			convertToSelectionBorder(-1, false, $borderEdges, $containedFaces);
+			if (0 < size($borderEdges)) {
+    			select $borderEdges;
+			}
+		}
+
+	case 0:
+		setOptionVars(false);
+		$asFraction = (0 == `optionVar -query polyBevelOffsetAsFraction`);
+		$world = (0 == `optionVar -query polyBevelOffsetWorld`);
+		$dist = `optionVar -query polyBevelOffset`;
+		$depth = `optionVar -query polyBevelDepth`;
+		$sg = `optionVar -query polyBevelSegment`;
+		$mitering = `optionVar -query polyBevelMitering`;
+		$miterAlong = `optionVar -query polyBevelMiterAlong`;
+		$chamfer = `optionVar -query polyBevelChamfer`;
+		$ival = `optionVar -query polyBevelAutofit`;
+		$smoothingAngle = `optionVar -query polyBevelSmoothingAngle`;
+
+		$cmd=("polyBevel3");
+		if ($asFraction)
+			$cmd=($cmd + " -fraction " + $dist);
+		else
+			$cmd=($cmd + " -offset " + $dist);
+		$cmd=($cmd + " -offsetAsFraction " + $asFraction + " -autoFit " + $ival);
+		if (!$ival) {
+			float $fv2 = `optionVar -query polyBevelRound`;
+			$cmd=($cmd + " -roundness " + $fv2);
+		}
+		$cmd = ($cmd + " -depth " + $depth);
+		$cmd = ($cmd + " -mitering " + $mitering);
+		$cmd = ($cmd + " -miterAlong " + $miterAlong);
+		$cmd = ($cmd + " -chamfer " + $chamfer);
+		$cmd = ($cmd + " -segments " + $sg + " -worldSpace " + $world + " -smoothingAngle " + $smoothingAngle);
+
+		// hardcode the cleanup options - they can be set in the AE/channel box if needed
+		$cmd = ($cmd + " -subdivideNgons 1 -mergeVertices 1 -mergeVertexTolerance 0.0001 -miteringAngle 180 -angleTolerance 180");
+
+		polyPerformAction $cmd e 0;
+
+		// make sure node is selected when there is history
+		if ( 0 != size(`ls -sl`) || (0 != size(`ls -hl`)) ) {
+			string $tmp[] = `listHistory`;
+			string $totalSel[];
+			for ($opNode in $tmp) {
+				if (`nodeType $opNode` == "polyBevel3") {
+					$totalSel[size($totalSel)] = $opNode;
+				}
+			}
+			
+ 			if (size($totalSel) > 0) 
+ 				select $totalSel[0];
+			else
+				select -clear;
+		}
+
+		setToolTo ShowManips;
+		break;
+
+	case 1: polyBevelOptions; break;
+	default:
+		setOptionVars(false);
+		$asFraction = (0 == `optionVar -query polyBevelOffsetAsFraction`);
+		$world = (0 == `optionVar -query polyBevelOffsetWorld`);
+		$dist = `optionVar -query polyBevelOffset`;
+		$depth = `optionVar -query polyBevelDepth`;
+		$sg = `optionVar -query polyBevelSegment`;
+		$mitering = `optionVar -query polyBevelMitering`;
+		$miterAlong = `optionVar -query polyBevelMiterAlong`;
+		$chamfer = `optionVar -query polyBevelChamfer`;
+		$ival = `optionVar -query polyBevelAutofit`;
+		$smoothingAngle = `optionVar -query polyBevelSmoothingAngle`;
+		$cmd=("polyBevel3 -offset " + $dist + " -offsetAsFraction " + $asFraction + " -autoFit " + $ival);
+		if (!$ival) {
+			float $fv2 = `optionVar -query polyBevelRound`;
+			$cmd=($cmd + " -roundness " + $fv2);
+		}
+		$cmd = ($cmd + " -segments " + $sg + " -worldSpace " + $world + " -smoothingAngle " + $smoothingAngle);
+		$cmd = ($cmd + " -depth " + $depth);
+		$cmd = ($cmd + " -mitering " + $mitering);
+		$cmd = ($cmd + " -miterAlong " + $miterAlong);
+		$cmd = ($cmd + " -chamfer " + $chamfer);
+
+		// hardcode the cleanup options - they can be set in the AE/channel box if needed
+		$cmd = ($cmd + " -subdivideNgons 1 -mergeVertices 1 -mergeVertexTolerance 0.0001 -miteringAngle 180 -angleTolerance 180");
+
+		$cmd = ("polyPerformAction \"" + $cmd + "\" e 0");
+	}
+	return $cmd;
+}

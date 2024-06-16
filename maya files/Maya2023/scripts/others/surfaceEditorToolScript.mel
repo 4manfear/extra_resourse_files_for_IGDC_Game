@@ -1,0 +1,45 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+// Creation Date:  14 January 1999
+//
+//
+//
+//  Procedure Name:
+//      surfaceEditorToolScript
+//
+//  Description:
+//	create wrapper around the surfaceEditor command
+//
+//  Input Arguments:
+//		4 ==> enter the tool (create if necessary)
+//
+//  Return Value:
+//      None.
+//
+
+global proc string surfaceEditorToolScript( int $setToTool )
+//
+//	Description :
+//		4 ==> enter the tool
+{
+	string $tool = "surfaceEditorContext";
+	if( ! `curveEditorCtx -exists $tool` ) {
+		rememberCtxSettings `curveEditorCtx -i1 "surfaceEditor.png" -title (uiRes("m_surfaceEditorToolScript.kSurfaceEditingTool")) $tool`;
+	}
+	setToolTo $tool;
+
+	if( 3 == $setToTool ) {
+		toolPropertyWindow;
+	}
+	else if( 4 != $setToTool ) {
+		warning (uiRes("m_surfaceEditorToolScript.kWrongInput"));
+	}
+	return $tool;
+}

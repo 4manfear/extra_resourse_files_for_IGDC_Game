@@ -1,0 +1,38 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//	Procedure: 	polyUVBorderHard()
+//
+//	Description:        
+//
+//		Hard texture-border edges and soft non-texture-border edges.
+//
+//  Input arguments
+//      None
+//
+//	Return value
+//		None
+//
+
+global proc polyUVBorderHard()
+{
+    if(size(`ls -sl`) == 0 && size(`ls -hl`) == 0)
+	    return;
+	ConvertSelectionToEdges;
+	$edges = `ls -sl`;
+	SelectUVBorderComponents;
+	$border = `ls -sl`;
+	select -r $edges;
+	select -d $border;
+	$nonBorderEdges = `ls -sl`;
+	select -tgl $edges;
+	$borderEdges = `ls -sl`;
+	if(size($nonBorderEdges) > 0)
+		polySoftEdge -a 180 -ch 1 $nonBorderEdges;
+	if(size($borderEdges) > 0)
+		polySoftEdge -a 0 -ch 1 $borderEdges;
+}

@@ -1,0 +1,96 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+
+global proc texMoveProperties () {
+
+	// Linux Motif2.1 shrinks the checkBox, if the string is ""
+	// NT would tab over the blank (" ") string label.
+	// So...
+	string $emptyLabel = "";
+	if (`about -linux`) {
+		$emptyLabel = " ";
+	}
+
+	string $parent = `toolPropertyWindow -q -location`;
+	setParent $parent;
+
+	setUITemplate -pushTemplate OptionsTemplate;
+
+	columnLayout texMove;
+
+		frameLayout -collapsable true -collapse false
+			-label (uiRes("m_texMoveProperties.kMoveSnapSettings")) texMoveSnapFrame;
+			columnLayout texMoveOptions; 
+			rowLayout -nc 3 -cw3 132 20 129;
+				text -align right 
+					-l (uiRes("m_texMoveProperties.kTranConstLabel"))
+					-ann (uiRes("m_texMoveProperties.kTranConstAnn"))
+					texTranConstLabel;
+	
+				string $constraintButton = `iconTextButton
+					-w 17 -h 26
+					-image ("popupMenuIcon.png")
+					-ann (uiRes("m_texMoveProperties.kTranConstAnn"))
+					texTranConstPopupButton`;
+	
+				string $constraintMenu = `popupMenu -b 1 -p $constraintButton`;
+				menu -e -pmc ("buildTexTranConstMenu " + $constraintMenu) $constraintMenu;
+				string $constraintToggle = `popupMenu -b 2 -p $constraintButton`;
+				menu -e -pmc "texTranConstToggle" $constraintToggle;
+	
+				textField 
+					-ed false
+					-width 131
+					-height 25
+					-ann (uiRes("m_texMoveProperties.kTranConstAnn"))
+					texTranConstTextField;
+	
+			setParent ..;
+
+			rowLayout -nc 4 -cw4 132 20 77 52;  
+				text -align right   
+					 -l (uiRes("m_texMoveProperties.kStepSnapLabel")) 
+					 -ann (uiRes("m_texMoveProperties.kStepSnapAnn")) 
+					 texMoveSnapLabel;  
+	  
+				string $snapButton = `iconTextButton  
+					-w 17 -h 26  
+					-image ("popupMenuIcon.png")  
+					-ann (uiRes("m_texMoveProperties.kStepSnapAnn")) 
+					texMoveSnapButton`;  
+	  
+				popupMenu -b 1 -p $snapButton texMoveSnapPopupMenu;  
+				popupMenu -b 2 -p $snapButton texMoveSnapTogglePopupMenu; 
+	  
+				textField   
+					-ed false  
+					-width 77  
+					-height 25  
+					-ann `uiRes("m_texMoveProperties.kStepSnapAnn")`  
+					texMoveSnapModeLabel;  
+	  
+				floatField -w 52 -pre 2 -v 1.0 texMoveSnapValue;  
+  
+			setParent ..;
+			
+				checkBoxGrp -ncb 1 
+					-label1 (uiRes("m_texMoveProperties.kRetainComponentSpacing"))
+					texMoveSnapCompRelative;
+
+			setParent ..;
+
+		setParent ..;
+
+		commonSelectProperties(/*collapsed*/true, /*uvTool*/true);
+		softSelectProperties(/*collapsed*/true, /*uvTool*/true);
+		reflectionProperties(/*collapsed*/true, /*uvTool*/true);
+
+	setParent ..;	
+
+	setUITemplate -popTemplate;
+}

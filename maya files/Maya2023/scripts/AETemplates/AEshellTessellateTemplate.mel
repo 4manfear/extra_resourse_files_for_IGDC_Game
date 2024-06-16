@@ -1,0 +1,48 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//  Procedure Name:
+//	AEshellTessellateTemplate
+//
+//  Description Name;
+//	  Creates the attribute editor controls for the shellTessellate Node
+//  Most controls are shared with AEnurbsTessellateTemplate and are
+//  defined in that file
+//
+//  Input Value:
+//	nodeName 
+//
+//  Output Value:
+//	None
+// 
+
+// to pick up nurbsAdvancedTessControls
+source "AEnurbsTessellateTemplate";
+
+global proc AEshellTessellateTemplate ( string $nodeName )
+{
+	string $inputSurface = (uiRes("m_AEshellTessellateTemplate.kInputSurface"));
+	editorTemplate -beginScrollLayout;
+		editorTemplate -beginLayout (uiRes("m_AEshellTessellateTemplate.kNURBSShellTessellate")) -collapse false;
+
+			editorTemplate -callCustom ("AEmultiInputNew \""+$inputSurface+"\"")
+                    ("AEmultiInputReplace \""+$inputSurface+"\"")
+                    "inputShell";
+
+			// just advanced options - simple and common do not apply
+			AEnurbsAdvancedTessControls($nodeName);
+
+	editorTemplate -endLayout;
+
+	// include/call base class/node attributes
+	AEabstractBaseCreateTemplate $nodeName ;
+	editorTemplate -addExtraControls;
+	editorTemplate -endScrollLayout;
+}
+
+

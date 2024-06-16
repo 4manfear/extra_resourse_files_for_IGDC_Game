@@ -1,0 +1,695 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+// These are the last settings from the RootOffset dialog
+global string $gCTERootOffsetLastMatchingObject = "";
+global int $gCTERootOffsetLastClipId = -1;
+
+//  Description:
+//		Creates the optionVar if it is not availanble, 
+//		or reset their values.
+//
+//		To change the default values of the settings, you should ONLY need
+//		to update this proc.
+//
+//  Input Arguments:
+//		Reset the Option var values
+//
+//  Return Value:
+//      None.
+//
+global proc teCreateMatchPoseOptionVars(int $reset_default)
+{
+	optionVar -init $reset_default -category "Time Editor.Match Pose"
+		-iv cteMatchPoseClip 1
+		-iv cteMatchPoseTime 1
+		-iv cteMatchPoseTranslate 2
+		-iv cteMatchPoseRotate 3
+		-fv cteMatchPoseUpAxisX 0.0
+		-fv cteMatchPoseUpAxisY 1.0
+		-fv cteMatchPoseUpAxisZ 0.0
+		-iv cteMatchPoseUseSceneUpAxis 1
+		;
+}
+
+//  Description:
+//		Performs a save on the option vars
+//
+//  Input Arguments:
+//		None.
+//
+//  Return Value:
+//      None.
+//
+global proc teMatchPoseSaveOptionVars() 
+{
+	$val = `radioButtonGrp -q -sl cteRootOffsetMatchingClip`;
+	optionVar -intValue cteMatchPoseClip $val;
+
+	$val = `radioButtonGrp -q -sl cteRootOffsetMatchingTime`;
+	optionVar -intValue cteMatchPoseTime $val;
+	
+	$val = `radioButtonGrp -q -sl cteRootOffsetMatchingPoseTranslation`;
+	optionVar -intValue cteMatchPoseTranslate $val;
+	
+	$val = `radioButtonGrp -q -sl cteRootOffsetMatchingPoseRotation`;
+	optionVar -intValue cteMatchPoseRotate $val;
+	
+	float $upVec[] = `floatFieldGrp -q -value cteRootOffsetUpAxis`;
+	int $useSceneAxis = `checkBoxGrp -q -value1 cteRootOffsetUseSceneUpAxis`;
+	optionVar -floatValue cteMatchPoseUpAxisX $upVec[0];
+	optionVar -floatValue cteMatchPoseUpAxisY $upVec[1];
+	optionVar -floatValue cteMatchPoseUpAxisZ $upVec[2];
+	optionVar -intValue cteMatchPoseUseSceneUpAxis $useSceneAxis;
+	
+}
+
+//  Description:
+//		Performs a reset of the option vars and update the UI
+//
+//  Input Arguments:
+//		None.
+//
+//  Return Value:
+//      None.
+//
+global proc teMatchPoseResetOptionVars()
+{
+	// reset the OptionVars
+	teCreateMatchPoseOptionVars 1;
+
+	// update the UI widgets in the Option Box
+	// Assumption - All UI widgets have been created
+	//
+	radioButtonGrp -e -sl `optionVar -q cteMatchPoseClip` cteRootOffsetMatchingClip;
+
+	radioButtonGrp -e -sl `optionVar -q cteMatchPoseTime` cteRootOffsetMatchingTime;
+
+	radioButtonGrp -e -sl `optionVar -q cteMatchPoseTranslate` cteRootOffsetMatchingPoseTranslation;
+
+	radioButtonGrp -e -sl `optionVar -q cteMatchPoseRotate` cteRootOffsetMatchingPoseRotation;
+	
+	checkBoxGrp -e -value1 `optionVar -q cteMatchPoseUseSceneUpAxis` cteRootOffsetUseSceneUpAxis;
+	
+	floatFieldGrp -e -value1 `optionVar -q cteMatchPoseUpAxisX` -value2 `optionVar -q cteMatchPoseUpAxisY` -value3 `optionVar -q cteMatchPoseUpAxisZ` cteRootOffsetUpAxis;
+	
+	teUpdateRootOffsetUpAxis();
+}
+
+//  Description:
+//		Updates the text field on the scene item selected as matching object
+//
+//  Input Arguments:
+//		None.
+//
+//  Return Value:
+//      None.
+//
+global proc teUpdateMatchingObject()
+{
+	global string $gCTERootOffsetLastMatchingObject;
+
+    string $selObjs[] = `ls -sl`;
+    if (size($selObjs) >= 1) {
+        string $obj = $selObjs[0];
+        
+        // We already have a transform selected, use it
+        if (`objectType -isa "transform" $obj`)
+        {
+            textFieldGrp -e -text $obj rootOffsetMatchingObjectName;
+			$gCTERootOffsetLastMatchingObject = $obj;
+        }
+        else
+        {
+            // The selection is not a transform, the object's associated transform
+            string $relatives[] = `listRelatives -path -type "transform" -allParents $obj`;
+            if (size($relatives) > 0)
+            {
+			    textFieldGrp -e -text $relatives[0] rootOffsetMatchingObjectName;
+				$gCTERootOffsetLastMatchingObject = $relatives[0];
+			}
+        }
+    }
+}
+
+//  Description:
+//		If the "use clip roots" checkbox is enabled, disable the rootObjects textScrollList
+//      And vice versa.
+global proc teUpdateRootOffsetRoots()
+{
+	int $checked = `checkBox -q -value cteRootOffsetUseClipRoots`;
+	formLayout -e -enable (!$checked) rootObjLayout;
+	if ($checked)
+		textScrollList -e -deselectAll rootOffsetRootObjectsNames;		
+}
+
+//  Description:
+//		Fill in the 'root objects' textfield with selected items
+//
+//  Input Arguments:
+//		None.
+//
+//  Return Value:
+//      None.
+//
+global proc teUpdateRootObjectsFromSelection()
+{
+    string $selObjs[] = `ls -sl`;
+	teUpdateRootObjects($selObjs);
+}
+
+//  Description:
+//		Get children of a clip
+//
+//  Input Arguments:
+//		clip Id
+//
+//	Output:
+//		list of children clip ids
+//
+//  Return Value:
+//      None.
+//
+proc teGetChildrenClips(int $srcClip, int $clips[])
+{
+	int $children[] = `timeEditorClip -q -children $srcClip`;
+	for ($i = 0; $i < size($children); $i++)
+	{
+		$clips[size($clips)] = $children[$i];
+		teGetChildrenClips($children[$i], $clips);
+	}
+}
+
+global proc teGetDrivenObjParents(string $obj, string $parents[])
+{
+    string $curObj = $obj;
+
+    while(true)
+    {
+        string $rel[] = `listRelatives -fullPath -parent $curObj`;
+        appendStringArray($parents, $rel, size($rel));
+        if (size($rel) > 0)
+            $curObj = $rel[0];
+        else
+            break;
+    }
+}
+//  Description:
+//		Fill in the 'root objects' textfield with root objects in a clip
+//
+//  Input Arguments:
+//		clip Id
+//
+//  Return Value:
+//      None.
+//
+global proc teUpdateRootObjectsFromClip(int $srcClip)
+{
+	int $clips[];
+	$clips[0] = $srcClip;
+	teGetChildrenClips($srcClip, $clips);
+	
+	string $drivenObjects[];
+	string $roots[];
+	
+	// Collect all the driven objects
+	int $i;
+	for ($i = 0; $i < size($clips); $i++)
+	{
+		string $objs[] = `timeEditorClip -q -drivenObjects $srcClip`;
+		appendStringArray($drivenObjects, $objs, size($objs));
+	}
+	// Remove any duplicates
+	$drivenObjects = stringArrayRemoveDuplicates($drivenObjects);
+	
+	// Find the roots by finding all objects with no parents or
+	// whose parents are not in the driven objects list
+	for ($i = 0; $i < size($drivenObjects); $i++)
+	{
+		string $parents[];
+		teGetDrivenObjParents($drivenObjects[$i], $parents);
+		int $isRoot = true;
+		
+		if (size($parents) > 0)
+		{
+			// We have a parent, check if the parent is part of the 
+			// driven objects list
+			int $j;
+			for ($j = 0; $j < size($parents); $j++)
+			{
+				if (stringArrayFind($parents[$j], 0, $drivenObjects) != -1)
+				{
+					$isRoot = false;
+					break;
+				}
+			}
+		}
+		
+		if ($isRoot)
+		{
+			$roots[size($roots)] = $drivenObjects[$i];
+		}
+	}	
+	teUpdateRootObjects($roots);
+}
+
+//  Description:
+//		Fill in the 'root objects' textfield with elements in the given array
+//
+//  Input Arguments:
+//		Array of strings
+//
+//  Return Value:
+//      None.
+//
+global proc teUpdateRootObjects(string $objList[])
+{
+    if (size($objList) >= 1) {
+		textScrollList -e -removeAll rootOffsetRootObjectsNames;
+		int $i;
+		for ($i = 0; $i < size($objList); $i++)
+		{
+			string $obj = $objList[$i];
+        
+			// We already have a transform selected, use it
+			if (`objectType -isa "transform" $obj`)
+			{
+				textScrollList -e -append $obj rootOffsetRootObjectsNames;
+				textScrollList -e -selectItem $obj rootOffsetRootObjectsNames;
+			}
+			else
+			{
+				// The selection is not a transform, the object's associated transform
+				string $relatives[] = `listRelatives -path -type "transform" -parent $obj`;
+				if (size($relatives) > 0)
+				{
+					textScrollList -e -append $relatives[0] rootOffsetRootObjectsNames;
+					textScrollList -e -selectItem $relatives[0] rootOffsetRootObjectsNames;
+				}
+			}
+		}
+    }
+}
+
+//  Description:
+//		Call the command to apply Pose Offset, with arguments specified in the dialog UI
+//
+//  Input Arguments:
+//		source clip id.
+//		calledFromUI: (not used)
+//        1 if calling from the dialog button. The arguments will be extracted from querying the UI.
+//        0 if calling from elsewhere, e.g. the popup menu. The last-specified arguments will be used.
+//
+//  Return Value:
+//      None.
+//
+global proc teMatchAction(int $srcClip, int $calledFromUI)
+{
+	global string $gCTERootOffsetLastMatchingObject;
+	string $matchingObjectName = $gCTERootOffsetLastMatchingObject;
+	if ($calledFromUI == 1)
+		$matchingObjectName = `textFieldGrp -q -tx rootOffsetMatchingObjectName`;
+	
+	if($matchingObjectName == "") {
+		error((uiRes("m_teRootOffsetOptions.kCTENoObjectToMatch")));
+		return;
+	}
+
+    int $matchingClip			 = `optionVar -q cteMatchPoseClip`;
+    int $matchingTime			 = `optionVar -q cteMatchPoseTime`;
+    int $matchingPoseTranslation = `optionVar -q cteMatchPoseTranslate`;
+    int $matchingPoseRotation	 = `optionVar -q cteMatchPoseRotate`;
+    
+    int $leftClip = 0;
+    int $rightClip = 0;
+    string $clipIdArg = "-clipId " + $rightClip;
+    string $matchArg = "-matchClipId " + $leftClip;
+
+    if ($matchingClip == 1) // Find the previous clip before our selected clip
+    {
+        $leftClip = `timeEditorClip -q -clipBefore $srcClip`;
+        $rightClip = $srcClip;
+        $clipIdArg = "-clipId " + $rightClip;
+        $matchArg = "-matchClipId " + $leftClip;
+    }
+    else // Find next clip after our selected clip
+    {
+        $leftClip = $srcClip;
+        $rightClip = `timeEditorClip -q -clipAfter $srcClip`;
+        $clipIdArg = "-clipId " + $leftClip;
+        $matchArg = "-matchClipId " + $rightClip;
+    }
+    
+    
+    string $matchObjArg = "-matchObj " + $matchingObjectName;
+    
+    float $matchTime = 0;
+    if ($matchingTime == 1) // Current frame
+        $matchTime = `currentTime -q`;
+    else if ($matchingTime == 2) // End of first clip
+        $matchTime = `timeEditorClip -q -loopEnd -truncated $leftClip`;
+    else if ($matchingTime == 3) // Inbetween clips
+    {
+        // Get the middle frame between the two clips
+        float $startTime = `timeEditorClip -q -loopEnd -truncated $leftClip`;
+        float $endTime = `timeEditorClip -q -loopStart -truncated $rightClip`;
+        $matchTime = ($startTime + $endTime) / 2.0;
+    }
+    else if ($matchingTime == 4) // Start of second clip
+        $matchTime = `timeEditorClip -q -loopStart -truncated $rightClip`;
+    
+    string $srcTimeArg = "-matchSrcTime " + $matchTime;
+    string $dstTimeArg = "-matchDstTime " + $matchTime;
+    
+    string $poseTransArg = "";
+    if ($matchingPoseTranslation == 1) // None
+        $poseTransArg = "-matchTransOp 2";
+    else if ($matchingPoseTranslation == 2) // Full
+        $poseTransArg = "-matchTransOp 0";
+    else if ($matchingPoseTranslation == 3) // Projected along Global Y
+        $poseTransArg = "-matchTransOp 1";
+
+    string $poseRotArg = "";
+    if ($matchingPoseRotation == 1) // None
+        $poseRotArg = "-matchRotOp 2";
+    else if ($matchingPoseRotation == 2) // Full
+        $poseRotArg = "-matchRotOp 0";
+    else if ($matchingPoseRotation == 3) // Projected Along Global Y
+        $poseRotArg = "-matchRotOp 1";
+
+	string $rootObjectsNames[];
+	if ($calledFromUI == 1)
+	{
+		int $useClipRoots = `checkBox -q -value cteRootOffsetUseClipRoots`;
+
+		if ($useClipRoots == 0)
+			$rootObjectsNames = `textScrollList -q -selectItem rootOffsetRootObjectsNames`;
+	}
+
+    string $applyRootsArg = "";
+    if (size($rootObjectsNames) > 0)
+	{
+		int $i;
+		for ($i = 0; $i < size($rootObjectsNames); $i++)
+		{
+			$applyRootsArg += " -rootObj " + $rootObjectsNames[$i] + " ";
+		}
+	}
+	else
+	{
+		$applyRootsArg = "-applyToAllRoots";
+	}
+
+    float $upVector[] = {0, 0, 0};
+
+	if (`checkBoxGrp -q -value1 cteRootOffsetUseSceneUpAxis` == 0)
+		$upVector = `floatFieldGrp -q -value cteRootOffsetUpAxis`;
+	else
+	{
+		string $upAxis = `optionVar -q "upAxisDirection"`;
+		if ($upAxis == "z")
+			$upVector = {0, 0, 1};
+		else
+			$upVector = {0, 1, 0};
+	}
+	string $upAxisArg = "-upx " + $upVector[0] + " -upy " + $upVector[1] + " -upz " + $upVector[2];
+
+    string $command = "timeEditorClipOffset "
+                      + $matchArg + " "
+                      + $clipIdArg + " "
+                      + $matchObjArg + " "
+                      + $srcTimeArg + " "
+                      + $dstTimeArg + " "
+                      + $poseTransArg + " "
+                      + $poseRotArg + " "
+                      + $upAxisArg + " "
+                      + $applyRootsArg;   
+
+    evalEcho $command;
+	if ($calledFromUI == 1)
+		teUpdateRootOffsetFields($srcClip);   
+}
+
+//  Description:
+//		Updates the text field for translate and rotate x y z values.
+//
+//  Input Arguments:
+//		source clip id
+//
+//  Return Value:
+//      None.
+//
+global proc teUpdateRootOffsetFields(int $clipSrcId)
+{
+    vector $trans = `timeEditorClipOffset -q -matchOffsetTrans $clipSrcId`;
+    vector $rot = `timeEditorClipOffset -q -matchOffsetRot $clipSrcId`;
+    floatFieldGrp -e -value1 ($trans.x) -value2 ($trans.y) -value3 ($trans.z) rootOffsetTransOffset;
+    floatFieldGrp -e -value1 ($rot.x) -value2 ($rot.y) -value3 ($rot.z) rootOffsetRotOffset;
+    
+}
+
+//  Description:
+//		Generates the Option Box UI
+//
+//  Input Arguments:
+//		source clip id.
+//
+//  Return Value:
+//      None.
+//
+global proc teRootOffsetOptionsBox(int $clipSrcId)
+{
+    // Build the option box actions
+    
+    
+    //	STEP 1:  Get the option box.
+	//	============================
+	//
+	//	The value returned is the name of the layout to be used as
+	//	the parent for the option box UI.
+	//
+	string $layout = getOptionBox();
+	setParent $layout;
+	
+	//	STEP 3:  Activate the default UI template.
+	//	==========================================
+	//
+	//	Activate the default UI template so that the layout of this 
+	//	option box is consistent with the layout of the rest of the 
+	//	application.
+	//
+	setUITemplate -pushTemplate DefaultTemplate;
+
+	//	STEP 4: Create option box contents.
+	//	===================================
+	//	
+	//	This, of course, will vary from option box to option box.	
+	
+	//	Turn on the wait cursor.
+	//
+	waitCursor -state 1;
+	
+	tabLayout -tabsVisible 0 -scrollable 1 -innerMarginWidth 4;
+	
+	string $parent = `columnLayout -adjustableColumn 1 -rowSpacing 4`;
+
+    // Matching Object
+    frameLayout -label (uiRes("m_teRootOffsetOptions.kCTERootOffsetMatchingObjects")) -collapsable false -collapse false;
+    
+    columnLayout;
+    
+    formLayout matchingObjLayout;
+        string $objectLayout = `formLayout`;
+        $matchingObjName = `textFieldGrp -label (uiRes("m_teRootOffsetOptions.kCTERootOffsetObjectName")) -editable false rootOffsetMatchingObjectName`;
+        teUpdateMatchingObject;
+        setParent ..;
+        
+        formLayout matchingPickLayout;
+            $matchingPick = `symbolButton -image "SP_FileDialogBack.png" -command ("teUpdateMatchingObject") rootOffsetMatchingPick`;
+        setParent ..;
+    setParent ..;
+    
+    formLayout -e -ac matchingPickLayout left 0 $objectLayout matchingObjLayout;
+    
+    setParent ..;
+    setParent ..;
+
+    // Root Objects
+    frameLayout -label (uiRes("m_teRootOffsetOptions.kCTERootOffsetRootObjects")) -collapsable false -collapse false;
+		int $labelWidth = 170;
+		int $fieldWidth = 300;
+		rowLayout -numberOfColumns 2 -columnWidth2 $labelWidth $fieldWidth;
+			text -label (uiRes("m_teRootOffsetOptions.kCTERootOffsetRootsNames"));
+			columnLayout;
+				checkBox -label (uiRes("m_teRootOffsetOptions.kCTERootOffsetUseClipRoots")) 
+						-value true
+						-changeCommand "teUpdateRootOffsetRoots" cteRootOffsetUseClipRoots;
+				formLayout rootObjLayout;
+					int $width = 240;
+					$rootListCtrl = `textScrollList -numberOfRows 7 -allowMultiSelection true  -width $width rootOffsetRootObjectsNames`;
+					teUpdateRootObjectsFromClip($clipSrcId);
+					teUpdateRootOffsetRoots();
+        
+					$rootPick = `symbolButton -image "SP_FileDialogBack.png" -command ("teUpdateRootObjectsFromSelection") rootOffsetRootsPick`;
+		
+					formLayout -e -attachControl $rootPick left 5 $rootListCtrl rootObjLayout;
+				setParent ..;
+			setParent ..;
+		setParent ..;
+    setParent ..;
+    
+    // Matching Clip
+    frameLayout -label (uiRes("m_teRootOffsetOptions.kCTERootOffsetMatchingClip")) -collapsable false -collapse false;
+        
+    columnLayout;
+    $matchingClip = `radioButtonGrp -vr -nrb 2 
+        -labelArray2 (uiRes("m_teRootOffsetOptions.kCTERootOffsetPrevious")) 
+                     (uiRes("m_teRootOffsetOptions.kCTERootOffsetNext")) 
+		cteRootOffsetMatchingClip`;
+                     
+    radioButtonGrp -edit -select `optionVar -q cteMatchPoseClip` $matchingClip;
+    
+    setParent ..;
+    setParent ..;
+    
+    // Matching Time
+    frameLayout -label (uiRes("m_teRootOffsetOptions.kCTERootOffsetMatchingTime")) -collapsable false -collapse false;
+    columnLayout;
+    $matchingTime = `radioButtonGrp -vr 
+		-numberOfRadioButtons 4 
+        -labelArray4 (uiRes("m_teRootOffsetOptions.kCTERootOffsetCurrentFrame")) 
+                     (uiRes("m_teRootOffsetOptions.kCTERootOffsetEndFirstClip")) 
+                     (uiRes("m_teRootOffsetOptions.kCTERootOffsetInbetweenClips")) 
+                     (uiRes("m_teRootOffsetOptions.kCTERootOffsetStartSecondClip")) 
+		cteRootOffsetMatchingTime`;
+
+    radioButtonGrp -edit -select `optionVar -q cteMatchPoseTime` $matchingTime;
+    
+    setParent ..;
+    setParent ..;
+    
+    // Matching Pose
+    frameLayout -label (uiRes("m_teRootOffsetOptions.kCTERootOffsetMatchingPose")) -collapsable false -collapse false;
+    columnLayout;
+
+    $matchingPoseTranslation = `radioButtonGrp -vr -label (uiRes("m_teRootOffsetOptions.kCTERootOffsetTranslation")) 
+		-numberOfRadioButtons 3 
+        -labelArray3 (uiRes("m_teRootOffsetOptions.kCTERootOffsetTransNone"))
+                     (uiRes("m_teRootOffsetOptions.kCTERootOffsetTransFullXYZ"))
+                     (uiRes("m_teRootOffsetOptions.kCTERootOffsetTransGlobalY")) 
+		cteRootOffsetMatchingPoseTranslation`;
+                     
+    radioButtonGrp -edit -select `optionVar -q cteMatchPoseTranslate` $matchingPoseTranslation;
+	setParent ..;
+	
+	columnLayout;
+    $matchingOffsetRotation = `radioButtonGrp -vr -label (uiRes("m_teRootOffsetOptions.kCTERootOffsetRotation")) 
+		-numberOfRadioButtons 3 
+        -labelArray3 (uiRes("m_teRootOffsetOptions.kCTERootOffsetRotNone"))
+                     (uiRes("m_teRootOffsetOptions.kCTERootOffsetRotFullXYZ"))
+                     (uiRes("m_teRootOffsetOptions.kCTERootOffsetRotGlobalY")) 
+		cteRootOffsetMatchingPoseRotation`;
+                     
+    radioButtonGrp -edit -select `optionVar -q cteMatchPoseRotate` $matchingOffsetRotation;
+	setParent ..;
+	
+	columnLayout;
+    checkBoxGrp -numberOfCheckBoxes 1 -label (uiRes("m_teRootOffsetOptions.kCTERootOffsetUpAxis")) 
+			    -label1 (uiRes("m_teRootOffsetOptions.kCTERootOffsetUseSceneUpAxis")) 
+				-value1 `optionVar -q cteMatchPoseUseSceneUpAxis`
+				-changeCommand "teUpdateRootOffsetUpAxis" cteRootOffsetUseSceneUpAxis;
+    floatFieldGrp -numberOfFields 3 -label "" 
+				  -value1 `optionVar -q cteMatchPoseUpAxisX`
+				  -value2 `optionVar -q cteMatchPoseUpAxisY`
+				  -value3 `optionVar -q cteMatchPoseUpAxisZ`
+				  cteRootOffsetUpAxis;
+    setParent ..;
+    setParent ..;
+    
+    // Transform Offset
+    frameLayout -label (uiRes("m_teRootOffsetOptions.kCTERootOffsetTransformOffset")) -collapsable false -collapse false;
+    columnLayout;
+
+    floatFieldGrp -enable false -numberOfFields 3 -label (uiRes("m_teRootOffsetOptions.kCTETransOffsetTranslation")) rootOffsetTransOffset;
+    floatFieldGrp -enable false -numberOfFields 3 -label (uiRes("m_teRootOffsetOptions.kCTETransOffsetRotation")) rootOffsetRotOffset;
+    
+    setParent ..;
+    setParent ..;
+    
+    teUpdateRootOffsetFields($clipSrcId);
+	teUpdateRootOffsetUpAxis();
+	global int $gCTERootOffsetLastClipId;
+	$gCTERootOffsetLastClipId = $clipSrcId;
+    
+    waitCursor -state 0;
+    setUITemplate -popTemplate;
+    
+    //	Step 6: Customize the buttons.  
+	//	==============================
+	//
+	//	Provide more descriptive labels for the buttons.
+	//	Disable those buttons that are not applicable to the option box.
+	//	Attach actions to those buttons that are applicable to the option
+	//	box.
+	
+	// 'Apply' button
+	// 
+	string $applyBtn = getOptionBoxApplyBtn();
+	button -edit -label (uiRes("m_teRootOffsetOptions.kCTERootOffsetMatch")) $applyBtn;
+    button -edit -command("teMatchPoseSaveOptionVars; teMatchAction " + $clipSrcId + " 1 ;") $applyBtn;
+    
+	// 'Save Settings' button
+	// 
+	string $saveBtn = getOptionBoxSaveBtn();
+	button -edit -command("teMatchPoseSaveOptionVars") $saveBtn;
+
+	// 'Reset Settings' button
+	// 
+	string $resetBtn = getOptionBoxResetBtn();
+	button -edit -command("teMatchPoseResetOptionVars") $resetBtn;
+
+
+    setOptionBoxTitle((uiRes("m_teRootOffsetOptions.kCTERootOffsetMatchingOptions")));
+    setOptionBoxHelpTag("TimeEditorMatchOptions");
+    
+    showOptionBox();
+}
+
+global proc teUpdateRootOffsetUpAxis()
+{
+	int $checked = `checkBoxGrp -q -value1 cteRootOffsetUseSceneUpAxis`;
+	floatFieldGrp -e -enable (!$checked) cteRootOffsetUpAxis;
+}
+
+global proc teRootOffsetOptions(int $action, int $id)
+{
+	// get the first clip id in current selected
+	int $srcClipId = teGetFirstClipInSelection($id, 1);
+	if($srcClipId == -1)
+		return;
+		
+	// set the optionVars first
+	teCreateMatchPoseOptionVars(false);
+
+	if($action == 1) {
+		global int $gCTERootOffsetLastClipId;
+
+		if ($srcClipId == $gCTERootOffsetLastClipId)
+		{
+			// if it's the same clip, run the command using last settings
+			teMatchAction($srcClipId, 0);
+		}
+		else
+		{
+			// bring up the option box
+			teRootOffsetOptionsBox($srcClipId);
+		}
+	} else if ($action == 2) {
+		// bring up the option box
+		teRootOffsetOptionsBox($srcClipId);
+	}
+}

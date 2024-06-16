@@ -1,0 +1,61 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//# this proc points the tool properties
+//# window to the current polySplit context
+
+global proc polySplitValues ( string $toolName )
+{
+	string $name = "polySplit";
+	string $parent = (`toolPropertyWindow -q -location` + "|" + $name);
+	setParent $parent;
+
+	// Subdivisions
+    //
+	intFieldGrp -e
+		-v1 `polySplitCtx -q -s $toolName`
+		-cc ("polySplitCtx -e -s #1 "+$toolName)
+		-dc ("polySplitCtx -e -s #1 "+$toolName)
+		subdSld;
+	  
+	// Smoothing
+	//
+	floatSliderGrp -e
+		-v `polySplitCtx -q -sma $toolName`
+		-cc ("polySplitCtx -e -sma #1 "+$toolName)
+		-dc ("polySplitCtx -e -sma #1 "+$toolName)
+		smoothingAngleSld;
+	
+	// Snapping To Edge
+	//
+    checkBoxGrp -e
+		-value1 `polySplitCtx -q -ste $toolName`
+        -on1 ("polySplitCtx -e -ste true  "+$toolName)
+        -of1 ("polySplitCtx -e -ste false "+$toolName)
+		snapEdgeBox;
+
+	// Magnet Snapping
+    //
+	intFieldGrp -e
+		-v1 `polySplitCtx -q -ms $toolName`
+		-cc ("polySplitCtx -e -ms #1 "+$toolName)
+		-dc ("polySplitCtx -e -ms #1 "+$toolName)
+		magnetSld;
+	floatSliderGrp -e
+		-v `polySplitCtx -q -ps $toolName`
+		-cc ("polySplitCtx -e -ps #1 "+$toolName)
+		snapSld;
+    checkBoxGrp -e
+		-value1 `polySplitCtx -q -es $toolName`
+        -on1 ("polySplitCtx -e -es true  "+$toolName)
+        -of1 ("polySplitCtx -e -es false "+$toolName)
+		snapMagnetBox;
+	  
+	string $helpTag= "SplitPolygonTool";
+	toolPropertySetCommon $toolName "polySplitFacet.png" $helpTag;
+	toolPropertySelect $name;
+}

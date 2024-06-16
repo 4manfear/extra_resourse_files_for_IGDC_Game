@@ -1,0 +1,34 @@
+<?xml version='1.0' encoding='utf-8'?>
+<templates>
+	<using package='maya'/>
+	<template name='LEapiImageLightShape'>
+		<!-- 
+		Declaration of the attributes that should be visible for this light type in the Light Editor.
+		-->
+		<attribute name='color' type='maya.float3'>
+			<label>Color</label>
+		</attribute>
+    <attribute name='intensity' type='maya.float'>
+      <label>Intensity</label>
+    </attribute>
+    <!-- 
+		Attributes below are used to specify construction data to the Light Editor.
+		They are not existing node attributes.
+		-->
+		<!-- Custom icon bitmap to be used for button in Light Editor -->
+		<attribute name='LEicon' type='maya.string'>
+			<description language="cb">:/LM_pointLight.png</description>
+		</attribute>
+	</template>
+	<view name='LEDefault' template='LEapiPointLightShape'>
+		<!-- 
+		The template view used by the Light Editor.
+		Should list all the attributes above, including LEicon.
+		Do not need a custom command as fallback command is good enough.
+		-->
+		<description>View used by Light Editor</description>
+		<property name='color'/>
+   	<property name='intensity'/>
+		<property name='LEicon'/>
+	</view>
+</templates>

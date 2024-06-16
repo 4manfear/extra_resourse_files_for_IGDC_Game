@@ -1,0 +1,54 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+// Creation Date:  14 January 1999
+//
+//
+//
+//  Procedure Name:
+//      curveSketchToolScript
+//
+//  Description:
+//	    Create the context if necessary, then enter it.
+//      4 and 3 are the valid input.
+//
+//  Input Arguments:
+//		4 ==> enter the tool (create if necessary)
+//      3 ==> do what "4" does, then open the property sheet
+//
+//  Return Value:
+//      None.
+//
+
+proc createCurveSketchContext( string $tool )
+{
+	if( ! `curveSketchCtx -exists $tool` ) {
+		rememberCtxSettings `curveSketchCtx -i1 "pencil.png" $tool`;
+	}
+}
+
+global proc string curveSketchToolScript( int $setToTool )
+//
+//	Description :
+//		4 ==> enter the tool
+//      3 ==> show property sheet
+{
+	string $tool = "";
+	$tool = "pencilContext";
+	createCurveSketchContext $tool;
+	setToolTo $tool;
+
+	if( 3 == $setToTool ) {
+		toolPropertyWindow;
+	}
+	else if( 4 != $setToTool ) {
+		warning (uiRes("m_curveSketchToolScript.kWrongInput"));
+	}
+	return $tool;
+}

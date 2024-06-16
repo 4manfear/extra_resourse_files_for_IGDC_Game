@@ -1,0 +1,153 @@
+<!--
+===========================================================================
+Copyright 2015 Autodesk, Inc. All rights reserved.
+
+Use of this software is subject to the terms of the Autodesk license
+agreement provided at the time of installation or download, or which
+otherwise accompanies this software in either electronic or hard copy form.
+===========================================================================
+
+Main fragment for color logic plugin
+-->
+
+<fragment uiName="colorLogic" name="colorLogic" type="plumbing" class="ShadeFragment" version="1.0">
+	<description><![CDATA[Color with color mask fragment]]></description>
+	<properties>
+		<float3 name="colorA" />
+		<float3 name="colorB" />
+		<int name="operation" />
+	</properties>
+	<values>
+		<float3 name="colorA" value="1.0,0.0,0.0" />
+		<float3 name="colorB" value="0.0,0.0,1.0" />
+		<int name="operation" value="0" />
+	</values>
+	<outputs>
+		<bool  name="outBool" />
+	</outputs>
+	<implementation>
+	<implementation render="OGSRenderer" language="Cg" lang_version="2.1">
+		<function_name val="colorLogic" />
+		<source>
+		<![CDATA[
+bool colorLogic(float3 colorA, float3 colorB, int operation)
+{
+	float floatA = (colorA[0] + colorA[1] + colorA[2]);
+	float floatB = (colorB[0] + colorB[1] + colorB[2]);
+
+	if (operation==0)
+	{
+		return (floatA == floatB);
+	}
+	else if (operation==1)
+	{
+		return (floatA != floatB);
+	}
+	else if (operation==2)
+	{
+		return (floatA < floatB);
+	}
+	else if (operation==3)
+	{
+		return (floatA > floatB);
+	}
+	else if (operation==4)
+	{
+		return (floatA <= floatB);
+	}
+	else if (operation==5)
+	{
+		return (floatA >= floatB);
+	}
+	else
+	{
+		return false;
+	}
+}
+		]]>
+		</source>
+	</implementation>
+	<implementation render="OGSRenderer" language="HLSL" lang_version="11.0">
+		<function_name val="colorLogic" />
+		<source>
+		<![CDATA[
+bool colorLogic(float3 colorA, float3 colorB, int operation)
+{
+	float floatA = (colorA[0] + colorA[1] + colorA[2]);
+	float floatB = (colorB[0] + colorB[1] + colorB[2]);
+
+	if (operation==0)
+	{
+		return (floatA == floatB);
+	}
+	else if (operation==1)
+	{
+		return (floatA != floatB);
+	}
+	else if (operation==2)
+	{
+		return (floatA < floatB);
+	}
+	else if (operation==3)
+	{
+		return (floatA > floatB);
+	}
+	else if (operation==4)
+	{
+		return (floatA <= floatB);
+	}
+	else if (operation==5)
+	{
+		return (floatA >= floatB);
+	}
+	else
+	{
+		return false;
+	}
+}
+		]]>
+		</source>
+		</implementation>
+		<implementation render="OGSRenderer" language="GLSL" lang_version="3.0">
+			<function_name val="colorLogic" />
+			<source>
+				<![CDATA[
+bool colorLogic(vec3 colorA, vec3 colorB, int operation)
+{
+	float floatA = (colorA[0] + colorA[1] + colorA[2]);
+	float floatB = (colorB[0] + colorB[1] + colorB[2]);
+
+	if (operation==0)
+	{
+		return (floatA == floatB);
+	}
+	else if (operation==1)
+	{
+		return (floatA != floatB);
+	}
+	else if (operation==2)
+	{
+		return (floatA < floatB);
+	}
+	else if (operation==3)
+	{
+		return (floatA > floatB);
+	}
+	else if (operation==4)
+	{
+		return (floatA <= floatB);
+	}
+	else if (operation==5)
+	{
+		return (floatA >= floatB);
+	}
+	else
+	{
+		return false;
+	}
+}
+		]]>
+		</source>
+	</implementation>
+	</implementation>
+</fragment>

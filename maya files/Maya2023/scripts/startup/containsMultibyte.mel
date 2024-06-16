@@ -1,0 +1,53 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+// Creation Date:  12 Nov 2006
+//
+//<doc>
+//<name containsMultibyte>
+//
+//<synopsis>
+//		containsMultibyte(string $str)
+//
+//<description>
+//		Determine whether or not a string contains multibyte characters.
+//
+//<returns>
+//      int: returns 1 if the string contains multibyte characters
+//           or 0 if it does not. 
+//
+//<examples>
+//
+//  // Determine whether or not a string contains multibyte characters
+//  // 
+//  // The result will be 0 if the string contains no multibyte characters
+//  int numFound = containsMultibyte("Test String");
+//  // Result: 0
+//
+//  // The result will be non-zero if the string contains 
+//  // multibyte characters
+//  // 
+//  int numFound = containsMultibyte($localizedString);
+//  // Result: 1
+//
+//</doc>
+//
+global proc int containsMultibyte(string $str)
+{
+    if (sizeBytes($str) > size($str))
+    {
+        return 1;
+    }
+    else 
+    {
+        return 0;
+    }
+}
+
+

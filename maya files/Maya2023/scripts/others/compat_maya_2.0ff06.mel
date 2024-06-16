@@ -1,0 +1,20 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+// Global Maya compatibility file, version 2.0ff06
+////////////////////////////////////////////////////////////////////////////
+attrCompatibility -v "2.0ff06";
+
+// Rename short name of fixTextureWarp from "clt" to "ftwp"
+//
+attrCompatibility -r ftwp nurbsSurface clt;
+
+// Attributes removed from nonExtendedLightShape node to change shadow map file I/O UI
+attrCompatibility -rm nonExtendedLightShapeNode rs;
+attrCompatibility -rm nonExtendedLightShapeNode readDmap;

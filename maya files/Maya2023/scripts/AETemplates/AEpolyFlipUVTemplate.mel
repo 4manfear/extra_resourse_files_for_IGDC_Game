@@ -1,0 +1,31 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+///////////////////////////////////////////////////////////////////////////////
+//
+//  Description:
+//  Attribute editor template layout for polyFlipUV node
+//
+///////////////////////////////////////////////////////////////////////////////
+
+global proc AEpolyFlipUVTemplate(string $nodeName)
+{
+	editorTemplate -beginScrollLayout;
+		editorTemplate -beginLayout (uiRes("m_AEpolyFlipUVTemplate.kFlipUV")) -collapse 0;
+
+			editorTemplate -addControl "flipType";
+			editorTemplate -addControl "local";
+
+			// suppressed attributes
+			editorTemplate -suppress "inputComponents";
+			editorTemplate -suppress "worldSpace";
+
+		editorTemplate -endLayout;
+
+	editorTemplate -addExtraControls;
+	editorTemplate -endScrollLayout;
+}

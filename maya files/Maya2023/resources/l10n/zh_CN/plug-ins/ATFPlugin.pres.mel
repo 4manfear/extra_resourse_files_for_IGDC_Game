@@ -1,0 +1,67 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+// Resources for Plug-in: ATFPlugin
+// 
+// ----------------------------
+// Registered string resources:
+// ----------------------------
+setPluginResource( "ATFPlugin", "kATFTessellation", "ATF 细分");
+setPluginResource( "ATFPlugin", "kAdaptive", "自适应");
+setPluginResource( "ATFPlugin", "kAdaptiveAnnot", "自适应");
+setPluginResource( "ATFPlugin", "kArubaTessellation", "Aruba 细分");
+setPluginResource( "ATFPlugin", "kChordalDeviation", "弦偏差:");
+setPluginResource( "ATFPlugin", "kChordalDeviationAnnot", "指定网格三角形与模型几何体之间的最大距离(以厘米为单位)。");
+setPluginResource( "ATFPlugin", "kEnableCustomization", "启用自定义");
+setPluginResource( "ATFPlugin", "kEnableCustomizationAnnot", "如果启用此选项，细分设置可能会更改。");
+setPluginResource( "ATFPlugin", "kIsEnabledIndication", "已启用");
+setPluginResource( "ATFPlugin", "kLegacyEnableCustomization", "启用旧版自定义");
+setPluginResource( "ATFPlugin", "kLegacyEnableCustomizationAnnot", "如果启用此选项，细分设置可能会更改。");
+setPluginResource( "ATFPlugin", "kLegacyGridAspectRatio", "栅格纵横比:");
+setPluginResource( "ATFPlugin", "kLegacyGridAspectRatioAnnot", "指定整个面中放置的栅格中允许的最大纵横比。");
+setPluginResource( "ATFPlugin", "kLegacyMaxEdgeLength", "最大边长:");
+setPluginResource( "ATFPlugin", "kLegacyMaxEdgeLengthAnnot", "指定边上的任何弦或任意两条相邻栅格线之间允许的最大长度(以厘米为单位)。");
+setPluginResource( "ATFPlugin", "kLegacyNormalTolerance", "法线容差:");
+setPluginResource( "ATFPlugin", "kLegacyNormalToleranceAnnot", "指定网格中相邻节点之间曲面法线的最大变化(以度为单位)。");
+setPluginResource( "ATFPlugin", "kLegacySurfaceTolerance", "表面容差:");
+setPluginResource( "ATFPlugin", "kLegacySurfaceToleranceAnnot", "指定网格三角形与模型几何体之间的最大距离(以厘米为单位)。");
+setPluginResource( "ATFPlugin", "kMaxChordLength", "最大弦长:");
+setPluginResource( "ATFPlugin", "kMaxChordLengthAnnot", "指定边上的任何弦或任意两条相邻栅格线之间允许的最大长度(以厘米为单位)。");
+setPluginResource( "ATFPlugin", "kMinChordLength", "最小弦长:");
+setPluginResource( "ATFPlugin", "kMinChordLengthAnnot", "指定边上的任何弦或任意两条相邻栅格线之间允许的最小长度(以厘米为单位)。");
+setPluginResource( "ATFPlugin", "kNoneTessellation", "无");
+setPluginResource( "ATFPlugin", "kNormalTolerance", "法线容差:");
+setPluginResource( "ATFPlugin", "kNormalToleranceAnnot", "指定网格中相邻节点之间曲面法线的最大变化(以度为单位)。");
+setPluginResource( "ATFPlugin", "kSampleType", "采样类型");
+setPluginResource( "ATFPlugin", "kSampleType_Adaptively", "自适应");
+setPluginResource( "ATFPlugin", "kSampleType_EntireDomain", "整个域");
+setPluginResource( "ATFPlugin", "kSampleType_G1Segments", "G1 分段");
+setPluginResource( "ATFPlugin", "kSampleType_KnotValues", "结值");
+setPluginResource( "ATFPlugin", "kSampleType_PerSpan", "每个跨度");
+setPluginResource( "ATFPlugin", "kSamples", "采样数");
+setPluginResource( "ATFPlugin", "kSamplesAnnot", "采样数");
+setPluginResource( "ATFPlugin", "kStitchSepByLayer", "层");
+setPluginResource( "ATFPlugin", "kStitchSepByStyle", "样式");
+setPluginResource( "ATFPlugin", "kStitchSepSettings", "分隔方式");
+setPluginResource( "ATFPlugin", "kStitchingSepAnot", "要缝合的曲面将通过这些不同的选项组合在一起。");
+setPluginResource( "ATFPlugin", "kStitchingServices", "ATF 缝合服务");
+setPluginResource( "ATFPlugin", "kStitchingServicesAnnot", "如果启用此选项，将使用指示的选项执行缝合。");
+setPluginResource( "ATFPlugin", "kStitchingTolerance", "容差");
+setPluginResource( "ATFPlugin", "kStitchingToleranceAnnot", "所有曲面将使用容差缝合。如果曲面之间的间隙大于容差，则不会将它们缝合在一起。");
+setPluginResource( "ATFPlugin", "kSymmetry", "对称层处理");
+setPluginResource( "ATFPlugin", "kSymmetryAnnot", "如果此选项处于启用状态，将处理和显示对称层。");
+setPluginResource( "ATFPlugin", "kTessellateObjects", "细分对象");
+setPluginResource( "ATFPlugin", "kTessellateObjectsAnnot", "如果启用此选项，将会细分导入的对象。");
+setPluginResource( "ATFPlugin", "kUseLegacyTessellation", "使用旧版细分");
+setPluginResource( "ATFPlugin", "kUseLegacyTessellationAnnot", "如果启用此选项，将执行旧版细分。");
+// 
+// --------------------------
+// Registered node resources:
+// --------------------------
+// 
+//  (Plugin has no registered nodes)
+// 

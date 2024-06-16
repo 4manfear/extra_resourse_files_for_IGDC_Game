@@ -1,0 +1,56 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+
+global proc blendShapeInterpolationCurve(string $bsName, int $targetIndex, float $ibWeight)
+{
+	int $ibIndex = 5000 + $ibWeight * 1000;
+	string $plugName = $bsName + ".inbetweenInfoGroup[" + $targetIndex + "].inbetweenInfo[" + $ibIndex + "].itc";
+	if(`window -exists InterpolationCurveWindow`)
+	{
+		falloffCurveAttr -e -at $plugName itcWidget;
+		showWindow InterpolationCurveWindow;
+	}
+	else
+	{
+		string $window = `window -title (uiRes("m_blendShapeInterpolationCurve.kFalloffWindow")) InterpolationCurveWindow`;
+		string $form = `formLayout -numberOfDivisions 100`;
+		string $setItpCmd =  "setInterpolationType " + $bsName + " " + $targetIndex + " " + $ibWeight + " 2";
+		string $curve = `falloffCurveAttr -h 400 -w 400 -at $plugName -cc $setItpCmd itcWidget`;
+		string $column = `columnLayout`;
+		checkBoxGrp -label1 (uiRes("m_blendShapeInterpolationCurve.kSnapToGrid"))
+				-cc ( ("falloffCurveAttr -e -snapToGrid #1 itcWidget;") ) 
+				snapToGrid_CBG;
+
+		string $resetCurveCmd = "setInterpolationType " + $bsName + " " + $targetIndex + " " + $ibWeight + " " + 0 + ";blendShapeResetInterpolationCurve " + $bsName + " " + $targetIndex + " " + $ibWeight;
+		button -label (uiRes("m_blendShapeInterpolationCurve.kResetCurveButton")) -command (($resetCurveCmd));
+		
+		int $stgl = `checkBoxGrp -q -value1 snapToGrid_CBG`;
+		checkBoxGrp -e -value1 $stgl snapToGrid_CBG;
+
+		formLayout -edit
+		-attachForm     $curve     "top"    5
+		-attachForm     $curve     "left"   5
+		-attachControl  $curve     "bottom" 1 $column
+		-attachForm     $curve     "right"  5
+
+		-attachNone     $column     "top"
+		-attachForm     $column     "left"   5
+		-attachForm     $column     "bottom" 5
+		-attachForm     $column     "right"  5
+		$form;
+
+		showWindow;
+	}
+}
+
+global proc setInterpolationType( string $bsName, int $targetIndex, float $ibWeight, int $type)
+{
+	int $ibIndex = 5000 + $ibWeight * 1000;
+	string $itpPlug = $bsName + ".inbetweenInfoGroup[" + $targetIndex + "].inbetweenInfo[" + $ibIndex + "].itp";
+	setAttr $itpPlug $type;
+}

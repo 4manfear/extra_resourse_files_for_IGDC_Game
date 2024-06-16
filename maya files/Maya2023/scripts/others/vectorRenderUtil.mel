@@ -1,0 +1,394 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//  Creation Date:  8 January 2003
+//
+//  Description:
+//      These are utility functions for the Maya Vector plugin.
+//
+///////////////////////////////////////////////////////////////////////////////
+
+// vrGetPrefix
+//
+// Returns a string value that should be prepended to every UI element of the
+// VectorRender UI to ensure non-conflicts with other UI.  Also represents the
+// command that will be used for the render.
+//
+global proc string vrGetPrefix() {
+	return "vectorize";
+}
+
+// vrGetRenderGlobals
+// 
+// Returns a string with the name of the vectorRenderGlobal node. 
+// If the node does not exist, it will be created.
+// 
+global proc string vrGetRenderGlobalsNode() {
+	// Check if the default vectorRenderGlobals node exists.
+	string $vectorGlobals = "";
+	string $vectorRenderNodes[] = `ls -typ vectorRenderGlobals`;
+	if ( size($vectorRenderNodes) ) {
+		// Node exists - return its name.
+        $vectorGlobals = $vectorRenderNodes[0];
+    } else {
+		// Create a new vector render globals node.
+		$vectorGlobals = `vrCreateGlobalsNode`;
+	}
+    return $vectorGlobals;
+}
+
+
+// vrGetImageNamePrefix
+//
+// Returns a string that represents the name prefix of the 
+// image (output file) as stored in the vectorRenderGlobals node.	
+//
+global proc string vrGetImageNamePrefix() {
+	// Get the image name prefix from vector globals ndoe. 
+	string $prefix = `getAttr ("defaultRenderGlobals.imageFilePrefix")`;
+	return $prefix;
+}
+
+
+// vrGetImageFormat 
+//	 
+// Returns a string which is a string version of the 
+// image format (based on the enum in vectorRenderGlobal node).
+// 
+global proc string vrGetImageFormat() {
+	return getImfImageType();
+}
+
+
+// vrIsVectorFormat
+//
+// Returns 1 if the given format is a vector format
+// Returns 0 otherwise
+//
+// Parameters:
+// $format - the format to check
+//
+global proc int vrIsVectorFormat( string $format ) {
+	if ( "swf" == $format || "svg" == $format || "eps" == $format || "ai" == $format  || "swft" == $format) {
+		return 1;
+	}
+	return 0;
+}
+
+
+// vrGetFilenameFormat
+//
+// Returns a string representing the format of the output image(s)
+// filename
+//
+global proc string vrGetFilenameFormat() {
+	string $filenameFormats[] = { "name",
+								  "name.ext",
+								  "name.#.ext",
+								  "name.ext.#",
+								  "name.#",
+								  "name#.ext",
+								  "name_#.ext",
+								  "name",
+								  "name.ext" };
+
+	string  $vectorGlobals = vrGetRenderGlobalsNode();
+
+	// Get the selected filename format
+	int $index = 0;
+	int $useAnim 		= `getAttr "defaultRenderGlobals.animation"`;
+	int $imageUse 		= `getAttr "defaultRenderGlobals.outFormatControl"`;
+	if ($useAnim) {
+		int $multiframe = multiframeFormat(vrGetImageFormat());
+		if ($multiframe) {
+		    if ($imageUse == 1) $index = 8;	// no extension
+		    else                $index = 9;
+        } else {
+			if ($imageUse == 1) $index = 5;
+			else {
+				int $frameBeforeExt	= 
+					`getAttr "defaultRenderGlobals.putFrameBeforeExt"`;
+				if ($frameBeforeExt == 0) $index = 4;
+				else {
+					int $period = `getAttr "defaultRenderGlobals.periodInExt"`;
+					if ($period == 1) $index = 3; // period in extension
+					else if ($period == 2) $index = 7; // underscore in extension
+					else $index = 6; // $period == 0
+				}
+			}
+		}
+	} else {
+		if ($imageUse == 1) $index = 1;     // no extension
+		else                $index = 2;
+    }
+
+	return $filenameFormats[$index-1];
+}
+
+// vrBuildDirectoryName
+//
+// Returns a full path directory name, terminated with a trailing
+// forward slash, "/".
+//
+global proc string vrBuildDirectoryName() {
+
+	// Get the mapping of the images directory in the current project.
+	//
+	string $imageLocation = (`workspace -query -fileRuleEntry "images"`);
+	
+	// Get the full path of the mapped images directory.
+	// 
+	string $fullImagePath = (`workspace -expandName $imageLocation`);
+
+	// Terminate the path with a trailing forward slash.
+	//
+	int $pathLength = size($fullImagePath);
+	if ( 0 < $pathLength ) {
+		string $lastChar = `substring $fullImagePath $pathLength $pathLength`;
+		if ( "/" != $lastChar ) {
+			$fullImagePath = $fullImagePath + "/";
+		}
+	}
+
+	return $fullImagePath;
+}
+
+
+// vrVectorRenderInfo
+//
+// Prints message strings for the vector render plug-in.
+// Adds a newline character to the end of the string.
+//
+// Paramters:
+// $msg - the string to be printed
+//
+global proc vrVectorRenderInfo( string $msg ) {
+	print( $msg + "\n" );
+}
+
+
+// vrFirstRenderableCamera
+//
+// Finds and returns a string which is the name of the first renderable camera
+//
+global proc string vrFirstRenderableCamera() {
+	string $allCameras[] = `ls -cameras`;
+	int    $i;
+
+	for ($i = 0; $i < size($allCameras); $i++) {
+		if (`getAttr ($allCameras[$i] + ".renderable")`) {
+			return ($allCameras[$i]);
+		}
+	}
+}
+
+
+// vrIsResolutionSupported( int $width, int $height ) 
+//
+// Returns true if the passed width and height are within 
+// a range of supported resolutions - currently anything 
+// bigger that 3200x3200 is not supported.
+//
+global proc int vrIsResolutionSupported( int $width, int $height ) {
+	if ( ( $width > 0  ) && ( $width <= 3200  ) && 
+		 ( $height > 0 ) && ( $height <= 3200 ) ) {
+		return true;
+	}
+	return false;
+}
+
+
+// vrVectorBuildCommand
+//
+// Returns a string which is the command with all the flags and values based 
+// on the vectorRenderGlobals node.    
+//
+// Parameters: 
+// $preview - true for interactive render view render, false for batch render.
+// $width   - width of the output
+// $height  - height of the output
+// $camera  - the name of the transform node above the camera shape to be used
+//            for the render.  By default, the default (active) camera is used
+//            if $camera is an empty string.
+//
+global proc string vrVectorBuildCommand( int $preview, int $width, int $height, string $camera, string $option ) {
+	string $command = vrGetPrefix();
+
+	// Define the all the strings.
+	string $fillStyles[] = { "None", 
+							 "SingleColor", 
+							 "TwoColor", 
+							 "FourColor",
+							 "FullColor",
+							 "AverageColor",
+							 "AreaGradient",
+							 "MeshGradient" };
+
+	string $edgeStyles[] = { "None", 
+							 "Outline", 
+							 "EntireMesh" };
+
+	string $svgAnimations[] = { "Native", "HTMLScript" };
+
+	// Get the vectorRenderGlobal node.
+	string $vectorGlobals = vrGetRenderGlobalsNode();
+
+	// Get the file format.
+	string $imageFormat = getImfImageType();
+
+	// Get the fill style.
+	int $index;
+	string $fillStyle = $fillStyles[0];
+	if ( `getAttr ( $vectorGlobals + ".fillObjects")`) { 
+		$index     = `getAttr ( $vectorGlobals + ".fillStyle")`;
+		$fillStyle = $fillStyles[$index];
+	}
+
+	// Get the edge style.
+	string $edgeStyle = $edgeStyles[0];
+	if ( `getAttr ( $vectorGlobals + ".includeEdges")`) { 
+		$index = `getAttr ( $vectorGlobals + ".edgeStyle")`;
+		$edgeStyle = $edgeStyles[$index];
+	}
+
+	// First add all of the necessary options, whether in render or batch 
+	// render mode
+
+	// Set the flags on the command.
+	$command += " -if " + $imageFormat;
+	$command += " -w " + $width;
+	$command += " -h " + $height;
+
+	$command += " -dl " + `getAttr ( $vectorGlobals + ".detailLevel")`;
+	$command += " -ct " + `getAttr ( $vectorGlobals + ".curveTolerance")`;
+	
+	$command += " -scf " + `getAttr ( $vectorGlobals + ".secondaryCF")`;
+	$command += " -ro " + `getAttr ($vectorGlobals + ".renderOptimization")` ;
+	
+	$command += " -fs " + $fillStyle;
+	$command += " -es " + $edgeStyle;
+	
+	if ( true == `getAttr ( $vectorGlobals + ".showBackFaces")` ) {
+		$command += " -sb";
+	}
+
+	if ( "None" != $fillStyle ) {
+		if ( true == `getAttr ($vectorGlobals + ".shadows")` ) {
+			$command += " -sh";
+		}
+		if ( true == `getAttr ($vectorGlobals + ".reflections")` ) {
+			$command += " -rf";
+			$command += " -rd " + `getAttr ($vectorGlobals + ".reflectionDepth")`;
+		}
+
+		// The highlight option is only available for the given fill styles.
+		if ( "SingleColor" == $fillStyle || 
+			 "AverageColor" == $fillStyle || 
+			 "AreaGradient" == $fillStyle ) {
+			if ( true == `getAttr ($vectorGlobals + ".highlights")` ) {
+				$command += " -hi";
+				$command += " -hl " + `getAttr ($vectorGlobals + ".highlightLevel")`;
+			}
+		}
+	}
+
+	if ( "None" != $edgeStyle ) {
+		float $edgeColor[] = `getAttr ( $vectorGlobals + ".edgeColor")`;
+		int $edgeIntColor[];
+		$edgeIntColor[0] = $edgeColor[0] * 255;
+		$edgeIntColor[1] = $edgeColor[1] * 255;
+		$edgeIntColor[2] = $edgeColor[2] * 255;
+		$command += " -ec " + $edgeIntColor[0] + " " + $edgeIntColor[1] + " " + $edgeIntColor[2];
+		
+		$command += " -ew " + `getAttr ( $vectorGlobals + ".edgeWeight")`;
+		if ( true == `getAttr ( $vectorGlobals + ".hiddenEdges")` ) {
+			$command += " -he";
+		}
+		if ( true == `getAttr ( $vectorGlobals + ".edgeDetail")` ) {
+			$command += " -ed ";
+			$command += " -mea " + `getAttr ( $vectorGlobals + ".minEdgeAngle")`;
+		}
+		$command += "-oai " + `getAttr ($vectorGlobals + ".outlinesAtIntersections")`; 
+	}
+
+	// If the camera has been specified, add it to the command.
+	if ( size($camera) > 0 ) {
+		$command += " -c " + $camera;
+	}
+
+	// SWF only
+	if ( "swf" == $imageFormat ) {
+		$command += " -fv " + `getAttr ( $vectorGlobals + ".flashVersion")`;
+		if ( true == `getAttr ( $vectorGlobals + ".browserView")` ) {
+			$command += " -bv ";
+		}
+
+	// SVG only
+	} else if ( "svg" == $imageFormat ) {
+		$index = `getAttr ( $vectorGlobals + ".svgAnimation")`;
+		$command += " -sa " + $svgAnimations[$index];
+		if ( true == `getAttr ( $vectorGlobals + ".svgCompression")` ) {
+			$command += " -sc ";
+		}
+	}
+
+	// Set the pixel aspect ratio if it is not equal to 1.0.
+	float $pixelAspect = `getAttr ("defaultResolution.pixelAspect")`;
+	if ( abs( $pixelAspect) < 0.0001 ) {
+		float $deviceAspectRatio = `getAttr ("defaultResolution.deviceAspectRatio")`;
+		$pixelAspect = $deviceAspectRatio / ((float)$width / (float)$height) ;
+	}
+	if ( abs( $pixelAspect - 1.0 ) > 0.0001 ) {
+		$command += " -par " + $pixelAspect;
+	}
+
+	// render specific layer
+	if ( $option != "" )
+	{
+		$command += $option ; 
+	}
+	
+	// Preview render specific options - causes only the current
+	// frame to be rendered, and be displayed in the Render View
+	if ( true == $preview ) {
+		//Render the current frame only
+		$command += " -cf";
+		
+		//And send its pixels to the render view
+		$command += " -rv";
+
+	// Batch Render specific options
+	} else {
+		if ( `getAttr defaultRenderGlobals.animation` ) {
+			// Render the whole animation.
+			$command += " -sf " + `getAttr defaultRenderGlobals.startFrame`;
+			$command += " -ef " + `getAttr defaultRenderGlobals.endFrame`;
+			$command += " -bf " + `getAttr defaultRenderGlobals.byFrameStep`;
+		} else {
+			$command += " -cf";		// Render the current frame only
+		}
+	
+		if ( true == `getAttr ( $vectorGlobals + ".combineFillsEdges")` ) {
+			$command += " -cfe ";
+		}
+
+		// SWF or SVG only
+		if ( "swf" == $imageFormat || "svg" == $imageFormat ) {
+			$command += " -fr " + `getAttr ( $vectorGlobals + ".frameRate")`;
+		}
+	}
+
+	// Add the custom extension option if specified. 
+	if ( 2 == `getAttr defaultRenderGlobals.outFormatControl` ) {
+		// Use custom extension.
+		string $customExtension = `getAttr defaultRenderGlobals.outFormatExt`; 
+		$command += " -ce \"" + $customExtension + "\"";
+	}
+
+	return $command;
+}

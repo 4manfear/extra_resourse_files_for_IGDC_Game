@@ -1,0 +1,23 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+
+global proc smoothSkinWeightValues(string $shape)
+//
+// Look for vertices whose weight values deviate greatly from
+// their neighbors and use their good neighbors to even out the
+// weights.
+//
+{	
+	if (nodeType($shape) != "mesh") {
+		return;
+	}
+	
+	string $skinClusterName = findRelatedSkinCluster($shape);    
+	skinCluster -e -sw 0.5 -swi 2 $skinClusterName;
+
+}

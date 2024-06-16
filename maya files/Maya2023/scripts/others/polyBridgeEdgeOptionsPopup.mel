@@ -1,0 +1,73 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc polyBridgeEdgeOptionsPopup( string $node )
+{
+	string $shEdgeLabel = (uiRes("m_polyBridgeEdgeOptionsPopup.kSoftenHardenLabel"));
+	string $sEdgeLabel = (uiRes("m_polyBridgeEdgeOptionsPopup.kSoftenLabel"));
+	string $hEdgeLabel = (uiRes("m_polyBridgeEdgeOptionsPopup.kHardenLabel"));
+
+	string $sEdgeCommand = ("setAttr " + $node + ".smoothingAngle 180");
+	string $hEdgeCommand = ("setAttr " + $node + ".smoothingAngle 0");
+
+	string $curveTypeLabel = (uiRes("m_polyBridgeEdgeOptionsPopup.kCurveType"));
+	string $linearLabel = (uiRes("m_polyBridgeEdgeOptionsPopup.kLinear"));
+	string $smoothLabel = (uiRes("m_polyBridgeEdgeOptionsPopup.kSmooth"));
+	string $curveLabel = (uiRes("m_polyBridgeEdgeOptionsPopup.kCurve"));
+
+	string $linearCommand = ("setAttr " + $node + ".curveType 0");
+	string $smoothCommand = ("setAttr " + $node + ".curveType 1");
+	string $curveCommand  = ("setAttr " + $node + ".curveType 2");
+
+	int $curveTypeValue = `getAttr ($node + ".curveType")`;
+
+	menuItem 
+		-label $shEdgeLabel
+		-radialPosition	"SE"
+		-subMenu 1
+		;
+
+		menuItem
+			-label $sEdgeLabel
+			-command $sEdgeCommand
+			-radialPosition "SE" 
+			;
+
+		menuItem
+			-label $hEdgeLabel
+			-command $hEdgeCommand
+			-radialPosition "NE" 
+			;
+
+		setParent -m ..;
+
+	menuItem 
+		-label $curveTypeLabel
+		-radialPosition	"N"
+		-subMenu 1
+		;
+
+		menuItem
+			-label $linearLabel
+			-command $linearCommand
+			-radialPosition "W" 
+			;
+
+		menuItem
+			-label $smoothLabel
+			-command $smoothCommand
+			-radialPosition "N"
+			;
+
+		menuItem
+			-label $curveLabel
+			-command $curveCommand
+			-radialPosition "E"
+			;
+
+		setParent -m ..;
+}

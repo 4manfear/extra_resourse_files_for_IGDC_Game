@@ -1,0 +1,52 @@
+import maya
+
+maya.stringTable['y_maya_plugin_evaluator_cache_preferences.kBgFillBwd'] = u'向后'
+maya.stringTable['y_maya_plugin_evaluator_cache_preferences.kBgFillBwdTip'] = u'从右到左。'
+maya.stringTable['y_maya_plugin_evaluator_cache_preferences.kBgFillFwd'] = u'正向'
+maya.stringTable['y_maya_plugin_evaluator_cache_preferences.kBgFillFwdBwd'] = u'前进和后退'
+maya.stringTable['y_maya_plugin_evaluator_cache_preferences.kBgFillFwdBwdTip'] = u'从中心向外。'
+maya.stringTable['y_maya_plugin_evaluator_cache_preferences.kBgFillFwdFromStart'] = u'从动画起点前进'
+maya.stringTable['y_maya_plugin_evaluator_cache_preferences.kBgFillFwdFromStartTip'] = u'从第一帧开始向前。'
+maya.stringTable['y_maya_plugin_evaluator_cache_preferences.kBgFillFwdTip'] = u'从左到右。'
+maya.stringTable['y_maya_plugin_evaluator_cache_preferences.kCacheFillBg'] = u'背景'
+maya.stringTable['y_maya_plugin_evaluator_cache_preferences.kCacheFillBgTip'] = u'自动。'
+maya.stringTable['y_maya_plugin_evaluator_cache_preferences.kCacheFillBoth'] = u'播放和后台'
+maya.stringTable['y_maya_plugin_evaluator_cache_preferences.kCacheFillBothTip'] = u'自动播放以及按“播放”时播放。'
+maya.stringTable['y_maya_plugin_evaluator_cache_preferences.kCacheFillDirectionText'] = u'背景填充方向'
+maya.stringTable['y_maya_plugin_evaluator_cache_preferences.kCacheFillDirectionTip'] = u'设置缓存状态加载方向。'
+maya.stringTable['y_maya_plugin_evaluator_cache_preferences.kCacheFillPlay'] = u'播放'
+maya.stringTable['y_maya_plugin_evaluator_cache_preferences.kCacheFillPlayTip'] = u'仅当按“播放”时。'
+maya.stringTable['y_maya_plugin_evaluator_cache_preferences.kCacheFillTypeText'] = u'缓存填充'
+maya.stringTable['y_maya_plugin_evaluator_cache_preferences.kCacheFillTypeTip'] = u'选择何时构建缓存。'
+maya.stringTable['y_maya_plugin_evaluator_cache_preferences.kCacheHybridCacheModeAll'] = u'全部'
+maya.stringTable['y_maya_plugin_evaluator_cache_preferences.kCacheHybridCacheModeAllTip'] = u'GPU 变形器解算支持 GPU 的所有网格，而不是缓存。'
+maya.stringTable['y_maya_plugin_evaluator_cache_preferences.kCacheHybridCacheModeDisabled'] = u'已禁用'
+maya.stringTable['y_maya_plugin_evaluator_cache_preferences.kCacheHybridCacheModeDisabledTip'] = u'不进行 GPU 变形器解算，网格已正常缓存。'
+maya.stringTable['y_maya_plugin_evaluator_cache_preferences.kCacheHybridCacheModeSMP'] = u'平滑网格预览'
+maya.stringTable['y_maya_plugin_evaluator_cache_preferences.kCacheHybridCacheModeSMPTip'] = u'GPU 变形器解算支持 GPU 的平滑网格预览网格，而不是缓存。'
+maya.stringTable['y_maya_plugin_evaluator_cache_preferences.kCacheHybridCacheModeText'] = u'混合缓存'
+maya.stringTable['y_maya_plugin_evaluator_cache_preferences.kCacheHybridCacheModeTip'] = u'选择何时使用 GPU 变形，而不是缓存网格。'
+maya.stringTable['y_maya_plugin_evaluator_cache_preferences.kCacheModeEval'] = u'解算缓存'
+maya.stringTable['y_maya_plugin_evaluator_cache_preferences.kCacheModeEvalTip'] = u'与渲染器无关，使用可用 RAM (适合在不确定时使用)。'
+maya.stringTable['y_maya_plugin_evaluator_cache_preferences.kCacheModeVpH'] = u'视口硬件缓存'
+maya.stringTable['y_maya_plugin_evaluator_cache_preferences.kCacheModeVpHTip'] = u'使用显卡内存。'
+maya.stringTable['y_maya_plugin_evaluator_cache_preferences.kCacheModeVpS'] = u'视口软件缓存'
+maya.stringTable['y_maya_plugin_evaluator_cache_preferences.kCacheModeVpSTip'] = u'使用系统内存。'
+maya.stringTable['y_maya_plugin_evaluator_cache_preferences.kCachedPlaybackEnableText'] = u'缓存播放'
+maya.stringTable['y_maya_plugin_evaluator_cache_preferences.kCachedPlaybackEnableTip'] = u'启用缓存播放。'
+maya.stringTable['y_maya_plugin_evaluator_cache_preferences.kDynamicsAsyncRefreshText'] = u'在缓存更新时刷新模拟'
+maya.stringTable['y_maya_plugin_evaluator_cache_preferences.kDynamicsAsyncRefreshTip'] = u'在缓存更新时自动刷新场景动力学。'
+maya.stringTable['y_maya_plugin_evaluator_cache_preferences.kEnableDynamicsSupportText'] = u'缓存动力学'
+maya.stringTable['y_maya_plugin_evaluator_cache_preferences.kEnableDynamicsSupportTip'] = u'对动力学和模拟节点进行缓存。'
+maya.stringTable['y_maya_plugin_evaluator_cache_preferences.kErrPrefs'] = u'无法添加首选项: {}'
+maya.stringTable['y_maya_plugin_evaluator_cache_preferences.kPreferredCacheModeText'] = u'首选模式'
+maya.stringTable['y_maya_plugin_evaluator_cache_preferences.kPreferredCacheModeTip'] = u'选择“缓存播放”如何使用系统资源。'
+maya.stringTable['y_maya_plugin_evaluator_cache_preferences.kPreventFrameSkippingText'] = u'防止跳帧'
+maya.stringTable['y_maya_plugin_evaluator_cache_preferences.kPreventFrameSkippingTip'] = u'在“播放”模式下不跳帧。'
+# ===========================================================================
+# Copyright 2022 Autodesk, Inc. All rights reserved.
+#
+# Use of this software is subject to the terms of the Autodesk license
+# agreement provided at the time of installation or download, or which
+# otherwise accompanies this software in either electronic or hard copy form.
+# ===========================================================================

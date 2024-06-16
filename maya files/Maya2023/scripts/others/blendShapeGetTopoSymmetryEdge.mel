@@ -1,0 +1,66 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc string blendShapeGetTopoSymmetryEdge() 
+//
+//  Description:
+//		Return the topo symmetry edge if topo symmetry is active.
+//
+{
+	string $symmetryEdge;
+
+	if (!`symmetricModelling -q -symmetry` || `symmetricModelling -q -about` != "topo")
+		return $symmetryEdge;
+
+	string $allSets[] = `listSets -as`;
+	if (!stringArrayContains("topoSymmetrySet", $allSets))
+		return $symmetryEdge;
+
+	string $symmetryComponents[] = `sets -q "topoSymmetrySet"`;
+	if (size($symmetryComponents) == 0)
+		return $symmetryEdge;
+
+	string $originalSelection[] = `ls -sl`;
+	int $objectMode = `selectMode -q -o`;
+	string $ocm = ($objectMode ? "-ocm " : "");
+	string $compSelType = "";
+	string $selQuery = "selectType -q " + $ocm;
+	if (eval($selQuery + "-vertex")) $compSelType = "vertex";
+	else if (eval($selQuery + "-edge")) $compSelType = "edge";
+	else if (eval($selQuery + "-facet")) $compSelType = "facet";
+	else if (eval($selQuery + "-meshComponents")) $compSelType = "meshComponents"; 
+	else if (eval($selQuery + "-cv")) $compSelType = "cv";
+	else $compSelType = "none";
+
+	select -r $symmetryComponents;
+	ConvertSelectionToContainedEdges;
+	$symmetryComponents = `ls -sl`;
+	if (size($symmetryComponents) > 0)
+		$symmetryEdge = $symmetryComponents[0];
+
+	// Restore component mask	
+	if (size($compSelType) > 0) {
+		string $selCmd = "selectType ";
+		int $objectMode = `selectMode -q -o`;
+		if ($objectMode) $selCmd += "-ocm";
+		if ($compSelType == "none") {
+			$selCmd += "-alc 0";
+		} else {
+			$selCmd += "-" + $compSelType + " 1";
+		}
+		eval($selCmd);
+	}
+
+	// Restore original selection
+	if (size($originalSelection[0]) > 0) {
+		select -r $originalSelection;
+	} else {
+		select -clear;
+	}
+
+	return $symmetryEdge;
+}

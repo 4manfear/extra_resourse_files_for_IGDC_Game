@@ -1,0 +1,22 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+// Global Maya compatibility file, version 2010ff01
+////////////////////////////////////////////////////////////////////////////
+//
+// This version becomes effective as of the August 19, 2008 release.
+//
+////////////////////////////////////////////////////////////////////////////
+
+attrCompatibility -v "2010ff01";
+
+// Rename the director node and its cameraPassInfo attribute to cameraSet and cameraLayer.
+// The old node and attr names were used during development of the feature by Custom Engineering.
+attrCompatibility -renameAttr cameraLayer cameraSet cameraPassInfo;
+attrCompatibility -renameAttr cl cameraSet cpi;
+attrCompatibility -nodeRename cameraSet director;

@@ -1,0 +1,109 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+// Creation Date:  14 January 1999
+//
+//
+//  Procedure Name:
+//      alignSurfaceToolScript
+//
+//  Description:
+//	create wrapper around the alignSurface command
+//
+//  Input Arguments:
+//		0 ==> do the command.
+//		1 ==> show the action option box
+//		2 ==> return the command
+//		3 ==> show tool option box
+//		4 ==> enter the tool
+//
+//  Return Value:
+//      None.
+//
+
+global proc alignSurfaceToolSetup( int $forceFactorySettings, string $goToTool )
+{
+	global int $gStartWithAutoComplete;
+
+	optionVar -init $forceFactorySettings -category "Modeling.Surfaces.Align"
+		-iv alignSurfaceEuc 0
+		-iv alignSurfaceLac $gStartWithAutoComplete
+		;
+
+	if( "" != $goToTool ) {
+		scriptCtx -e -euc `optionVar -q alignSurfaceEuc` $goToTool;
+		scriptCtx -e -lac `optionVar -q alignSurfaceLac` $goToTool;
+	}
+}
+
+global proc alignSurfaceValues ( string $toolName ) 
+{
+	performAlign 3 "Surface" $toolName;
+	scriptCtxCommonValues( $toolName );
+}
+
+global proc alignSurfaceProperties()
+{
+	scriptCtxCommonProperties;
+}
+
+proc createAlignSurfaceContext( string $tool )
+{
+	if( ! `scriptCtx -exists $tool` ) {
+		alignSurfaceToolSetup( 0, "" );
+		scriptCtx -i1 "alignSurface.png"
+			-title (uiRes("m_alignSurfaceToolScript.kAlignSurfacesTool"))
+			-bcn "alignSurface"
+
+			-exitUponCompletion `optionVar -q alignSurfaceEuc`
+			-totalSelectionSets 1
+			-expandSelectionList true
+			-fcs ("alignSurfaceToolScript 0")
+
+			-setNoSelectionPrompt ((uiRes("m_alignSurfaceToolScript.kSelectTwoSurfaces")) )
+			-setSelectionPrompt ((uiRes("m_alignSurfaceToolScript.kSelectSecondSurface")) )
+
+			-setAutoToggleSelection true
+			-setAutoComplete `optionVar -q alignSurfaceLac`
+			-showManipulators true
+			-setSelectionCount 2
+
+			-nurbsSurface true
+			-isoparm true
+		$tool;
+	}
+}
+
+global proc string performAlignSurface( int $action,
+									 string $goToTool )
+{
+	return performAlign( $action, "Surface", $goToTool );
+}
+
+global proc string alignSurfaceToolScript( int $setToTool )
+//
+//	Description :
+//		0 ==> do the command.
+//		1 ==> show the action option box
+//		2 ==> return the command
+//		3 ==> show tool/action option box
+//		4 ==> enter the tool/do the command
+{
+	string $tool = "";
+	if( $setToTool > 2 ) {
+		if( !`optionVar -q modelWithToolAlignSurface` ) {
+			$setToTool = 4 - $setToTool;
+		}
+		else {
+			$tool = "alignSurfaceContext";
+			createAlignSurfaceContext $tool;
+		}
+	}
+	return scriptToolScript( "performAlignSurface", $setToTool, $tool );
+}

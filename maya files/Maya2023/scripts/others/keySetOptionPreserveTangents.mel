@@ -1,0 +1,229 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+proc int[] keySetOptionPreserveTangentsQuery( string $cmd )
+//
+//	Description:
+//		Returns an int array containing the optionVar data for the
+//		preserveTangents settings in the following order:
+//
+//		tangents[0] = fixed
+//		tangents[1] = linear
+//		tangents[2] = flat
+//		tangents[3] = smooth
+//		tangents[4] = step
+//		tangents[5] = clamped
+//		tangents[6] = plateau
+//		tangents[7] = stepnext
+//		tangents[8] = auto
+//
+{
+	int $preserveTangents[];
+	$preserveTangents[0] = `optionVar -query ($cmd + "PreserveTangentFixed")`;
+	$preserveTangents[1] = `optionVar -query ($cmd + "PreserveTangentLinear")`;
+	$preserveTangents[2] = `optionVar -query ($cmd + "PreserveTangentFlat")`;
+	$preserveTangents[3] = `optionVar -query ($cmd + "PreserveTangentSmooth")`;
+	$preserveTangents[4] = `optionVar -query ($cmd + "PreserveTangentStep")`;
+	$preserveTangents[5] = `optionVar -query ($cmd + "PreserveTangentClamped")`;
+	$preserveTangents[6] = `optionVar -query ($cmd + "PreserveTangentPlateau")`;
+	$preserveTangents[7] = `optionVar -query ($cmd + "PreserveTangentStepNext")`;
+	$preserveTangents[8] = `optionVar -query ($cmd + "PreserveTangentAuto")`;
+	return $preserveTangents;
+}
+
+proc keySetOptionPreserveTangentsSetOptionVars( string $cmd, int $forceFactorySettings, string $category )
+//
+//	Description:
+//		Initialize preserve tangent option vars.
+//
+{
+	optionVar -init $forceFactorySettings -category $category
+		-iv ($cmd + "PreserveTangentFixed") 0
+		-iv ($cmd + "PreserveTangentLinear") 0
+		-iv ($cmd + "PreserveTangentFlat") 0
+		-iv ($cmd + "PreserveTangentSmooth") 0
+		-iv ($cmd + "PreserveTangentStep") 0
+		-iv ($cmd + "PreserveTangentClamped") 0
+		-iv ($cmd + "PreserveTangentPlateau") 0
+		-iv ($cmd + "PreserveTangentStepNext") 0
+		-iv ($cmd + "PreserveTangentAuto") 0
+		;
+}
+
+proc keySetOptionPreserveTangentsSetup( string $cmd )
+//
+//	Description:
+//		Update preserve tangents UI from optionVar data.
+//
+{
+	int $preserveTangents[] = keySetOptionPreserveTangentsQuery( $cmd );
+	checkBoxGrp -edit -v1 $preserveTangents[0] ($cmd + "PreserveTangent1");	// fixed
+	checkBoxGrp -edit -v2 $preserveTangents[1] ($cmd + "PreserveTangent1");	// linear
+	checkBoxGrp -edit -v3 $preserveTangents[2] ($cmd + "PreserveTangent1");	// flat
+	checkBoxGrp -edit -v4 $preserveTangents[3] ($cmd + "PreserveTangent1");	// smooth
+	checkBoxGrp -edit -v1 $preserveTangents[4] ($cmd + "PreserveTangent2");	// step
+	checkBoxGrp -edit -v2 $preserveTangents[5] ($cmd + "PreserveTangent2");	// clamped
+	checkBoxGrp -edit -v3 $preserveTangents[6] ($cmd + "PreserveTangent2");	// plateau
+	checkBoxGrp -edit -v4 $preserveTangents[7] ($cmd + "PreserveTangent2");	// stepnext
+	checkBoxGrp -edit -v1 $preserveTangents[8] ($cmd + "PreserveTangent3");	// auto
+}
+
+proc keySetOptionPreserveTangentsCallback( string $cmd )
+//
+//	Description:
+//		Update preserve tangents optionVar data from UI.
+//
+{
+	optionVar -intValue ($cmd + "PreserveTangentFixed") `checkBoxGrp -q -v1 ($cmd + "PreserveTangent1")`;
+	optionVar -intValue ($cmd + "PreserveTangentLinear") `checkBoxGrp -q -v2 ($cmd + "PreserveTangent1")`;
+	optionVar -intValue ($cmd + "PreserveTangentFlat") `checkBoxGrp -q -v3 ($cmd + "PreserveTangent1")`;
+	optionVar -intValue ($cmd + "PreserveTangentSmooth") `checkBoxGrp -q -v4 ($cmd + "PreserveTangent1")`;
+	optionVar -intValue ($cmd + "PreserveTangentStep") `checkBoxGrp -q -v1 ($cmd + "PreserveTangent2")`;
+	optionVar -intValue ($cmd + "PreserveTangentClamped") `checkBoxGrp -q -v2 ($cmd + "PreserveTangent2")`;
+	optionVar -intValue ($cmd + "PreserveTangentPlateau") `checkBoxGrp -q -v3 ($cmd + "PreserveTangent2")`;
+	optionVar -intValue ($cmd + "PreserveTangentStepNext") `checkBoxGrp -q -v4 ($cmd + "PreserveTangent2")`;
+	optionVar -intValue ($cmd + "PreserveTangentAuto") `checkBoxGrp -q -v1 ($cmd + "PreserveTangent3")`;
+}
+
+proc keySetOptionPreserveTangentsWidgets( string $cmd )
+//
+//	Description:
+//		Create preserve tangents UI widgets. Caller is responsible
+//		for ensuring the parent is set correctly prior to invoking.
+//
+{
+	checkBoxGrp -label (uiRes("m_keySetOptionPreserveTangents.kPreserveKeyTangent"))
+				-label1 (uiRes("m_keySetOptionPreserveTangents.kFixed"))
+				-label2 (uiRes("m_keySetOptionPreserveTangents.kLinear"))
+				-label3 (uiRes("m_keySetOptionPreserveTangents.kFlat"))
+				-label4 (uiRes("m_keySetOptionPreserveTangents.kSmooth"))
+				-ncb 4
+				-ann (uiRes("m_keySetOptionPreserveTangents.kPreserveTangentAnnotation"))
+				-valueArray4 0 0 0 0
+				($cmd + "PreserveTangent1");
+	checkBoxGrp -label1 (uiRes("m_keySetOptionPreserveTangents.kStep"))
+				-label2 (uiRes("m_keySetOptionPreserveTangents.kClamped"))
+				-label3 (uiRes("m_keySetOptionPreserveTangents.kPlateau"))
+				-label4 (uiRes("m_keySetOptionPreserveTangents.kStepNext"))
+				-valueArray4 0 0 0 0
+				-ncb 4
+				-ann (uiRes("m_keySetOptionPreserveTangents.kPreserveTangentAnnotation"))
+				($cmd + "PreserveTangent2");
+	checkBoxGrp -label1 (uiRes("m_keySetOptionPreserveTangents.kAuto"))
+				-value1 0
+				-ncb 1
+				-ann (uiRes("m_keySetOptionPreserveTangents.kPreserveTangentAnnotation"))
+				($cmd + "PreserveTangent3");
+}
+
+proc keySetOptionPreserveTangentsPreviewInit( string $cmd, string $cb )
+//
+//	Description:
+//		Update changeCommand callbacks for interactive preview support.
+//
+{
+	string $baseName = ($cmd + "PreserveTangent");
+	int $i;
+	for( $i = 1; $i < 4; $i++ )
+	{
+		// Check for existence of UI widgets before updating in case this is invoked
+		// during optionBox UI deletion.
+		string $uiName = $baseName + $i;
+		if( `checkBoxGrp -ex $uiName` )
+		{
+			checkBoxGrp -e
+						-cc $cb
+						$uiName;
+		}
+	}
+}
+
+global proc int[] keySetOptionPreserveTangents( string $argList[] )
+//
+//	Description:
+//		Multi-purpose proc for preserve tangent curve filter functionality.
+//
+//		$argList[0] = command name
+//		$argList[1] = action
+//
+//		Actions:
+//		$argList[1] == "setOptionVars"	initializes preserve tangents optionVars
+//			$argList[2] = 1/0			reset options to factory settings 
+//			$argList[3] = string		option var category 
+//			Returns empty int array
+//
+//		$argList[1] == "setup"			updates UI from optionVar data.
+//			no args
+//			Returns empty int array
+//
+//		$argList[1] == "widgets"		creates preserve tangents UI
+//			no args						(caller is expected to setParent before calling)
+//			Returns empty int array
+//
+//		$argList[1] == "callback"		updates optionVar data from UI.
+//			no args
+//			Returns empty int array
+//
+//		$argList[1] == "previewInit"	initialize UI state for interactive preview
+//			$argList[2] = string		callback function to install on UI.		
+//			Returns empty int array
+//
+//		$argList[1] == "queryOptionVars"	queries optionVar data.
+//			no args
+//			Returns int array for preserve tangent states in the order defined by
+//			keySetOptionPreserveTangentsQuery()
+//
+{
+	string $cmd = $argList[0];
+	string $action = $argList[1];
+
+	int $result[];
+
+	if( $action == "setOptionVars" )
+	{
+		if( size( $argList ) != 4 )
+		{
+			string $setOptVarsError = (uiRes("m_keySetOptionPreserveTangents.kPreserveTangentSetOptionVarsError"));
+			error(`format -s $cmd $setOptVarsError`);
+		}
+		int $forceFactorySettings = $argList[2];
+		string $category = $argList[3];
+		keySetOptionPreserveTangentsSetOptionVars( $cmd, $forceFactorySettings, $category );
+	}
+	else if( $action == "setup" )
+	{
+		keySetOptionPreserveTangentsSetup( $cmd );
+	}
+	else if( $action == "widgets" )
+	{
+		keySetOptionPreserveTangentsWidgets( $cmd );
+	}
+	else if( $action == "callback" )
+	{
+		keySetOptionPreserveTangentsCallback( $cmd );
+	}
+	else if( $action == "previewInit" )
+	{
+		if( size($argList) != 3 )
+		{
+			string $previewInitError = (uiRes("m_keySetOptionPreserveTangents.kPreserveTangentPreviewInitError"));
+			error(`format -s  $cmd $previewInitError`);
+		}
+		string $cb = $argList[2];
+		keySetOptionPreserveTangentsPreviewInit( $cmd, $cb );
+	}
+	else if( $action == "queryOptionVars" )
+	{
+		$result = keySetOptionPreserveTangentsQuery( $cmd );
+	}
+	else
+	{
+		string $invalidAction = (uiRes("m_keySetOptionPreserveTangents.kInvalidAction"));
+		error(`format -s $action $invalidAction`);
+	}
+	return $result;
+}

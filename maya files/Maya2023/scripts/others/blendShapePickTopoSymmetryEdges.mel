@@ -1,0 +1,151 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc int topoSymmetryEnabled(string $objects[])
+//
+//  Description:
+//		Determine if topo symmetry is enabled for any one of $objects.
+//
+{
+	if (!`symmetricModelling -q -symmetry` || `symmetricModelling -q -about` != "topo")
+		return 0;
+
+	string $symmetryObject = `symmetricModelling -q -topoSymmetry`;
+	if ($symmetryObject != "")
+	{
+		string $transform[] = `listTransforms $symmetryObject`;
+		if (size($transform) == 1)
+		{
+			for($object in $objects)
+			{
+				if (stringArrayContains($transform[0], `listTransforms $object`))
+					return 1;
+			}
+		}
+	}
+
+	return 0;
+}
+
+global proc blendShapePickTopoSymmetryEdges(string $postCmd, string $objects[], string $bsNodes[]) 
+//
+//  Description:
+//		Pick topo symmetry edges for $bsNodes from the meshes in $objects, then excute $postCmd.
+//
+{
+	string $ctx;
+	string $currentSelection[] = `ls -sl`;
+	string $currentHilite[] = `ls -hl`;
+	int $objectMode = `selectMode -q -o`;
+	string $ocm = ($objectMode ? "-ocm " : "");
+	int $disableSymmetry = `symmetricModelling -q -s`;
+
+	// Save component selectType
+	string $compSelType = "";
+	string $selQuery = "selectType -q " + $ocm;
+	if (eval($selQuery + "-vertex")) $compSelType = "vertex";
+	else if (eval($selQuery + "-edge")) $compSelType = "edge";
+	else if (eval($selQuery + "-facet")) $compSelType = "facet";
+	else if (eval($selQuery + "-meshComponents")) $compSelType = "meshComponents"; 
+	else if (eval($selQuery + "-cv")) $compSelType = "cv";
+	else $compSelType = "none";
+
+	// Build setup command
+	string $startCmd = "select -r ";
+	$startCmd += "{\"" + stringArrayToString($objects, "\", \"") + "\"};";
+	$startCmd += "hilite;";
+	$startCmd += "selectType " + $ocm + "-alc 0;";
+	$startCmd += "selectType " + $ocm + "-edge 1;";
+	$startCmd += "select -clear;";
+	if ($disableSymmetry) $startCmd += "symmetricModelling -s 0;";
+	string $pointMsg = (uiRes("m_blendShapePickTopoSymmetryEdges.kSelectSymmetryEdgePrompt"));
+	$startCmd += "inViewMessage -smg \"" + $pointMsg + "\" -pos midCenterTop -a 0.5 -fade -fadeStayTime 10000;";
+
+	// Build final command
+	string $cmd = "blendShapeSetSymmetryEdge($Selection1, ";
+	$cmd += "{\"" + stringArrayToString($bsNodes, "\", \"") + "\"}, ";
+	$cmd += "{\"" + stringArrayToString($currentSelection, "\", \"") + "\"}, ";
+	$cmd += "{\"" + stringArrayToString($currentHilite, "\", \"") + "\"}, ";
+	$cmd += "\"" + $compSelType + "\");" + $postCmd;
+
+	$ctx = `scriptCtx
+		-title (uiRes("m_blendShapePickTopoSymmetryEdges.kSelectSymmetryEdgeTitle"))
+		-toolStart $startCmd
+		-finalCommandScript $cmd
+		-showManipulators off
+		-totalSelectionSets 1
+		-setSelectionCount 0
+		// Types of point allowed in selection
+		// -----------------------------------
+		-controlVertex 0
+		-editPoint 0
+		-polymeshVertex	0
+		-polymeshEdge 1
+		-polymeshFace 0
+		-locatorXYZ 0
+		-locator 0
+		-joint 0
+		-jointPivot 0
+		-scalePivot 0
+		-rotatePivot 0
+		-subdivMeshPoint 0
+		-latticePoint 0
+		-particle 0
+		-motionTrailPoint 0
+		-motionTrailTangent 0
+		// -----------------------------------
+		-exitUponCompletion on
+		-setAutoComplete off`;
+		
+	setToolTo $ctx;
+}
+
+global proc blendShapeSetSymmetryEdge(string $component[], string $bsNodes[], string $originalSelection[], string $originalHilite[], string $compSelType) 
+{
+	string $typedObject[];
+
+	// Polygon Edge
+	$typedObject = `filterExpand -expand on -selectionMask 32 $component`;
+	if (size($typedObject) > 0) {
+		string $cmd = "blendShape -e ";
+		for($edge in $typedObject)
+			$cmd += "-se " + $edge + " ";
+
+		for($bs in $bsNodes)
+		{
+			string $symCmd = $cmd + $bs;
+			eval($symCmd);
+		}
+	}
+
+	// Restore component mask	
+	if (size($compSelType) > 0) {
+		string $selCmd = "selectType ";
+		int $objectMode = `selectMode -q -o`;
+		if ($objectMode) $selCmd += "-ocm";
+		if ($compSelType == "none") {
+			$selCmd += "-alc 0";
+		} else {
+			$selCmd += "-" + $compSelType + " 1";
+		}
+		eval($selCmd);
+	}
+
+	// Restore original hilite
+	if (size($originalHilite[0]) > 0) {
+		hilite $originalHilite;
+	} else {
+		hilite -u `ls -hl`;
+	}
+	
+	// Restore original selection
+	if (size($originalSelection[0]) > 0) {
+		select -r $originalSelection;
+	} else {
+		select -clear;
+	}
+}

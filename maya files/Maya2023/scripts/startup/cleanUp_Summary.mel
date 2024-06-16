@@ -1,0 +1,63 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//-----------------------------------------------------------------------
+//
+//  Creation Date:  January 16, 2003
+//
+//  Procedure Name:
+//      cleanUp_Summary
+//
+//  Description:
+//
+//		Utility function used by the various components of the
+//		"Optimize Scene Size" function (otherwise known as scene cleanup).
+//
+//		Records the results of a particular cleanup operation.  A short 
+//		summary is given (just the name of the operation), as well as a
+//		long one that describes how the operation modified the scene 
+//		(how many nodes were removed, for example).  The short summaries
+//		is written to the result line, while the long summaries are
+//		written to the Script Editor.
+//
+//  Input Arguments: 
+//
+//		$short - short summary to be written to result line
+//		$long - longer summary to be written to the Script Editor
+//
+//	Return Value: None.
+//
+//	Related Functions:
+//
+//		For progress reporting and interruptability, user-defined cleanup
+//		steps might want to make use of the following utility functions:
+//
+//		cleanUp_StartProgress() - called before an operation begins
+//		cleanUp_SetProgress() - called as the operation is running, to 
+//								update the progress bar.
+//		cleanUp_EndProgress() - called to signal that the operation is 
+//								finished.
+//		cleanUp_CheckInterrupt() - called between cleanup operations to
+//								   detect when a previous operation has
+//								   been interrupted.
+//		cleanUp_Summary() - called to report the results of cleanup 
+//							operations.
+//
+//-----------------------------------------------------------------------
+
+global proc cleanUp_Summary( string $short, string $long )
+{
+	//	global variables are used to store the summaries of the
+	//	various operations.
+	//
+	global string $gCleanUpSummary[];
+	global string $gCleanUpSteps[];
+
+	$gCleanUpSummary[size($gCleanUpSummary)] = $long;
+	$gCleanUpSteps[size($gCleanUpSteps)] = $short;
+}
+

@@ -1,0 +1,84 @@
+<!--
+Copyright 2016 Autodesk, Inc. All rights reserved. 
+
+Use of this software is subject to the terms of the Autodesk 
+license agreement provided at the time of installation or download, 
+or which otherwise accompanies this software in either electronic 
+or hard copy form.
+-->
+<fragment  uiName="mayaTransparentDrawPass" name="mayaTransparentDrawPass" type="sceneEffect" class="ScriptFragment" version="1.0" feature_level="0" >
+    <description>
+    <![CDATA[
+        Implements Simple and Object Sorting transparency algorithms.
+    ]]>
+</description>
+    <properties>
+        <countedObject  name="transpList" />
+        <countedObject  name="unsupportedTranspList" />
+        <camera  name="camera" />
+        <target  name="final" />
+        <target  name="depth" />
+        <float4  name="viewport" />
+        <bool  name="sortTransparent" />
+        <effectInstance  name="materialOverrideInstance" />
+        <bool  name="drawTransparentList" />
+        <bool  name="transpListsEmpty" />
+        <bool  name="twoPassTransparency" />
+    </properties>
+    <values>
+        <float4 name="viewport" value="0.000000,0.000000,1.000000,1.000000"  />
+        <bool name="sortTransparent" value="true"  />
+        <bool name="drawTransparentList" value="true"  />
+        <bool name="transpListsEmpty" value="true"  />
+        <bool name="twoPassTransparency" value="true"  />
+    </values>
+    <outputs>
+        <target  name="output" />
+    </outputs>
+    <parametershare>
+    </parametershare>
+    <implementation render="OGS" language="ScriptInterpreter" version="0.1" >
+        <scriptCommands>
+            <Declare name="transpRenderer" type="ScriptPipeRenderer" value="::StdDrawAgents" />
+            <SetRenderer name="transpRenderer" />
+            <SetTarget index="0" value="@final" />
+            <SetDepthStencil value="@depth" />
+            <SetViewport value="@viewport" />
+            <SetCamera value="@camera" />
+            <SetEffect name="" />
+            <If value="@drawTransparentList" />
+                <Call name="isListEmptyTwo" arg0="@transpList" arg1="@unsupportedTranspList" arg2="@transpListsEmpty" />
+                <IfNot value="@transpListsEmpty" />
+                    <If value="@sortTransparent" />
+                        <Call name="sortRenderListByZ" arg0="@transpList" arg1="@camera" />
+                        <Call name="sortRenderListByZ" arg0="@unsupportedTranspList" arg1="@camera" />
+                    <EndIf />
+                    <Declare name="transpState" type="stateSetter" />
+                    <SetStateCommand commandName="SetStateParameter" name="transpState" parameter="DepthEnable" value="true" />
+                    <SetStateCommand commandName="SetStateParameter" name="transpState" parameter="SetBlendEnable" value="true" />
+                    <SetStateCommand commandName="SetRenderState" name="transpState" parameter="BlendOver" />
+                    <SetStateCommand commandName="SetRenderState" name="transpState" parameter="ZLessNoW" />
+                    <SetStateCommand commandName="SetStateParameter" name="transpState" parameter="AlphaTestEnabled" value="false" />
+                    <SetStateCommand commandName="CommitNewState" name="transpState" />
+                    <Call name="SetPassSemantic" arg0="transparentGeometry" arg1="TRUE" />
+                    <If value="@materialOverrideInstance" />
+                        <Call name="SetEffectInstance" arg0="@materialOverrideInstance" />
+                        <Call name="SetPassSemantic" arg0="materialOverride" arg1="TRUE" />
+                    <EndIf />
+
+                    <Render name="@transpList" />
+                    <Render name="@unsupportedTranspList" />
+
+                    <If value="@materialOverrideInstance" />
+                        <Call name="SetPassSemantic" arg0="materialOverride" arg1="FALSE" />
+                        <Call name="SetEffectInstance" arg0="" />
+                    <EndIf />
+                    <Call name="SetPassSemantic" arg0="transparentGeometry" arg1="FALSE" />
+                    <SetStateCommand commandName="RestorePreviousState" name="transpState" />
+                <EndIf />
+            <EndIf />
+            <SetParameter name="@output" value="@final" />
+        </scriptCommands>
+    </implementation>
+</fragment>
+

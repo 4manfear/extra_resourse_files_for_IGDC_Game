@@ -1,0 +1,32 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc templateLayer( string $state, int $setting )
+//
+//
+// Creation Date:	28 June 1996
+//
+//
+//	Procedure Name:
+//		templateLayer
+//
+//	Description:
+//		This procedure queries the layer popup for the current
+//		layer, and templates/untemplates the members of that
+//		layer, or templates/untemplates the members of all layers,
+//		based on the arguments passed to the proc.
+//
+//	Input Arguments:
+//		$state, either -all or -active.
+//		$setting, either "0" or "1"
+//
+//	Return Value:
+//		None.
+//
+{
+	obsoleteProc( "templateLayer", "templateLayer.mel" );
+}

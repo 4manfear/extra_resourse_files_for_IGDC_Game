@@ -1,0 +1,47 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  2005
+//
+// Description: create a line modifier node and attach to selected pfx objects 
+//	
+
+global proc createLineModifier()
+{
+	string $pfxGeom[] = `ls -sl -dag -type "pfxGeometry"`;	
+	int $numObjs = size( $pfxGeom );
+	if( $numObjs < 1 ){
+		warning( (uiRes("m_createLineModifier.kNoSelectedNodes")));
+		return;
+	}
+	float $bb[] = `exactWorldBoundingBox`;
+	string $lineMod = `createNode "lineModifier"`;
+	move (($bb[0] + $bb[3])*0.5) 
+		 (($bb[1] + $bb[4])*0.5) 
+		 (($bb[2] + $bb[5])*0.5) $lineMod;
+
+
+	string $obj;
+	for( $obj in $pfxGeom ){
+		int $modInd;
+		int $numMods = `getAttr -size ($obj + ".lineModifier" )`;
+		for( $modInd = 0; $modInd <= $numMods; $modInd++ ){
+			string $input = ($obj + ".lineModifier[" + $modInd +"]");
+			if( $modInd < $numMods ){
+				string $con = `connectionInfo -sfd $input`;
+				if( size( $con ) > 0 ){
+					// already connected, keep looking
+					continue;
+				}
+			}
+			connectAttr ($lineMod + ".outLineModifier") $input;
+			break;
+		}
+	}
+}

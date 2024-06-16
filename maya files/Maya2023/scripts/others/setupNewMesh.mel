@@ -1,0 +1,26 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+
+global proc setupNewMesh()
+{
+	int $ival=`optionVar -query polyCreateMeshesSingleSided`;
+	if ($ival) {
+		$ival = 0;
+	} else {
+		$ival = 1;
+	}
+	int $tangentSpace = `optionVar -query polyDefaultTangentSpace`;
+	string $tsaDegrees = `optionVar -query polyDefaultTangentSmoothingAngle`;
+	float $tsa = `convertUnit -fromUnit "deg" $tsaDegrees`;
+	string $shapes[] = `ls -sl -dag -typ mesh`;
+	for ($shape in $shapes) {
+		setAttr ( $shape + ".doubleSided" ) $ival;
+		setAttr ( $shape + ".tangentSpace" ) $tangentSpace;
+		setAttr ( $shape + ".tangentSmoothingAngle" ) $tsa;
+	}
+}

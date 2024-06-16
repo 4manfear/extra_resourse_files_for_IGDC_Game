@@ -1,0 +1,38 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+///////////////////////////////////////////////////////////////////////////////
+//
+//  Description:
+//  Attribute editor template layout for polyCut nodes
+//
+///////////////////////////////////////////////////////////////////////////////
+
+global proc AEpolyCutTemplate(string $nodeName)
+{
+	editorTemplate -beginScrollLayout;
+	editorTemplate -beginLayout (uiRes("m_AEpolyCutTemplate.kPolygonCutFacesAttributes")) -collapse 0;
+
+	editorTemplate -addControl "cutPlaneCenter";
+	editorTemplate -addControl "cutPlaneRotate";
+	editorTemplate -addControl "cutPlaneSize";
+	editorTemplate -addControl "deleteFaces";
+	editorTemplate -addControl "extractFaces";
+	editorTemplate -addControl "extractOffset";
+
+	editorTemplate -endLayout;
+
+	AEpolyModifierInclude $nodeName;
+
+	// suppressed attributes
+	editorTemplate -suppress "inputComponents";
+	editorTemplate -suppress "onObject";
+	editorTemplate -suppress "worldSpace";
+
+	editorTemplate -addExtraControls;
+	editorTemplate -endScrollLayout;
+}

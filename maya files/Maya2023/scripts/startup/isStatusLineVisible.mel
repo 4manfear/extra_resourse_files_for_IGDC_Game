@@ -1,0 +1,27 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  23 June 1997
+//
+//  Procedure Name:
+//      isStatusLineVisible
+//
+//  Description:
+//      Return the visibility of the Status line.
+//
+//  Input Arguments:
+//      None.
+//
+//  Return Value:
+//      True if the Status line is visible, false otherwise.
+//
+global proc int isStatusLineVisible() {
+
+	return isUIComponentVisible("Status Line");
+}

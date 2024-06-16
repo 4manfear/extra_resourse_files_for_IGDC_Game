@@ -1,0 +1,18 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc DeviceEdMenu (string $theDeviceEditor) {
+
+// 	string $parent;
+	// $parent = `deviceEditor -q -control $theDeviceEditor`;
+// 
+	// popupMenu -mm 1 -p $parent deviceEditorMenu;
+	    // menuItem -l "Show axes" -rp "W" axisMenu;
+	    // menuItem -l "Show buttons" -rp "E" buttonMenu;
+		// menuItem -l "Show attachments" -rp "S" attributeMenu;
+		// menuItem -l "Save attachments" -rp "N" saveAttachMenu;
+}

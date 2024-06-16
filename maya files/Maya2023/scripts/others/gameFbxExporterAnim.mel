@@ -1,0 +1,1416 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// Functions defined in this file (gameFbxExporterAnimClips.mel):
+//
+// global proc gameExp_AnimationLayoutOrder(string $formLayout)
+// global proc string gameExp_CreateAnimationClipUIComponents()
+// global proc gameExp_AnimFileSplitChanged(int $index)
+// global proc gameExp_CreateScrollAnimationClipLayout()
+// global proc gameExp_SetUniqueAnimationClipName(string $index, string $name, string $clipNameField)
+// global proc gameExp_PlayAnimationClip(int $currentIndex)
+// global proc gameExp_playbackOffCallback()
+// global proc gameExp_playbackRangeChangedCallback()
+// global proc gameExp_synchronizePlaybackRange(int $setStartTime, float $startTime, int $setEndTime, float $endTime)
+// global proc gameExp_synchronizeClipWidgets(int $index, string $clipWidget)
+// global proc gameExp_SwitchMatchModeToClip(int $index, string $mode)
+// global proc gameExp_AdjustTimeline(int $index, string $clipButton, int $mods)
+// global proc gameExp_ToggleSelectionClips(int $action)
+// global proc gameExp_ToggleSelectionClip(int $action, int $clipId)
+// global proc gameExp_AddNewAnimationClip(int $refresh)
+// global proc cte_ClipRemovedCallback()
+// global proc cte_ClipModifiedCallback()
+// proc int cte_NameCheck(string $node, int $clipId)
+// proc cte_AddNewClip(string $node, int $clipId)
+// global proc cte_gameExp_AddNewAnimationClip(int $refresh)
+// global proc gameExp_InsertNewAnimationClip(int $insertPos)
+// global proc gameExp_DeleteAnimationClipLayout(int $position)
+// global proc int gameExp_ClipOverwriteExistingFiles(string $fileNameTmp)
+// global proc int gameExp_ClipExportSelectedInfo()
+// global proc string[] gameExp_GenerateClipFilenameList(int $nbAnimClips, string $fileNameTmp, string $name[], float $start[], float $end[])
+// 
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+
+
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// Attach in a specific order the animation clips sub form layout
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+global proc gameExp_AnimationLayoutOrder(string $formLayout)
+{ 
+    string $animForm = gameExp_CreateAnimationClipUIComponents();   
+    string $pathForm = gameExp_CreatePathUIComponents();
+      
+    formLayout -edit 
+        -attachForm      $animForm   "top"     0 
+        -attachForm      $animForm   "left"    0
+        -attachForm      $animForm   "right"   0  
+        -attachControl   $animForm   "bottom"  0   $pathForm                    
+
+        -attachForm      $pathForm   "left"    0
+        -attachForm      $pathForm   "right"   0  
+        -attachForm      $pathForm   "bottom"  0     
+       
+    $formLayout;    
+    
+    setParent ..;    
+}
+
+
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// Create the Animation Clips UI Components
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+global proc string gameExp_CreateAnimationClipUIComponents()
+{    
+    global string $gGameFbxExporterCurrentNode;
+    global int $gGameExporterSettingsCollapse;
+          
+    string $form = `formLayout`;
+    
+    // Get prefixed control names
+    $gameFbxExporterAnimClipFrameLayout = gameExp_GetPrefixedName("gameFbxExporterAnimClipFrameLayout");
+    $gameFbxExporterAnimClipFormLayout = gameExp_GetPrefixedName("gameFbxExporterAnimClipFormLayout");
+    $gameFbxExporterClipNameLabel = gameExp_GetPrefixedName("gameFbxExporterClipNameLabel");
+    $gameFbxExporterStartFrameLabel = gameExp_GetPrefixedName("gameFbxExporterStartFrameLabel");
+    $gameFbxExporterEndFrameLabel = gameExp_GetPrefixedName("gameFbxExporterEndFrameLabel");
+    $gameFbxExporteToggleSelectionClips = gameExp_GetPrefixedName("gameFbxExporteToggleSelectionClips");
+    $gameFbxExporterAnimSettingsFrameLayout = gameExp_GetPrefixedName("gameFbxExporterAnimSettingsFrameLayout");
+    $gameFbxExporterAnimSettingsFormLayout = gameExp_GetPrefixedName("gameFbxExporterAnimSettingsFormLayout");
+    $gameFbxExporterBakeAnimation = gameExp_GetPrefixedName("gameFbxExporterBakeAnimation");
+    $gameFbxExporterFileSplit = gameExp_GetPrefixedName("gameFbxExporterFileSplit");
+    int $tabSelected = `tabLayout -q -selectTabIndex gameExporterTabLayout`;
+    string $frameLabel = ($tabSelected == 3) ? getPluginResource( "gameFbxExporter", "kGameExporterTimeEditorClips" ) : 
+                                               getPluginResource( "gameFbxExporter", "kGameExporterAnimationClips" );
+    frameLayout -width 100 
+				-label $frameLabel
+                -collapse 0 
+				-collapsable 1 
+                $gameFbxExporterAnimClipFrameLayout;
+    formLayout -width 100 $gameFbxExporterAnimClipFormLayout;         
+    
+    text -label "" emptyLabel;    
+    text -label (getPluginResource( "gameFbxExporter", "kGameExporterClipName" )) $gameFbxExporterClipNameLabel;
+    text -label (getPluginResource( "gameFbxExporter", "kGameExporterStartFrame" )) $gameFbxExporterStartFrameLabel;
+    text -label (getPluginResource( "gameFbxExporter", "kGameExporterEndFrame" )) $gameFbxExporterEndFrameLabel;
+    checkBox -label "" 
+             -value 1
+             -annotation (getPluginResource( "gameFbxExporter","kGameExporterAnnToggleAllClips"))
+             -changeCommand ("gameExp_ToggleSelectionClips #1")
+             $gameFbxExporteToggleSelectionClips;    
+       
+    
+    frameLayout -width 100 -label (getPluginResource( "gameFbxExporter", "kGameExporterSettings" ))
+                -collapse $gGameExporterSettingsCollapse 
+				-collapsable 1 
+				-collapseCommand "$gGameExporterSettingsCollapse = 1" 
+				-expandCommand "$gGameExporterSettingsCollapse = 0"
+                $gameFbxExporterAnimSettingsFrameLayout;
+    
+    formLayout -width 100 $gameFbxExporterAnimSettingsFormLayout;
+
+    optionMenu $gameFbxExporterFileSplit;
+        menuItem -label (getPluginResource( "gameFbxExporter", "kGameExporterMultiClipsSingleFile" ))
+                 -annotation (getPluginResource( "gameFbxExporter", "kGameExporterAnnMultiClipsSingleFile" ));
+        menuItem -label (getPluginResource( "gameFbxExporter", "kGameExporterMultiClipFiles" ))
+                 -annotation (getPluginResource( "gameFbxExporter", "kGameExporterAnnMultiClipFiles" ));   
+
+    string $gameExporterMoveToOrigin = gameExp_GetPrefixedName("gameExporterMoveToOrigin");
+    checkBoxGrp -columnWidth 1 85 
+                -label (getPluginResource( "gameFbxExporter", "kGameExporterMoveToOrigin" )) 
+                -annotation (getPluginResource( "gameFbxExporter","kGameExporterAnnMoveToOrigin"))
+                $gameExporterMoveToOrigin;  
+    
+    separator -height 10 sep_1;  
+
+    checkBoxGrp -columnWidth 1 90 
+                -label (getPluginResource( "gameFbxExporter", "kGameExporterBakeAnimation" )) 
+                -annotation (getPluginResource( "gameFbxExporter", "kGameExporterAnnBakeAnimation" ))
+                $gameFbxExporterBakeAnimation;              
+
+    string $gameExporterInputConnections = gameExp_GetPrefixedName("gameExporterInputConnections");
+    checkBoxGrp -label (getPluginResource( "gameFbxExporter", "kGameExporterInputConnections" )) 
+                -columnWidth 1 110
+               -annotation (getPluginResource( "gameFbxExporter","kGameExporterAnnInputConnections"))
+                $gameExporterInputConnections;
+
+    separator -height 10 sep_2;      
+
+    text -label (getPluginResource( "gameFbxExporter", "kGameExporterUpAxis" )) 
+         -annotation (getPluginResource( "gameFbxExporter", "kGameExporterAnnUpAxis" )) 
+         gameExporterUpAxisLabel;
+    string $gameExporterUpAxis = gameExp_GetPrefixedName("gameExporterUpAxis");
+    optionMenu $gameExporterUpAxis;
+        menuItem -label (getPluginResource( "gameFbxExporter", "kGameExporterUpAxisY" ));
+        menuItem -label (getPluginResource( "gameFbxExporter", "kGameExporterUpAxisZ" ));
+
+    string $gameExporterEmbedMedia = gameExp_GetPrefixedName("gameExporterEmbedMedia");
+    checkBoxGrp -columnWidth 1 90 
+                -label (getPluginResource( "gameFbxExporter", "kGameExporterEmbedMedia" )) 
+                -annotation (getPluginResource( "gameFbxExporter","kGameExporterAnnEmbedMedia"))
+                $gameExporterEmbedMedia;   
+
+    separator -height 10 sep_3;    
+
+    gameExp_CreateFileFormatComponents();
+    string $gameExporterFileTypeLabel   = gameExp_GetPrefixedName("gameExporterFileTypeLabel");
+    string $gameExporterFileType        = gameExp_GetPrefixedName("gameExporterFileType");
+    string $gameExporterFBXVersionLabel = gameExp_GetPrefixedName("gameExporterFBXVersionLabel");
+    string $gameExporterFBXVersion      = gameExp_GetPrefixedName("gameExporterFBXVersion");
+    separator -height 2 -visible false sep_4;  
+
+    gameExp_CreateAdvanceSettingsGearButton();
+    string $gameExporterAdvanceSettings = gameExp_GetPrefixedName("gameExporterAdvanceSettings");
+
+    if( size($gGameFbxExporterCurrentNode) )
+    {
+        connectControl -preventContextualMenu true -index 2 $gameFbxExporterBakeAnimation ($gGameFbxExporterCurrentNode + ".bakeAnimation");   
+           
+        connectControl -preventContextualMenu true -index 2 $gameExporterInputConnections ($gGameFbxExporterCurrentNode + ".inputConnections");   
+
+        // Disable Input Connection when Export All.
+        int $enableInputConn = (getAttr($gGameFbxExporterCurrentNode + ".exportSetIndex") != 1);
+        checkBoxGrp -edit 
+                -enable $enableInputConn
+                $gameExporterInputConnections;
+
+        // Set UI Components value with node attributes              
+        optionMenu -edit -select `getAttr($gGameFbxExporterCurrentNode + ".fileSplitType")`
+                   -changeCommand ("gameExp_AnimFileSplitChanged `optionMenu -q -select " + $gameFbxExporterFileSplit + "`") 
+                   $gameFbxExporterFileSplit;       
+                   
+        optionMenu -edit 
+                   -select `getAttr($gGameFbxExporterCurrentNode + ".upAxis")` 
+                   -changeCommand ("setAttr(\"" + $gGameFbxExporterCurrentNode + ".upAxis\") `optionMenu -q -select " + $gameExporterUpAxis + "`")
+                   $gameExporterUpAxis;      
+
+        connectControl -preventContextualMenu true -index 2 $gameExporterEmbedMedia ($gGameFbxExporterCurrentNode + ".embedMedia");
+        
+        connectControl -preventContextualMenu true -index 2 $gameExporterMoveToOrigin ($gGameFbxExporterCurrentNode + ".moveToOrigin");
+    }
+            
+       // Bake animations will be read-only with the Time Editor Tab
+    $tabSelected = `tabLayout -q -selectTabIndex gameExporterTabLayout`;
+    int $editable = ($tabSelected != 3);
+    checkBoxGrp -e -editable $editable $gameFbxExporterBakeAnimation;                 
+
+    formLayout -edit    
+        -attachForm      $gameFbxExporterFileSplit   "top"     5
+        -attachForm      $gameFbxExporterFileSplit   "right"   15
+        -attachForm      $gameFbxExporterFileSplit   "left"    10 
+                       
+		-attachControl   $gameExporterMoveToOrigin "top"      5 $gameFbxExporterFileSplit
+        -attachForm      $gameExporterMoveToOrigin "left"    10
+ 
+        -attachControl   sep_1   "top"     0 $gameExporterMoveToOrigin            
+        -attachForm      sep_1   "left"    0 
+        -attachForm      sep_1   "right"   0          
+                   
+        -attachControl   $gameFbxExporterBakeAnimation   "top"      1 sep_1
+        -attachForm      $gameFbxExporterBakeAnimation   "left"     5
+
+        -attachControl   $gameExporterInputConnections   "top"       1 sep_1
+        -attachForm      $gameExporterInputConnections   "right"     10 
+
+        -attachControl   sep_2   "top"     0 $gameFbxExporterBakeAnimation
+        -attachForm      sep_2   "left"    0 
+        -attachForm      sep_2   "right"   0 
+
+        -attachControl   gameExporterUpAxisLabel    "top"     1    sep_2
+        -attachForm      gameExporterUpAxisLabel    "left"   44
+             
+        -attachControl   $gameExporterUpAxis        "top"     0    sep_2
+        -attachControl   $gameExporterUpAxis        "left"    3    gameExporterUpAxisLabel
+
+        -attachControl   $gameExporterEmbedMedia    "top"     0   sep_2
+        -attachForm      $gameExporterEmbedMedia    "right"   10
+        
+        -attachControl   sep_3   "top"     0 $gameExporterUpAxis
+        -attachForm      sep_3   "left"    0 
+        -attachForm      sep_3   "right"   0    
+
+        -attachControl   $gameExporterAdvanceSettings   "top"       1   sep_3
+        -attachForm      $gameExporterAdvanceSettings   "right"     6  
+
+        -attachControl   $gameExporterFileTypeLabel   "top"       1   sep_3
+        -attachForm      $gameExporterFileTypeLabel   "left"     10
+
+        -attachControl   $gameExporterFileType       "top"       0   sep_3
+        -attachControl   $gameExporterFileType       "left"      3   $gameExporterFileTypeLabel
+        -attachControl   $gameExporterFileType       "right"    50   $gameExporterAdvanceSettings
+
+        -attachControl   sep_4   "top"     1 $gameExporterFileType
+        -attachForm      sep_4   "left"    0 
+        -attachForm      sep_4   "right"   0    
+
+        -attachControl   $gameExporterFBXVersionLabel   "top"       1   sep_4
+        -attachForm      $gameExporterFBXVersionLabel   "left"     10
+
+        -attachControl   $gameExporterFBXVersion        "top"       0   sep_4
+        -attachControl   $gameExporterFBXVersion        "left"      3   $gameExporterFBXVersionLabel
+        -attachControl   $gameExporterFBXVersion        "right"    50   $gameExporterAdvanceSettings
+
+    $gameFbxExporterAnimSettingsFormLayout;    
+    
+    setParent ..;
+    setParent ..;   
+    
+     // Create Scroll Layout for the animation clips
+    gameExp_CreateScrollAnimationClipLayout();
+    
+    formLayout -edit    
+        -attachForm      emptyLabel  "top"    5  
+        -attachForm      emptyLabel  "left"   0  
+
+        -attachForm      $gameFbxExporterClipNameLabel  "top"    5  
+        -attachControl   $gameFbxExporterClipNameLabel  "left"   25   emptyLabel  
+        -attachControl   $gameFbxExporterClipNameLabel  "right"  10   $gameFbxExporterStartFrameLabel                      
+
+        -attachForm      $gameFbxExporterStartFrameLabel  "top"    5  
+        -attachControl   $gameFbxExporterStartFrameLabel  "right"  15 $gameFbxExporterEndFrameLabel
+
+        -attachForm      $gameFbxExporterEndFrameLabel  "top"    5  
+        -attachControl   $gameFbxExporterEndFrameLabel  "right"  60 $gameFbxExporteToggleSelectionClips
+        
+        -attachForm      $gameFbxExporteToggleSelectionClips  "top"    5  
+        -attachForm      $gameFbxExporteToggleSelectionClips  "right"  19
+        
+        -attachForm     $gameFbxExporterAnimSettingsFrameLayout "left" 0
+        -attachForm     $gameFbxExporterAnimSettingsFrameLayout "right" 0
+        -attachForm     $gameFbxExporterAnimSettingsFrameLayout "bottom" 0
+            
+    $gameFbxExporterAnimClipFormLayout;    
+    
+    setParent ..;
+    setParent ..;
+    
+    formLayout -edit       
+       -attachForm      $gameFbxExporterAnimClipFrameLayout   "top"       0
+       -attachForm      $gameFbxExporterAnimClipFrameLayout   "left"      0
+       -attachForm      $gameFbxExporterAnimClipFrameLayout   "right"     0
+       -attachForm      $gameFbxExporterAnimClipFrameLayout   "bottom"    0
+    $form;
+    
+    setParent ..;
+           
+    return $form;
+   
+}
+
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// Animation "file split" type changed, update corresponding components.
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+global proc gameExp_AnimFileSplitChanged(int $index)
+{
+    global string $gGameFbxExporterCurrentNode;
+    setAttr($gGameFbxExporterCurrentNode + ".fileSplitType") $index;
+    
+    string $gameExporterExportFilename = gameExp_GetPrefixedName("gameExporterExportFilename");
+    string $placeholder =  $index == 2 ? (getPluginResource( "gameFbxExporter", "kGameExporterPlaceholderClipFilePrefix" )) : (getPluginResource( "gameFbxExporter", "kGameExporterPlaceholderFileName" ));        
+    textField -e -placeholderText $placeholder $gameExporterExportFilename;   
+
+    // generate the filename preview from the prefix/filename stored in the 
+    // gGameFbxExporterCurrentNode
+    gameExp_CreateFilenamePreview();    
+}
+
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// Create the list of animation clips
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+global proc gameExp_CreateScrollAnimationClipLayout()
+{
+    global string $gGameFbxExporterCurrentNode;
+    global int $gGameFbxExporterCurrentClipPlaying;
+    global int $gMatchModeClip;
+    global string $rangeClipButtonWidgets[];
+    global string $rangeClipStartFieldWidgets[];
+    global string $rangeClipEndFieldWidgets[];
+
+    // In case we were playing an animation, turn it off.
+    $gGameFbxExporterCurrentClipPlaying = -1;
+    play -state off;
+    
+    // Get prefixed control names created by gameExp_CreateAnimationClipUIComponents()
+    $gameFbxExporterAnimClipFormLayout = gameExp_GetPrefixedName("gameFbxExporterAnimClipFormLayout");
+    $gameFbxExporterEndFrameLabel = gameExp_GetPrefixedName("gameFbxExporterEndFrameLabel");
+    $gameFbxExporterAnimSettingsFrameLayout = gameExp_GetPrefixedName("gameFbxExporterAnimSettingsFrameLayout");
+  
+    // Get prefixed control names
+    $gameFbxExporterScrollLayout = gameExp_GetPrefixedName("gameFbxExporterScrollLayout");
+    
+    setParent $gameFbxExporterAnimClipFormLayout;    
+            
+    if (`layout -exists $gameFbxExporterScrollLayout`)
+    {
+        // We delete the whole thing and re-create everything
+        // so the UI fields can get synched with the stored data.
+        // Because clips are index based and can be deleted/added
+        // managing the indices and connections would be too much work
+        // than simply re-building the whole list (which, anyway is a
+        // very fast action!)
+        deleteUI -layout $gameFbxExporterScrollLayout;
+    }  
+         
+    scrollLayout -verticalScrollBarAlwaysVisible true -h 80 -verticalScrollBarThickness 16 -childResizable true $gameFbxExporterScrollLayout; 
+   
+    int $nbAnimClips = size($gGameFbxExporterCurrentNode) ? `getAttr -size ($gGameFbxExporterCurrentNode + ".animClips")` : 0;
+    
+    // Time Editor Clips will be readonly
+    int $tabSelected = `tabLayout -q -selectTabIndex gameExporterTabLayout`;    
+    int $editable = ($tabSelected != 3);
+
+    clear $rangeClipButtonWidgets;
+    clear $rangeClipStartFieldWidgets;
+    clear $rangeClipEndFieldWidgets;
+    
+    for( $i=0; $i < $nbAnimClips; $i++)
+    {
+        string $formLayoutClip = `formLayout -width 100`;
+        symbolButton -image "deleteClip.png" 
+                     -annotation (getPluginResource( "gameFbxExporter","kGameExporterAnnDeleteClip"))
+                     -command ("gameExp_DeleteAnimationClipLayout " + $i) 
+                     deleteAnimClip;
+                     
+        string $clipNameField = `textField -width 50 -placeholderText (getPluginResource( "gameFbxExporter", "kGameExporterClipNamePrompt" ))`;               
+        textField -e -text `getAttr ($gGameFbxExporterCurrentNode + ".animClips[" + $i + "].animClipName")` 
+                     -changeCommand ("gameExp_SetUniqueAnimationClipName " + $i + "\"#1\"" + $clipNameField) 
+                     -editable $editable
+                     $clipNameField;
+
+        // Right click "Insert Clip" menu
+        string $popupParent = $clipNameField ;
+        popupMenu -parent $popupParent -button 3;
+        menuItem -label (getPluginResource( "gameFbxExporter","kGameExporterInsertClip")) 
+                 -command ("gameExp_InsertNewAnimationClip " + $i);
+
+       
+        string $startTime = `floatField -width 35 -precision 0
+                   -annotation (getPluginResource( "gameFbxExporter","kGameExporterAnnStartTime"))
+                                        -editable $editable`;
+        string $endTime = `floatField -width 35 -precision 0
+                                      -annotation (getPluginResource( "gameFbxExporter","kGameExporterAnnEndTime"))
+                                      -editable $editable`;
+                                      
+        // remember the widgets so we can access them from callback functions
+        $rangeClipStartFieldWidgets[size($rangeClipStartFieldWidgets)] = $startTime;
+        $rangeClipEndFieldWidgets[size($rangeClipEndFieldWidgets)] = $endTime;
+        
+        // complete the fields setup
+        floatField -e -value `getAttr ($gGameFbxExporterCurrentNode + ".animClips[" + $i + "].animClipStart")`
+                      -changeCommand ("setAttr(\"" + $gGameFbxExporterCurrentNode + ".animClips[" + $i + "].animClipStart\") #1;\
+                                       gameExp_AdjustTimeline(\"" + $i + "\", \"StartClip\", 16)") //16=Cmd modifier
+                       $startTime;
+                       
+        floatField -e  -value `getAttr ($gGameFbxExporterCurrentNode + ".animClips[" + $i + "].animClipEnd")` 
+                      -changeCommand ("setAttr(\"" + $gGameFbxExporterCurrentNode + ".animClips[" + $i + "].animClipEnd\") #1;\
+                                       gameExp_AdjustTimeline(\"" + $i + "\", \"EndClip\", 16)") //16=Cmd modifier
+                       $endTime ;
+        
+        floatField -e -step 10
+               -dragCommand ("setAttr(\"" + $gGameFbxExporterCurrentNode + ".animClips[" + $i + "].animClipStart\") #1;\
+                                gameExp_AdjustTimeline(\"" + $i + "\", \"StartClip\", 16)") //16=Cmd modifier
+               -changeCommand ("setAttr(\"" + $gGameFbxExporterCurrentNode + ".animClips[" + $i + "].animClipStart\") #1;\
+                                gameExp_AdjustTimeline(\"" + $i + "\", \"StartClip\", 16)") //16=Cmd modifier
+                   $startTime;
+
+        floatField -e -step 10
+               -dragCommand ("setAttr(\"" + $gGameFbxExporterCurrentNode + ".animClips[" + $i + "].animClipEnd\") #1;\
+                               gameExp_AdjustTimeline(\"" + $i + "\", \"EndClip\", 16)") //16=Cmd modifier
+               -changeCommand ("setAttr(\"" + $gGameFbxExporterCurrentNode + ".animClips[" + $i + "].animClipEnd\") #1;\
+                               gameExp_AdjustTimeline(\"" + $i + "\", \"EndClip\", 16)") //16=Cmd modifier
+                   $endTime;
+
+        // Right click "Increase/decrease/set frame"
+        string $cbCmdIncr = "gameExp_AdjustTimeline(" + $i + ", \\\"StartClip\\\", 1)"; // 1=Shift modifier, increment 
+        string $cbCmdDecr = "gameExp_AdjustTimeline(" + $i + ", \\\"StartClip\\\", 8)"; // 8=Alt modifier, decrement 
+        string $cbCmdSet  = "gameExp_AdjustTimeline(" + $i + ", \\\"StartClip\\\", 4)"; // 4=Ctrl modifier, set
+        popupMenu -parent $startTime -button 3;
+            menuItem -label (getPluginResource( "gameFbxExporter","kGameExporterIncrementFrame"))
+                     -command ("evalDeferred \"" + $cbCmdIncr + "\"");
+            menuItem -label (getPluginResource( "gameFbxExporter","kGameExporterDecrementFrame")) 
+                     -command ("evalDeferred \"" + $cbCmdDecr + "\"");
+            menuItem -label (getPluginResource( "gameFbxExporter","kGameExporterSetToCurrentFrame")) 
+                     -command ("evalDeferred \"" + $cbCmdSet + "\"");
+
+        $cbCmdIncr = "gameExp_AdjustTimeline(" + $i + ", \\\"EndClip\\\", 1)"; // 1=Shift modifier, increment 
+        $cbCmdDecr = "gameExp_AdjustTimeline(" + $i + ", \\\"EndClip\\\", 8)"; // 8=Alt modifier, decrement 
+        $cbCmdSet  = "gameExp_AdjustTimeline(" + $i + ", \\\"EndClip\\\", 4)"; // 4=Ctrl modifier, set
+        popupMenu -parent $endTime -button 3;
+             menuItem -label (getPluginResource( "gameFbxExporter","kGameExporterIncrementFrame"))
+                      -command ("evalDeferred \"" + $cbCmdIncr + "\"");
+             menuItem -label (getPluginResource( "gameFbxExporter","kGameExporterDecrementFrame")) 
+                      -command ("evalDeferred \"" + $cbCmdDecr + "\"");
+             menuItem -label (getPluginResource( "gameFbxExporter","kGameExporterSetToCurrentFrame")) 
+                     -command ("evalDeferred \"" + $cbCmdSet + "\"");
+
+        string $adjustTimelineBtn = (gameExp_GetPrefixedName("adjustTimelineClip_") + $i);
+        $rangeClipButtonWidgets[size($rangeClipButtonWidgets)] = $adjustTimelineBtn;
+        symbolCheckBox -image "adjustTimeline.png" 
+                     -annotation (getPluginResource( "gameFbxExporter","kGameExporterAnnSetRange"))
+                     -changeCommand ("gameExp_AdjustTimeline(" + $i + ", \"RangeClip\", 16)") //16=Cmd modifier
+                    $adjustTimelineBtn;
+                     
+        string $animClipPlayBtn = (gameExp_GetPrefixedName("playButtonAnimClip_") + $i);
+        symbolButton -image "playClip.png" 
+                     -annotation (getPluginResource( "gameFbxExporter","kGameExporterAnnPlay"))
+                     -command ("gameExp_PlayAnimationClip " + $i) 
+                     $animClipPlayBtn;   
+
+        checkBox -label "" 
+                 -value `getAttr ($gGameFbxExporterCurrentNode + ".animClips[" + $i + "].exportAnimClip")`
+                 -annotation (getPluginResource( "gameFbxExporter","kGameExporterAnnToggleClip"))
+                 -changeCommand("setAttr(\"" + $gGameFbxExporterCurrentNode + ".animClips[" + $i + "].exportAnimClip\") #1")                 
+                 exportClip;
+                  
+        int $top = ($i ? 5 : 2);               
+        formLayout -edit       
+            -attachForm      deleteAnimClip  "top"   $top 
+            -attachForm      deleteAnimClip  "left"  0
+            
+            -attachForm      $clipNameField  "top"   $top 
+            -attachControl   $clipNameField  "left"  0   deleteAnimClip
+            -attachControl   $clipNameField  "right" 2   $startTime
+            
+            -attachForm      $startTime  "top"   $top 
+            -attachControl   $startTime  "right" 2  $endTime
+            
+            -attachForm      $endTime  "top"    $top 
+            -attachControl   $endTime  "right"  2  $adjustTimelineBtn    
+                
+            -attachForm      $adjustTimelineBtn  "top"    $top 
+            -attachControl   $adjustTimelineBtn  "right"  0  $animClipPlayBtn 
+
+            -attachForm      $animClipPlayBtn  "top"   $top 
+            -attachControl   $animClipPlayBtn  "right" 0 exportClip 
+
+            -attachForm      exportClip  "top"    ($top + 5) 
+            -attachForm      exportClip  "right"  5 
+            
+        $formLayoutClip;
+        setParent ..;        
+    }   
+    
+    // restore the MatchMode on the appropriate clip
+    gameExp_SwitchMatchModeToClip($gMatchModeClip, "Reset");
+    
+    string $form = `formLayout -width 100`;
+    
+    text -label "" emptyLabel;
+    textField -width 50 -enable false textFieldTemplate;
+    floatField -width 35 -precision 0 -enable false startFieldTemplate;
+    floatField -width 35 -precision 0 -enable false endFieldTemplate;
+    symbolButton -image "addClip.png" 
+                 -annotation (getPluginResource( "gameFbxExporter","kGameExporterAnnAddClip"))
+                 -command ($tabSelected == 2 ? ("gameExp_AddNewAnimationClip " + 1) : ("cte_gameExp_AddNewAnimationClip " + 1))
+                 addAnimBtn;
+         
+    int $top = ($nbAnimClips ? 6 : 2);
+    formLayout -edit 
+            -attachForm      emptyLabel  "top"    0 
+            -attachForm      emptyLabel  "left"   0            
+               
+            -attachForm      textFieldTemplate  "top"    $top 
+            -attachControl   textFieldTemplate  "left"   22  emptyLabel
+            -attachControl   textFieldTemplate  "right"  2   startFieldTemplate
+            
+            -attachForm      startFieldTemplate  "top"    $top 
+            -attachControl   startFieldTemplate  "right"  2 endFieldTemplate
+            
+            -attachForm      endFieldTemplate  "top"    $top 
+            -attachControl   endFieldTemplate  "right"  15  addAnimBtn
+            
+            -attachForm      addAnimBtn  "top"    $top             
+            -attachForm      addAnimBtn  "right"  28                          
+    $form;
+    
+    setParent ..;
+        
+    formLayout -edit          
+            -attachControl   $gameFbxExporterScrollLayout  "top"     5   $gameFbxExporterEndFrameLabel
+            -attachForm      $gameFbxExporterScrollLayout  "left"    0 
+            -attachForm      $gameFbxExporterScrollLayout  "right"   0 
+            -attachControl   $gameFbxExporterScrollLayout  "bottom"  0  $gameFbxExporterAnimSettingsFrameLayout    
+    $gameFbxExporterAnimClipFormLayout;
+
+    setParent ..;
+}
+
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// Set a unique animation clip name
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+global proc gameExp_SetUniqueAnimationClipName(string $index, string $name, string $clipNameField)
+{
+
+    global string $gGameFbxExporterCurrentNode;
+    if(size($name))
+    {
+        int $nbAnimClips = `getAttr -size ($gGameFbxExporterCurrentNode + ".animClips")`;
+        string $clipsName[];
+        
+        for( $i=0; $i < $nbAnimClips; $i++)
+        {
+            $clipsName[size($clipsName)] = `getAttr ($gGameFbxExporterCurrentNode + ".animClips[" + $i + "].animClipName")`;        
+        }
+        
+        //
+        // Give a unique animation clip name
+        //        
+        $name = gameExp_ProvideUniqueName($name, $clipsName);        
+    }
+   
+    setAttr($gGameFbxExporterCurrentNode + ".animClips[" + $index + "].animClipName") -type "string" $name;
+    textField -e -text $name $clipNameField;
+    
+    // generate the filename preview from the prefix/filename stored in the 
+    // gGameFbxExporterCurrentNode
+    gameExp_CreateFilenamePreview();
+}
+
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// Play animation clip and update stop/play icon.
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+global proc gameExp_PlayAnimationClip(int $currentIndex)
+{
+    global string $gGameFbxExporterCurrentNode;
+    global int $gGameFbxExporterCurrentClipPlaying;
+    string $playButtonAnimClip = gameExp_GetPrefixedName("playButtonAnimClip_");
+    if($currentIndex != $gGameFbxExporterCurrentClipPlaying)
+    {      
+        if($gGameFbxExporterCurrentClipPlaying != -1)
+        {
+            symbolButton -edit 
+                         -image "playClip.png" 
+                         -annotation (getPluginResource( "gameFbxExporter","kGameExporterAnnPlay"))
+                         -command ("gameExp_PlayAnimationClip " + $gGameFbxExporterCurrentClipPlaying) 
+                         ($playButtonAnimClip + $gGameFbxExporterCurrentClipPlaying);
+        }
+        $gGameFbxExporterCurrentClipPlaying = $currentIndex;
+        symbolButton -edit 
+                     -image "stopClip.png" 
+                     -annotation (getPluginResource( "gameFbxExporter","kGameExporterAnnStop"))
+                     -command ("gameExp_PlayAnimationClip " + $currentIndex) 
+                     ($playButtonAnimClip + $currentIndex);
+        
+        gameExp_AdjustTimeline($currentIndex, "", 0); // no modifier
+        
+        float $by = `playbackOptions -query -by`;
+        if( `currentTime -q` + $by > `playbackOptions -q -max` ) {
+            currentTime -e `playbackOptions -q -min`;
+        }
+        
+        play -state on;
+    }
+    else
+    {   
+        $gGameFbxExporterCurrentClipPlaying = -1;
+        symbolButton -edit 
+                     -image "playClip.png" 
+                     -annotation (getPluginResource( "gameFbxExporter","kGameExporterAnnPlay"))
+                     -command ("gameExp_PlayAnimationClip " + $currentIndex) 
+                     ($playButtonAnimClip + $currentIndex);
+        play -state off;        
+    }   
+}
+
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// Callback that the "playingBack" stopped. Change the stop icon to play icon.
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+global proc gameExp_playbackOffCallback()
+{
+    global int $gGameFbxExporterCurrentClipPlaying;
+    if( $gGameFbxExporterCurrentClipPlaying != -1) 
+    {
+        gameExp_PlayAnimationClip($gGameFbxExporterCurrentClipPlaying);       
+    }   
+}
+
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// Callback for the "playbackRangeChanged" message. 
+// Turns off the MatchMode if we match the criteria.
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+global proc gameExp_playbackRangeChangedCallback()
+{
+    global int $gMatchModeClip;
+    global int $gTimelineRef;
+    
+    if ($gMatchModeClip == -1)
+    {
+        // MatchMode is not enabled, we can bail out now.
+        return;
+    }
+    
+    $gTimelineRef -= 1;
+    if ($gTimelineRef >= 0)
+    {
+        // the timeline is still changing. Let's wait
+        // until it is done so we can compare the final
+        // values.
+        return;
+    }
+    
+    // get timeline values
+    float $tlStart = `playbackOptions -q -min`;
+    float $tlEnd   = `playbackOptions -q -max`;
+    
+    // get clip values
+    global string $gGameFbxExporterCurrentNode;
+    float $startTime = `getAttr ($gGameFbxExporterCurrentNode + ".animClips[" + $gMatchModeClip + "].animClipStart")`;
+    float $endTime = `getAttr ($gGameFbxExporterCurrentNode + ".animClips[" + $gMatchModeClip + "].animClipEnd")`;
+    
+    // check if the timeline range matches the active clip range to decide if
+    // we need to exit MatchMode (user changed timeline from Maya UI)
+    if ($tlStart != $startTime || $tlEnd != $endTime)
+    {
+        gameExp_SwitchMatchModeToClip($gMatchModeClip, "Exit");
+    }
+    $gTimelineRef = 0;
+}
+
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// Synchronize Maya's timeline values
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+global proc gameExp_synchronizePlaybackRange(int $setStartTime, float $startTime, 
+                                    int $setEndTime, float $endTime)
+{
+    global int $gTimelineRef;
+    
+    // we need to set gTimelineRef with a value that represent how many times the
+    // callback "gameExp_playbackRangeChangedCallback" is triggered because the 
+    // timeline Start and/or End values are changed
+    $gTimelineRef = 0;
+    if ($setStartTime && $setEndTime)
+    {
+        $gTimelineRef += (`playbackOptions -q -min` != $startTime);
+        $gTimelineRef += (`playbackOptions -q -max` != $endTime);
+        playbackOptions -e -minTime $startTime -maxTime $endTime;
+    }
+    else
+    if ($setStartTime)
+    {
+        $gTimelineRef = (`playbackOptions -q -min` != $startTime);
+        playbackOptions -e -minTime $startTime;
+    }
+    else
+    if ($setEndTime)
+    {
+        $gTimelineRef = (`playbackOptions -q -max` != $endTime);
+        playbackOptions -e -maxTime $endTime;
+    }    
+}
+
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// Synchronize the Start/End floatFields values
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+global proc gameExp_synchronizeClipWidgets(int $index, string $clipWidget)
+{
+    // $clipWidget is:
+    //   StartClip : only set the value on the Start field
+    //   EndClip   : only set the value on the End field
+    //   RangeClip  : set values on both fields
+    
+    global string $gGameFbxExporterCurrentNode;
+    global string $rangeClipStartFieldWidgets[];
+    global string $rangeClipEndFieldWidgets[];
+
+    int $startSize = size($rangeClipStartFieldWidgets);
+    int $endSize   = size($rangeClipEndFieldWidgets);
+    if ( ($startSize != $endSize) ||
+         ($index < 0 || $index >= $startSize) )
+    {
+        // something is wrong, the two arrays must have the same size or the index is invalid
+        return;
+    }
+    
+    if ($clipWidget == "StartClip" || $clipWidget == "RangeClip")
+    {
+        float $startTime = `getAttr ($gGameFbxExporterCurrentNode + ".animClips[" + $index + "].animClipStart")`;
+        floatField -e -value $startTime $rangeClipStartFieldWidgets[$index];
+    }
+    
+    if ($clipWidget == "EndClip" || $clipWidget == "RangeClip")
+    {
+        float $endTime = `getAttr ($gGameFbxExporterCurrentNode + ".animClips[" + $index + "].animClipEnd")`;
+        floatField -e -value $endTime $rangeClipEndFieldWidgets[$index];
+    }
+}
+
+
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// Set the MatchMode clip to the specified one
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+global proc gameExp_SwitchMatchModeToClip(int $index, string $mode)
+{
+    // $mode can have several values:
+    //   "Exit"      : exit the MatchMode
+    //   "Reset"     : internal state to set the match mode on the defined clip ($index)
+    //   "RangeClip" : called by a click on the Range Clip button
+    //   ""          : internal call during playback. We should not process
+    
+    global int $gMatchModeClip;
+    global string $rangeClipButtonWidgets[];
+    
+    if ($mode == "")
+    {
+        // internal call. Nothing to do!
+        return;
+    }
+    
+    // clear background color on the range clip button
+    int $nbClips = size($rangeClipButtonWidgets);
+    for ($i = 0; $i < $nbClips; $i++)
+    {
+        symbolCheckBox -e -value false $rangeClipButtonWidgets[$i];
+    }
+    
+    if ($mode == "Exit")
+    {
+        // explicitly request to quit match mode
+        $gMatchModeClip = -1;
+        return;
+    }
+    
+    if ($mode == "RangeClip")
+    {
+        if ($gMatchModeClip == $index)
+        {
+            // turn off the MatchMode on this clip since user clicked on an 
+            // already MatchMode active clip
+            $gMatchModeClip = -1;
+        }
+        else
+        {
+            // switch MatchMode on new clip
+            $gMatchModeClip = $index;
+        }
+    }
+    
+    // Change the background color
+    if ($gMatchModeClip > -1 && $gMatchModeClip < $nbClips)
+        symbolCheckBox -e -value true $rangeClipButtonWidgets[$gMatchModeClip];
+}
+
+
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// Adjust the timeline start/end with the corresponding clip values 
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+global proc gameExp_AdjustTimeline(int $index, string $clipButton, int $mods)
+{
+    // $clipButton represent which button is involved. Values are:
+    //   "StartClip"
+    //   "EndClip"
+    //   "RangeClip"
+    //   "" internal call during playback. We should not process
+    //       the key modifiers
+    //
+    // $mods :
+    //       0 = from internal call, no special action
+    //       1 = "Shift" from dropdown menu "increase frame"
+    //       8 = "Alt"   from dropdown menu "decrease frame"
+    //       4 = "Ctlr"  from dropdown menu "set to current time"
+    //      16 = "Cmd"   from changeCommand of floatField or command of rangeClip button
+    //
+    global string $gGameFbxExporterCurrentNode;
+    global int $gGameFbxExporterCurrentClipPlaying;
+    global int $gMatchModeClip;
+    
+    // Move the MatchMode to this "$index" clip
+    gameExp_SwitchMatchModeToClip($index, $clipButton);
+        
+    // Change focus so we know that the new value has been assigned
+    string $gameExporterPresetList = gameExp_GetPrefixedName("gameExporterPresetList"); 
+    setFocus $gameExporterPresetList;
+                
+    int $isShift   = 0;
+    int $isCtrl    = 0;
+    int $isAlt     = 0;
+    int $isCmd     = 0;
+    int $modifClip = 0;
+    
+    if ($clipButton != "")
+    {
+        $isShift = ($mods % 2);
+        $isCtrl  = ($mods / 4 % 2);
+        $isAlt   = ($mods / 8 % 2);
+        $isCmd   = ($mods / 16 % 2);
+        $modifClip = ($isShift || $isCtrl || $isAlt);
+    }
+
+    float $currentTime = `currentTime -query`;
+    float $startTime = `getAttr ($gGameFbxExporterCurrentNode + ".animClips[" + $index + "].animClipStart")`;
+    float $endTime = `getAttr ($gGameFbxExporterCurrentNode + ".animClips[" + $index + "].animClipEnd")`;
+        
+    if ($clipButton == "StartClip")
+    {
+        if ($isShift) $startTime = $startTime + 1; // increments start frame
+        if ($isAlt)   $startTime = $startTime - 1; // decrements start frame
+        if ($isCtrl)  $startTime = $currentTime;
+        
+        if ($startTime >= $endTime) 
+        {
+            // we keep $startTime since it is the value set by the user, and increment $endTime by 1
+            $endTime = $startTime+1;
+            setAttr ($gGameFbxExporterCurrentNode + ".animClips[" + $index + "].animClipEnd") $endTime;
+            gameExp_synchronizeClipWidgets($index, "EndClip");
+        }
+        
+        if ($modifClip)
+        {
+            setAttr ($gGameFbxExporterCurrentNode + ".animClips[" + $index + "].animClipStart") $startTime;
+            gameExp_synchronizeClipWidgets($index, "StartClip");
+        }
+        
+        if ($gMatchModeClip == $index)
+        {
+            // change the timeline only if we are processing the clip that has the MatchMode enabled
+            currentTime -e $startTime;
+            gameExp_synchronizePlaybackRange(true, $startTime, false, 0.0);
+        }
+    }
+    else
+    if ($clipButton == "EndClip")
+    {
+        if ($isShift) $endTime = $endTime + 1; // increments end frame
+        if ($isAlt)   $endTime = $endTime - 1; // decrements end frame
+        if ($isCtrl)  $endTime = $currentTime;
+        
+        if ($endTime <= $startTime) 
+        {
+            // we keep $endTime since it is the value set by the user, and decrement $startTime by 1
+            $startTime = $endTime-1;
+            setAttr ($gGameFbxExporterCurrentNode + ".animClips[" + $index + "].animClipStart") $startTime;
+            gameExp_synchronizeClipWidgets($index, "StartClip");
+        }
+        
+        if ($modifClip)
+        {
+            setAttr ($gGameFbxExporterCurrentNode + ".animClips[" + $index + "].animClipEnd") $endTime;
+            gameExp_synchronizeClipWidgets($index, "EndClip");
+        }
+        
+        if ($gMatchModeClip == $index)
+        {
+            // change the timeline only if we are processing the clip that has the MatchMode enabled
+            currentTime -e $endTime;
+            gameExp_synchronizePlaybackRange(false, 0.0, true, $endTime);
+        }
+    }
+    else
+    if ($clipButton == "RangeClip" || $clipButton == "")
+    {
+        if ($isCtrl)
+        {
+            $startTime = `playbackOptions -q -minTime`;
+            setAttr ($gGameFbxExporterCurrentNode + ".animClips[" + $index + "].animClipStart") $startTime;
+            
+            $endTime = `playbackOptions -q -maxTime`;
+            setAttr ($gGameFbxExporterCurrentNode + ".animClips[" + $index + "].animClipEnd") $endTime;
+            gameExp_synchronizeClipWidgets($index, "RangeClip");
+            
+            if ($gMatchModeClip != $index)
+            {
+                // the currently processed clip is not the one in MatchMode. We only change the 
+                // animClipStart/End if necessary but do not affect the timeline
+                return;
+            }
+        }
+        else
+        {
+            if ($clipButton == "RangeClip" && $gMatchModeClip != $index)
+            {
+                // the currently processed clip is not the one in MatchMode. We only change the 
+                // animClipStart/End if necessary but do not affect the timeline
+                return;
+            }
+            
+            if ($currentTime < $startTime)
+                currentTime -e $startTime;
+            else
+            if ($currentTime > $endTime)
+                currentTime -e $endTime;
+
+            gameExp_synchronizePlaybackRange(true, $startTime, true, $endTime);
+        }
+    }
+    
+    if(`play -q -state` && ($gGameFbxExporterCurrentClipPlaying != $index))
+    {
+        gameExp_PlayAnimationClip($index);
+    }
+}
+
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// Select or deselect all animation clips 
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+global proc gameExp_ToggleSelectionClips(int $action)
+{
+    gameExp_ToggleSelectionClip($action, -1);
+}
+
+global proc gameExp_ToggleSelectionClip(int $action, int $clipId)
+{
+    // when clipId == -1, we want to toggle all the clips at once
+    global string $gGameFbxExporterCurrentNode;
+    int $nbAnimClips = `getAttr -size ($gGameFbxExporterCurrentNode + ".animClips")`;
+    if ($clipId == -1)
+    {
+        for($i=0; $i < $nbAnimClips; $i++ )
+        {
+            setAttr ($gGameFbxExporterCurrentNode + ".animClips[" + $i + "].exportAnimClip") $action;
+        }
+    }
+    else
+    if ($clipId < $nbAnimClips)
+    {
+        setAttr ($gGameFbxExporterCurrentNode + ".animClips[" + $clipId + "].exportAnimClip") $action;
+    }
+    
+    gameExp_CreateScrollAnimationClipLayout();
+    
+    // generate the filename preview from the prefix/filename stored in the 
+    // gGameFbxExporterCurrentNode
+    gameExp_CreateFilenamePreview();    
+}
+
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// Add a new animation clip
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+global proc gameExp_AddNewAnimationClip(int $refresh)
+{
+    global string $gGameFbxExporterCurrentNode;
+
+    // Change focus so we know that the value has been assigned.
+    string $gameExporterPresetList = gameExp_GetPrefixedName("gameExporterPresetList"); 
+    setFocus $gameExporterPresetList;       
+    
+    int $nbAnimClips = `getAttr -size ($gGameFbxExporterCurrentNode + ".animClips")`;    
+    // Doing a getAttr or setAttr on an index that doesn't exist will create it.        
+    setAttr ($gGameFbxExporterCurrentNode + ".animClips[" + $nbAnimClips + "].animClipStart") `playbackOptions -q -minTime`;
+    setAttr ($gGameFbxExporterCurrentNode + ".animClips[" + $nbAnimClips + "].animClipEnd") `playbackOptions -q -maxTime`;
+    
+    if($refresh)
+    {   
+        $gameFbxExporterScrollLayout = gameExp_GetPrefixedName("gameFbxExporterScrollLayout");
+    
+        int $areaValue[] = `scrollLayout -q -scrollAreaValue $gameFbxExporterScrollLayout`; 
+        gameExp_CreateScrollAnimationClipLayout();
+        // Set the scroll at the bottom, usually a new item is with a height of 25, lets add 50 to be sure that we are
+        // really at the end of the list.
+        evalDeferred("scrollLayout -e -scrollByPixel \"down\" " + ($areaValue[0] + 50) + " " + $gameFbxExporterScrollLayout);     
+    }        
+}
+
+global proc cte_ClipRemovedCallback()
+{
+    // Don't do anything if we are not in the Time Editor Tab
+    int $tabSelected = `tabLayout -q -selectTabIndex gameExporterTabLayout`;
+    if ($tabSelected != 3)
+        return;
+        
+    global string $gGameFbxExporterCurrentNode;
+    int $nbAnimClips = `getAttr -size ($gGameFbxExporterCurrentNode + ".animClips")`;
+    int $index = 0;
+    for ($index = 0; $index < $nbAnimClips; $index++)
+    {
+        string $srcNode = `getAttr ($gGameFbxExporterCurrentNode+".animClips[" + $index + "].animClipSrcNode")`;
+        int $clipId = `getAttr ($gGameFbxExporterCurrentNode+".animClips[" + $index + "].animClipId")`;
+        
+        if (`timeEditorClip -q -exists $clipId` == 0)
+        {
+            gameExp_DeleteAnimationClipLayout($index);
+            break;
+        }
+    }
+    
+    // Refresh the clip list
+    $gameFbxExporterScrollLayout = gameExp_GetPrefixedName("gameFbxExporterScrollLayout");
+    gameExp_CreateScrollAnimationClipLayout();
+}
+
+global proc cte_ClipModifiedCallback()
+{
+    // Don't do anything if we are not in the Time Editor Tab
+    int $tabSelected = `tabLayout -q -selectTabIndex gameExporterTabLayout`;
+    if ($tabSelected != 3)
+        return;
+
+    global string $gGameFbxExporterCurrentNode;
+    int $nbAnimClips = `getAttr -size ($gGameFbxExporterCurrentNode + ".animClips")`;
+    int $index = 0;
+    for ($index = 0; $index < $nbAnimClips; $index++)
+    {
+        string $srcNode = `getAttr ($gGameFbxExporterCurrentNode+".animClips[" + $index + "].animClipSrcNode")`;
+        int $clipId = `getAttr ($gGameFbxExporterCurrentNode+".animClips[" + $index + "].animClipId")`;
+        
+        if (`timeEditorClip -q -exists $clipId` == 0)
+            continue;
+        
+        string $clipName = `timeEditorClip -q -name $clipId`;    
+        int $clipStart = `timeEditorClip -q -loopStart -truncated $clipId`;
+        int $clipEnd = `timeEditorClip -q -loopEnd -truncated $clipId`;
+            
+        setAttr -type "string" ($gGameFbxExporterCurrentNode + ".animClips[" + $index + "].animClipName") $clipName;
+        setAttr ($gGameFbxExporterCurrentNode + ".animClips[" + $index + "].animClipId") $clipId;
+        setAttr ($gGameFbxExporterCurrentNode + ".animClips[" + $index + "].animClipStart") $clipStart;
+        setAttr ($gGameFbxExporterCurrentNode + ".animClips[" + $index + "].animClipEnd") $clipEnd;            
+    }
+    
+    // Refresh the clip list
+    $gameFbxExporterScrollLayout = gameExp_GetPrefixedName("gameFbxExporterScrollLayout");
+    gameExp_CreateScrollAnimationClipLayout();
+}
+
+proc int cte_NameCheck(string $node, int $clipId)
+{
+    global string $gGameFbxExporterCurrentNode;
+    string $clipName = `timeEditorClip -q -name $clipId`;   
+    int $nbAnimClips = `getAttr -size ($gGameFbxExporterCurrentNode + ".animClips")`;    
+    for ($index = 0; $index < $nbAnimClips; $index++)
+    {
+        string $curName = `getAttr ($gGameFbxExporterCurrentNode+".animClips[" + $index + "].animClipName")`;
+        string $curNode = `getAttr ($gGameFbxExporterCurrentNode+".animClips[" + $index + "].animClipSrcNode")`;
+        int $curId = `getAttr ($gGameFbxExporterCurrentNode+".animClips[" + $index + "].animClipId")`;
+        if ($curName == $clipName)
+        {
+            // Same clip already exists
+            if ($curNode == $node && $curId == $clipId)
+            {
+                return 1;
+            }
+            else // Different clip but same name
+            {
+                return 2;
+            }
+        }
+    }
+    return 0;
+}
+
+proc cte_AddNewClip(string $node, int $clipId)
+{
+    global string $gGameFbxExporterCurrentNode;
+    
+    // Change focus so we know that the value has been assigned.
+    string $gameExporterPresetList = gameExp_GetPrefixedName("gameExporterPresetList"); 
+    setFocus $gameExporterPresetList;       
+    
+    int $nbAnimClips = `getAttr -size ($gGameFbxExporterCurrentNode + ".animClips")`;    
+    
+    string $clipName = `timeEditorClip -q -name $clipId`;   
+    int $clipStart = `timeEditorClip -q -loopStart -truncated $clipId`;
+    int $clipEnd = `timeEditorClip -q -loopEnd -truncated $clipId`;
+    
+    setAttr -type "string" ($gGameFbxExporterCurrentNode + ".animClips[" + $nbAnimClips + "].animClipName") $clipName;
+    setAttr -type "string" ($gGameFbxExporterCurrentNode + ".animClips[" + $nbAnimClips + "].animClipSrcNode") $node;
+    setAttr ($gGameFbxExporterCurrentNode + ".animClips[" + $nbAnimClips + "].animClipId") $clipId;
+    setAttr ($gGameFbxExporterCurrentNode + ".animClips[" + $nbAnimClips + "].animClipStart") $clipStart;
+    setAttr ($gGameFbxExporterCurrentNode + ".animClips[" + $nbAnimClips + "].animClipEnd") $clipEnd;    
+}
+
+global proc cte_gameExp_AddNewAnimationClip(int $refresh)
+{
+    int $selNodes[] = `timeEditor -selectedClips ""`;
+    
+    int $selSize = size($selNodes);
+    if ($selSize == 0)
+    {
+        gameExp_ShowMessage(getPluginResource( "gameFbxExporter", "kGameExporterNoTEClipSelected" ), 2);
+        return;
+    }
+    // Check first if any of the selected clips has already been added    
+    for ($index = 0; $index < $selSize; $index++)
+    {
+        string $nodeName = `timeEditorClip -q -name $selNodes[$index]`;
+        int $clipId = $selNodes[$index];
+		
+        int $check = cte_NameCheck($nodeName, $clipId);
+        if ($check != 0)
+        {
+            if ($check == 1)
+                gameExp_ShowMessage(getPluginResource( "gameFbxExporter", "kGameExporterTEClipInList" ), 2);
+            else if ($check == 2)
+                gameExp_ShowMessage(getPluginResource( "gameFbxExporter", "kGameExporterRenameTEClipSelected" ), 2);
+            return;
+        }
+    }   
+    for ($index = 0; $index < $selSize; $index++)
+    {
+        string $nodeName = `timeEditorClip -q -name $selNodes[$index]`;
+        int $clipId = $selNodes[$index];
+        cte_AddNewClip($nodeName, $clipId);
+    }
+    
+    if($refresh)
+    {   
+        $gameFbxExporterScrollLayout = gameExp_GetPrefixedName("gameFbxExporterScrollLayout");
+    
+        int $areaValue[] = `scrollLayout -q -scrollAreaValue $gameFbxExporterScrollLayout`; 
+        gameExp_CreateScrollAnimationClipLayout();
+        // Set the scroll at the bottom, usually a new item is with a height of 25, lets add 50 to be sure that we are
+        // really at the end of the list.
+        evalDeferred("scrollLayout -e -scrollByPixel \"down\" " + ($areaValue[0] + 50) + " " + $gameFbxExporterScrollLayout);     
+    }
+}
+
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// Insert a new animation clip at the given position
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+global proc gameExp_InsertNewAnimationClip(int $insertPos)
+{
+    global string $gGameFbxExporterCurrentNode;   
+
+    if (`tabLayout -q -selectTabIndex gameExporterTabLayout` == 2)
+        gameExp_AddNewAnimationClip(0);
+    else
+        cte_gameExp_AddNewAnimationClip(0);
+    
+    int $nbAnimClips = `getAttr -size ($gGameFbxExporterCurrentNode + ".animClips")`;    
+    $nbAnimClips--;
+    
+    // Keep the new added clip values
+    string $name = `getAttr ($gGameFbxExporterCurrentNode+".animClips[" + $nbAnimClips + "].animClipName")`;
+    int $start = `getAttr ($gGameFbxExporterCurrentNode+".animClips[" + $nbAnimClips + "].animClipStart")`;
+    int $end = `getAttr ($gGameFbxExporterCurrentNode+".animClips[" + $nbAnimClips  + "].animClipEnd")`; 
+    int $expClip = `getAttr ($gGameFbxExporterCurrentNode+".animClips[" + $nbAnimClips + "].exportAnimClip")`;
+    string $node = `getAttr ($gGameFbxExporterCurrentNode+".animClips[" + $nbAnimClips + "].animClipSrcNode")`;
+    int $id = `getAttr ($gGameFbxExporterCurrentNode+".animClips[" + $nbAnimClips + "].animClipId")`;
+    
+    // Shift +1 position all items from the position where we insert a new animation clip.      
+    for ($index = $nbAnimClips; $index > $insertPos; $index--)
+    {
+        setAttr ($gGameFbxExporterCurrentNode+".animClips[" + $index + "].animClipName")  -type "string" `getAttr ($gGameFbxExporterCurrentNode+".animClips[" + ( $index - 1 ) + "].animClipName")`;
+        setAttr ($gGameFbxExporterCurrentNode+".animClips[" + $index + "].animClipStart") `getAttr ($gGameFbxExporterCurrentNode+".animClips[" + ( $index - 1 ) + "].animClipStart")`;
+        setAttr ($gGameFbxExporterCurrentNode+".animClips[" + $index + "].animClipEnd") `getAttr ($gGameFbxExporterCurrentNode+".animClips[" + ( $index - 1 ) + "].animClipEnd")`; 
+        setAttr ($gGameFbxExporterCurrentNode+".animClips[" + $index + "].exportAnimClip") `getAttr ($gGameFbxExporterCurrentNode+".animClips[" + ( $index - 1 ) + "].exportAnimClip")`;            
+        setAttr ($gGameFbxExporterCurrentNode+".animClips[" + $index + "].animClipSrcNode")  -type "string" `getAttr ($gGameFbxExporterCurrentNode+".animClips[" + ( $index - 1 ) + "].animClipSrcNode")`;
+        setAttr ($gGameFbxExporterCurrentNode+".animClips[" + $index + "].animClipId") `getAttr ($gGameFbxExporterCurrentNode+".animClips[" + ( $index - 1 ) + "].animClipId")`;            
+    }
+        
+    setAttr ($gGameFbxExporterCurrentNode+".animClips[" + $insertPos + "].animClipName") -type "string" $name;
+    setAttr ($gGameFbxExporterCurrentNode+".animClips[" + $insertPos + "].animClipStart") $start;
+    setAttr ($gGameFbxExporterCurrentNode+".animClips[" + $insertPos + "].animClipEnd") $end; 
+    setAttr ($gGameFbxExporterCurrentNode+".animClips[" + $insertPos + "].exportAnimClip") $expClip;
+    setAttr ($gGameFbxExporterCurrentNode+".animClips[" + $insertPos + "].animClipSrcNode") -type "string" $node;
+    setAttr ($gGameFbxExporterCurrentNode+".animClips[" + $insertPos + "].animClipId") $id;
+    // evalDeferred that re-creation command since it will deleting 
+    // the control that we are currently in.     
+    evalDeferred("gameExp_CreateScrollAnimationClipLayout");   
+}
+
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// Delete an animation clip
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+global proc gameExp_DeleteAnimationClipLayout(int $position)
+{
+    global string $gGameFbxExporterCurrentNode;
+    global int $gMatchModeClip;
+
+    $gameFbxExporterScrollLayout = gameExp_GetPrefixedName("gameFbxExporterScrollLayout");
+    
+    // exit the MatchMode
+    gameExp_SwitchMatchModeToClip($gMatchModeClip, "Exit");
+    
+    int $areaValue[] = `scrollLayout -q -scrollAreaValue $gameFbxExporterScrollLayout`;
+    
+    // Change focus so we know that the value has been assigned.
+    string $gameExporterPresetList = gameExp_GetPrefixedName("gameExporterPresetList"); 
+    setFocus $gameExporterPresetList; 
+    
+    int $nbAnimClips = `getAttr -size ($gGameFbxExporterCurrentNode + ".animClips")`;
+    
+    // Shift -1 position all items from the position that we want to remove and 
+    // remove the last item in order to keep a continuous indexed list.
+    if($nbAnimClips != ($position + 1))
+    {        
+        for ($index = $position; $index < ($nbAnimClips - 1 ); $index++)
+        {
+            setAttr ($gGameFbxExporterCurrentNode+".animClips[" + $index + "].animClipName")  -type "string" `getAttr ($gGameFbxExporterCurrentNode+".animClips[" + ( $index + 1 ) + "].animClipName")`;
+            setAttr ($gGameFbxExporterCurrentNode+".animClips[" + $index + "].animClipStart") `getAttr ($gGameFbxExporterCurrentNode+".animClips[" + ( $index + 1 ) + "].animClipStart")`;
+            setAttr ($gGameFbxExporterCurrentNode+".animClips[" + $index + "].animClipEnd") `getAttr ($gGameFbxExporterCurrentNode+".animClips[" + ( $index + 1 ) + "].animClipEnd")`; 
+            setAttr ($gGameFbxExporterCurrentNode+".animClips[" + $index + "].exportAnimClip") `getAttr ($gGameFbxExporterCurrentNode+".animClips[" + ( $index + 1 ) + "].exportAnimClip")`;            
+            setAttr ($gGameFbxExporterCurrentNode+".animClips[" + $index + "].animClipSrcNode")  -type "string" `getAttr ($gGameFbxExporterCurrentNode+".animClips[" + ( $index + 1 ) + "].animClipSrcNode")`;
+            setAttr ($gGameFbxExporterCurrentNode+".animClips[" + $index + "].animClipId") `getAttr ($gGameFbxExporterCurrentNode+".animClips[" + ( $index + 1 ) + "].animClipId")`;            
+        }
+    }
+    
+    removeMultiInstance -break true ($gGameFbxExporterCurrentNode + ".animClips[" + ($nbAnimClips - 1) + "]");
+    gameExp_CreateScrollAnimationClipLayout();
+    evalDeferred("scrollLayout -e -scrollByPixel \"down\" " + ($areaValue[0] - 25) + " " + $gameFbxExporterScrollLayout);   
+    
+    // generate the filename preview from the prefix/filename stored in the 
+    // gGameFbxExporterCurrentNode
+    gameExp_CreateFilenamePreview();
+}
+
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// Collect all the exportable clips filenames and check for overwrite 
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+global proc int gameExp_ClipOverwriteExistingFiles(string $fileNameTmp)
+{
+    global string $gGameFbxExporterCurrentNode;
+              
+    int $nbAnimClips = `getAttr -size ($gGameFbxExporterCurrentNode + ".animClips")`;
+    int $splitType = `getAttr ($gGameFbxExporterCurrentNode + ".fileSplitType")`;   
+    string $dir = `getAttr($gGameFbxExporterCurrentNode + ".exportPath")`;
+
+    string $paths[];          
+    for($i=0; $i < $nbAnimClips; $i++ )
+    {     
+        // Skip the clips that we don't want to export
+        if(!`getAttr ($gGameFbxExporterCurrentNode + ".animClips[" + $i + "].exportAnimClip")`)
+        {
+            continue;
+        }
+        
+        string $name = `getAttr ($gGameFbxExporterCurrentNode + ".animClips[" + $i + "].animClipName")`;
+        string $path;
+
+        if($splitType == 2)
+        {
+            string $tmp = `substitute "\.fbx$" $fileNameTmp ""`;
+            $path = ($tmp + $name);
+        }
+        else
+        {
+            $path = ($dir + "/" + $name);
+        }                
+
+        // add extension if not added
+        if(fileExtension(basename($path,"")) == "")
+        {
+            $path = ($path+ ".fbx");
+        } 
+
+        stringArrayInsertAtIndex(size($paths), $paths, $path);
+    }        
+
+    return gameExp_OverwriteExistingFiles($paths, 4);
+}
+
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// Inform the user that only the selected clips will be exported 
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+global proc int gameExp_ClipExportSelectedInfo()
+{   
+    string $msg = getPluginResource( "gameFbxExporter", "kGameExporterClipSelectedExport" ); 
+    string $ok = getPluginResource( "gameFbxExporter", "kGameExporterContinueLabel" );
+    string $cancel = getPluginResource( "gameFbxExporter", "kGameExporterCancelLabel" );
+    string $icon = "information";
+   
+    string $continue = `confirmDialog
+        -parent gameExporterWindow
+        -title (getPluginResource( "gameFbxExporter", "kGameExporterWindowTitle" ))
+        -message $msg
+        -button $ok
+        -button $cancel
+        -icon $icon
+        -defaultButton $ok
+        -cancelButton $cancel`;
+    
+    if( $continue == $cancel )
+    {
+        return 0;
+    }       
+   
+    return 1;
+} 
+
+
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// Helper function to create a list of FBX filenames from the provided
+// clip nodes and/or fileClipPrefix.
+//
+// Remark: can return an empty list
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+global proc string[] gameExp_GenerateClipFilenameList(int $nbAnimClips, string $fileNameTmp, string $name[], float $start[], float $end[])
+{
+    global string $gGameFbxExporterCurrentNode;
+    int $splitType = `getAttr ($gGameFbxExporterCurrentNode + ".fileSplitType")`;     
+    string $fileNameList[];
+    
+    for($i=0; $i < $nbAnimClips; $i++ )
+    {     
+        // Skip the clips that we don't want to export
+        if(!`getAttr ($gGameFbxExporterCurrentNode + ".animClips[" + $i + "].exportAnimClip")`)
+        {
+            continue;
+        }
+        
+        string $nme = `getAttr ($gGameFbxExporterCurrentNode + ".animClips[" + $i + "].animClipName")`;
+        stringArrayInsertAtIndex(size($name) , $name , $nme);
+        floatArrayInsertAtIndex (size($start), $start, `getAttr ($gGameFbxExporterCurrentNode + ".animClips[" + $i + "].animClipStart")`);
+        floatArrayInsertAtIndex (size($end)  , $end  , `getAttr ($gGameFbxExporterCurrentNode + ".animClips[" + $i + "].animClipEnd")`);
+        
+        if ($splitType == 1)
+        {
+            // single file. We need to fill the fileNamList with one entry per clip (even if we have the same value) 
+            // because inside gameExp_DoExport we use the size of this list to process all the clips.
+            string $file = `getAttr($gGameFbxExporterCurrentNode + ".exportFilename")`;
+            if ($file != "")
+            {
+                // add extension if not added
+                if(fileExtension(basename($file,"")) == "")
+                {
+                    $file = ($file + ".fbx");
+                }
+                stringArrayInsertAtIndex(size($fileNameList), $fileNameList, $file);
+            }
+        }
+        else
+        if($splitType == 2)
+        {     
+            string $fileName = ($fileNameTmp + $nme);
+        
+            // add extension if not added
+            if(fileExtension(basename($fileName,"")) == "")
+            {
+                $fileName = ($fileName + ".fbx");
+            }
+            stringArrayInsertAtIndex(size($fileNameList), $fileNameList, $fileName);
+        }
+    }
+
+    return $fileNameList;
+}

@@ -1,0 +1,172 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+// ===========================================================================
+//
+//  Procedure Name:
+//      texDistributeShells
+//
+//  Description:
+//      UV workflow function used for distributing UV shells in a direction
+//      or towards a target shell. The "target shell" direction is determined
+//      by the function texGetTargetShell() in texGetTargetShell.mel
+//
+//  Input Arguments
+//      action               - Int      - 0, standard. 1, towards target.
+//      spacing              - Float    - Spacing between shells.
+//      direction            - String   - "up", "down", "left" or "right".
+//      shellList            - String[] - Empty list or a list of UV shells.
+//
+//  Return Value:
+//      None.
+//
+// ===========================================================================
+
+global proc texDistributeShells(int $action, float $spacing, string $direction, string $shellList[])
+{
+    // Validate and store UV selection
+    texCheckSelection("any");
+    string $selection[] = `ls -selection`;
+
+    // Variables
+    float $distance, $anchorX, $anchorY;
+    int $directionAxis;
+
+    if ($direction == "left" || $direction == "down")
+        $spacing = -$spacing;
+
+    int $userSelection = 0;
+    // Get shells from selection if we have no incomming shell list
+    if (`size($shellList)` == 0){
+        $userSelection = 1;
+        $shellList = texGetShells();
+    }
+
+     // Distribute towards a set direction
+    if ($action == 0)
+    {
+        $shellList = texSortShellsByBounds($shellList, $direction);
+    // Towards target
+    } else {
+        // Retrieve target shell, distribution distance (step) and direction axis - split up values
+        string $returnArray[] = texGetTargetShell($shellList);
+        if(size($returnArray) == 0)
+            return;
+        string $targetShell = $returnArray[0];
+        string $shellListString = $returnArray[1];
+        $shellList = stringToStringArray($shellListString, "%");
+        $distance = $returnArray[2]; // Convert to float
+        $directionAxis = $returnArray[3];
+    }
+    
+    if (`size($shellList)` == 0)
+        return; 
+    // Begin progressBar
+    global string $gMainProgressBar;
+    progressBar -e -bp -max (size($shellList)) $gMainProgressBar;
+
+    // Start distributing...
+    int $counter = 0;
+    float $moveX = 0;
+    float $moveY = 0;
+
+    if ($action == 0)
+    {
+        // Centralize the first shell
+        float $allBox[];
+        if($userSelection) //If inputs are from user selection, this way is faster
+            $allBox = `polyEvaluate -boundingBoxComponent2d`;
+        else
+        {
+            string $allShells = stringArrayToString($shellList, " ");
+            $allBox = eval("polyEvaluate -boundingBoxComponent2d " + $allShells);
+        }
+        
+        float $firstBox[] = eval("polyEvaluate -boundingBoxComponent2d " + $shellList[0]);
+        $moveX = ($allBox[0] + $allBox[1])/2 - ($firstBox[0] + $firstBox[1])/2;
+        $moveY = ($allBox[2] + $allBox[3])/2 - ($firstBox[2] + $firstBox[3])/2;
+        eval("polyEditUV -uValue " + $moveX + " -vValue " + $moveY + " " + $shellList[0]);
+        
+        // Move all other shells
+        while ($counter < `size($shellList)`)
+        {
+            // Step progressBar
+            progressBar -e -s 1 $gMainProgressBar;
+
+            float $uvBox[] = eval("polyEvaluate -boundingBoxComponent2d " + $shellList[$counter]);
+            // Get the bounding box info from first shell
+            if ($counter == 0)
+            {
+                if($direction == "right")
+                {
+                    $anchorX = $uvBox[1];
+                    $anchorY = ($uvBox[2]+$uvBox[3])/2;
+                }
+                else if($direction == "left")
+                {
+                    $anchorX = $uvBox[0];
+                    $anchorY = ($uvBox[2]+$uvBox[3])/2;
+                }
+                else if($direction == "up")
+                {
+                    $anchorX = ($uvBox[0]+$uvBox[1])/2;
+                    $anchorY = $uvBox[3];
+                }
+                else if($direction == "down")
+                {
+                    $anchorX = ($uvBox[0]+$uvBox[1])/2;
+                    $anchorY = $uvBox[2];
+                }
+            } else {
+                if($direction == "right")
+                {
+                    $moveX = $anchorX + $spacing - $uvBox[0];
+                    $moveY = $anchorY - ($uvBox[2] + $uvBox[3])/2;
+                    $anchorX = $moveX + $uvBox[1];
+                }
+                else if($direction == "left")
+                {
+                    $moveX = $anchorX + $spacing - $uvBox[1];
+                    $moveY = $anchorY - ($uvBox[2] + $uvBox[3])/2;
+                    $anchorX = $moveX + $uvBox[0];
+                }
+                else if($direction == "up")
+                {
+                    $moveX = $anchorX - ($uvBox[0] + $uvBox[1])/2;
+                    $moveY = $anchorY + $spacing - $uvBox[2];
+                    $anchorY = $moveY + $uvBox[3];
+                }
+                else if($direction == "down")
+                {
+                    $moveX = $anchorX - ($uvBox[0] + $uvBox[1])/2;
+                    $moveY = $anchorY + $spacing - $uvBox[3];
+                    $anchorY = $moveY + $uvBox[2];
+                }
+                eval("polyEditUV -uValue " + $moveX + " -vValue " + $moveY + " " + $shellList[$counter]);
+            }
+            $counter += 1;
+        }
+    }else { // Distribute towards target
+        while ($counter < `size($shellList)`)
+        {
+            if ($directionAxis == 0){ // ...along U
+                if ($counter > 1) // Move if not start shell
+                    eval("polyEditUV -uValue " + $distance*($counter-1) + " " + $shellList[$counter]);
+            } else {
+                if ($counter > 1) // Move if not start shell
+                    eval("polyEditUV -vValue " + $distance*($counter-1) + " " + $shellList[$counter]);
+            }
+            $counter += 1;
+        }
+    }
+
+    // End progressBar
+    progressBar -e -ep $gMainProgressBar;
+    
+    // Reset pivot
+    texPivotCycle selection middle;
+}

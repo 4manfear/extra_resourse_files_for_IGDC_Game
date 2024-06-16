@@ -1,0 +1,33 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  5 March 2001
+//
+//  Procedure Name:
+//      makeStringSingleLine
+//
+//  Description:
+//      Converts all of the newlines and tabs to spaces so that they will show 
+//		up better when the string is printed on a single line.
+//
+//  Input Arguments:
+//      String to work on
+//
+//  Return Value:
+//      Modified string
+//
+global proc string makeStringSingleLine( string $src ) 
+{
+	string $result = $src;
+	string $specialCharsExpr = "[\t\n\r]";
+	while ( size( match( $specialCharsExpr, $result ) ) > 0 ) {
+		$result = substitute( $specialCharsExpr, $result, " " );
+	}
+	return $result;
+}

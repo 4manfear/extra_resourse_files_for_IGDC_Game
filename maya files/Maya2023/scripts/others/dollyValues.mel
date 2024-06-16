@@ -1,0 +1,62 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//  Description:
+//
+//  Input Arguments:
+//      None.
+//
+//  Return Value:
+//      None.
+//
+
+global proc dollyValues(string $toolName)
+{
+	string $icon = "dolly.png";
+	string $helpTag = "DollyTool";
+	toolPropertySetCommon $toolName $icon $helpTag;
+
+	string $parent = (`toolPropertyWindow -q -location` + "|dolly");
+	setParent $parent;
+	
+	floatSliderGrp -e
+		-cc ("dollyCtx -e -scale #1 " + $toolName)
+		-v `dollyCtx -q -scale $toolName`
+		scale;
+
+	checkBoxGrp -e
+		-v1 `dollyCtx -q -localDolly $toolName`
+		-cc1 ("dollyCtx -e -localDolly #1 " + $toolName)
+		local_checkBoxGrp;
+
+	checkBoxGrp -e
+		-v1 `dollyCtx -q -centerOfInterestDolly $toolName`
+		-cc1 ("dollyCtx -e -centerOfInterestDolly #1 " + $toolName)
+		centerOfInterest_checkBoxGrp;
+
+	checkBoxGrp -e
+		-v1 `dollyCtx -q -dollyTowardsCenter $toolName`
+		-cc1 ("dollyCtx -e -dollyTowardsCenter #1 " + $toolName)
+		towardsCenter_checkBoxGrp;
+
+    string $bdt = `dollyCtx -q -boxDollyType $toolName`;
+
+    radioButtonGrp -e
+       	-on1 ("dollyCtx -e -boxDollyType surface "+$toolName)
+       	-on2 ("dollyCtx -e -boxDollyType bbox "+$toolName)
+     	-select (($bdt == "bbox") + 1)
+     	boxDollyType;
+
+	radioButtonGrp -e
+       	-on1 ("dollyCtx -e -orthoZoom false "+$toolName)
+       	-on2 ("dollyCtx -e -orthoZoom true "+$toolName)
+     	-select (`dollyCtx -q -orthoZoom $toolName` + 1)
+     	orthoMode;
+
+	toolPropertySelect dolly;
+}

@@ -1,0 +1,60 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Description:
+//      This script defines the elements for the texture smudge
+//	property sheet.
+//
+//  Input Arguments:
+//      None.
+//
+//  Return Value:
+//      None.
+//
+
+global proc textureSmudgeUVProperties()
+{
+ 	string $parent = `toolPropertyWindow -query -location`;
+ 	setParent $parent;
+	
+ 	setUITemplate -pushTemplate OptionsTemplate;
+	
+ 	columnLayout textureSmudgeUV;
+ 		frameLayout 
+ 			-collapsable true
+ 			-collapse false
+ 			-label (uiRes("m_textureSmudgeUVProperties.kSmudgeSettings"))
+ 			textureSmudgeDeformFrame;
+
+ 			columnLayout textureSmudgeDeformOptions;
+ 				separator -style "none"; 
+				optionMenuGrp -label (uiRes("m_textureSmudgeUVProperties.kEffectType")) textureSmudgeEffectType ; 
+					menuItem -label (uiRes("m_textureSmudgeUVProperties.kFixed"));
+					menuItem -label (uiRes("m_textureSmudgeUVProperties.kSmudge")) ;
+					
+				optionMenuGrp -label (uiRes("m_textureSmudgeUVProperties.kFalloffType")) textureSmudgeFunctionType;
+					menuItem -label (uiRes("m_textureSmudgeUVProperties.kExponential"));
+					menuItem -label (uiRes("m_textureSmudgeUVProperties.kLinear"));
+					menuItem -label (uiRes("m_textureSmudgeUVProperties.kConstant"));
+
+				floatSliderGrp -label (uiRes("m_textureSmudgeUVProperties.kSmudgeSize")) -field true
+					-minValue 0.0 -fieldMinValue 0.0 textureSmudgeSmudgeSize ; 
+					
+				string $pressure = (uiRes("m_textureSmudgeUVProperties.kPressure"));
+				
+				floatSliderGrp -label $pressure -field true 
+					-minValue 0.0 -maxValue 1.0 textureSmudgePressure ; 
+				checkBoxGrp -label "" -label1 (uiRes("m_textureSmudgeUVProperties.kMiddleMouseInitiates"))
+					textureSmudgeMiddleButton ;
+			setParent ..;
+		setParent ..;
+	setParent ..;
+
+	setUITemplate -popTemplate;
+}

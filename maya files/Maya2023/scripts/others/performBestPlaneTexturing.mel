@@ -1,0 +1,68 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  Dec 2 1998
+//
+//  Description:
+//      This script computes the #components to be mapped and passes that
+//		count as an argument to the underlying command along with the
+//		entire selection list.  
+//
+//		NOTE: 
+//			The selection list also contains the other components that define
+//			the projection plane.		
+//
+//  Input Arguments:
+//      Polygonal components to be mapped
+//		Other components to be used for plane computing
+//			(usually faces, locators, vertices, CVs etc)
+//
+//  Return Value:
+//      None.
+//
+
+global proc performBestPlaneTexturing(string $map[], string $plane[])
+{
+	// Get the inner edges
+	select -r $map;
+	ConvertSelectionToContainedEdges;
+	string $inEdges[] = `filterExpand -selectionMask 32`;
+
+	string $finalCmd = "";
+	while (size($map) > 0)
+	{
+		int $i = size($map) - 1;
+		string $mesh = `match "^[^\.]*" $map[$i]`;
+		string $cmd = $map[$i] + " ";
+		int $sep = 1;
+		stringArrayRemoveAtIndex($i, $map);
+		while ($i > 0) {
+			$i = $i - 1;
+			if (`match "^[^\.]*" $map[$i]` == $mesh) {
+				$cmd += ($map[$i] + " ");
+				$sep++;
+				stringArrayRemoveAtIndex($i, $map);
+			}
+		}
+		$cmd = "polyForceUV -ni " + $sep + " " + $cmd;
+		$i = size($plane);
+		while ($i > 0) {
+			$i = $i - 1;
+			$cmd += ($plane[$i] + " ");
+		}
+		$cmd += "; ";
+		$finalCmd += $cmd;
+	}
+	evalEcho($finalCmd);
+
+	if (0 < size($inEdges)) {
+		select $inEdges;
+		polyPerformAction polyMapSew e 0;
+	}
+}

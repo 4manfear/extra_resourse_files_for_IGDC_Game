@@ -1,0 +1,70 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  Dec 2014
+//
+//  Description:	Add and remove callbacks triggered before or after rendering a frame.
+//
+//
+//<doc>
+//<name addFrameRenderCallback>
+//
+//<synopsis>
+//	addFrameRenderCallback (string $beforeOrAfter, string $commandString)
+//
+//<description>
+//      This proc registers a user-defined command string which will be triggered before or after rendering a frame.
+//
+//<flags>
+//		string $beforeOrAfter	A string, either "before" or "after", to specify the callback type.
+//		string $commandString	The callback function to be triggered before or after rendering a frame.
+//
+//<returns>
+//
+//<examples>
+//	addFrameRenderCallback("after", "clearUpMyRendererResource()");
+//	removeFrameRenderCallback("after", "clearUpMyRendererResource()");
+//
+//</doc>
+//
+
+global string $gBeforeFrameRenderCallbacks[];
+global string $gAfterFrameRenderCallbacks[];
+
+global proc addFrameRenderCallback(string $beforeOrAfter, string $commandString)
+{
+	global string $gBeforeFrameRenderCallbacks[];
+	global string $gAfterFrameRenderCallbacks[];
+	if ($beforeOrAfter=="before") {
+		$gBeforeFrameRenderCallbacks[size($gBeforeFrameRenderCallbacks)] = $commandString;
+	}
+	else {
+		$gAfterFrameRenderCallbacks[size($gAfterFrameRenderCallbacks)] = $commandString;
+	}
+}
+
+global proc removeFrameRenderCallback(string $beforeOrAfter, string $commandString)
+{
+	global string $gBeforeFrameRenderCallbacks[];
+	global string $gAfterFrameRenderCallbacks[];
+
+	if ($beforeOrAfter=="before") {
+		int $index = stringArrayFind($commandString, 0, $gBeforeFrameRenderCallbacks);
+		if (-1 != $index) {
+			stringArrayRemoveAtIndex($index, $gBeforeFrameRenderCallbacks);
+		}
+	}
+	else {
+		int $index = stringArrayFind($commandString, 0, $gAfterFrameRenderCallbacks);
+		if (-1 != $index) {
+			stringArrayRemoveAtIndex($index, $gAfterFrameRenderCallbacks);
+		}
+	}
+}
+

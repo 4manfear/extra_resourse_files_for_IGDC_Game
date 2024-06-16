@@ -1,0 +1,61 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+// Creation Date:  May 2000 
+//
+//
+//
+//  Procedure Name:
+//     	artFluidAttrToolScript 
+//
+//  Description:
+//		
+//
+//  Input Arguments:
+//		4 ==> enter the tool (create if necessary)
+//      3 ==> property sheet box
+//
+//  Return Value:
+//      None.
+//
+
+global proc string artFluidAttrToolScript( int $setToTool )
+//
+//	Description :
+//		4 ==> enter the tool
+{
+	string $tool = "artFluidAttrContext";
+	if( ! `artFluidAttrCtx -exists $tool` ) {
+		rememberCtxSettings `artFluidAttrCtx 
+			-i1 "fluidPaint.png" 
+
+			// The default "autoSave" command is "Save as Initial State",
+			// not artFluidAttrConfirmPaintLoss.
+			//
+			-as ( "artFluidAttrAutoSaveInitialState " + $tool )
+
+			// This pops up the confirm box if they're trying to paint
+			// on a non-grid paint property.
+			//
+			-beforeStrokeCmd ( "artFluidAttrVerifyGrid `artFluidAttrCtx -q " +
+							   "-property " + $tool + "`" )
+
+			$tool`;
+	}
+
+	setToolTo $tool;
+
+	if( 3 == $setToTool ) {
+		toolPropertyWindow;
+	}
+	else if( 4 != $setToTool ) {
+		warning( (uiRes("m_artFluidAttrToolScript.kWrongInput")) );
+	}
+	return $tool;
+}

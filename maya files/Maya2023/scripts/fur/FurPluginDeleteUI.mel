@@ -1,0 +1,90 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  July 1998
+//
+//  Description:
+//     Delete Hair plugin-related UI
+//
+
+global proc HfDisableAllMenuItems(
+	string	$menu
+)
+{
+	if ( $menu != "" && `menu -exists $menu` ) {
+		string	$items[] = `menu -q -itemArray $menu`;
+		string	$item;
+
+		for ( $item in $items ) {
+			menuItem -e -enable false $item;
+		}
+	}
+}
+
+global string	$gMainWindow;
+
+if( size( $gMainWindow ) ) {
+	setParent $gMainWindow;
+}
+
+global string $gHfHairMenu; // Defined when plugin was loaded
+
+if (`menu -exists $gHfHairMenu`)
+{
+	deleteUI -menu $gHfHairMenu;
+
+	if (true || `isTrue "JasperExists"`) {
+		global string $gHfPaintHairAttrToolCtx;
+
+		if ( $gHfPaintHairAttrToolCtx != ""
+		  && `userPaintCtx -exists $gHfPaintHairAttrToolCtx` ) {
+			deleteUI $gHfPaintHairAttrToolCtx;
+			$gHfPaintHairAttrToolCtx="";
+		}
+	}
+}
+
+//Delete "Fur/UV Linking" option from relationship Editor.
+//
+if(`menuItem -exists taskUvFurLinkingItem`)
+{
+	deleteUI -mi taskUvFurLinkingItem;
+}
+
+//Delete "Fur/UV..." menu item from Window->Relationship Editor->UV Linking->
+//
+global string $gFurUVLinkMenuItem;
+if (`menuItem -exists $gFurUVLinkMenuItem`)
+{
+	deleteUI -mi $gFurUVLinkMenuItem;
+}
+
+//Delete "Hair/Fur Linking" option from relationship Editor.
+//
+if(`menuItem -exists taskHairFurLinkingItem`)
+{
+	deleteUI -mi taskHairFurLinkingItem;
+}
+//Delete "Hair/Fur.." menu item from Window->Relationship Editor->
+//
+global string $gHairFurLinkMenuItem;
+if (`menuItem -exists $gHairFurLinkMenuItem`)
+{
+	deleteUI -mi $gHairFurLinkMenuItem;
+}
+
+global string $gHfHairHelpMenuItem;
+
+if ( `menuItem -exists $gHfHairHelpMenuItem` ) {
+	deleteUI -mi $gHfHairHelpMenuItem;
+}
+
+// rebuild hotbox menu
+//
+hotBox -um;

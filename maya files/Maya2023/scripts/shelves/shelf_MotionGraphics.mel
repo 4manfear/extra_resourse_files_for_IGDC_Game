@@ -1,0 +1,352 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc shelf_MotionGraphics () {
+    global string $gBuffStr;
+    global string $gBuffStr0;
+    global string $gBuffStr1;
+
+    string $label;
+    string $annot;
+    string $format = "^1s: ^2s";
+    
+    $label = getPluginResource("MASH", "kCreateMASHNetwork");
+    $annot = getPluginResource("MASH", "kCreateMASHNetworkAnnot");
+    shelfButton
+		-label $label
+		-annotation `format -s $label -s $annot $format`
+        -image1 "MASH_CreateNetwork.png" 
+        -command "MASHnewNetwork(\"MASH#\");" 
+    ;
+
+	addShelfSeparator();
+
+	$label = getPluginResource("MASH", "kMASHOutliner");
+	$annot = getPluginResource("MASH", "kMASHOutlinerAnnot");
+    shelfButton
+		-label $label
+		-annotation `format -s $label -s $annot $format`
+        -image1 "MASH_Editor.png" 
+        -command "MASHOutliner;" 
+    ;
+
+	$label = getPluginResource("MASH", "kConnectToType");
+	$annot = getPluginResource("MASH", "kConnectToTypeAnnot");
+    shelfButton
+		-label $label
+		-annotation `format -s $label -s $annot $format`
+        -image1 "MASH_ConnectToType.png" 
+        -command "MASHconnectToType;" 
+        -mi (uiRes("m_shelf_MotionGraphics.kCreateMeshFromPoints")) ( "MASHcreateMeshFromPointsEntry" )
+        -mi (uiRes("m_shelf_MotionGraphics.kCreateMASHPointsNode")) ( "MASHaddPointsNode" )
+        -mi (uiRes("m_shelf_MotionGraphics.kConnectnParticlesToMASH")) ( "MASHnNetworkConnect" )
+        -mi (uiRes("m_shelf_MotionGraphics.kAddTrailsToParticles")) ( "MASHaddTrailsToParticles" )
+        -mi (uiRes("m_shelf_MotionGraphics.kSwitchMASHGeometryType")) ( "MASHswitchGeometryType" )
+        -mi (uiRes("m_shelf_MotionGraphics.kCreateInstancerPivot")) ( "createInstancerPivot" )
+        -mi (uiRes("m_shelf_MotionGraphics.kBakeInstancerToobjects")) ( "MASHBakeGUI" )
+        -mi (uiRes("m_shelf_MotionGraphics.kBreakoutUtility")) ( "MASHsetUpBreakoutUI" )
+    ;
+
+	$label = (uiRes("m_shelf_MotionGraphics.kAddShellDynamics"));
+	$annot = (uiRes("m_shelf_MotionGraphics.kAddShellDynamicsAnnot"));
+    shelfButton
+        -enableCommandRepeat 1
+        -enable 1
+        -width 35
+        -height 35
+        -manage 1
+        -visible 1
+        -preventOverride 0
+        -annotation $annot 
+        -enableBackground 0
+        -highlightColor 0.321569 0.521569 0.65098 
+        -align "center" 
+        -label $label 
+        -labelOffset 0
+        -rotation 0
+        -flipX 0
+        -flipY 0
+        -useAlpha 1
+        -font "plainLabelFont" 
+        -overlayLabelColor 0.8 0.8 0.8 
+        -overlayLabelBackColor 0 0 0 0.5 
+        -image "MASH_ShellDynamics.png" 
+        -image1 "MASH_ShellDynamics.png" 
+        -style "iconOnly" 
+        -marginWidth 1
+        -marginHeight 1
+        -command "MASHAddShellDynamics;" 
+        -sourceType "mel" 
+        -commandRepeatable 1
+        -flat 1
+    ;
+
+	addShelfSeparator();
+
+	$label = (uiRes("m_shelf_MotionGraphics.kPolySphere"));
+	$annot = getRunTimeCommandAnnotation("CreatePolygonSphere");
+	shelfButton
+		-label $label
+		-annotation `format -s $label -s $annot $format`
+		-image "polySphere.png"
+		-command ("CreatePolygonSphere")
+		-doubleClickCommand ("CreatePolygonSphereOptions")
+		-mi (uiRes("m_shelf_MotionGraphics.kCreateCube")) ( "CreatePolygonCube" )
+		-mi (uiRes("m_shelf_MotionGraphics.kCreateCylinder")) ( "CreatePolygonCylinder" )
+		-mi (uiRes("m_shelf_MotionGraphics.kCreateCone")) ( "CreatePolygonCone" )
+		-mi (uiRes("m_shelf_MotionGraphics.kCreateTorus")) ( "CreatePolygonTorus" )
+		-mi (uiRes("m_shelf_MotionGraphics.kCreatePlane")) ( "CreatePolygonPlane" )
+        -mi (uiRes("m_shelf_MotionGraphics.kCreateDisc")) ( "CreatePolygonDisc" )
+		-mi (uiRes("m_shelf_MotionGraphics.kCreatePlatonicSolid")) ( "performPolyPrimitive PlatonicSolid 0" )
+		-mi (uiRes("m_shelf_MotionGraphics.kCreatePyramid")) ( "CreatePolygonPyramid" )
+		-mi (uiRes("m_shelf_MotionGraphics.kCreatePrism")) ( "CreatePolygonPrism" )
+		-mi (uiRes("m_shelf_MotionGraphics.kCreatePipe")) ( "CreatePolygonPipe" )
+		-mi (uiRes("m_shelf_MotionGraphics.kCreateHelix")) ( "CreatePolygonHelix" )
+        -mi (uiRes("m_shelf_MotionGraphics.kCreateGear")) ( "CreatePolygonGear" )
+		-mi (uiRes("m_shelf_MotionGraphics.kCreateSoccerBall")) ( "CreatePolygonSoccerBall" )
+        -mi (uiRes("m_shelf_MotionGraphics.kCreateSuperEllipse")) ( "CreatePolygonSuperEllipse" )
+        -mi (uiRes("m_shelf_MotionGraphics.kCreateSphericalHarmonics")) ( "CreatePolygonSphericalHarmonics" )
+        -mi (uiRes("m_shelf_MotionGraphics.kCreateUltraShape")) ( "CreatePolygonUltraShape" )
+	;
+
+	$label = (uiRes("m_shelf_MotionGraphics.kEPCurveTool"));
+	$annot = getRunTimeCommandAnnotation("EPCurveTool");
+	shelfButton
+		-label $label
+		-annotation `format -s $label -s $annot $format`
+		-image "curveEP.png"
+		-command ("EPCurveTool")
+		-doubleClickCommand ("EPCurveToolOptions")
+		-mi (uiRes("m_shelf_MotionGraphics.kPencilCurveTool")) ( "PencilCurveTool" )
+		-mi (uiRes("m_shelf_MotionGraphics.kBezierCurveTool")) ( "CreateBezierCurveTool" )
+		-mi (uiRes("m_shelf_MotionGraphics.kCVCurveTool")) ( "CVCurveTool" )
+		-mi (uiRes("m_shelf_MotionGraphics.kThreePointCircularArc")) ( "ThreePointArcTool" )
+		-mi (uiRes("m_shelf_MotionGraphics.kTwoPointCircularArc")) ( "TwoPointArcTool" )
+		-mi (uiRes("m_shelf_MotionGraphics.kCreateCircle")) ( "CreateNURBSCircle" )
+		-mi (uiRes("m_shelf_MotionGraphics.kCreateSquare")) ( "CreateNURBSSquare" )
+	;
+
+	$label = (uiRes("m_shelf_MotionGraphics.kPolyType"));
+	$annot = getRunTimeCommandAnnotation("CreatePolygonType");
+	shelfButton
+		-label $label
+		-annotation `format -s $label -s $annot $format`
+		-image "polyType.png"
+		-command ("CreatePolygonType()")
+	;
+
+	$label = (uiRes("m_shelf_MotionGraphics.kSVG"));
+	$annot = getRunTimeCommandAnnotation("CreatePolygonSVG");
+	shelfButton
+		-label $label
+		-annotation `format -s $label -s $annot $format`
+		-image "polySVG.png"
+		-command ("CreatePolygonSVG()")
+	;
+
+	$label = (uiRes("m_shelf_MotionGraphics.kShowModelingToolkit"));
+	$annot = (uiRes("m_shelf_MotionGraphics.kShowModelingToolkitAnnot"));
+    shelfButton
+        -enableCommandRepeat 1
+        -enable 1
+        -width 23
+        -height 23
+        -manage 1
+        -visible 1
+        -preventOverride 0
+        -annotation $annot 
+        -enableBackground 0
+        -highlightColor 0.321569 0.521569 0.65098 
+        -align "center" 
+        -label $label
+        -labelOffset 0
+        -rotation 0
+        -flipX 0
+        -flipY 0
+        -useAlpha 1
+        -font "plainLabelFont" 
+        -overlayLabelColor 0.8 0.8 0.8 
+        -overlayLabelBackColor 0 0 0 0.5 
+        -image "shelf_modelingToolkit.png" 
+        -image1 "shelf_modelingToolkit.png" 
+        -style "iconOnly" 
+        -marginWidth 1
+        -marginHeight 1
+        -command "showModelingToolkit" 
+        -sourceType "mel" 
+        -commandRepeatable 1
+        -flat 1
+    ;
+
+	addShelfSeparator();
+
+	$label = (uiRes("m_shelf_MotionGraphics.kBend"));
+	$annot = getRunTimeCommandAnnotation("Bend");
+	shelfButton
+		-label $label
+		-annotation `format -s $label -s $annot $format`
+		-image "bendNLD.png"
+		-command ("Bend")
+        -mi (uiRes("m_shelf_MotionGraphics.kBlendDeformer")) ( "MASHaddBlendDeformer" )
+        -mi (uiRes("m_shelf_MotionGraphics.kAddJiggleDeformer")) ( "MASHaddJiggleDeformer" )
+		-mi (uiRes("m_shelf_MotionGraphics.kFlare")) ( "Flare" )
+		-mi (uiRes("m_shelf_MotionGraphics.kSine")) ( "Sine" )
+		-mi (uiRes("m_shelf_MotionGraphics.kSquash")) ( "Squash" )
+		-mi (uiRes("m_shelf_MotionGraphics.kTwist")) ( "Twist" )
+		-mi (uiRes("m_shelf_MotionGraphics.kWave")) ( "Wave" )
+		-mi (uiRes("m_shelf_MotionGraphics.kJiggleDeformer")) ( "CreateJiggleDeformer" )
+		-mi (uiRes("m_shelf_MotionGraphics.kWarp")) ( "CreateWrap" )
+		-mi (uiRes("m_shelf_MotionGraphics.kShrinkWrap")) ( "CreateShrinkWrap" )
+		-mi (uiRes("m_shelf_MotionGraphics.kWrinkle")) ( "WrinkleTool" )
+	;
+
+	$label = (uiRes("m_shelf_MotionGraphics.kCreateTextureDeformer"));
+	$annot = getRunTimeCommandAnnotation("CreateTextureDeformer");
+	shelfButton
+		-label $label
+		-annotation `format -s $label -s $annot $format`
+		-image "paintTextureDeformer.png"
+		-command ("CreateTextureDeformer")
+		-doubleClickCommand ("CreateTextureDeformerOptions")
+	;
+
+	$label = (uiRes("m_shelf_MotionGraphics.kBlendShapes"));
+	$annot = getRunTimeCommandAnnotation("CreateBlendShape");
+	shelfButton
+		-label $label
+		-annotation `format -s $label -s $annot $format`
+		-image "blendShape.png"
+		-command ("CreateBlendShape")
+		-doubleClickCommand ("CreateBlendShapeOptions")
+	;
+
+	if (`pluginInfo -query -loaded "curveWarp"`) {
+		$label = (uiRes("m_shelf_MotionGraphics.kCurveWarp"));
+		$annot = (uiRes("m_shelf_MotionGraphics.kCurveWarpAnnot"));
+		shelfButton
+			-label $label
+			-annotation `format -s $label -s $annot $format`
+			-image "CurveWarp.png"
+			-command ("createCurveWarp")
+		;
+	}
+
+	addShelfSeparator();
+
+	$label = (uiRes("m_shelf_MotionGraphics.kCamera"));
+	$annot = getRunTimeCommandAnnotation("CreateCameraOnly");
+	shelfButton
+		-label $label
+		-annotation `format -s $label -s $annot $format`
+		-image "view.png"
+		-command ("CreateCameraOnly")
+		-doubleClickCommand ("CreateCameraOnlyOptions")
+		-mi (uiRes("m_shelf_MotionGraphics.kCameraAndAim")) ( "CreateCameraAim" )
+		-mi (uiRes("m_shelf_MotionGraphics.kCameraAimAndUp")) ( "CreateCameraAimUp" )
+	;
+
+	addShelfSeparator();
+
+
+	$label = (uiRes("m_shelf_MotionGraphics.kEmitter"));
+	$annot = getRunTimeCommandAnnotation("NCreateEmitter");
+	shelfButton
+		-label $label
+		-annotation `format -s $label -s $annot $format`
+		-image "posEmitter.png"
+		-command ("NCreateEmitter")
+		-doubleClickCommand ("NCreateEmitterOptions")
+        -mi (uiRes("m_shelf_MotionGraphics.kEmitFromObject")) ( "NEmitFromObject" )
+        -mi (uiRes("m_shelf_MotionGraphics.kFillObject")) ( "ParticleFill" )
+	;
+
+    shelfButton
+        -enableCommandRepeat 1
+        -enable 1
+        -width 35
+        -height 35
+        -manage 1
+        -visible 1
+        -preventOverride 0
+        -annotation (getRunTimeCommandAnnotation("nClothCreate")) 
+        -enableBackground 0
+        -highlightColor 0.321569 0.521569 0.65098 
+        -align "center" 
+        -label (uiRes("m_shelf_MotionGraphics.kCreateNcloth")) 
+        -labelOffset 0
+        -rotation 0
+        -flipX 0
+        -flipY 0
+        -useAlpha 1
+        -font "plainLabelFont" 
+        -overlayLabelColor 0.8 0.8 0.8 
+        -overlayLabelBackColor 0 0 0 0.5 
+        -image "nClothCreate.png" 
+        -image1 "nClothCreate.png" 
+        -style "iconOnly" 
+        -marginWidth 1
+        -marginHeight 1
+        -command "doCreateNCloth 0" 
+        -sourceType "mel" 
+        -doubleClickCommand "nClothCreateOptions" 
+        -commandRepeatable 1
+        -flat 1
+    ;
+
+	$label = (uiRes("m_shelf_MotionGraphics.kPartSoftBody"));
+	$annot = getRunTimeCommandAnnotation("CreateNSoftBody");
+	shelfButton
+		-label $label
+		-annotation `format -s $label -s $annot $format`
+		-image "soft.png"
+		-command ("CreateNSoftBody")
+		-doubleClickCommand ("CreateNSoftBodyOptions")
+	;
+
+	$label = (uiRes("m_shelf_MotionGraphics.kRadial"));
+	$annot = getRunTimeCommandAnnotation("Radial");
+	shelfButton
+		-label $label
+		-annotation `format -s $label -s $annot $format`
+		-image "posRadial.png"
+		-command ("Radial")
+		-doubleClickCommand ("RadialOptions")
+		-mi (uiRes("m_shelf_MotionGraphics.kDrag")) ( "Drag" )
+		-mi (uiRes("m_shelf_MotionGraphics.kTurbulence")) ( "Turbulence" )
+		-mi (uiRes("m_shelf_MotionGraphics.kGravity")) ( "Gravity" )
+		-mi (uiRes("m_shelf_MotionGraphics.kNewton")) ( "Newton" )
+		-mi (uiRes("m_shelf_MotionGraphics.kUniform")) ( "Uniform" )
+		-mi (uiRes("m_shelf_MotionGraphics.kVortex")) ( "Vortex" )
+		-mi (uiRes("m_shelf_MotionGraphics.kAir")) ( "Air" )
+		-mi (uiRes("m_shelf_MotionGraphics.kSprings")) ( "CreateSpring" )
+	;
+
+	addShelfSeparator();
+
+	$label = (uiRes("m_shelf_MotionGraphics.kSetKey"));
+	$annot = getRunTimeCommandAnnotation("SetKey");
+	shelfButton
+		-label $label
+		-annotation `format -s $label -s $annot $format`
+		-image "setKeyframe.png"
+		-command ("SetKey")
+		-mi (uiRes("m_shelf_MotionGraphics.kSetKeyOnAnimated")) ( "SetKeyAnimated" )
+		-mi (uiRes("m_shelf_MotionGraphics.kSetKeyOnTranslate")) ( "SetKeyTranslate" )
+		-mi (uiRes("m_shelf_MotionGraphics.kSetKeyOnRotate")) ( "SetKeyRotate" )
+		-mi (uiRes("m_shelf_MotionGraphics.kSetKeyOnScale")) ( "SetKeyScale" )
+		-mi (uiRes("m_shelf_MotionGraphics.kConstrainParent")) ( "ParentConstraint" )
+		-mi (uiRes("m_shelf_MotionGraphics.kConstrainPoint")) ( "PointConstraint" )
+		-mi (uiRes("m_shelf_MotionGraphics.kConstrainOrient")) ( "performOrientConstraint 0" )
+		-mi (uiRes("m_shelf_MotionGraphics.kConstrainScale")) ( "ScaleConstraint" )
+		-mi (uiRes("m_shelf_MotionGraphics.kConstrainAim")) ( "AimConstraint" )
+		-mi (uiRes("m_shelf_MotionGraphics.kConstrainPoleVector")) ( "PoleVectorConstraint" )
+		-mi (uiRes("m_shelf_MotionGraphics.kConstrainPointOnPoly")) ( "PointOnPolyConstraint" )
+		-mi (uiRes("m_shelf_MotionGraphics.kConstrainGeometry")) ( "GeometryConstraint" )
+		-mi (uiRes("m_shelf_MotionGraphics.kConstrainNormal")) ( "performNormalConstraint 0" )
+	;
+
+} 

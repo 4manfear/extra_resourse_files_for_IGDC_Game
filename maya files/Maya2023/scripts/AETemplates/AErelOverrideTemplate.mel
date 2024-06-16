@@ -1,0 +1,26 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+// Attribute Editor Template for relative override node.
+//
+global proc AErelOverrideTemplate(string $nodeName) {
+	editorTemplate -beginScrollLayout;
+		editorTemplate -beginLayout (uiRes("m_AErelOverrideTemplate.kOverrideProperties")) -collapse false;
+			editorTemplate -label (uiRes("m_AErelOverrideTemplate.kEnabled")) -addControl "enabled";
+			editorTemplate -label (uiRes("m_AErelOverrideTemplate.kMultiply")) -addControl "multiply";
+			editorTemplate -label (uiRes("m_AErelOverrideTemplate.kOffset")) -addControl "offset";
+			editorTemplate -suppress "attribute";
+		editorTemplate -endLayout;
+		editorTemplate -suppress "parentList";
+		editorTemplate -suppress "previous";
+		editorTemplate -suppress "selfEnabled";
+		editorTemplate -suppress "parentEnabled";
+		editorTemplate -suppress "parentNumIsolatedChildren";
+		editorTemplate -suppress "localRender";
+		editorTemplate -addExtraControls;
+	editorTemplate -endScrollLayout;
+}

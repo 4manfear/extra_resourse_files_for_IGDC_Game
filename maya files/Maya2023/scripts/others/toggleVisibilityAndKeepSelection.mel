@@ -1,0 +1,126 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//  Creation Date:  May 2014
+//
+
+proc toggleComponentVisibilityAndKeepSelection( string $componentList[], int $behaviour )
+{
+	int $visibility = `hide -testVisibility $componentList`;
+	if ( $visibility == 1 )	// selection is hidden
+	{
+		showHidden $componentList;
+	}
+	if ( $visibility == 2 ) // selection is visible
+	{
+		hide -clearLastHidden $componentList;
+	}
+	if ( $visibility == 3 ) // selection is partially visible
+	{
+		showHidden -all;
+	}
+}
+
+proc toggleShapeVisibilityAndKeepSelection( string $shapeList[], int $behaviour )
+{
+	global string $gLastHiddenSelection[];
+	int $counter=0;
+
+	if ( $behaviour == 2 ) 
+	{
+		// dependend behaviour: all the selection items will be visible or invisible after the operation
+		// Set below in toggleVisibilityAndKeepSelection() which is the only place
+		// this proc is called from.
+		global int $gUFEFirstSelectedVisibility;
+		int $visibility = !$gUFEFirstSelectedVisibility;
+		for ($shape in $shapeList) 
+		{
+			setAttr($shape + ".visibility", $visibility );
+			if (!$visibility) 
+			{
+				$gLastHiddenSelection[$counter++] = $shape;
+			}
+		}
+	} else {
+		// independent behaviour: the selection items will be toggled independently from each other
+		for ($shape in $shapeList) 
+		{
+			int $currVisibility = getAttr($shape + ".visibility");
+			setAttr($shape + ".visibility", !$currVisibility );
+			if ($currVisibility) 
+			{
+				$gLastHiddenSelection[$counter++] = $shape;
+			}
+		}
+	}
+}
+
+//
+//  Procedure Name:
+//		toggleVisibilityAndKeepSelection
+//
+//  Description:
+//		Toggles the visibility of the selected object(s).
+//
+global proc toggleVisibilityAndKeepSelection( int $behaviour )
+{
+	global string $gLastHiddenSelection[];
+	clear($gLastHiddenSelection);
+	global string $gLastNonMayaHiddenSelection[];
+	clear($gLastNonMayaHiddenSelection);
+
+	global int $gUFEFirstSelectedVisibility;
+	int $ufeResult = 0;
+	if ( $behaviour == 2 ) {
+		$gUFEFirstSelectedVisibility = python("import maya.internal.ufeSupport.toggleVisibility; maya.internal.ufeSupport.toggleVisibility.getVisibilityOfFirstItem()");
+		$ufeResult = python("import maya.internal.ufeSupport.toggleVisibility; maya.internal.ufeSupport.toggleVisibility.toggleVisibilityAndKeepSelection(" + $behaviour + ", " + $gUFEFirstSelectedVisibility + ")");
+	} else {
+		$ufeResult = python("import maya.internal.ufeSupport.toggleVisibility; maya.internal.ufeSupport.toggleVisibility.toggleVisibilityAndKeepSelection(" + $behaviour + ")");
+	}
+
+	string $selectionList[] = `ls -sl -tr -s`;
+	if (size($selectionList) > 0) 
+	{
+		toggleShapeVisibilityAndKeepSelection( $selectionList, $behaviour );
+		return;
+	}
+
+	string  $componentSelection[] = `filterExpand -sm 34 -sm 32 -sm 31`;
+	if (size($componentSelection) > 0) 
+	{
+		toggleComponentVisibilityAndKeepSelection( $componentSelection, $behaviour );
+		return;
+	}
+
+	if ($ufeResult)	// We toggled some non-Maya items
+	{
+		return;
+	}
+
+	// no selected object, no selected components, now check the highlighted object
+	// if it has any hidden components, show them all
+	string $hiliteList[] = `ls -hl`;
+	int $done = false;
+	for ($hilited in $hiliteList)
+	{
+		string $children[] = `listRelatives -c $hilited`;
+		for ($shape in $children)
+		{
+			if ( objExists ($shape+"HiddenFacesSet") )
+			{
+				showHidden $hilited;
+				$done = true;
+			}
+		}
+	}
+	if ( $done )
+		return;
+
+	string $msgIvm = (uiRes("m_toggleVisibilityAndKeepSelection.kIvmInvalidSelected"));
+	inViewMessage -amg $msgIvm -fade;
+}

@@ -1,0 +1,71 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  Sept 1996
+//
+//  Description:
+//      This script performs various GUI startup related tasks.
+//		It is run only in GUI mode and not batch mode.
+//
+//  Input Arguments:
+//      None.
+//
+//  Return Value:
+//      None.
+//
+//  Note:
+//      None.
+// 
+{
+// Kinematics UI initialization
+//
+	jointDisplayScale `optionVar -q ikJointDisplayScale`;
+	jointDisplayScale -ikfk `optionVar -q ikIkFkJointDisplayScale`;
+	ikHandleDisplayScale `optionVar -q ikHandleDisplayScale`;
+	ikfkDisplayMethod -display `optionVar -q ikIkFkDisplayMethod`;
+
+	//	Add the poleVectorConstraint item to the Constraints menu
+	//	if needed.
+	//
+	//	one hardcoded names is used:
+	//		The poleVectorConstraint menu item: poleVectorConstraint
+	//
+	global string $gMainConstraintsMenu;
+	string $menuItemName = "poleVectorConstraint";
+
+	//	Find the main window for the application.
+	//
+	string $mainWindow;
+	string $windowList[] = `lsUI -wnd`;
+	string $item;
+	for ($item in $windowList) {
+		if (1 == `window -q -mainWindow $item`) {
+			$mainWindow = $item;
+			break;
+		}
+	}
+
+	int $found = 0;
+	string $constraintsMenu = $mainWindow + "|" + $gMainConstraintsMenu;
+	if (`menu -exists $constraintsMenu`) {
+		string $menuItems[] = `menu -q -ia $constraintsMenu`;
+		if (size($menuItems) > 0) {
+			for ($item in $menuItems) {
+				if ("" != match($menuItemName, $item)) {
+					$found = 1;
+					break;
+				}
+			}
+		}
+
+		if (1 != $found) {
+			AniConstraintsMenuAddPoleVector($constraintsMenu);
+		}
+	}
+}

@@ -1,0 +1,67 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc float convertResolutionMeasurement(
+	float  $value,
+	string $fromUnits,
+	string $toUnits)
+//
+//	Description:
+//		Convert a resolution (i.e. DPI value) from one unit
+//		of measurement to another.
+//
+//	Arguments:
+//		value - Value to convert.
+//		fromUnits - Units value is currently in.
+//		toUnits - Units to convert value to. 
+//
+//	Valid units are:
+//		"pixels/inch",
+//		"pixels/cm",
+//
+{
+	float $result = $value;
+	float $kCentimetersInOneInch = 2.54;
+
+	//	Nothing to do if units are the same.
+	//
+	if ($fromUnits == $toUnits) return $result;
+
+	// First convert the value from its current units to pixels/inch.
+	//
+	float $valueInPixelsPerInch;
+	string $msg;
+	
+	switch ($fromUnits)
+	{
+		case "pixels/inch":
+			$valueInPixelsPerInch = $value;
+			break;
+		case "pixels/cm":
+			$valueInPixelsPerInch = $value * $kCentimetersInOneInch;
+			break;
+		default:
+			$msg = (uiRes("m_convertResolutionMeasurement.kCannotConvertFrom"));
+			error (`format -stringArg $fromUnits $msg`);
+	}
+
+	// Now convert the value in pixels/inch to the desired units 
+	//
+	switch ($toUnits)
+	{
+		case "pixels/inch":
+			$result = $valueInPixelsPerInch;
+			break;
+		case "pixels/cm":
+			$result = $valueInPixelsPerInch / $kCentimetersInOneInch;
+			break;
+		default:
+			$msg = (uiRes("m_convertResolutionMeasurement.kCannotConvertTo"));
+			error (`format -stringArg $toUnits $msg`);
+	}
+	return $result;
+}

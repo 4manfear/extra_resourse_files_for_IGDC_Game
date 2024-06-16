@@ -1,0 +1,45 @@
+<!--
+===========================================================================
+Copyright 2015 Autodesk, Inc. All rights reserved.
+
+Use of this software is subject to the terms of the Autodesk license
+agreement provided at the time of installation or download, or which
+otherwise accompanies this software in either electronic or hard copy form.
+===========================================================================
+
+Top level fragment graph for constant shader plugin texture
+-->
+
+<fragment_graph name="colorMath" ref="colorMath" class="FragmentGraph" version="1.0">
+	<fragments>
+        <fragment_ref name="mayaTextureOutput" ref="mayaTextureOutput" />
+		<fragment_ref name="combineMayaTextureOutput" ref="combineMayaTextureOutput" />
+		<fragment_ref name="colorMathBase" ref="colorMathBase" />
+		<fragment_ref name="floatMath" ref="floatMath" />
+		<fragment_ref name="mayaintPassThrough" ref="mayaintPassThrough" />
+	</fragments>
+	<connections>
+        <connect from="combineMayaTextureOutput.output" to="mayaTextureOutput.mayaTextureOutput" name="mayaTextureOutput" />
+        <connect from="colorMathBase.outColor" to="combineMayaTextureOutput.base" name="combineBase" />
+        <connect from="floatMath.outFloat" to="combineMayaTextureOutput.alpha" name="combineAlpha" />
+        <connect from="mayaintPassThrough.mayaintPassThrough" to="colorMathBase.operation" name="colorMathOp" />
+        <connect from="mayaintPassThrough.mayaintPassThrough" to="floatMath.operation" name="floatMathOp" />
+</connections>
+	<properties>
+		<float3 name="colorA" ref="colorMathBase.colorA" />
+		<float name="alphaA" ref="floatMath.floatA" />
+		<float3 name="colorB" ref="colorMathBase.colorB" />
+		<float name="alphaB" ref="floatMath.floatB" />
+		<int name="operation" ref="mayaintPassThrough.input" />
+	</properties>
+	<values>
+		<float3 name="colorA" value="1.0,0.0,0.0" />
+		<float name="alphaA" value="1.0" />
+		<float3 name="colorB" value="0.0,0.0,1.0" />
+		<float name="alphaB" value="0.0" />
+		<int name="operation" value="0"/>
+	</values>
+	<outputs>
+        <struct name="mayaTextureOutput" ref="mayaTextureOutput.mayaTextureOutput" />
+	</outputs>
+</fragment_graph>

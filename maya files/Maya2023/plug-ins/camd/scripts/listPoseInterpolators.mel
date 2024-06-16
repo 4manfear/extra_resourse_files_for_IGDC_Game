@@ -1,0 +1,25 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+
+global proc string[] listPoseInterpolators()
+//
+//  Description: 
+//  	To get the names of all the poseInterpolator nodes in a scene.
+//   
+{
+	string $tpls[];
+	string $tplShapes[] = `ls -et poseInterpolator`;
+	
+	int $i;
+	for ($i = 0; $i < size($tplShapes); ++$i)
+	{
+		string $tmp[] = `listRelatives -parent -path $tplShapes[$i]`;
+		$tpls[$i] = $tmp[0];
+	}
+	return $tpls;
+} 

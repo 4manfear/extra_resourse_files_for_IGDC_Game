@@ -1,0 +1,32 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+// To register this rig, call 
+// 
+// stereoRigManager -add "simpleRig" "MEL" "stereoCameraSimpleRig";
+
+// Create the most simple rig. Simply a left and right camera,
+// no attribute connection.
+//
+global proc string[] stereoCameraSimpleRig()
+{
+	string $basename = "stereoCameraSimple";
+
+	// Create the root of the rig
+	//
+	string $root[] = `camera -name $basename`;
+	string $left[] = `camera -name ($basename+"Left")`;
+
+	setAttr ($left[0]+".tx") -6.32;
+
+	parent $left[0] $root[0];
+
+	select -r $root[0];
+  
+	return {$root[0], $left[1], $root[1]};
+}

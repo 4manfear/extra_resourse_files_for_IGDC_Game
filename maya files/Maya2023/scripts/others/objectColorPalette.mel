@@ -1,0 +1,22 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  Jan 9, 2001
+//
+//  Description:
+//      Creates a window that allows the users to specify an
+//		object colour based on the User Defined colours.
+//
+
+
+global proc objectColorPalette ()
+{
+    //All the useful code has been moved to this helper method, which is more general.
+	objectColorPaletteForObject("","",1,"");
+}

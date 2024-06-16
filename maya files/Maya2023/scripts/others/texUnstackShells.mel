@@ -1,0 +1,90 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+// ===========================================================================
+//
+//  Procedure Name:
+//      texUnstackShells
+//
+//  Description:
+//      UV workflow function used for spreading out an unordered stack of UV
+//      shells. It does this by running a predefined setup for Layout UVs that
+//      rotates shells 90 degrees, flips mirrored shells and keeps the TD.
+//
+//  Input Arguments
+//      flipReversed - Flip reversed UV shells
+//
+//  Return Value:
+//      None.
+//
+//  Notes:
+//  This script is part of the implementation of Nightshade UV Editor into
+//  Autodesk Maya. For testing purposes, keep the source commands at the top
+//  and then just source this entire script.
+//
+// ===========================================================================
+
+global proc texUnstackShells(int $flipReversed)
+{
+    // Validate selection
+    texCheckSelection("any");
+
+    // Save original selection
+    string $sel[] = `ls -selection`;
+
+    // Spread out for every shell...
+    string $meshList[] = `ls -hl`; // Convert selection to mesh
+    for ($item in $meshList)
+    {
+        // Select mesh convert selection to UVs
+		string $meshStart = $item + ".";
+		string $selectionUV[];
+		for ($selItem in $sel)
+		{
+			if(startsWith($selItem, $meshStart))
+			    $selectionUV[size($selectionUV)] = $selItem;
+		}
+		if(size($selectionUV) == 0)
+			continue;
+        $selectionUV = `polyListComponentConversion -toUV $selectionUV`;
+		select $selectionUV;
+        polySelectBorderShell 0;
+       
+        $shellSel = `ls -selection`;
+        // Calculate center point from UV bounding box
+        float $uvBox[] = `polyEvaluate -boundingBoxComponent2d`;
+        float $oldCenterU = 0.5 * ( $uvBox[0] + $uvBox[1] );
+        float $oldCenterV = 0.5 * ( $uvBox[2] + $uvBox[3] );
+
+        // Layout/(order) UV shells
+        polyLayoutUV 
+            -flipReversed $flipReversed
+            -layout 2
+            -layoutMethod 1
+            -percentageSpace 0.2
+            -rotateForBestFit true
+            -scale 0
+            -separate false
+        ;
+        // Calculate new center point from UV bounding box
+        $uvBox = `polyEvaluate -boundingBoxComponent2d`;
+        float $newCenterU = 0.5 * ( $uvBox[0] + $uvBox[1] );
+        float $newCenterV = 0.5 * ( $uvBox[2] + $uvBox[3] );
+
+        // Get proper translation distance then move back the shell package
+        float $distU = ($oldCenterU - $newCenterU);
+        float $distV = ($oldCenterV - $newCenterV);
+        polyEditUV
+            -uValue $distU
+            -vValue $distV
+            $shellSel
+        ;
+    }
+
+    // Select the original selection
+    select $sel;
+}

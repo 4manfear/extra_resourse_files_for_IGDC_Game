@@ -1,0 +1,71 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:	May 23, 1997
+//
+//  Procedure Name:
+//	AEwaterTemplate
+//
+//  Description Name;
+//	Creates the attribute editor controls for the water Node
+//
+//  Input Value:
+//	nodeName 
+//
+//  Output Value:
+//	None
+// 
+
+
+global proc AEwaterTemplate ( string $nodeName )
+{
+	AEswatchDisplay $nodeName;
+	editorTemplate -beginScrollLayout;
+
+		editorTemplate -beginLayout (uiRes("m_AEwaterTemplate.kWaterAttr")) -collapse 0;
+			editorTemplate -addControl "numberOfWaves";
+			editorTemplate -addControl "waveTime";
+			editorTemplate -addControl "waveVelocity";
+			editorTemplate -addControl "waveAmplitude";
+
+			editorTemplate -addSeparator;
+			editorTemplate -addControl "fast";
+			editorTemplate -addControl "waveFrequency";
+			editorTemplate -addControl "subWaveFrequency";
+			editorTemplate -addControl "smoothness";
+
+			editorTemplate -addSeparator;
+			editorTemplate -addControl "windUV";
+		editorTemplate -endLayout;
+
+		editorTemplate -beginLayout (uiRes("m_AEwaterTemplate.kConcentricRippleAttr"));
+			editorTemplate -addControl "rippleTime";
+			editorTemplate -addControl "rippleFrequency";
+			editorTemplate -addControl "rippleAmplitude";
+			editorTemplate -addControl "dropSize";
+			editorTemplate -addControl "rippleOrigin";
+
+			editorTemplate -addSeparator;
+			editorTemplate -addControl "groupVelocity";
+			editorTemplate -addControl "phaseVelocity";
+			editorTemplate -addControl "spreadStart";
+			editorTemplate -addControl "spreadRate";
+
+			editorTemplate -addSeparator;
+			editorTemplate -addControl "reflectionBox";
+			editorTemplate -addControl "boxMin";
+			editorTemplate -addControl "boxMax";
+		editorTemplate -endLayout;
+
+		// include/call base class/node attributes
+		AEtexture2dCommon $nodeName;
+
+	editorTemplate -addExtraControls;
+	editorTemplate -endScrollLayout;
+}

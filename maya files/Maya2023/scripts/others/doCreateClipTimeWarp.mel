@@ -1,0 +1,70 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  Feb 20, 2001
+//
+//  Description:
+//		This script creates a time warp curve.
+//
+//  Input Arguments:
+//      None.
+//
+//  Return Value:
+//      None.
+//
+
+global proc doCreateClipTimeWarp(string $clips[], int $enableWarp)
+//
+//	Description:
+//		Assume that all passed in clips should get the same time warp
+//		curve.
+//
+{
+	int $nClips = size($clips);
+	if ($nClips == 0) {
+		return;
+	}
+
+	int $firstWarp = true;
+	string $timeWarpCurve;
+
+	int $ii = 0;
+	for ($ii = 0; $ii < $nClips; $ii++) {
+		string $clip = $clips[$ii];
+
+		string $connections[] = `listConnections ($clip+".timeWarp")`;
+		if (size($connections) > 0) {
+			//	Something is already connected, so do nothing.
+			//
+			string $warnMsg = (uiRes("m_doCreateClipTimeWarp.kClipWarn"));
+			$warnMsg = `format -s $clip $warnMsg`;
+			warning($warnMsg);
+			continue;
+		}
+
+		setAttr -k on ($clip+".timeWarpEnable");
+		setAttr -k on ($clip+".timeWarp");
+		setAttr ($clip+".timeWarpEnable") $enableWarp;
+
+		if ($firstWarp) {
+			setKeyframe -at timeWarp -t 0.0 -v 0.0 $clip;
+			setKeyframe -at timeWarp -t 100.0 -v 100.0 $clip;
+
+			string $cnx[] = 
+				`listConnections -s 1 -d 0 -type animCurve ($clip+".tw")`;
+
+			if (size($cnx) > 0) {
+				$timeWarpCurve = $cnx[0];
+				$firstWarp = false;
+			}
+		} else {
+			connectAttr ($timeWarpCurve+".o") ($clip+".tw");
+		}
+	}
+}

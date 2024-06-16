@@ -1,0 +1,42 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//  Maya Script File
+//
+//  Creation Date:	September 27, 2000
+//
+//  Procedure Name:
+//	AEanimBlendInOutTemplate
+//
+//  Description Name;
+//	Creates the attribute editor controls for the animBlendInOut Node
+//
+//  Input Value:
+//	nodeName 
+//
+//  Output Value:
+//	None
+//
+ 
+global proc AEanimBlendInOutTemplate ( string $nodeName )
+{
+	editorTemplate -beginScrollLayout;
+
+		editorTemplate -beginLayout (uiRes("m_AEanimBlendInOutTemplate.kBlendAttributes"))  -collapse 0;
+			editorTemplate -addControl "weight";
+			editorTemplate -addControl "rotateInterp";
+
+		editorTemplate -endLayout;
+
+		// include/call base class/node attributes
+		//
+		AEdependNodeTemplate $nodeName;
+
+	editorTemplate -addExtraControls;
+	editorTemplate -endScrollLayout;
+}

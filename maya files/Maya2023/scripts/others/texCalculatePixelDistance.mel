@@ -1,0 +1,213 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+// ===========================================================================
+//
+//  Procedure Name:
+//      texCalculatePixelDistance
+//
+//  Description:
+//      UV workflow function used for calculating the distance in pixels 
+//      between two selected UVs.
+//
+//  Input Arguments
+//      None
+//
+//  Return Value:
+//      None - Pixel distances are presented on a UI.
+//
+//  Notes:
+//  This script is part of the implementation of Nightshade UV Editor into
+//  Autodesk Maya. This script is sourced by NS_AUVM. Do not run it directly.
+//
+// ===========================================================================
+
+global proc texCalculatePixelDistance()
+{
+    // Validate UV selection
+    texCheckSelection("any");
+
+    // Calculate distances and setup variables
+    float $uvBox[], $distU, $distV, $distUV;
+    $uvBox = `polyEvaluate -boundingBoxComponent2d`;
+    $distU = abs($uvBox[1] - $uvBox[0]);
+    $distV = abs($uvBox[3] - $uvBox[2]);
+    $distUV = hypot($distU, $distV);
+
+    float $distU4096, $distUColumn, $distV4096, $distVColumn, $distUV4096, $distUVColumn;
+    int $map4096 = 4096;
+    int $mapColumn = 0;
+    string $labelString = "";
+    $distU4096 = (4096 * $distU);
+    $distV4096 = (4096 * $distV);
+    $distUV4096 = (4096 * $distUV);
+	
+	global string $gUVTkPixelDistanceTextList[];
+	
+    // Check for window duplicate
+    if (!`window -exists windowCalculatePixelDistance`){
+		// UI dimensions
+		int $frameMargin = 10;
+		int $frameWidth = 300;
+		int $cellWidth = ($frameWidth / 4) - 5;
+		int $cellHeight = 17;
+		int $windowHeight = 189;
+
+		// Colors
+		float $darkBlue[], $darkGrey[], $darkPurple[], $darkRed[], $lightBlue[], $lightGrey[], 
+		$lightPurple[], $lightRed[], $headerColor[];
+		$darkBlue = {0.25, 0.25, 0.45};
+		$darkGrey = {0.3, 0.3, 0.3};
+		$darkPurple = {0.39, 0.25, 0.45};
+		$darkRed = {0.45, 0.25, 0.25};
+		$lightBlue = {0.32, 0.32, 0.5};
+		$lightGrey = {0.37, 0.37, 0.37};
+		$lightPurple = {0.45, 0.32, 0.5};
+		$lightRed = {0.5, 0.32, 0.32};
+		$headerColor = {0.16, 0.16, 0.16};
+
+        string $texPanel[] = `getPanel -sty polyTexturePlacementPanel`;
+		string $texWin = $texPanel[0] + "Window";
+		$createWinCmd = "window -s true -h " + $windowHeight + " -w " + $frameWidth + " -title \"" + (uiRes("m_texCalculatePixelDistance.kPixelDistance")) + "\"";
+		if(`workspaceControl -ex $texWin` && `workspaceControl -q -fl $texWin`)
+			$createWinCmd += " -p " + $texWin;
+		$createWinCmd += " windowCalculatePixelDistance";
+		print $createWinCmd;
+		eval($createWinCmd);
+
+		// Create layouts
+		formLayout form1CalcPxDist;
+		formLayout
+			-parent form1CalcPxDist
+			form2CalcPxDist
+		;
+		frameLayout
+			-label (uiRes("m_texCalculatePixelDistance.kResult"))
+			-marginHeight $frameMargin
+			-marginWidth $frameMargin
+			-parent form2CalcPxDist
+			-width $frameWidth
+			frameCalcPxDist
+		;
+
+		gridLayout
+			-backgroundColor $headerColor[0] $headerColor[1] $headerColor[2]
+			-cellHeight $cellHeight
+			-cellWidth $cellWidth
+			-numberOfColumns 4
+			-numberOfRows 7
+			-parent frameCalcPxDist
+			gridCalcPxDist
+		;
+
+		// Create headers
+		for ($i = 0; $i < 4; $i++)
+		{
+			if ($i == 0) $labelString = (uiRes("m_texCalculatePixelDistance.kMapSize"));
+			else if ($i == 1) $labelString = (uiRes("m_texCalculatePixelDistance.kUDistance"));
+			else if ($i == 2) $labelString = (uiRes("m_texCalculatePixelDistance.kVDistance"));
+			else if ($i == 3) $labelString = (uiRes("m_texCalculatePixelDistance.kDistance"));
+
+			text
+				-align "center"
+				-font "boldLabelFont"
+				-height $cellHeight
+				-label $labelString
+				-width $cellWidth
+			;
+		}
+		// Create cells
+		for ($i = 0; $i < 24; $i++)
+		{
+			if ($i % 8 == 0) $bgColor = $darkGrey;
+			else if ($i % 8 == 1) $bgColor = $darkRed;
+			else if ($i % 8 == 2) $bgColor = $darkBlue;
+			else if ($i % 8 == 3) $bgColor = $darkPurple;
+			else if ($i % 8 == 4) $bgColor = $lightGrey;
+			else if ($i % 8 == 5) $bgColor = $lightRed;
+			else if ($i % 8 == 6) $bgColor = $lightBlue;
+			else if ($i % 8 == 7) $bgColor = $lightPurple;
+
+			$gUVTkPixelDistanceTextList[$i] = 
+                `text -align "center"
+                      -backgroundColor $bgColor[0] $bgColor[1] $bgColor[2]
+                      -height $cellHeight
+                      -width $cellWidth`;
+		}
+
+		setParent ..; // Set default parent to one step up
+
+		// Buttons
+		button
+			-command "texCalculatePixelDistance;"
+			-label (uiRes("m_texCalculatePixelDistance.kUvEditorPxDistBtnOkLabel"))
+			-parent form1CalcPxDist
+			btnOkCalcPx
+		;
+		button
+			-command "deleteUI windowCalculatePixelDistance"
+			-label (uiRes("m_texCalculatePixelDistance.kUvEditorPxDistBtnCloseLabel"))
+			-parent form1CalcPxDist
+			btnCloseCalcPx
+		;
+
+		// Layout frame
+		formLayout -edit
+			-attachForm        frameCalcPxDist     "top"            0
+			-attachForm        frameCalcPxDist     "left"           0
+			-attachForm        frameCalcPxDist     "right"          0
+
+		form2CalcPxDist;
+
+		// Layout main form
+		formLayout -edit
+			-attachForm        form2CalcPxDist     "top"            0
+			-attachForm        form2CalcPxDist     "left"           0
+			-attachForm        form2CalcPxDist     "right"          0
+			-attachControl     form2CalcPxDist     "bottom"         0       btnOkCalcPx
+
+			-attachForm        btnOkCalcPx         "left"           5
+			-attachForm        btnOkCalcPx         "bottom"         5
+			-attachPosition    btnOkCalcPx         "right"          2       50
+			-attachNone        btnOkCalcPx         "top"
+
+			-attachForm        btnCloseCalcPx      "right"          5
+			-attachForm        btnCloseCalcPx      "bottom"         5
+			-attachPosition    btnCloseCalcPx      "left"           1       50
+			-attachNone        btnCloseCalcPx      "top"
+
+		form1CalcPxDist;
+	}
+	
+	//Update content
+	for ($i = 0; $i < 24; $i++)
+    {
+        if ($i % 4 == 0){ // Map size column
+            if ($i == 0) $mapColumn = $map4096;
+            else $mapColumn = ($mapColumn / 2);
+            $labelString = texRoundOff($mapColumn, 2);
+
+        } else if ($i % 4 == 1){ // U Distance column
+            if ($i == 1) $distUColumn = $distU4096;
+            else $distUColumn = ($distUColumn / 2);
+            $labelString = texRoundOff($distUColumn, 2);
+
+        } else if ($i % 4 == 2){ // V Distance column
+            if ($i == 2) $distVColumn = $distV4096;
+            else $distVColumn = ($distVColumn / 2);
+            $labelString = texRoundOff($distVColumn, 2);
+
+        } else if ($i % 4 == 3){ // Distance column
+            if ($i == 3) $distUVColumn = $distUV4096;
+            else $distUVColumn = ($distUVColumn / 2);
+            $labelString = texRoundOff($distUVColumn, 2);
+        }
+        text -e -label (string($labelString) + " px") $gUVTkPixelDistanceTextList[$i];
+    }
+	// Display the window
+	showWindow windowCalculatePixelDistance;
+}

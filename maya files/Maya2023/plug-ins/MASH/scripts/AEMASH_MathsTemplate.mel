@@ -1,0 +1,51 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc AEMASH_MathsTemplate( string $nodeName )
+    {
+    editorTemplate -beginScrollLayout;
+    python("import MASH.nodeHeaders; MASH.nodeHeaders.addHeader('" + $nodeName + "', 'Maths')")
+    editorTemplate -endLayout;
+
+    editorTemplate -beginLayout (getPluginResource("MASH", "kMathsNode")) -collapse 0;
+    editorTemplate  -label (getPluginResource("MASH", "kUseXYZExpr")) -addControl "enableAll";
+    editorTemplate  -label (getPluginResource("MASH", "kUseXExpr")) -addControl "enableX";
+    editorTemplate  -label (getPluginResource("MASH", "kUseYExpr")) -addControl "enableY";
+    editorTemplate  -label (getPluginResource("MASH", "kUseZExpr")) -addControl "enableZ";
+    editorTemplate -addSeparator;
+    editorTemplate  -label (getPluginResource("MASH", "kOverwriteVal")) -addControl "overwrite";
+    editorTemplate -addSeparator;
+    editorTemplate  -label (getPluginResource("MASH", "kXYZExpr")) -addControl "formula";
+    editorTemplate  -label (getPluginResource("MASH", "kXExpr")) -addControl "formulaX";
+    editorTemplate  -label (getPluginResource("MASH", "kYExpr")) -addControl "formulaY";
+    editorTemplate  -label (getPluginResource("MASH", "kZExpr")) -addControl "formulaZ";
+    editorTemplate -addSeparator;
+
+    editorTemplate -beginLayout (getPluginResource("MASH", "kStrength")) -collapse 0;
+    editorTemplate  -label (getPluginResource("MASH", "kPos")) -addControl "strengthPosition";
+    editorTemplate  -label (getPluginResource("MASH", "kRot")) -addControl "strengthRotation";
+    editorTemplate  -label (getPluginResource("MASH", "kScale")) -addControl "strengthScale";
+    editorTemplate  -label (getPluginResource("MASH", "kStrength")) -addControl "Envelope";
+    editorTemplate  -label (getPluginResource("MASH", "kRandStrength")) -addControl "randEnvelope";
+    editorTemplate  -label (getPluginResource("MASH", "kStepStrength")) -addControl "StepEnvelope";
+    editorTemplate -addSeparator;
+    editorTemplate  -label (getPluginResource("MASH", "kStrengthMap")) -addControl "mColour";
+    editorTemplate  -label (getPluginResource("MASH", "kMapProjAxis")) -addControl "mapDirection";
+    editorTemplate -callCustom "MASHmapHelperButton" "MASHmapHelperButtonEdit" "";
+    editorTemplate -endLayout;
+
+    editorTemplate -beginLayout (getPluginResource("MASH", "kFalloffObject")) -collapse 1;
+    editorTemplate -callCustom "MASHfalloffButtons" "MASHfalloffButtonsEdit" "";
+    editorTemplate -endLayout;
+	editorTemplate -endLayout;
+
+	AEdependNodeTemplate $nodeName;
+
+    editorTemplate -addExtraControls;
+    editorTemplate -endScrollLayout;
+
+    }

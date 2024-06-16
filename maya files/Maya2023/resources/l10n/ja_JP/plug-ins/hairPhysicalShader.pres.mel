@@ -1,0 +1,83 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+// Resources for Plug-in: hairPhysicalShader
+// 
+// ----------------------------
+// Registered string resources:
+// ----------------------------
+// 
+//  (Plugin has no registered string resources)
+// 
+// 
+// --------------------------
+// Registered node resources:
+// --------------------------
+// 
+// Node: hairPhysicalShader
+// 
+setNodeNiceNameResource( "hairPhysicalShader", "ヘア物理シェーダ" );
+setAttrNiceNameResource( "hairPhysicalShader", "fzn", "フリーズ" );
+setAttrNiceNameResource( "hairPhysicalShader", "rcD", "毛根カラー D" );
+setAttrNiceNameResource( "hairPhysicalShader", "rcDr", "毛根カラー DR" );
+setAttrNiceNameResource( "hairPhysicalShader", "rcDg", "毛根カラー DG" );
+setAttrNiceNameResource( "hairPhysicalShader", "rcDb", "毛根カラー DB" );
+setAttrNiceNameResource( "hairPhysicalShader", "tcD", "毛先のカラー D" );
+setAttrNiceNameResource( "hairPhysicalShader", "tcDr", "毛先のカラー DR" );
+setAttrNiceNameResource( "hairPhysicalShader", "tcDg", "毛先のカラー DG" );
+setAttrNiceNameResource( "hairPhysicalShader", "tcDb", "毛先のカラー DB" );
+setAttrNiceNameResource( "hairPhysicalShader", "iD", "強度 D" );
+setAttrNiceNameResource( "hairPhysicalShader", "trans", "透明度" );
+setAttrNiceNameResource( "hairPhysicalShader", "transr", "透明度 R" );
+setAttrNiceNameResource( "hairPhysicalShader", "transg", "透明度 G" );
+setAttrNiceNameResource( "hairPhysicalShader", "transb", "透明度 B" );
+setAttrNiceNameResource( "hairPhysicalShader", "ac", "アンビエント カラー" );
+setAttrNiceNameResource( "hairPhysicalShader", "acr", "アンビエント カラー R" );
+setAttrNiceNameResource( "hairPhysicalShader", "acg", "アンビエント カラー G" );
+setAttrNiceNameResource( "hairPhysicalShader", "acb", "アンビエント カラー B" );
+setAttrNiceNameResource( "hairPhysicalShader", "incand", "白熱光" );
+setAttrNiceNameResource( "hairPhysicalShader", "incandr", "白熱光 R" );
+setAttrNiceNameResource( "hairPhysicalShader", "incandg", "白熱光 G" );
+setAttrNiceNameResource( "hairPhysicalShader", "incandb", "白熱光 B" );
+setAttrNiceNameResource( "hairPhysicalShader", "cR", "カラー R" );
+setAttrNiceNameResource( "hairPhysicalShader", "cRr", "カラー RR" );
+setAttrNiceNameResource( "hairPhysicalShader", "cRg", "カラー RG" );
+setAttrNiceNameResource( "hairPhysicalShader", "cRb", "カラー RB" );
+setAttrNiceNameResource( "hairPhysicalShader", "iR", "強度 R" );
+setAttrNiceNameResource( "hairPhysicalShader", "lsR", "縦方向のシフト R" );
+setAttrNiceNameResource( "hairPhysicalShader", "lwR", "縦方向の幅 R" );
+setAttrNiceNameResource( "hairPhysicalShader", "cTT", "カラー TT" );
+setAttrNiceNameResource( "hairPhysicalShader", "cTTr", "カラー TTR" );
+setAttrNiceNameResource( "hairPhysicalShader", "cTTg", "カラー TTG" );
+setAttrNiceNameResource( "hairPhysicalShader", "cTTb", "カラー TTB" );
+setAttrNiceNameResource( "hairPhysicalShader", "iTT", "強度 TT" );
+setAttrNiceNameResource( "hairPhysicalShader", "lsTT", "縦方向のシフト TT" );
+setAttrNiceNameResource( "hairPhysicalShader", "lwTT", "縦方向の幅 TT" );
+setAttrNiceNameResource( "hairPhysicalShader", "awTT", "方位角の幅 TT" );
+setAttrNiceNameResource( "hairPhysicalShader", "cTRT", "カラー TRT" );
+setAttrNiceNameResource( "hairPhysicalShader", "cTRTr", "カラー TRTR" );
+setAttrNiceNameResource( "hairPhysicalShader", "cTRTg", "カラー TRTG" );
+setAttrNiceNameResource( "hairPhysicalShader", "cTRTb", "カラー TRTB" );
+setAttrNiceNameResource( "hairPhysicalShader", "iTRT", "強度 TRT" );
+setAttrNiceNameResource( "hairPhysicalShader", "lsTRT", "縦方向のシフト TRT" );
+setAttrNiceNameResource( "hairPhysicalShader", "lwTRT", "縦方向の幅 TRT" );
+setAttrNiceNameResource( "hairPhysicalShader", "cG", "カラー G" );
+setAttrNiceNameResource( "hairPhysicalShader", "cGr", "カラー GR" );
+setAttrNiceNameResource( "hairPhysicalShader", "cGg", "カラー GG" );
+setAttrNiceNameResource( "hairPhysicalShader", "cGb", "カラー GB" );
+setAttrNiceNameResource( "hairPhysicalShader", "iG", "強度 G" );
+setAttrNiceNameResource( "hairPhysicalShader", "asG", "方位角のシフト G" );
+setAttrNiceNameResource( "hairPhysicalShader", "awG", "方位角の幅 G" );
+setAttrNiceNameResource( "hairPhysicalShader", "oc", "出力カラー" );
+setAttrNiceNameResource( "hairPhysicalShader", "ocr", "出力カラー R" );
+setAttrNiceNameResource( "hairPhysicalShader", "ocg", "出力カラー G" );
+setAttrNiceNameResource( "hairPhysicalShader", "ocb", "出力カラー B" );
+setAttrNiceNameResource( "hairPhysicalShader", "cD", "カラー D" );
+setAttrNiceNameResource( "hairPhysicalShader", "cDr", "カラー DR" );
+setAttrNiceNameResource( "hairPhysicalShader", "cDg", "カラー DG" );
+setAttrNiceNameResource( "hairPhysicalShader", "cDb", "カラー DB" );
+setAttrNiceNameResource( "hairPhysicalShader", "fza", "フリーズの影響を受ける" );

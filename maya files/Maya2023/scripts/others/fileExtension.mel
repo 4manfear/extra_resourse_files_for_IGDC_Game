@@ -1,0 +1,59 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  11.Apr.03
+//
+//<doc>
+//<name fileExtension>
+//
+//<synopsis>
+//		string fileExtension(string $file)
+//
+//<description>
+//		Return the file extension.
+//
+//<flags>
+//		string $file	A file that may contain a file extension.
+//
+//<returns>
+//		string : The file extension.
+//
+//<examples>
+//	fileExtension("file.txt");
+//	// Result: txt //
+//
+//	fileExtension("c:/Images/image.bmp");
+//	// Result: bmp //
+//
+//	fileExtension("/usr/images/picture.jpg");
+//	// Result: jpg //
+//
+//	fileExtension("c:\Documents\Pictures\me.jpg");
+//	// Result: jpg //
+//
+//	fileExtension("frame.012.tif");
+//	// Result: tif //
+//
+//</doc>
+//
+global proc string fileExtension(string $file)
+{
+	string $result = "";
+
+	if ("" == $file) return $result;
+
+    string $buffer[];
+	int $count;
+	$count = `tokenize $file "." $buffer`;
+	if ($count > 1) {
+		$result = ($buffer[$count - 1]);
+	}
+
+	return $result;
+}

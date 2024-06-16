@@ -1,0 +1,66 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+// 
+//  Creation Date: October 3, 2016 
+// 
+//  Procedure Name: 
+//      texCalculateAngle 
+// 
+//  Description: 
+//      UV workflow function used for calculating the angle between two UVs 
+//      by performing an arctangent calculation. 
+// 
+//  Input Arguments 
+//      uv1                  - String - One UV coordinate. 
+//      uv2                  - String - One UV coordinate. 
+// 
+//  Return Value: 
+//      Float                - The smallest angle to the U or V axis. 
+// 
+//  Notes: 
+//  This script is part of the implementation of Nightshade UV Editor into 
+//  Autodesk Maya. This script is sourced by NS_AUVM. Do not run it directly. 
+// 
+// =========================================================================== 
+ 
+global proc float texCalculateAngle(string $uv1, string $uv2)
+{
+    global float $angle;
+    float $pointA[], $pointB[], $uDist, $vDist;
+
+    // If the queried attribute does not exist, we are on the format "0.15:0.25"
+    if ( catchQuiet(`polyEditUV -query $uv1`) ){
+        string $p0[] = stringToStringArray($uv1, ":");
+        $pointA[0] = (float)$p0[0];
+        $pointA[1] = (float)$p0[1];
+    } else {
+        $pointA = `polyEditUV -query $uv1`;
+    }
+
+    if ( catchQuiet(`polyEditUV -query $uv2`) ){
+        string $p1[] = stringToStringArray($uv2, ":");
+        $pointB[0] = (float)$p1[0];
+        $pointB[1] = (float)$p1[1];
+
+    } else {
+        $pointB = `polyEditUV -query $uv2`;
+    }
+
+    // Find left point (results can be both positive and negative)
+    if ($pointA[0] >= $pointB[0]){
+        $uDist = ($pointA[0] - $pointB[0]);
+        $vDist = ($pointA[1] - $pointB[1]);
+    } else {
+        $uDist = ($pointB[0] - $pointA[0]);
+        $vDist = ($pointB[1] - $pointA[1]);
+    }
+
+    // Calculate arc tangent in degrees
+    $angle = `atan2d $vDist $uDist`;
+    return $angle;
+}

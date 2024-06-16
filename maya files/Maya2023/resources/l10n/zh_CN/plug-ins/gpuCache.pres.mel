@@ -1,0 +1,114 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+// Resources for Plug-in: gpuCache
+// 
+// ----------------------------
+// Registered string resources:
+// ----------------------------
+setPluginResource( "gpuCache", "kAllDagObjectsWrongModeMsg", "只能在创建模式下使用 -allDagObjects 标志。");
+setPluginResource( "gpuCache", "kAnimTimeRangeWrongModeMsg", "只能在查询模式下使用 -animTimeRange 标志。");
+setPluginResource( "gpuCache", "kBadNormalsMsg", "法线数错误。法线数与其范围不符。");
+setPluginResource( "gpuCache", "kBadNurbsMsg", "NURBS 曲面错误。将忽略 NURBS 曲面采样。");
+setPluginResource( "gpuCache", "kBadUVsMsg", "UV 数错误。UV 数与其范围不符。");
+setPluginResource( "gpuCache", "kCacheOpenFileErrorMsg", "打开文件进行读取时出错: ^1s。原因: ^2s");
+setPluginResource( "gpuCache", "kClashOptionWrongModeMsg", "标志 -clashOption 只能在创建模式下使用。");
+setPluginResource( "gpuCache", "kCloseFileErrorMsg", "关闭文件时出错: ^1s。原因: ^2s");
+setPluginResource( "gpuCache", "kCompressLevelWrongModeMsg", "只能在创建模式下使用 -compressLevel 标志。");
+setPluginResource( "gpuCache", "kCouldNotSaveFileMsg", "无法保存文件 ^1s。");
+setPluginResource( "gpuCache", "kCreateBakerErrorMsg", "无法创建烘焙器！");
+setPluginResource( "gpuCache", "kCreateCacheWriterErrorMsg", "无法创建 cacheWriter！");
+setPluginResource( "gpuCache", "kDataFormatWrongModeMsg", "标志 -dataFormat 只能在创建模式下使用。");
+setPluginResource( "gpuCache", "kDirectoryWrongModeMsg", "只能在创建模式下使用标志 -directory。");
+setPluginResource( "gpuCache", "kDisplayFilterLabel", "GPU 缓存");
+setPluginResource( "gpuCache", "kEditQueryFlagErrorMsg", "无法同时指定 -edit 和 -query 标志。");
+setPluginResource( "gpuCache", "kEndTimeWrongModeMsg", "只能在创建模式下使用 -endTime 标志。");
+setPluginResource( "gpuCache", "kEvaluateMaterialErrorMsg", "无法对材质解算\n");
+setPluginResource( "gpuCache", "kExportingMsg", "正在导出...");
+setPluginResource( "gpuCache", "kFailLoadWFShaderErrorMsg", "未能加载线框着色器: ^1s^2s");
+setPluginResource( "gpuCache", "kFileDoesntExistMsg", "文件不存在: ^1s。");
+setPluginResource( "gpuCache", "kFileFormatWrongMsg", "读取 ^1s 时出错。Alembic 文件必须采用 Ogawa 格式。从 Maya 2022 开始，移除了对 HDF5 alembic 文件的支持。");
+setPluginResource( "gpuCache", "kFileNameModeMsg", "只能在创建模式下使用 -filename 标志。");
+setPluginResource( "gpuCache", "kFileNotFindWarningMsg", "在 ^2s 中找不到“^1s”。请改用“^3s”。");
+setPluginResource( "gpuCache", "kFilePrefixWrongModeMsg", "只能在创建模式下使用 -fileprefix 标志。");
+setPluginResource( "gpuCache", "kGlobalRefreshStatsEvictionMsg", "  已收回 ^1s 个 VBO 缓冲区(^2s ^3s)");
+setPluginResource( "gpuCache", "kGlobalRefreshStatsMsg", "加载插件后的视频内存缓冲区操作:");
+setPluginResource( "gpuCache", "kGlobalRefreshStatsUploadMsg", "  已上传 ^1s 个 VBO 缓冲区(^2s ^3s)");
+setPluginResource( "gpuCache", "kGlobalSystemStatsIndexMsg", "  ^1s 个索引缓冲区(^2s ^3s)");
+setPluginResource( "gpuCache", "kGlobalSystemStatsMsg", "gpuCache 节点分配的系统内存缓冲区总数: ^1s 个缓冲区(^2s ^3s)");
+setPluginResource( "gpuCache", "kGlobalSystemStatsVertexMsg", "  ^1s 个顶点缓冲区(^2s ^3s)");
+setPluginResource( "gpuCache", "kGlobalVideoStatsIndexMsg", "  ^1s 个 VBO 索引缓冲区(^2s ^3s)");
+setPluginResource( "gpuCache", "kGlobalVideoStatsMsg", "gpuCache 节点分配的视频内存缓冲区总数: ^1s 个缓冲区(^2s ^3s)");
+setPluginResource( "gpuCache", "kGlobalVideoStatsVertexMsg", "  ^1s 个 VBO 顶点缓冲区(^2s ^3s)");
+setPluginResource( "gpuCache", "kHaveBeenBakedErrorMsg", "^1s 已烘焙。");
+setPluginResource( "gpuCache", "kIncompatibleQueryMsg", "查询标志集不兼容。");
+setPluginResource( "gpuCache", "kInterruptedMsg", "已被用户中断。");
+setPluginResource( "gpuCache", "kListFileEntriesOtherFlagsMsg", "-listFileEntries 标志不能与其他标志一起使用。");
+setPluginResource( "gpuCache", "kListFileEntriesWrongModeMsg", "-listFileEntries 标志只能在创建模式下使用。");
+setPluginResource( "gpuCache", "kListShapeEntriesOtherFlagsMsg", "-listShapeEntries 标志不能与其他标志一起使用。");
+setPluginResource( "gpuCache", "kListShapeEntriesWrongModeMsg", "-listShapeEntries 标志只能在创建模式下使用。");
+setPluginResource( "gpuCache", "kNoObjBakable1ErrorMsg", "选择的所有对象都无法烘焙。其中至少一个对象已烘焙。");
+setPluginResource( "gpuCache", "kNoObjBakable2ErrorMsg", "选择的所有对象中都无法烘焙。");
+setPluginResource( "gpuCache", "kNoObjBaked1ErrorMsg", "在选择中找不到 gpuCache 对象。其中至少一个对象可以烘焙，但此命令是在查询模式下调用的。");
+setPluginResource( "gpuCache", "kNoObjBaked2ErrorMsg", "在选择中找不到 gpuCache 对象。");
+setPluginResource( "gpuCache", "kNoObjectsMsg", "此命令至少需要 1 个对象。");
+setPluginResource( "gpuCache", "kNodeBakedFailedErrorMsg", "无法烘焙 ^1s。");
+setPluginResource( "gpuCache", "kNodeWontBakeErrorMsg", "将不会烘焙 ^1s，此命令是在查询模式下调用的。");
+setPluginResource( "gpuCache", "kOpenFileForWriteErrorMsg", "打开文件进行写入时出错: ^1s。原因: ^2s");
+setPluginResource( "gpuCache", "kOptimizationThresholdWrongModeMsg", "只能在创建模式下使用 -optimizationThreshold 标志。");
+setPluginResource( "gpuCache", "kOptimizeAnimationsForMotionBlurWrongModeMsg", "只能在创建模式下使用 -optimizeAnimationsForMotionBlur 标志。");
+setPluginResource( "gpuCache", "kOptimizeWrongModeMsg", "只能在创建模式下使用 -optimize 标志。");
+setPluginResource( "gpuCache", "kOptimizingMsg", "正在优化...");
+setPluginResource( "gpuCache", "kOutlinerMenuItemLabel", "GPU 缓存");
+setPluginResource( "gpuCache", "kReadFileErrorMsg", "读取文件时出错: ^1s。 原因: ^2s");
+setPluginResource( "gpuCache", "kReadMeshErrorMsg", "读取网格时出错: ^1s，^2s。原因: ^3s");
+setPluginResource( "gpuCache", "kRefreshAllOtherFlagsMsg", "-refreshAll 标志不能与其他标志一起使用。");
+setPluginResource( "gpuCache", "kRefreshAllWrongModeMsg", "-refreshAll 标志只能在创建模式下使用。");
+setPluginResource( "gpuCache", "kRefreshWrongModeMsg", "只能在编辑模式下使用 -refresh 标志。");
+setPluginResource( "gpuCache", "kSampleMultiplierWrongModeMsg", "只能在创建模式下使用 -sampleMultiplier 标志。");
+setPluginResource( "gpuCache", "kSampleMultiplierWrongValueMsg", "sampleMultiplier 值无效。它必须至少为 1。");
+setPluginResource( "gpuCache", "kSaveMultipleFilesWrongModeMsg", "标志 -saveMultipleFiles 只能在创建模式下使用。");
+setPluginResource( "gpuCache", "kSelectionMenuItemLabel", "GPU 缓存");
+setPluginResource( "gpuCache", "kSimulationRateWrongModeMsg", "只能在创建模式下使用 -simulationRate 标志。");
+setPluginResource( "gpuCache", "kSimulationRateWrongValueMsg", "simulationRate 值无效。它必须至少为 ^1s 帧。");
+setPluginResource( "gpuCache", "kStartEndTimeErrorMsg", "开始时间必须早于或等于结束时间。");
+setPluginResource( "gpuCache", "kStartTimeWrongModeMsg", "只能在创建模式下使用 -startTime 标志。");
+setPluginResource( "gpuCache", "kStatsAllFramesMsg", "所有帧的统计信息:");
+setPluginResource( "gpuCache", "kStatsBuffersMsg", "    ^1s:   缓冲区: ^2s，平均值: ^3s，最小值: ^4s，最大值: ^5s，总计: ^6s (^7s ^8s)");
+setPluginResource( "gpuCache", "kStatsCurrentFrameMsg", "当前帧的统计信息:");
+setPluginResource( "gpuCache", "kStatsMaterialsMsg", "  材质: ^1s 个图形，^2s 个节点\n");
+setPluginResource( "gpuCache", "kStatsNbGeomMsg", "  gpuCache 节点数目为 ^1s，内部子节点数目: ^2s");
+setPluginResource( "gpuCache", "kStatsNormalsMsg", "法线   ");
+setPluginResource( "gpuCache", "kStatsSystemTotalMsg", "  共使用 ^1s ^2s 的系统内存");
+setPluginResource( "gpuCache", "kStatsTotalInstancedMsg", "    实例化总数: ^1s 个线条，^2s 个三角形");
+setPluginResource( "gpuCache", "kStatsTrianglesMsg", "三角形 ");
+setPluginResource( "gpuCache", "kStatsUVsMsg", "UV       ");
+setPluginResource( "gpuCache", "kStatsVBOIndexMsg", "VBO 索引 ");
+setPluginResource( "gpuCache", "kStatsVBOVertexMsg", "VBO 顶点");
+setPluginResource( "gpuCache", "kStatsVP2IndexMsg", "VP2 索引 ");
+setPluginResource( "gpuCache", "kStatsVP2VertexMsg", "VP2 顶点");
+setPluginResource( "gpuCache", "kStatsVerticesMsg", "顶点  ");
+setPluginResource( "gpuCache", "kStatsVideoTotalMsg", "  共使用 ^1s ^2s 的视频内存\n");
+setPluginResource( "gpuCache", "kStatsWiresMsg", "线条     ");
+setPluginResource( "gpuCache", "kStatsZeroBuffersMsg", "    ^1s:  缓冲区: 0");
+setPluginResource( "gpuCache", "kUnsupportedGeomMsg", "指定的几何体不受支持。忽略 ^1s。");
+setPluginResource( "gpuCache", "kUseBaseTessellationWrongModeMsg", "标志 -useBaseTessellation 只能在创建模式中使用。");
+setPluginResource( "gpuCache", "kWaitForBackgroundReadingWrongModeMsg", "只能在查询模式下使用 -waitForBackgroundReading 标志。");
+setPluginResource( "gpuCache", "kWriteAlembicErrorMsg", "写入 Alembic 文件时出错: ^1s。原因: ^2s");
+setPluginResource( "gpuCache", "kWriteMaterialsWrongModeMsg", "只能在创建模式下使用 -writeMaterials 标志。");
+setPluginResource( "gpuCache", "kWriteUVsWrongModeMsg", "标志 -writeUVs 只能在创建模式中使用。");
+setPluginResource( "gpuCache", "kWritingMsg", "正在写入...");
+// 
+// --------------------------
+// Registered node resources:
+// --------------------------
+// 
+// Node: gpuCache
+// 
+setNodeNiceNameResource( "gpuCache", "Gpu 缓存" );
+setAttrNiceNameResource( "gpuCache", "cfn", "缓存文件名" );
+setAttrNiceNameResource( "gpuCache", "cmp", "缓存几何体路径" );

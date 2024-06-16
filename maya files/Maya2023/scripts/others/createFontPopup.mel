@@ -1,0 +1,46 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  August 14, 1996
+//
+//  Description:
+//      Make a popup for all the fonts available
+//
+//  Input Arguments:
+//      $popupArgs - extra arguments/flags to pass to the font dialog
+//
+//      $command   - command to execute. Is passed $extraArg, $tabLayout
+//      			 and the font returned by the dialog.
+//
+//		$extraArg  - first argument passed to $command. If set to "NULL"
+//					 then this argument is not passed.
+//
+//		$layout    - second argument passed to $command (or the first,
+//					 if $extraArg was "NULL"). Traditionally this was the
+//					 layout to be updated by the command.
+//
+//  Return Value:
+//      None.
+//
+
+
+global proc createFontPopup( string $popupArgs, string $command,
+							 string $extraArg, string $layout )
+{
+
+	if ( $extraArg == "NULL" ) $extraArg = "";
+	string $dowhat = ( $command + " " + $extraArg + " " +
+					   "\"" + $layout + "\" " );
+
+	string $fName = eval("fontDialog " + $popupArgs);
+	if ($fName == "") return;
+	eval ($dowhat + "\"" + $fName + "\";");	
+
+}
+

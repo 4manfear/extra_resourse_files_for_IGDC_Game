@@ -1,0 +1,83 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+// Resources for Plug-in: hairPhysicalShader
+// 
+// ----------------------------
+// Registered string resources:
+// ----------------------------
+// 
+//  (Plugin has no registered string resources)
+// 
+// 
+// --------------------------
+// Registered node resources:
+// --------------------------
+// 
+// Node: hairPhysicalShader
+// 
+setNodeNiceNameResource( "hairPhysicalShader", "头发物理着色器" );
+setAttrNiceNameResource( "hairPhysicalShader", "fzn", "冻结" );
+setAttrNiceNameResource( "hairPhysicalShader", "rcD", "根颜色 D" );
+setAttrNiceNameResource( "hairPhysicalShader", "rcDr", "根颜色 DR" );
+setAttrNiceNameResource( "hairPhysicalShader", "rcDg", "根颜色 DG" );
+setAttrNiceNameResource( "hairPhysicalShader", "rcDb", "根颜色 DB" );
+setAttrNiceNameResource( "hairPhysicalShader", "tcD", "尖端颜色 D" );
+setAttrNiceNameResource( "hairPhysicalShader", "tcDr", "尖端颜色 DR" );
+setAttrNiceNameResource( "hairPhysicalShader", "tcDg", "尖端颜色 DG" );
+setAttrNiceNameResource( "hairPhysicalShader", "tcDb", "尖端颜色 DB" );
+setAttrNiceNameResource( "hairPhysicalShader", "iD", "强度 D" );
+setAttrNiceNameResource( "hairPhysicalShader", "trans", "透明度" );
+setAttrNiceNameResource( "hairPhysicalShader", "transr", "透明度 R" );
+setAttrNiceNameResource( "hairPhysicalShader", "transg", "透明度 G" );
+setAttrNiceNameResource( "hairPhysicalShader", "transb", "透明度 B" );
+setAttrNiceNameResource( "hairPhysicalShader", "ac", "环境色" );
+setAttrNiceNameResource( "hairPhysicalShader", "acr", "环境色 R" );
+setAttrNiceNameResource( "hairPhysicalShader", "acg", "环境色 G" );
+setAttrNiceNameResource( "hairPhysicalShader", "acb", "环境色 B" );
+setAttrNiceNameResource( "hairPhysicalShader", "incand", "白炽度" );
+setAttrNiceNameResource( "hairPhysicalShader", "incandr", "白炽度 R" );
+setAttrNiceNameResource( "hairPhysicalShader", "incandg", "白炽度 G" );
+setAttrNiceNameResource( "hairPhysicalShader", "incandb", "白炽度 B" );
+setAttrNiceNameResource( "hairPhysicalShader", "cR", "颜色 R" );
+setAttrNiceNameResource( "hairPhysicalShader", "cRr", "颜色 RR" );
+setAttrNiceNameResource( "hairPhysicalShader", "cRg", "颜色 RG" );
+setAttrNiceNameResource( "hairPhysicalShader", "cRb", "颜色 RB" );
+setAttrNiceNameResource( "hairPhysicalShader", "iR", "强度 R" );
+setAttrNiceNameResource( "hairPhysicalShader", "lsR", "纵向偏移 R" );
+setAttrNiceNameResource( "hairPhysicalShader", "lwR", "纵向宽度 R" );
+setAttrNiceNameResource( "hairPhysicalShader", "cTT", "颜色 TT" );
+setAttrNiceNameResource( "hairPhysicalShader", "cTTr", "颜色 TTR" );
+setAttrNiceNameResource( "hairPhysicalShader", "cTTg", "颜色 TTG" );
+setAttrNiceNameResource( "hairPhysicalShader", "cTTb", "颜色 TTB" );
+setAttrNiceNameResource( "hairPhysicalShader", "iTT", "强度 TT" );
+setAttrNiceNameResource( "hairPhysicalShader", "lsTT", "纵向偏移 TT" );
+setAttrNiceNameResource( "hairPhysicalShader", "lwTT", "纵向宽度 TT" );
+setAttrNiceNameResource( "hairPhysicalShader", "awTT", "方位宽度 TT" );
+setAttrNiceNameResource( "hairPhysicalShader", "cTRT", "颜色 TRT" );
+setAttrNiceNameResource( "hairPhysicalShader", "cTRTr", "颜色 TRTR" );
+setAttrNiceNameResource( "hairPhysicalShader", "cTRTg", "颜色 TRTG" );
+setAttrNiceNameResource( "hairPhysicalShader", "cTRTb", "颜色 TRTB" );
+setAttrNiceNameResource( "hairPhysicalShader", "iTRT", "强度 TRT" );
+setAttrNiceNameResource( "hairPhysicalShader", "lsTRT", "纵向偏移 TRT" );
+setAttrNiceNameResource( "hairPhysicalShader", "lwTRT", "纵向宽度 TRT" );
+setAttrNiceNameResource( "hairPhysicalShader", "cG", "颜色 G" );
+setAttrNiceNameResource( "hairPhysicalShader", "cGr", "颜色 GR" );
+setAttrNiceNameResource( "hairPhysicalShader", "cGg", "颜色 GG" );
+setAttrNiceNameResource( "hairPhysicalShader", "cGb", "颜色 GB" );
+setAttrNiceNameResource( "hairPhysicalShader", "iG", "强度 G" );
+setAttrNiceNameResource( "hairPhysicalShader", "asG", "方位偏移 G" );
+setAttrNiceNameResource( "hairPhysicalShader", "awG", "方位宽度 G" );
+setAttrNiceNameResource( "hairPhysicalShader", "oc", "输出颜色" );
+setAttrNiceNameResource( "hairPhysicalShader", "ocr", "输出颜色 R" );
+setAttrNiceNameResource( "hairPhysicalShader", "ocg", "输出颜色 G" );
+setAttrNiceNameResource( "hairPhysicalShader", "ocb", "输出颜色 B" );
+setAttrNiceNameResource( "hairPhysicalShader", "cD", "颜色 D" );
+setAttrNiceNameResource( "hairPhysicalShader", "cDr", "颜色 DR" );
+setAttrNiceNameResource( "hairPhysicalShader", "cDg", "颜色 DG" );
+setAttrNiceNameResource( "hairPhysicalShader", "cDb", "颜色 DB" );
+setAttrNiceNameResource( "hairPhysicalShader", "fza", "已冻结受影响对象" );

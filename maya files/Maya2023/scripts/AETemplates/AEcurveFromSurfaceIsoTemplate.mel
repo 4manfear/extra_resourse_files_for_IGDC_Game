@@ -1,0 +1,41 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//	Procedure Name:
+//	AEcurveFromSurfaceIsoTemplate
+//
+//	Description Name;
+//	Creates the attribute editor controls for the curveFromSurfaceIso node
+//
+//	Input Value:
+//	nodeName
+//
+//	Output Value:
+//	None
+//
+
+global proc AEcurveFromSurfaceIsoTemplate( string $nodeName )
+{
+	editorTemplate -beginScrollLayout;
+		string $inputSurface = (uiRes("m_AEcurveFromSurfaceIsoTemplate.kInputSurface"));
+        editorTemplate -beginLayout (uiRes("m_AEcurveFromSurfaceIsoTemplate.kCurveFromSurfaceIsoparm")) -collapse 0;
+			editorTemplate -callCustom ("AEinputNew \""+$inputSurface+"\"")
+					("AEinputReplace \""+$inputSurface+"\"")
+					"inputSurface";
+
+			editorTemplate -addControl "isoparmValue";
+			editorTemplate -addControl "isoparmDirection";
+			editorTemplate -addControl "relativeValue";
+		editorTemplate -endLayout;
+
+		// include/call base class/node attributes
+		AEcurveFromSurfaceTemplate($nodeName);
+
+	editorTemplate -addExtraControls;
+	editorTemplate -endScrollLayout;
+}

@@ -1,0 +1,33 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+
+global proc selectToolProperties () {
+
+	// Linux Motif2.1 shrinks the checkBox, if the string is ""
+	// NT would tab over the blank (" ") string label.
+	// So...
+	string $emptyLabel = "";
+	if (`about -linux`) {
+		$emptyLabel = " ";
+	}
+
+	string $parent = `toolPropertyWindow -q -location`;
+	setParent $parent;
+
+	setUITemplate -pushTemplate OptionsTemplate;
+
+	columnLayout selectTool;
+
+	commonSelectProperties(/*collapsed*/false, /*uvTool*/false);
+	softSelectProperties(/*collapsed*/true, /*uvTool*/false);
+	reflectionProperties(/*collapsed*/true, /*uvTool*/false);
+
+	setParent ..;	
+
+	setUITemplate -popTemplate;
+}

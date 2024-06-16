@@ -1,0 +1,49 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+
+global proc int poseInterpolatorDeletePose(string $tpl, string $poseName)
+//
+//  Description: 
+//  	Delete the specified poseInterpolator node
+//
+//  Return value: 
+//   
+{
+	if (!isPoseInterpolator($tpl))
+		return 0;
+
+	int $index = poseInterpolatorPoseIndex($tpl, $poseName);
+	if ($index < 0)
+		return 0;
+
+	string $sPlug = $tpl + ".output[" + $index + "]";
+	string $targetsToRemove[] = `listConnections -plugs on -source off -type "blendShape" $sPlug`;
+	
+	poseInterpolator -e -deletePose $poseName $tpl;
+	
+	for ($target in $targetsToRemove)
+	{
+		string $buffer[];
+		tokenize($target, ".", $buffer);
+		string $node = $buffer[0];
+		string $attr = $buffer[1];
+		string $parentAttr = $node + ".weight";
+		int $indices[] = `getAttr -multiIndices $parentAttr`;
+		for ($i in $indices)
+		{
+			string $childAttr = $node + ".weight[" + $i + "]";
+			string $alias = `aliasAttr -q $childAttr`;
+			if ($attr == $alias)
+			{
+				blendShapeDeleteTargetGroup($node, $i);
+			}
+		}
+	}
+	
+	return 1;
+} 

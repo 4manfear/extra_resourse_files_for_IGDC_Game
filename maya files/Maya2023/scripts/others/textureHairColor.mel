@@ -1,0 +1,46 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  2004
+//
+//<doc>
+//<name textureHairColor>
+//
+//<synopsis>
+//      textureHairColor hairSystem texture
+//
+//<returns>
+//      None.
+//
+//<description>
+// This mel procedure applies values from a 2D texture to the
+// follicles of hairSystem.
+//
+//<flags>
+//  None.
+//
+//<examples>
+//
+// textureHairColor hairSystem1 checker1;
+//
+//</doc>
+
+
+global proc textureHairColor( string $hairSystem, string $textureNode )
+{
+	string $follicles[] = hairCurvesFromSystem( $hairSystem );
+	string $follicle;
+	for( $follicle in $follicles ){
+		float $u = getAttr( $follicle + ".parameterU" );
+		float $v = getAttr( $follicle + ".parameterV" );
+		setAttr ( $follicle + ".colorBlend" ) 1.0;
+		float $col[] = `colorAtPoint -o RGB -u $u -v $v $textureNode`;
+		setAttr ($follicle + ".color") -type double3 $col[0] $col[1] $col[2];
+	}
+}

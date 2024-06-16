@@ -1,0 +1,78 @@
+<?xml version='1.0' encoding='utf-8'?>
+<templates>
+	<using package='maya'/>
+	<template name='LEapiSpotLightShape'>
+		<!-- 
+		Declaration of the attributes that should be visible for this light type in the Light Editor.
+		-->
+		<attribute name='color' type='maya.float3'>
+			<label>Color</label>
+		</attribute>
+		<attribute name='intensity' type='maya.float'>
+			<label>Intensity</label>
+		</attribute>
+		<attribute name='emitDiffuse' type='maya.bool'>
+			<label>Emit Diffuse</label>
+		</attribute>
+		<attribute name='emitSpecular' type='maya.bool'>
+			<label>Emit Specular</label>
+		</attribute>
+		<attribute name='decayRate' type='maya.enum'>
+			<label>Decay Rate</label>
+		</attribute>
+		<attribute name='useDepthMapShadows' type='maya.bool'>
+			<label>Shadows</label>
+		</attribute>
+		<attribute name='useRayTraceShadows' type='maya.bool'>
+			<label>RT Shadows</label>
+		</attribute>
+		<attribute name='dmapResolution' type='maya.long'>
+			<label>Shadow Resolution</label>
+		</attribute>
+		<attribute name='shadowColor' type='maya.float3'>
+			<label>Shadow Color</label>
+		</attribute>	
+		<attribute name='coneAngle' type='maya.float'>
+			<label>Cone Angle</label>
+		</attribute>
+		<attribute name='penumbraAngle' type='maya.float'>
+			<label>Penumbra Angle</label>
+		</attribute>
+		<attribute name='dropoff' type='maya.float'>
+			<label>Drop Off</label>
+		</attribute>
+		<attribute name='locatorScale' type='maya.float'>
+			<label>Locator Scale</label>
+		</attribute>
+		<!-- 
+		Attributes below are used to specify construction data to the Light Editor.
+		They are not existing node attributes.
+		-->
+		<!-- Custom icon bitmap to be used for button in Light Editor -->
+		<attribute name='LEicon' type='maya.string'>
+			<description language="cb">:/LM_spotLight.png</description>
+		</attribute>
+	</template>
+	<view name='LEDefault' template='LEapiSpotLightShape'>
+		<!-- 
+		The template view used by the Light Editor.
+		Should list all the attributes above, including LEicon.
+		Do not need a custom command as fallback command is good enough.
+		-->
+		<description>View used by Light Editor</description>
+		<property name='color'/>
+		<property name='intensity'/>
+		<property name='emitDiffuse'/>
+		<property name='emitSpecular'/>
+		<property name='decayRate'/>
+		<property name='useDepthMapShadows'/>	
+		<property name='useRayTraceShadows'/>
+		<property name='dmapResolution'/>
+		<property name='shadowColor'/>
+		<property name='coneAngle'/>
+		<property name='penumbraAngle'/>
+		<property name='dropoff'/>
+		<property name='locatorScale'/>		
+		<property name='LEicon'/>
+	</view>
+</templates>

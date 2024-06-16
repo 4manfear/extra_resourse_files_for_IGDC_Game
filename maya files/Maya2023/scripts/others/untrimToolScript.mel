@@ -1,0 +1,100 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+// Creation Date:  14 January 1999
+//
+//
+//  Procedure Name:
+//      untrimToolScript
+//
+//  Description:
+//	create wrapper around the untrim command
+//
+//  Input Arguments:
+//		0 ==> do the command.
+//		1 ==> show the tool/action option box
+//		2 ==> return the command
+//		3 ==> show tool/action option box
+//		4 ==> enter the tool
+//
+//  Return Value:
+//      None.
+//
+
+global proc untrimToolSetup( int $forceFactorySettings, string $goToTool )
+{
+	optionVar -init $forceFactorySettings -category "Modeling.Surfaces.Untrim"
+		-iv untrimEuc 0
+		-iv untrimLac 1
+		;
+
+	if( "" != $goToTool ) {
+		scriptCtx -e -euc `optionVar -q untrimEuc` $goToTool;
+		scriptCtx -e -lac `optionVar -q untrimLac` $goToTool;
+	}
+}
+
+global proc untrimValues ( string $toolName ) 
+{
+	performUntrim 3 $toolName;
+	scriptCtxCommonValues( $toolName );
+}
+
+global proc untrimProperties()
+{
+	scriptCtxCommonProperties;
+}
+
+proc createUntrimContext( string $tool )
+{
+	if( ! `scriptCtx -exists $tool` ) {
+		untrimToolSetup( 0, "" );
+		scriptCtx -i1 "untrim.png"
+		  -title (uiRes("m_untrimToolScript.kUntrimSurfacesTool"))
+		  -bcn "untrim"
+
+		  -exitUponCompletion `optionVar -q untrimEuc`
+		  -totalSelectionSets 1
+		  -expandSelectionList true
+		  -fcs ("untrimToolScript 0")
+
+		  -setNoSelectionPrompt ((uiRes("m_untrimToolScript.kSelectSurfaces")) )
+		  -setSelectionPrompt ((uiRes("m_untrimToolScript.kSelectedMoreSurfaces")) )
+
+		  -setAutoToggleSelection true
+		  -setAutoComplete `optionVar -q untrimLac`
+		  -showManipulators true
+
+		  -setSelectionCount 0
+		  -nurbsSurface true
+		$tool;
+	}
+}
+
+global proc string untrimToolScript( int $setToTool )
+//
+//	Description :
+//		0 ==> do the command.
+//		1 ==> show the action option box
+//		2 ==> return the command
+//		3 ==> show tool/action option box
+//		4 ==> enter the tool/do the command
+{
+	string $tool = "";
+	if( $setToTool > 2 ) {
+		if( !`optionVar -q modelWithToolUntrim` ) {
+			$setToTool = 4 - $setToTool;
+		}
+		else {
+			$tool = "untrimContext";
+			createUntrimContext $tool;
+		}
+	}
+	return scriptToolScript( "performUntrim", $setToTool, $tool );
+}

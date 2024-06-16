@@ -1,0 +1,53 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  March 17, 1997
+//
+//  Description:
+//      This script defines the elements for the insertKey
+//	context tool property sheet.
+//
+//  Input Arguments:
+//      None.
+//
+//  Return Value:
+//      None.
+//
+global proc insertKeyProperties ()
+{
+	string $parent = `toolPropertyWindow -query -location`;
+	setParent $parent;
+
+	setUITemplate -pushTemplate OptionsTemplate;
+
+	columnLayout insertKey;
+		frameLayout
+			-collapsable true
+			-collapse false
+			-label (uiRes("m_insertKeyProperties.kInsertKeySettings"))
+			insertKeyFrame;
+			columnLayout insertKeyOptions;
+				separator -style "none";
+				checkBoxGrp -label (uiRes("m_insertKeyProperties.kInsertBreakdowns"))
+					-numberOfCheckBoxes 1
+					-value1 off
+					-label1 ""
+					insertKeyBreakdown;
+                checkBoxGrp -label (uiRes("m_insertKeyProperties.kPreserveTangentType"))
+					-annotation (uiRes("m_insertKeyProperties.kPreserveTangentTypeAnnot"))
+					-numberOfCheckBoxes 1
+					-value1 off
+					-label1 ""
+					insertKeyPreserveTangent;
+			setParent ..;
+		setParent ..;
+	setParent ..;
+
+	setUITemplate -popTemplate;
+}

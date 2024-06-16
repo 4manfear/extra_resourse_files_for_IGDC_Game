@@ -1,0 +1,358 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+// 
+//  Description:
+//      This script is use to update the image dimming options.
+//
+//  Input Arguments:
+//		None.
+//
+//  Return Value:
+//      None.
+//
+
+proc string tvImageDimmingPanelName()
+//
+//  Procedure Name:
+//      textureWindowPanelName
+//
+//  Description:
+//		return the texture window panel name.
+//
+//  Input Arguments:
+//		
+//
+//  Return Value:
+//      texture window panel name
+//
+{
+	string $texWinName[] = `getPanel -sty polyTexturePlacementPanel`;
+	return $texWinName[0];
+}
+
+proc setOptionVars(int $forceFactorySettings)
+//
+//  Procedure Name:
+//      setOptionVars
+//
+//  Description:
+//		Initialize the option values.
+//
+//  Input Arguments:
+//		Whether to set the options to default values.
+//
+//  Return Value:
+//      None.
+//
+{
+	optionVar -init $forceFactorySettings -category "UV Editor.Dim Image"
+		-fv tvImageDimming 0.5
+		;
+}
+
+global proc tvImageDimmingSetup(string $parent, int $forceFactorySettings)
+//
+//  Procedure Name:
+//      tvImageDimmingSetup
+//
+//  Description:
+//		Update the state of the option box UI to reflect the option values.
+//
+//  Input Arguments:
+//      parent               - Top level parent layout of the option box UI.
+//                             Required so that UI object names can be 
+//                             successfully resolved.
+//
+//	forceFactorySettings - Whether the option values should be set to
+//                             default values.
+//
+//  Return Value:
+//      None.
+//
+{
+	setParent $parent;
+
+	setOptionVars($forceFactorySettings);
+
+	string $winName = tvImageDimmingPanelName();
+
+	float $curDim = `optionVar -query tvImageDimming`; 
+
+	floatSliderGrp -edit -value $curDim tvImageDimming; 
+}
+
+global proc tvImageDimmingCallback(string $parent, int $doIt)
+//
+//  Procedure Name:
+//      tvImageDimmingCallback
+//
+//  Description:
+//		Update the option values with the current state of the option box UI.
+//
+//  Input Arguments:
+//      parent - Top level parent layout of the option box UI.  Required so
+//               that UI object names can be successfully resolved.
+//
+//	doIt   - Whether the command should execute.
+//
+//  Return Value:
+//      None.
+//
+{
+	optionVar -fv tvImageDimming `floatSliderGrp -q -value tvImageDimming`; 
+
+	if ($doIt) {
+		performTextureViewDimImageOptions 0; 
+		addToRecentCommandQueue "performTextureViewDimImageOptions 0" "TextureViewDimImage";
+	}
+}
+ 
+//
+//  Procedure Name:
+//      tvImageDimmingOptions
+//
+//  Description:
+//		Construct the option box UI.  Involves accessing the standard option
+//		box and customizing the UI accordingly.
+//
+//  Input Arguments:
+//      None.
+//
+//  Return Value:
+//      None.
+//
+proc tvImageDimmingOptions()
+{
+	// Global template variables for form spacing
+	global int $gOptionBoxTemplateFrameSpacing;
+
+	//	Name of the command for this option box.
+	//
+	string $commandName = "tvImageDimming";
+
+	//	Build the option box actions.
+	//
+	string $callback = ($commandName + "Callback");
+	string $setup = ($commandName + "Setup");
+	
+	global string $gOptionBoxOptions;
+	$gOptionBoxOptions = "noApplyAndClose"; 
+	$gOptionBoxOptions += " ";
+	$gOptionBoxOptions += "noApplyBtn";
+	
+ 	//	STEP 1:  Get the option box.
+	//	============================
+	//
+	//	The value returned is the name of the layout to be used as
+	//	the parent for the option box UI.
+	//
+	string $layout = getOptionBox();
+	setParent $layout;
+	
+	//	STEP 2:  Pass the command name to the option box.
+	//	=================================================
+	//
+	//	Any default option box behaviour based on the command name is set 
+	//	up with this call.  For example, updating the 'Help' menu item with
+	//	the name of the command.
+	//
+	setOptionBoxCommandName($commandName);
+	
+	//	STEP 3:  Activate the default UI template.
+	//	==========================================
+	//
+	//	Activate the default UI template so that the layout of this 
+	//	option box is consistent with the layout of the rest of the 
+	//	application.
+	//
+	setUITemplate -pushTemplate DefaultTemplate;
+
+	//	STEP 4: Create option box contents.
+	//	===================================
+	//	
+	//	This, of course, will vary from option box to option box.	
+	//	Turn on the wait cursor.
+	//
+	waitCursor -state 1;
+
+	string $parent = `formLayout`; 
+	string $settingsFrame = `frameLayout -label (uiRes("m_performTextureViewDimImageOptions.kSettings")) -cl 0 `;
+	columnLayout;
+	floatSliderGrp -label (uiRes("m_performTextureViewDimImageOptions.kDimming"))
+		-minValue 0.0 -maxValue 1.0
+		-fieldMinValue 0.0 -fieldMaxValue 1.0
+		-pre 2 
+		-value 0.5 
+		-cc ($callback + " " + $parent + " " + 1)
+		-dragCommand ($callback + " " + $parent + " " + 1) 
+		tvImageDimming;
+  
+	setParent ..;
+	setParent ..;
+	
+	// Attach frame to form layout
+    formLayout -e
+    	-af $settingsFrame "top" $gOptionBoxTemplateFrameSpacing
+    	-af $settingsFrame "left" $gOptionBoxTemplateFrameSpacing
+    	-af $settingsFrame "right" $gOptionBoxTemplateFrameSpacing
+    	-an $settingsFrame "bottom"
+    $parent;
+
+	//
+	scriptJob -parent tvImageDimming
+	-event "texWindowEditorImageBaseColorChanged" ("callbackTexWindowEditorImageBaseColorChanged");
+	
+	//	Turn off the wait cursor.
+	//
+	waitCursor -state 0;
+	
+	//	Step 5: Deactivate the default UI template.
+	//	===========================================
+	//
+	setUITemplate -popTemplate;
+
+	//	Step 6: Customize the buttons.  
+	//	============================== 
+	//	'Save' button.
+	//
+	string $saveBtn = getOptionBoxSaveBtn();
+	button -edit -visible 0 
+		-command ($callback + " " + $parent + " " + 1 + "; hideOptionBox")
+		$saveBtn;
+
+	//	'Reset' button.
+	//
+	string $resetBtn = getOptionBoxResetBtn();
+	button -edit -visible 0 
+		-command ($setup + " " + $parent + " " + 1 + ";" + $callback + " " + $parent + " " + 1)
+		$resetBtn;
+
+	//	Step 7: Set the option box title.
+	//	=================================
+	//
+	setOptionBoxTitle (uiRes("m_performTextureViewDimImageOptions.kImageDimOptions"));
+
+	//	Step 8: Customize the 'Help' menu item text.
+	//	============================================
+	//
+	setOptionBoxHelpTag( "UVTextureEditorImageDimming" );
+
+	//	Step 9: Set the current values of the option box.
+	//	=================================================
+	//
+	eval (($setup + " " + $parent + " " + 0));	
+	
+	//	Step 10: Show the option box.
+	//	=============================
+	//
+	showOptionBox();
+}
+
+
+//
+//  Procedure Name:
+//      assembleCmd
+//
+//  Description:
+//		Construct the command that will apply the option box values.
+//
+//  Input Arguments:
+//      None.
+//
+proc string assembleCmd()
+{
+	string $cmd;
+
+	setOptionVars(false);
+
+	float $sliderValue = `optionVar -query tvImageDimming`;
+	string $winName = tvImageDimmingPanelName();
+
+	float $brightness = 1.0 - $sliderValue;
+	$cmd = "textureWindow -edit -ibc " +
+		$brightness + " " + $brightness + " " + $brightness + " " +  
+		$winName;
+		
+	return $cmd;
+}
+
+//
+//  Procedure Name:
+//      performTextureViewDimImageOptions
+//
+//  Description:
+//
+//  Input Arguments:
+//      0 - Execute the command.
+//      1 - Show the option box dialog.
+//      2 - Return the command.
+//
+global proc string performTextureViewDimImageOptions(int $action)
+{
+	string $cmd = "";
+
+	switch ($action) {
+
+		//	Execute the command.
+		//
+		case 0:
+			//	Get the command.
+			//
+			$cmd = `assembleCmd`;
+
+			//	Execute the command with the option settings.
+			//
+			eval($cmd);
+			break;
+
+		//	Show the option box.
+		//
+		case 1:
+			tvImageDimmingOptions;
+			break;
+
+		//	Return the command string.
+		//
+		case 2:
+			//	Get the command.
+			//
+			$cmd = `assembleCmd`;
+			break;
+	}
+	return $cmd;
+}
+
+
+// This is a callback function. 
+// As the other option box, the slider ui control will sync with optionVar in this option box. 
+// However, this is not enought for the dim value sitll could be changed from mel cmd, so 
+// need a way to update this option box with the new dim value.   
+global proc callbackTexWindowEditorImageBaseColorChanged()
+{
+	if(!`floatSliderGrp -q -ex tvImageDimming`)
+		return;
+	string $winName = tvImageDimmingPanelName();
+	float $color[] = eval ( "textureWindow -q -imageBaseColor "+ $winName ) ;
+	float $brightness = $color[0];
+	float $dimValue = 1.0 - $brightness;
+	
+	// update the floatSliderGrp ui control and optionVar. 
+	//floatSliderGrp -edit -cc "" -dc "" tvImageDimming;
+	floatSliderGrp -edit -value $dimValue tvImageDimming;
+	//floatSliderGrp -edit 
+	//	-cc ( "tvImageDimmingCallback \"\" 1" )
+	//	-dragCommand ( "tvImageDimmingCallback \"\" 1" )
+	//	tvImageDimming;
+ 	
+	optionVar -fv tvImageDimming
+		`floatSliderGrp -q -value tvImageDimming`; 
+	
+	//
+}
+

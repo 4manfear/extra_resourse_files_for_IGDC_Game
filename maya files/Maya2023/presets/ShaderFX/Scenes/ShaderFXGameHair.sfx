@@ -1,0 +1,108 @@
+SFX_WIN
+Version=28
+GroupVersion=-1.0
+Advanced=0
+HelpID=0
+ParentMaterial=0
+NumberOfNodes=2
+#NT=10100 1 Hw Material Base-Hw Shader Nodes-Core
+	PC=35
+	name=1 v=5000 _Material
+	version=1 v=2003 1.842
+	posx=1 v=2003 7.557
+	posy=1 v=2003 10.0
+	classname=1 v=5000 Hw Material Base
+	submenuname=1 v=5000 Core
+	bitmapnodeindex=1 v=2002 10
+	isadvanced=1 v=2001 1
+	advanceddelete=1 v=2001 1
+	helpid=1 v=2002 73
+	grpnodecolor=1 v=5012 4
+	grpPosX=1 v=2003 -1129.38
+	grpPosY=1 v=2003 -143.923
+	disableconsolidation_HwShader=2 e=1 v=2001 0
+	value_ClampDynamicLights=2 e=1 v=2002 99
+	value_MaxNumberLights=2 e=1 v=2002 3
+	value_Gamma=2 e=2 v=2001 0
+	value_Wireframe=2 e=3 v=2001 0
+	value_DepthWrite=2 e=4 v=2001 1
+	value_DepthTest=2 e=4 v=2001 1
+	value_CastShadow=2 e=5 v=2001 1
+	value_SurfaceMaskCutoff=2 e=6 v=2003 0.0
+	value_SSAO=2 e=7 v=2001 1
+	options_Tessellation=2 e=900 v=5012 0
+	value_FlatTessellationBlend=2 e=901 v=2003 0.0
+	value_BoundingBoxMultiplier=2 e=902 v=2003 1.0
+	value_ClippingBiasAdd=2 e=902 v=2003 5.0
+	options_Displacement=2 e=1000 v=5012 1
+	options_VDM_CoordSys=2 e=1001 v=5012 1
+	value_DisplacementMultiplier=2 e=1002 v=2003 1.0
+	value_DisplacementOffset=2 e=1003 v=2003 0.0
+	cgfxprofile_HwShader=2 e=1999 v=5012 0
+	config_HwShader=2 e=2000 v=5012 1
+	shadername_HwShader=2 e=2001 v=5000 
+	saveshadertodisk_HwShader=2 e=2002 v=5015 
+	group=-1
+	ISC=9
+		SVT=2002 2002 0 0 0 _NumberOfLights
+		SVT=5001 3002 0 0 0 _ObjectVertexPosition
+		SVT=5001 2003 0 0 0 
+		SVT=5001 3002 0 0 0 _Displacement
+		SVT=5001 5018 0 0 0 _SurfaceShader
+		SVT=5001 2003 0 0 0 _SurfaceMask
+		SVT=5001 2003 0 0 0 _SurfaceMaskCutoff
+		SVT=2001 2001 0 0 0 _Gamma
+		SVT=1001 1002 0 0 0 
+	OSC=0
+#NT=10100 1 Hair Surface Shader-Hw Shader Nodes-Surface Shaders
+	PC=33
+	name=1 v=5000 HairSurfaceShader
+	version=1 v=2003 1.01
+	posx=1 v=2003 -373.75
+	posy=1 v=2003 8.33301
+	classname=1 v=5000 Hair Surface Shader
+	submenuname=1 v=5000 Surface Shaders
+	grpPosX=1 v=2003 -8127.33
+	grpPosY=1 v=2003 -829.167
+	defineinheader_MyTexture=2 e=1 v=2001 1
+	texturepath_MyTexture=2 e=1 v=5000 
+	uvindex_UVs=2 e=2 v=2002 0
+	uiorder_PrimarySpecRoughness=2 e=2 v=2002 3
+	exposetoui_MyTexture=2 e=3 v=2001 1
+	value_FlipGreenChannel=2 e=3 v=2001 0
+	uvsetname_UVs=2 e=3 v=5000 
+	autoPreviewTexture_MyTexture=2 e=4 v=2001 1
+	fullpathinshader_MyTexture=2 e=4 v=2001 0
+	perinstanceunshared_UVs=2 e=4 v=2001 0
+	value_ConvertToLinearSpace=2 e=4 v=2001 0
+	mipmaplevels_MyTexture=2 e=5 v=2002 -1
+	uiorder_SeconarySpecRoughness=2 e=5 v=2002 5
+	texturenodename_MyTexture=2 e=5 v=5000 BreakupMap
+	filter_Sampler=2 e=6 v=5012 0
+	uiorder_SecondarySpecShift=2 e=6 v=2002 6
+	addressu_Sampler=2 e=7 v=5012 0
+	addressv_Sampler=2 e=8 v=5012 0
+	addressw_Sampler=2 e=9 v=5012 0
+	bordercolor_Sampler=2 e=10 v=3003 0.0,0.0,0.0,0.0
+	uveditororder_MyTexture=2 e=12 v=2002 -1
+	uiorder_MyTexture=2 e=13 v=2002 8
+	uigroup_MyTexture=2 e=13 v=5000 
+	options_Normal=2 e=800 v=5012 0
+	value_InvertGreenChannel=2 e=900 v=2001 0
+	group=-1
+	ISC=0
+	OSC=4
+		SVT=5001 5018 0 _SurfaceShader
+		CC=1
+			C=1 0 0 0 4 0 0
+			CPC=0
+		SVT=5001 2003 0 _SurfaceMask
+		CC=1
+			C=1 1 0 0 5 0 0
+			CPC=0
+		SVT=5001 2003 0 _SurfaceMaskCutoff
+		CC=1
+			C=1 2 0 0 6 0 0
+			CPC=0
+		SVT=1001 1002 0 
+		CC=0

@@ -1,0 +1,20 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc setExrLayerOverride( string $layer )
+{
+    global string $gExrLayerOverride;
+
+    if (`pluginInfo -q -loaded OpenEXRLoader.so`)
+    {
+        $gExrLayerOverride = $layer;
+    }
+    else
+    {
+        warning (uiRes("m_setExrLayerOverride.kEXRPluginWarn"));
+    }
+}

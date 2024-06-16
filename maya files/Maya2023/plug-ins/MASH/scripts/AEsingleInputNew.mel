@@ -1,0 +1,128 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+
+global proc AEsingleInputReplace ( string $attributeUIName, string $input )
+{
+	setUITemplate -pst attributeEditorTemplate;
+
+	string $connections[] = `listConnections -d false -sh true $input`;
+	int $numInputs = size( $connections );
+
+	string $textName;
+	int $index;
+
+	string $buffer[];
+	tokenize($input, ".", $buffer);
+	string $nodeName = $buffer[0];
+	string $att	 = $buffer[1];
+
+	setParent ($att + "Column");
+	$layoutName=`setParent -q`;
+	int $oldCount = `columnLayout -q -nch $layoutName`;
+
+		if ( `rowLayout -ex ("row")` )
+		{
+			// replace existing one
+			$textName = $attributeUIName;
+			text -e -l $textName inputName;
+			textField -e  -tx $connections[0]
+				($att);
+			if ($connections[0] == ""){
+				symbolButton -e -en 0 goToConnectedInput;
+				symbolButton -e -en 1  -command ("AEconnectSingleInputNew(\""+$input+"\")") aeConnectInput;
+			} else {
+				symbolButton -e -en 1
+					-c ("showEditor " + $connections[0] )
+					goToConnectedInput;
+				symbolButton -e -en 0
+			    aeConnectInput;
+			}
+		}
+
+
+	setParent ..;
+	setUITemplate -ppt;
+
+}
+
+
+global proc AEsingleInputNew ( string $attributeUIName, string $input )
+{
+	setUITemplate -pst attributeEditorTemplate;
+
+	string $buffer[];
+	tokenize($input, ".", $buffer);
+	string $nodeName = $buffer[0];
+	string $att	 = $buffer[1];
+
+	string $connections[] = `listConnections -d false -sh true $input`;
+	int $numInputs = size( $connections );
+	string $textName;
+	int $index;
+
+	columnLayout ($att + "Column");
+	$layoutName = `setParent -q`;
+
+
+	rowLayout -nc 4 ("row");
+	$textName = $attributeUIName;
+	text -l $textName inputName;
+	textField  -ed 0
+		-tx $connections[0]
+		($att);
+	if ($connections[0] == ""){
+		symbolButton -i "inArrow.png" -en 0
+			goToConnectedInput;
+		symbolButton -i "addBookmark.png" -en 1  -command ("AEconnectSingleInputNew(\""+$input+"\")")
+			aeConnectInput;
+	} else {
+		symbolButton -i "inArrow.png"
+			-c ("showEditor " + $connections[0] )
+			goToConnectedInput;
+		popupMenu -b 3 goToConnectedMenu;
+			menuItem
+				-l $connections[0]
+				-c ("showEditor "+$connections[0])
+				goToConnectedMenuItem;
+        setParent -m ..;
+        symbolButton -i "addBookmark.png" -en 0
+			aeConnectInput;
+
+		}
+		setParent ..;
+
+
+	setParent ..;
+
+	setUITemplate -ppt;
+}
+
+global proc AEconnectSingleInputNew (string $input )
+{
+    string $buffer[];
+	tokenize($input, ".", $buffer);
+	string $nodeName = $buffer[0];
+	string $att	 = $buffer[1];
+
+    string $filter[] = `filterExpand -sm 9`;
+
+        if (size($filter) > 0) {
+            string $shape[] = `listRelatives -s $filter[0]`;
+
+            connectAttr -force ($shape[0]+".worldSpace[0]") $input;
+            //mashInViewMessage("Curve connected.", "Info");
+
+            updateAE $nodeName;
+            }
+        else {
+
+            //mashInViewMessage("Please select a curve.", "Warning");
+
+        }
+
+}

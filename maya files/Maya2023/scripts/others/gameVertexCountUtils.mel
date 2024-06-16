@@ -1,0 +1,114 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc string gameVertexCount_evalOptScript( string $eval )
+//
+//	Description:
+//		Returns the options script for the given evaluator.
+//
+{
+	string $evalOpts[] = `gameVertexCount -leo $eval`;
+	return $evalOpts[0];
+}
+
+global proc string gameVertexCount_evalOptPrefix( string $eval )
+//
+//	Description:
+//		Returns the options prefix for the given evaluator.
+//
+{
+	string $evalOpts[] = `gameVertexCount -leo $eval`;
+	return $evalOpts[1];
+}
+
+global proc string gameVertexCount_evalOptScriptActive()
+//
+//	Description:
+//		Returns the options script for the active evaluator.
+//
+{
+	int $val = `optionVar -q gameVertexCountEvaluator` - 1;
+	string $evals[] = `gameVertexCount -le`;
+	int $nEvals = size($evals);
+	if( $val >= $nEvals )
+	{
+		$val = $nEvals - 1;
+	}
+	if( $val < 0 )
+	{
+		return "";
+	}
+	string $eval = $evals[$val];
+	return gameVertexCount_evalOptScript( $eval );
+}
+
+global proc string gameVertexCount_evalOptPrefixActive()
+//
+//	Description:
+//		Returns the options prefix for the active evaluator.
+//
+{
+	int $val = `optionVar -q gameVertexCountEvaluator` - 1;
+	string $evals[] = `gameVertexCount -le`;
+	int $nEvals = size($evals);
+	if( $val >= $nEvals )
+	{
+		$val = $nEvals - 1;
+	}
+	if( $val < 0 )
+	{
+		return "";
+	}
+	string $eval = $evals[$val];
+	return gameVertexCount_evalOptPrefix( $eval );
+}
+
+global proc string[] gameVertexCount_evalOptScriptsAll()
+//
+//	Description:
+//		Returns a string array of all valid evaluator options scripts.
+//
+{
+	int $nCmds = 0;
+	string $cmds[];
+	string $evals[] = `gameVertexCount -le`;
+	int $nEvals = size($evals);
+	int $i;
+	for( $i = 0; $i < $nEvals; $i++ )
+	{
+		string $eval = $evals[$i];
+		string $evalScript = gameVertexCount_evalOptScript( $eval );
+		if( size($evalScript) > 0 )
+		{
+			$cmds[$nCmds++] = $evalScript;
+		}
+	}
+	return $cmds;
+}
+
+global proc string[] gameVertexCount_evalOptPrefixesAll()
+//
+//	Description:
+//		Returns a string array of all valid evaluator options prefixes.
+//
+{
+	int $nCmds = 0;
+	string $cmds[];
+	string $evals[] = `gameVertexCount -le`;
+	int $nEvals = size($evals);
+	int $i;
+	for( $i = 0; $i < $nEvals; $i++ )
+	{
+		string $eval = $evals[$i];
+		string $evalPrefix = gameVertexCount_evalOptPrefix( $eval );
+		if( size($evalPrefix) > 0 )
+		{
+			$cmds[$nCmds++] = $evalPrefix;
+		}
+	}
+	return $cmds;
+}

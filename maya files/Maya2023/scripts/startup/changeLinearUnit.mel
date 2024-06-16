@@ -1,0 +1,23 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  Jun 16 1997
+//
+//  Description:
+//      This procedure changes the current unit to the given unit
+//		but preserves the current grid spacing and grid size.
+//
+
+global proc changeLinearUnit( string $newUnit ) {
+
+	float $currentGridSpacing = `grid -q -spacing`;
+	float $currentGridSize = `grid -q -size`;
+	currentUnit -l $newUnit;
+	grid -spacing $currentGridSpacing -size $currentGridSize;
+}

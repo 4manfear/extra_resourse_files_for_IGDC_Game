@@ -1,0 +1,41 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:	1997
+//
+//  Procedure Name:
+//	AElightTemplate
+//
+//  Description:
+//	Creates the attribute editor controls for the  light Node
+//
+//  Input Value:
+//	nodeName
+//
+//  Output Value:
+//	None
+//
+
+
+
+global proc AElightTemplate ( string $nodeName )
+{
+	editorTemplate -beginScrollLayout;
+		AElightCommon  $nodeName;
+		AElightCommonShadow1 $nodeName;
+		AElightCommonShadow2 $nodeName;
+	
+		editorTemplate -beginLayout (uiRes("m_AElightTemplate.kDisplay"));
+			// include/call base class/node attributes
+			AEdagNodeTemplate $nodeName;
+		editorTemplate -endLayout;
+	
+	editorTemplate -addExtraControls;
+	editorTemplate -endScrollLayout;
+}

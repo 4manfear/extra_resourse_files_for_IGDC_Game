@@ -1,0 +1,41 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//  Procedure Name:
+//	AEdynObjectCommon
+//
+//  Description Name;
+//	Creates the attribute editor controls for the dynObject Node
+//
+//  Input Value:
+//	nodeName 
+//
+//  Output Value:
+//	None
+// 
+
+global proc AEdynObjectCommon ( string $nodeName )
+{	
+	if (`objectType $nodeName` != "particle" ) 
+	{
+		editorTemplate -suppress "dynamicsWeight";
+	} else {
+		editorTemplate -addControl "dynamicsWeight";
+
+		editorTemplate -beginLayout (uiRes("m_AEdynObjectCommon.kGoalWeightsandObjects"))  -collapse 1;
+			editorTemplate -callCustom
+				"AEdynObjectGoalWeightNew"
+				"AEdynObjectGoalWeightReplace"
+				"goalWeight";
+
+		editorTemplate -endLayout;
+	}
+
+	// suppressed attributes
+	editorTemplate -suppress "goalGeometry";
+}

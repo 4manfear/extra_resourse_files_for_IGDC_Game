@@ -1,0 +1,73 @@
+<!--
+Copyright 2016 Autodesk, Inc. All rights reserved. 
+
+Use of this software is subject to the terms of the Autodesk 
+license agreement provided at the time of installation or download, 
+or which otherwise accompanies this software in either electronic 
+or hard copy form.
+-->
+<fragment  uiName="mayaNonPEAlphaMaskScript" name="mayaNonPEAlphaMaskScript" type="sceneEffect" class="ScriptFragment" version="1.0" feature_level="30" >
+    <description>
+    <![CDATA[
+        Generate the Non Post-effect Alpha Mask
+    ]]>
+    </description>
+    <properties>
+        <camera  name="camera" />
+        <countedObject  name="nonPostEffectList" />
+        <countedObject  name="postEffectList" />
+        <countedObject  name="advancedEffectList" />
+        <target  name="maya_NonPEAlphaMaskTarget" />
+    </properties>
+    <values>
+    </values>
+    <outputs>
+        <target  name="output" />
+    </outputs>
+    <parametershare>
+    </parametershare>
+    <implementation render="OGS" language="ScriptInterpreter" version="0.1" >
+        <scriptCommands>
+            <SetCamera value="@camera" />
+            <Declare name="localState" type="stateSetter" />
+            <SetStateCommand commandName="SetStateParameter" name="localState" parameter="SetBlendEnable" value="false" />
+            <SetStateCommand commandName="SetStateParameter" name="localState" parameter="AlphaTestEnabled" value="false" />
+            <SetStateCommand commandName="SetStateParameter" name="localState" parameter="DepthEnable" value="true" />
+            <SetStateCommand commandName="SetStateParameter" name="localState" parameter="DepthWriteEnable" value="true" />
+            <SetStateCommand commandName="CommitNewState" name="localState" />
+            <SetTarget index="0" value="@maya_NonPEAlphaMaskTarget" />
+            <SetDepthStencil value="" />
+            <Clear color="0.0,0.0,0.0,0.0" depth="1.0" stencil="0" />
+            <SetEffect name="" />
+            <Declare name="listEmpty" type="bool" />
+            <Call name="isListEmpty" arg0="@postEffectList" arg1="listEmpty" />
+            <IfNot value="listEmpty" />
+                <Declare name="localState2" type="stateSetter" />
+                <SetStateCommand commandName="SetStateParameter" name="localState2" parameter="SetWriteMask" value="None" />
+                <SetStateCommand commandName="CommitNewState" name="localState2" />
+                <Call name="SetPassSemantic" arg0="PEPatternPass" arg1="TRUE" />
+                <Render name="@postEffectList" />
+                <Call name="SetPassSemantic" arg0="PEPatternPass" arg1="FALSE" />
+                <SetStateCommand commandName="RestorePreviousState" name="localState2" />
+            <EndIf />
+            <Declare name="listEmpty1" type="bool" />
+            <Call name="isListEmpty" arg0="@advancedEffectList" arg1="listEmpty1" />
+            <IfNot value="listEmpty1" />
+                <Declare name="localState3" type="stateSetter" />
+                <SetStateCommand commandName="SetStateParameter" name="localState3" parameter="SetWriteMask" value="None" />
+                <SetStateCommand commandName="CommitNewState" name="localState3" />
+                <Call name="SetPassSemantic" arg0="PEPatternPass" arg1="TRUE" />
+                <Render name="@advancedEffectList" />
+                <Call name="SetPassSemantic" arg0="PEPatternPass" arg1="FALSE" />
+                <SetStateCommand commandName="RestorePreviousState" name="localState3" />
+            <EndIf />
+            <Call name="SetPassSemantic" arg0="nonPEPatternPass" arg1="TRUE" />
+            <Render name="@nonPostEffectList" />
+            <Call name="SetPassSemantic" arg0="nonPEPatternPass" arg1="FALSE" />
+            <SetStateCommand commandName="RestorePreviousState" name="localState" />
+            <RestoreOverrideEffect />
+            <SetParameter name="@output" value="@maya_NonPEAlphaMaskTarget" />
+        </scriptCommands>
+    </implementation>
+</fragment>
+

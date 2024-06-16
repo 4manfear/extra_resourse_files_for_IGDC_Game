@@ -1,0 +1,40 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc performDetachComponents()
+{
+ 	string $vertList[] = `filterExpand -ex false -sm 31`;
+	string $edgeList[] = `filterExpand -ex false -sm 32`;
+	string $faceList[] = `filterExpand -ex false -sm 34`;
+
+ 	if (0 < size($vertList)) 
+	{
+		select -r $vertList;
+		polySplitVertex;
+	}
+	else if (0 < size($edgeList)) 
+	{
+		select -r $edgeList;
+		polySplitEdge $edgeList;
+	}
+	else if (0 < size($faceList)) 
+	{
+		// when faces are selected, detach the perimeter edges
+		string $borderEdges[];
+		string $containedFaces[];
+		convertToSelectionBorder(-1, false, $borderEdges, $containedFaces);
+		if (0 < size($borderEdges)) {
+			polySplitEdge $borderEdges;
+			select -r $faceList;	// restore selection
+		}
+	}
+	else
+	{
+		string $noCompsError = ( (uiRes("m_performDetachComponents.kNoCompsError")));
+		error $noCompsError;
+	}
+}

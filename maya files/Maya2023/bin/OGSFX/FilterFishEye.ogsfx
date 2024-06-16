@@ -1,0 +1,96 @@
+//**************************************************************************/
+// Copyright 2015 Autodesk, Inc.
+// All rights reserved.
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+//**************************************************************************/
+
+// World-view-projection transformation.
+uniform mat4 gWVPXf : WorldViewProjection;
+
+// Target size.
+uniform vec2 gTargetSize : ViewportPixelSize;
+
+// The single filter input, i.e. the image to be filtered.
+uniform texture2D gInputTex : InputTexture;
+
+// Filter input sampler.
+uniform sampler2D gInputSamp = sampler_state
+{
+    Texture = <gInputTex>;
+};
+
+// FishEye parameters
+uniform float aperture = 178.0;
+
+// Vertex shader input structure.
+attribute VS_INPUT
+{
+    vec4 Pos : POSITION;
+    vec2 UV : TEXCOORD0;
+};
+
+// Vertex shader output structure.
+attribute VS_TO_PS
+{
+    vec2 VSUV : TEXCOORD0;
+};
+
+// Vertex shader.
+GLSLShader VS_FilterFishEye
+{
+	void main()
+	{
+        gl_Position = gWVPXf*Pos;
+		
+		// Pass the texture coordinates unchanged.
+		VSUV = UV;
+	}
+}
+
+// Pixel shader output structure.
+attribute pixelOut
+{
+    vec4 colorOut: COLOR0;
+}
+
+GLSLShader PS_FilterFishEye
+{
+	void main()
+	{
+		float apertureHalf = 0.5 * aperture * (3.1415926535 / 180.0);
+		float maxFactor = sin(apertureHalf);
+
+		vec2 uv;
+		vec2 xy = 2.0 * VSUV - 1.0;
+		float d = length(xy);
+		if (d < (2.0-maxFactor))
+		{
+			d = length(xy * maxFactor);
+			float z = sqrt(1.0 - d * d);
+			float r = atan(d, z) / 3.1415926535;
+			float phi = atan(xy.y, xy.x);
+
+			uv.x = r * cos(phi) + 0.5;
+			uv.y = r * sin(phi) + 0.5;
+		}
+		else
+		{
+			uv = VSUV;
+		}
+		vec4 c = texture2D(gInputSamp, uv);
+		colorOut = c;
+	}
+}
+
+// The main technique.
+technique Main
+{
+    pass p0
+    {
+        VertexShader (in VS_INPUT, out VS_TO_PS) = VS_FilterFishEye;
+        PixelShader (in VS_TO_PS, out pixelOut) = PS_FilterFishEye;
+    }
+}
+

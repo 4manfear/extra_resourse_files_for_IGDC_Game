@@ -1,0 +1,76 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+///////////////////////////////////////////////////////////////////////////////
+//
+//  Description:
+//  Attribute editor template layout for polyCircularize nodes
+//
+///////////////////////////////////////////////////////////////////////////////
+
+global proc checkPolyCircularizeAlignment( string $nodeName )
+{
+	if( `objExists $nodeName` == 0 )
+		return;
+			
+	string $nodeAttr = $nodeName + ".alignment";
+    int $value = `getAttr $nodeAttr`;
+
+	if( $value == 1 )
+	{
+		editorTemplate -dimControl $nodeName "normalOffset" true;
+	}
+	else
+	{
+		editorTemplate -dimControl $nodeName "normalOffset" false;
+	}
+}
+
+global proc checkPolyCircularizeDivisions( string $nodeName )
+{
+	if( `objExists $nodeName` == 0 )
+		return;
+			
+	string $nodeAttr = $nodeName + ".divisions";
+    int $value = `getAttr $nodeAttr`;
+
+	if( $value == 0 )
+	{
+		editorTemplate -dimControl $nodeName "supportingEdges" true;
+	}
+	else
+	{
+		editorTemplate -dimControl $nodeName "supportingEdges" false;
+	}
+}
+
+
+global proc AEpolyCircularizeTemplate(string $nodeName)
+{
+	editorTemplate -beginScrollLayout;
+	editorTemplate -beginLayout (uiRes("m_AEpolyCircularizeTemplate.kPolygonCircularizeAttributes")) -collapse 0;
+
+	editorTemplate -addControl "normalOffset";
+	editorTemplate -addControl "radialOffset";
+	editorTemplate -addControl "normalOrientation";
+	editorTemplate -addControl "twist";
+	editorTemplate -addControl "relaxInterior";
+	editorTemplate -addControl "alignment" "checkPolyCircularizeAlignment";
+	editorTemplate -addControl "smoothingAngle";
+	editorTemplate -addControl "evenlyDistribute";
+	editorTemplate -label (uiRes("m_AEpolyCircularizeTemplate.kCircularizeDivisions")) -addControl "divisions" "checkPolyCircularizeDivisions";
+	editorTemplate -addControl "supportingEdges";
+
+	editorTemplate -endLayout;
+
+	AEpolyModifierInclude $nodeName;
+
+	editorTemplate -suppress "worldSpace";
+
+	editorTemplate -addExtraControls;
+	editorTemplate -endScrollLayout;
+}

@@ -1,0 +1,52 @@
+import maya
+
+maya.stringTable['y_maya_plugin_evaluator_cache_preferences.kBgFillBwd'] = u'後方'
+maya.stringTable['y_maya_plugin_evaluator_cache_preferences.kBgFillBwdTip'] = u'右から左へ。'
+maya.stringTable['y_maya_plugin_evaluator_cache_preferences.kBgFillFwd'] = u'前方'
+maya.stringTable['y_maya_plugin_evaluator_cache_preferences.kBgFillFwdBwd'] = u'前方および後方'
+maya.stringTable['y_maya_plugin_evaluator_cache_preferences.kBgFillFwdBwdTip'] = u'中央から外側へ。'
+maya.stringTable['y_maya_plugin_evaluator_cache_preferences.kBgFillFwdFromStart'] = u'アニメーション開始から前方へ'
+maya.stringTable['y_maya_plugin_evaluator_cache_preferences.kBgFillFwdFromStartTip'] = u'最初のフレームから前方へ。'
+maya.stringTable['y_maya_plugin_evaluator_cache_preferences.kBgFillFwdTip'] = u'左から右へ。'
+maya.stringTable['y_maya_plugin_evaluator_cache_preferences.kCacheFillBg'] = u'バックグラウンド'
+maya.stringTable['y_maya_plugin_evaluator_cache_preferences.kCacheFillBgTip'] = u'自動。'
+maya.stringTable['y_maya_plugin_evaluator_cache_preferences.kCacheFillBoth'] = u'再生とバックグラウンド'
+maya.stringTable['y_maya_plugin_evaluator_cache_preferences.kCacheFillBothTip'] = u'[再生]をクリックしたときに自動実行。'
+maya.stringTable['y_maya_plugin_evaluator_cache_preferences.kCacheFillDirectionText'] = u'バックグラウンドでのフィルの方向'
+maya.stringTable['y_maya_plugin_evaluator_cache_preferences.kCacheFillDirectionTip'] = u'キャッシュ ステータスのロード方向を設定します。'
+maya.stringTable['y_maya_plugin_evaluator_cache_preferences.kCacheFillPlay'] = u'再生'
+maya.stringTable['y_maya_plugin_evaluator_cache_preferences.kCacheFillPlayTip'] = u'[再生]を押したときのみ。'
+maya.stringTable['y_maya_plugin_evaluator_cache_preferences.kCacheFillTypeText'] = u'キャッシュ フィル'
+maya.stringTable['y_maya_plugin_evaluator_cache_preferences.kCacheFillTypeTip'] = u'キャッシュを構築する時期を選択します。'
+maya.stringTable['y_maya_plugin_evaluator_cache_preferences.kCacheHybridCacheModeAll'] = u'すべて'
+maya.stringTable['y_maya_plugin_evaluator_cache_preferences.kCacheHybridCacheModeAllTip'] = u'GPU デフォーマは、キャッシングするのではなく、すべての GPU 対応メッシュを評価します。'
+maya.stringTable['y_maya_plugin_evaluator_cache_preferences.kCacheHybridCacheModeDisabled'] = u'無効化'
+maya.stringTable['y_maya_plugin_evaluator_cache_preferences.kCacheHybridCacheModeDisabledTip'] = u'GPU デフォーマは評価されません。メッシュは通常どおりキャッシュされます。'
+maya.stringTable['y_maya_plugin_evaluator_cache_preferences.kCacheHybridCacheModeSMP'] = u'スムーズ メッシュ プレビュー'
+maya.stringTable['y_maya_plugin_evaluator_cache_preferences.kCacheHybridCacheModeSMPTip'] = u'GPU デフォーマは、キャッシングするのではなく、GPU 対応のスムーズ メッシュ プレビュー メッシュを評価します。'
+maya.stringTable['y_maya_plugin_evaluator_cache_preferences.kCacheHybridCacheModeText'] = u'ハイブリッド キャッシュ'
+maya.stringTable['y_maya_plugin_evaluator_cache_preferences.kCacheHybridCacheModeTip'] = u'メッシュをキャッシュしないで、GPU デフォメーションを使用する場合に選択します。'
+maya.stringTable['y_maya_plugin_evaluator_cache_preferences.kCacheModeEval'] = u'評価キャッシュ'
+maya.stringTable['y_maya_plugin_evaluator_cache_preferences.kCacheModeEvalTip'] = u'レンダラに依存しないで、使用可能な RAM を使用します(使用可能な RAM が不明な場合に最適)。'
+maya.stringTable['y_maya_plugin_evaluator_cache_preferences.kCacheModeVpH'] = u'ビューポート ハードウェア キャッシュ'
+maya.stringTable['y_maya_plugin_evaluator_cache_preferences.kCacheModeVpHTip'] = u'グラフィックス カードのメモリを使用します。'
+maya.stringTable['y_maya_plugin_evaluator_cache_preferences.kCacheModeVpS'] = u'ビューポート ソフトウェア キャッシュ'
+maya.stringTable['y_maya_plugin_evaluator_cache_preferences.kCacheModeVpSTip'] = u'システム メモリを使用します。'
+maya.stringTable['y_maya_plugin_evaluator_cache_preferences.kCachedPlaybackEnableText'] = u'キャッシュされた再生'
+maya.stringTable['y_maya_plugin_evaluator_cache_preferences.kCachedPlaybackEnableTip'] = u'[キャッシュされた再生]を有効にします。'
+maya.stringTable['y_maya_plugin_evaluator_cache_preferences.kDynamicsAsyncRefreshText'] = u'キャッシュ更新のシミュレーションを更新'
+maya.stringTable['y_maya_plugin_evaluator_cache_preferences.kDynamicsAsyncRefreshTip'] = u'キャッシュ更新時にシーンのダイナミクスを自動的に更新します。'
+maya.stringTable['y_maya_plugin_evaluator_cache_preferences.kEnableDynamicsSupportText'] = u'キャッシュのダイナミクス'
+maya.stringTable['y_maya_plugin_evaluator_cache_preferences.kEnableDynamicsSupportTip'] = u'ダイナミクス ノードとシミュレーション ノードのキャッシング。'
+maya.stringTable['y_maya_plugin_evaluator_cache_preferences.kErrPrefs'] = u'基本設定の追加に失敗しました: {}'
+maya.stringTable['y_maya_plugin_evaluator_cache_preferences.kPreferredCacheModeText'] = u'優先モード'
+maya.stringTable['y_maya_plugin_evaluator_cache_preferences.kPreferredCacheModeTip'] = u'[キャッシュされた再生]でシステム リソースを使用する方法を選択します。'
+maya.stringTable['y_maya_plugin_evaluator_cache_preferences.kPreventFrameSkippingText'] = u'フレームのスキップを防ぐ'
+maya.stringTable['y_maya_plugin_evaluator_cache_preferences.kPreventFrameSkippingTip'] = u'再生モードではフレームをスキップしません。'
+# ===========================================================================
+# Copyright 2022 Autodesk, Inc. All rights reserved.
+#
+# Use of this software is subject to the terms of the Autodesk license
+# agreement provided at the time of installation or download, or which
+# otherwise accompanies this software in either electronic or hard copy form.
+# ===========================================================================

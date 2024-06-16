@@ -1,0 +1,308 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    The QML used to display the toolclip is found in a path relative to this file. If not set. then the system default UI
+    is used. If present, the following variables will be interpolated into the string:
+    %(language)s      - the language i.e. en, ja, etc.
+    %(country)s       - the country code i.e. us, jp, etc.
+    %(localecode)s          - the locale code i.e. en-us, ja-jp, etc
+
+    If a qml file cannot be loaded from the given path, the built-in path is used instead.
+ 
+    The ui attribute may be specified in the toolclips or toolclip elements. If specified in both, the toolclip version is used.
+-->
+<toolclips ui="ui/ToolClipUI.qml" simple="ui/SimpleTooltip.qml" locale="zh_CN">
+    <toolclip key="BluePencilBtn" title="Blue Pencil" help="TC-Blue-Pencil">
+        <text>用于在视口中不同帧上进行绘制的工具。</text>
+        <expanded>
+            <resourcelist>
+                <video location="TC-BP-AdjustTools.webm">调整 Blue Pencil 工具</video>
+                <video location="TC-BP-Select-Frames.webm">在时间滑块上选择 Blue Pencil 帧</video>
+                <link location="TC-Blue-Pencil">Blue Pencil 概述</link>
+                <link location="TC-BP-Toolbar">Blue Pencil 工具栏</link>
+                <link location="TC-Draw-with-Blue-Pencil">在视口中使用 Blue Pencil 进行绘制</link>
+            </resourcelist>
+        </expanded>
+    </toolclip>
+
+    <toolclip key="BluePencilPencilButton" title="铅笔" help="TC-Draw-with-Blue-Pencil">
+        <text>用于在时间滑块中的当前时间进行徒手绘制。单击鼠标右键以访问大小和不透明度选项。</text>
+        <expanded>
+            <resourcelist>
+                <video location="TC-BP-Pencil.webm">使用 Blue Pencil 进行绘制</video>
+                <video location="TC-BP-AdjustTools.webm">调整 Blue Pencil 工具</video>
+                <video location="TC-BP-Select-Frames.webm">在时间滑块上选择 Blue Pencil 帧</video>
+                <link location="TC-Blue-Pencil">Blue Pencil 概述</link>
+                <link location="TC-Draw-with-Blue-Pencil">在视口中使用 Blue Pencil 进行绘制</link>
+            </resourcelist>
+        </expanded>
+    </toolclip>
+
+    <toolclip key="BluePencilBrushButton" title="笔刷" help="TC-Draw-with-Blue-Pencil">
+        <text>用于在时间滑块中的当前时间使用较柔和的边进行徒手绘制。单击鼠标右键以访问大小和不透明度选项。</text>
+        <expanded>
+            <resourcelist>
+                <video location="TC-BP-Brush.webm">使用 Blue Pencil 笔刷进行绘制</video>
+                <video location="TC-BP-AdjustTools.webm">调整 Blue Pencil 工具</video>
+                <video location="TC-BP-Select-Frames.webm">在时间滑块上选择 Blue Pencil 帧</video>
+                <link location="TC-Blue-Pencil">Blue Pencil 概述</link>
+                <link location="TC-Draw-with-Blue-Pencil">在视口中使用 Blue Pencil 进行绘制</link>
+            </resourcelist>
+        </expanded>
+    </toolclip>
+
+    <toolclip key="BluePencilEraserButton" title="橡皮擦" help="TC-Draw-with-Blue-Pencil">
+        <text>在当前帧清除 Blue Pencil 草图上的笔刷笔划。单击鼠标右键以访问大小选项。</text>
+        <expanded>
+            <resourcelist>
+                <video location="TC-BP-Eraser.webm">擦除 Blue Pencil 图形</video>
+                <video location="TC-BP-AdjustTools.webm">调整 Blue Pencil 工具</video>
+                <link location="TC-Draw-with-Blue-Pencil">在视口中使用 Blue Pencil 进行绘制</link>
+                <link location="TC-CleanUp-Blue-Pencil">清理 Blue Pencil 草图</link>
+            </resourcelist>
+        </expanded>
+    </toolclip>
+
+    <toolclip key="BluePencilTextButton" title="文本" help="TC-Draw-with-Blue-Pencil">
+        <text>将文本框添加到场景中，您可以在当前帧的此文本框中键入文本。单击鼠标右键以访问字体、大小和不透明度选项。</text>
+        <expanded>
+            <resourcelist>
+                <video location="TC-BP-Text.webm">使用文本功能在场景中写入文本</video>
+                <video location="TC-BP-AdjustTools.webm">调整 Blue Pencil 工具</video>
+                <link location="TC-Draw-with-Blue-Pencil">在视口中使用 Blue Pencil 进行绘制</link>
+                <link location="TC-Blue-Pencil">Blue Pencil 概述</link>
+            </resourcelist>
+        </expanded>
+    </toolclip>
+
+    <toolclip key="BluePencilLineButton" title="直线" help="TC-Draw-with-Blue-Pencil">
+        <text>在屏幕上拖动以在当前帧创建一条直线。单击鼠标右键以访问大小和不透明度选项。</text>
+        <expanded>
+            <resourcelist>
+                <video location="TC-BP-Line.webm">使用直线工具进行绘制</video>
+                <video location="TC-BP-AdjustTools.webm">调整 Blue Pencil 工具</video>
+                <link location="TC-Draw-with-Blue-Pencil">在视口中使用 Blue Pencil 进行绘制</link>
+                <link location="TC-Blue-Pencil">Blue Pencil 概述</link>
+            </resourcelist>
+        </expanded>
+    </toolclip>
+
+    <toolclip key="BluePencilArrowButton" title="箭头" help="TC-Draw-with-Blue-Pencil">
+        <text>在屏幕上拖动以在当前帧创建箭头。单击鼠标右键以访问大小和不透明度选项。</text>
+        <expanded>
+            <resourcelist>
+                <video location="TC-BP-Arrow.webm">使用箭头工具进行绘制</video>
+                <video location="TC-BP-AdjustTools.webm">调整 Blue Pencil 工具</video>
+                <link location="TC-Draw-with-Blue-Pencil">在视口中使用 Blue Pencil 进行绘制</link>
+                <link location="TC-Blue-Pencil">Blue Pencil 概述</link>
+            </resourcelist>
+        </expanded>
+    </toolclip>
+
+    <toolclip key="BluePencilEllipseButton" title="椭圆" help="TC-Draw-with-Blue-Pencil">
+        <text>在屏幕上拖动以在当前帧创建椭圆形状。单击鼠标右键以访问大小和不透明度选项。</text>
+        <expanded>
+            <resourcelist>
+                <video location="TC-BP-Ellipse.webm">使用椭圆工具创建椭圆形状</video>
+                <video location="TC-BP-AdjustTools.webm">调整 Blue Pencil 工具</video>
+                <link location="TC-Draw-with-Blue-Pencil">在视口中使用 Blue Pencil 进行绘制</link>
+                <link location="TC-Blue-Pencil">Blue Pencil 概述</link>
+            </resourcelist>
+        </expanded>
+    </toolclip>
+
+    <toolclip key="BluePencilRectangleButton" title="矩形" help="TC-Draw-with-Blue-Pencil">
+        <text>在屏幕上拖动以在当前帧创建方形。单击鼠标右键以访问大小和不透明度选项。</text>
+        <expanded>
+            <resourcelist>
+                <video location="TC-BP-Rectangle.webm">使用矩形工具创建方形</video>
+                <video location="TC-BP-AdjustTools.webm">调整 Blue Pencil 工具</video>
+                <link location="TC-Draw-with-Blue-Pencil">在视口中使用 Blue Pencil 进行绘制</link>
+                <link location="TC-Blue-Pencil">Blue Pencil 概述</link>
+            </resourcelist>
+        </expanded>
+    </toolclip>
+
+    <toolclip key="BluePencilTransformMode" title="变换模式" help="TC-Blue-Pencil-Transform">>
+        <text>用于修改图形。选择区域，按 Enter 键，然后拖动或使用鼠标中键拖动以修改选定对象。按 Enter 键以应用变换。
+        </text>
+        <expanded>
+            <resourcelist>
+                <video location="TC-BP-Transform.webm">使用变换模式修改图形</video>
+                <video location="TC-BP-AdjustTools.webm">调整 Blue Pencil 工具</video>
+                <link location="TC-Blue-Pencil-Transform">使用 Blue Pencil 变换模式修改图形</link>
+                <link location="TC-Draw-with-Blue-Pencil">在视口中使用 Blue Pencil 进行绘制</link>
+                <link location="TC-Blue-Pencil">Blue Pencil 概述</link>
+            </resourcelist>
+        </expanded>
+    </toolclip>
+
+    <toolclip key="BluePencilDrawColor" title="绘制颜色" help="ColorChooser">
+        <text>双击或单击鼠标右键以打开窗口来更改绘图工具的颜色。</text>
+    </toolclip>
+
+    <toolclip key="BluePencilGhostPreviousButton" title="重影上一个" help="TC-BP-Ghost">
+        <text>显示当前帧之前的帧上的重影草图。单击鼠标右键以设置已生成重影的帧的数量和颜色。</text>
+        <expanded>
+            <resourcelist>
+                <video location="TC-BP-Ghost-Previous.webm">为上一个 Blue Pencil 帧生成重影</video>
+                <video location="TC-BP-AdjustTools.webm">调整 Blue Pencil 工具</video>
+                <video location="TC-BP-Select-Frames.webm">在时间滑块上选择 Blue Pencil 帧</video>-->
+                <link location="TC-BP-Ghost">预览包含 Blue Pencil 重影的帧</link>
+                <link location="TC-Draw-with-Blue-Pencil">在视口中使用 Blue Pencil 进行绘制</link>
+                <link location="TC-BP-Frames">使用 Blue Pencil 帧</link>
+            </resourcelist>
+        </expanded>
+    </toolclip>
+
+    <toolclip key="BluePencilGhostNextButton" title="重影下一个" help="TC-BP-Ghost">
+        <text>显示当前帧之后的帧上的重影草图。单击鼠标右键以设置已生成重影的帧的数量和颜色。</text>
+        <expanded>
+            <resourcelist>
+                <video location="TC-BP-Ghost-Next.webm">为下一个 Blue Pencil 帧生成重影</video>
+                <video location="TC-BP-AdjustTools.webm">调整 Blue Pencil 工具</video>
+                <video location="TC-BP-Select-Frames.webm">在时间滑块上选择 Blue Pencil 帧</video>
+                <link location="TC-BP-Ghost">预览包含 Blue Pencil 重影的帧</link>
+                <link location="TC-Draw-with-Blue-Pencil">在视口中使用 Blue Pencil 进行绘制</link>
+                <link location="TC-BP-Frames">使用 Blue Pencil 帧</link>
+            </resourcelist>
+        </expanded>
+    </toolclip>
+
+    <toolclip key="BluePencilRetimeForwardButton" title="向前重定时" help="TC-BP-Frames">
+        <text>在时间滑块上将选定 Blue Pencil 帧向前移动“帧范围”(Frame Range)字段中设置的量。</text>
+        <expanded>
+            <resourcelist>
+                <video location="TC-BP-Retime-Forward.webm">在时间滑块上将 Blue Pencil 帧向前移动</video>
+                <video location="TC-BP-Select-Frames.webm">在时间滑块上选择 Blue Pencil 帧</video>
+                <link location="TC-BP-Frames">使用 Blue Pencil 帧</link>
+            </resourcelist>
+        </expanded>
+    </toolclip>
+
+    <toolclip key="BluePencilRetimeBackwardButton" title="向后重定时" help="TC-BP-Frames">
+        <text>在时间滑块上将选定 Blue Pencil 帧向后移动“帧范围”(Frame Range)字段中设置的量。</text>
+        <expanded>
+            <resourcelist>
+                <video location="TC-BP-Retime-Backward.webm">在时间滑块上将 Blue Pencil 帧向后移动</video>
+                <video location="TC-BP-Select-Frames.webm">在时间滑块上选择 Blue Pencil 帧</video>
+                <link location="TC-BP-Frames">使用 Blue Pencil 帧</link>
+            </resourcelist>
+        </expanded>
+    </toolclip>
+
+    <toolclip key="BluePencilAddFrameButton" title="添加帧" help="TC-BP-Frames">
+        <text>在当前时间插入空白帧。开始绘制时，也会创建一帧。</text>
+        <expanded>
+            <resourcelist>
+                <video location="TC-BP-Select-Frames.webm">在时间滑块上选择 Blue Pencil 帧</video>
+                <link location="TC-BP-Frames">使用 Blue Pencil 帧</link>
+            </resourcelist>
+        </expanded>
+    </toolclip>
+
+    <toolclip key="BluePencilClearFrameButton" title="清除帧" help="TC-CleanUp-Blue-Pencil">
+        <text>清空图形的选定帧，但不会将其删除。</text>
+        <expanded>
+            <resourcelist>
+                <video location="TC-BP-Select-Frames.webm">在时间滑块上选择 Blue Pencil 帧</video>
+                <link location="TC-BP-Frames">使用 Blue Pencil 帧</link>
+                <link location="TC-CleanUp-Blue-Pencil">清理 Blue Pencil 草图</link>
+            </resourcelist>
+        </expanded>
+    </toolclip>
+
+    <toolclip key="BluePencilDeleteFrameButton" title="删除帧" help="TC-CleanUp-Blue-Pencil">
+        <text>在当前时间删除一个或多个选定帧。</text>
+        <expanded>
+            <resourcelist>
+                <link location="TC-CleanUp-Blue-Pencil">清理 Blue Pencil 草图</link>
+                <link location="TC-BP-Frames">使用 Blue Pencil 帧</link>
+            </resourcelist>
+        </expanded>
+    </toolclip>
+
+    <toolclip key="BluePencilDuplicatePreviousFrameButton" title="复制上一帧" help="TC-BP-Frames">
+        <text>在当前时间创建上一帧的相同版本。</text>
+        <expanded>
+            <resourcelist>
+                <video location="TC-BP-Select-Frames.webm">在时间滑块上选择 Blue Pencil 帧</video>
+                <link location="TC-CleanUp-Blue-Pencil">清理 Blue Pencil 草图</link>
+                <link location="TC-BP-Frames">使用 Blue Pencil 帧</link>
+            </resourcelist>
+        </expanded>
+    </toolclip>
+
+    <toolclip key="BluePencilCutFrameButton" title="剪切帧" help="TC-BP-Frames">
+        <text>在当前时间移除一个或多个选定帧并将其复制到剪贴板。</text>
+        <expanded>
+            <resourcelist>
+                <video location="TC-BP-Select-Frames.webm">在时间滑块上选择 Blue Pencil 帧</video>
+                <link location="TC-CleanUp-Blue-Pencil">清理 Blue Pencil 草图</link>
+                <link location="TC-BP-Frames">使用 Blue Pencil 帧</link>
+            </resourcelist>
+        </expanded>
+    </toolclip>
+
+    <toolclip key="BluePencilCopyFrameButton" title="复制帧" help="TC-BP-Frames">
+        <text>将选定帧复制到剪贴板。</text>
+        <expanded>
+            <resourcelist>
+                <video location="TC-BP-Select-Frames.webm">在时间滑块上选择 Blue Pencil 帧</video>
+                <link location="TC-BP-Frames">使用 Blue Pencil 帧</link>
+            </resourcelist>
+        </expanded>
+    </toolclip>
+
+    <toolclip key="BluePencilPasteFrameButton" title="粘贴帧" help="TC-BP-Frames">
+        <text>将剪贴板的内容粘贴到当前时间。</text>
+        <expanded>
+            <resourcelist>
+                <video location="TC-BP-Select-Frames.webm">在时间滑块上选择 Blue Pencil 帧</video>
+                <link location="TC-BP-Frames">使用 Blue Pencil 帧</link>
+            </resourcelist>
+        </expanded>
+    </toolclip>
+
+    <toolclip key="BluePencilJumpToPreviousFrameButton" title="跳转到上一帧" help="TC-BP-Frames">
+        <text>将选定对象移动到上一帧。</text>
+        <expanded>
+            <resourcelist>
+                <video location="TC-BP-Jump-To-Previous-Frame.webm">跳转到上一 Blue Pencil 帧</video>
+                <video location="TC-BP-Select-Frames.webm">在时间滑块上选择 Blue Pencil 帧</video>
+                <link location="TC-BP-Frames">使用 Blue Pencil 帧</link>
+                <link location="TC-Blue-Pencil">Blue Pencil 概述</link>
+            </resourcelist>
+        </expanded>
+    </toolclip>
+
+    <toolclip key="BluePencilJumpToNextFrameButton" title="跳转到下一帧" help="TC-BP-Frames">
+        <text>将选定对象移动到下一帧。</text>
+        <expanded>
+            <resourcelist>
+                <video location="TC-BP-Jump-To-Next-Frame.webm">跳转到下一 Blue Pencil 帧</video>
+                <video location="TC-BP-Select-Frames.webm">在时间滑块上选择 Blue Pencil 帧</video>
+                <link location="TC-BP-Frames">使用 Blue Pencil 帧</link>
+                <link location="TC-Blue-Pencil">Blue Pencil 概述</link>
+            </resourcelist>
+        </expanded>
+    </toolclip>
+
+    <toolclip key="BluePencilImportBluePencilFramesButton" title="导入 Blue Pencil 帧" help="TC-BP-Import-Export-Frames">
+        <text>打开 .zip 归档文件并将帧添加到当前场景中。</text>
+        <expanded>
+            <resourcelist>
+                <link location="TC-BP-Import-Export-Frames">导入 Blue Pencil 帧</link>
+            </resourcelist>
+        </expanded>
+    </toolclip>
+
+    <toolclip key="BluePencilExportBluePencilFramesButton" title="导出 Blue Pencil 帧" help="TC-BP-Import-Export-Frames">
+        <text>将场景的 Blue Pencil 帧另存为 .zip 归档文件。</text>
+        <expanded>
+            <resourcelist>
+                <link location="TC-BP-Import-Export-Frames">导出 Blue Pencil 帧</link>
+            </resourcelist>
+        </expanded>
+    </toolclip>
+
+</toolclips>

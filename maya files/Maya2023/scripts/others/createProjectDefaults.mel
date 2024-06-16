@@ -1,0 +1,125 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  Sept 1996
+//
+//  Description:
+//      This script setups up the workspace defaults for the user.
+//		It is run in both batch and GUI modes.
+//
+//  Input Arguments:
+//      None.
+//
+//  Return Value:
+//      None.
+//
+//  Note:
+//      None.
+// 
+
+//global proc createProjectDefaults ( )
+//
+//	Description:
+//		set up default option var values
+//		if they aren't already set.
+//
+{
+	optionVar -init false -category "Files/Projects"
+		-iv useDefaultFileExtensions true
+		-sv defaultTextureSaveAsType "unlessRef"
+		-sv defaultDiskCacheSaveAsType "always"
+		;
+
+	optionVar -init false -category "UI Elements"
+		-iv useSaveScenePanelConfig true;
+}
+
+// Ensure that some critical file-rules exist. If the user 
+// wants to, they are free to set them to "", but the rule 
+// itself must exist.
+//
+global proc checkDefaultFileRules()
+{
+	// not sure why, but I get errors when I try to access
+	// stringArrayContains. So go through the rules one-by-one :(
+	//
+	int $foundMayaAscii = 0;
+	int $foundMayaBinary = 0;
+	int $foundTemplates = 0;	
+	int $foundMovie = 0;
+	int $foundOfflineEdit = 0;
+	
+	string $warning = (uiRes("m_createProjectDefaults.kCouldNotSaveWorkspace"));
+
+	string $fileRules[] = `workspace -q -frl`;
+	for( $rule in $fileRules ) {
+		if( $rule == "mayaAscii" ) {
+			$foundMayaAscii = 1;
+		}
+		if( $rule == "mayaBinary" ) {
+			$foundMayaBinary = 1;
+		}
+		if( $rule == "templates" ) {
+			$foundTemplates = 1;
+		}
+		if( $rule == "movie" ) {
+			$foundMovie = 1;
+		}
+		if( $rule == "offlineEdit" ) {
+			$foundOfflineEdit = 1;
+		}
+	}
+	
+	string $curDir = `workspace -q -dir`;
+
+	if( !$foundMayaAscii ) {
+		workspace -fr "mayaAscii" "scenes";
+		workspace -dir `workspace -q -rootDirectory`;
+		if( catch(`workspace -cr "scenes"`) ) {
+			warning $warning;
+		}
+	}
+	if( !$foundMayaBinary ) {
+		workspace -fr "mayaBinary" "scenes";
+		workspace -dir `workspace -q -rootDirectory`;
+		if( catch(`workspace -cr "scenes"`) ) {
+			warning $warning;
+		}
+	}
+	if( !$foundTemplates ) {
+		workspace -fr "templates" "assets";
+		workspace -dir `workspace -q -rootDirectory`;
+		if( catch(`workspace -cr "assets"`) ) {
+			warning $warning;
+		}
+	}
+	if( !$foundMovie ) {
+		workspace -fr "movie" "data";
+	}
+	if( !$foundOfflineEdit ) {
+		workspace -fr "offlineEdit" "scenes/edits";
+		workspace -dir `workspace -q -rootDirectory`;
+		if( catch(`workspace -cr "scenes/edits"`) ) {
+			warning $warning;
+		}
+	}
+
+	// Only save the workspace if we added something. We don't want to
+	// trigger unnecessary workspace changed messages if everything
+	// was fine.
+	//
+	if( !$foundMayaAscii || !$foundMayaBinary || !$foundTemplates || 
+		 !$foundMovie || $foundOfflineEdit ) 
+	{
+		workspace -dir $curDir;
+		if( catch(`workspace -s`) ) {
+			warning $warning;
+		}
+	}
+}

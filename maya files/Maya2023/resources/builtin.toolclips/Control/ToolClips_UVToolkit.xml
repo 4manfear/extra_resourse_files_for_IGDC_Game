@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="utf-8"?>
+<toolclips ui="ui/ToolClipUI.qml" simple="ui/SimpleTooltip.qml" locale="en_US">
+    <toolclip key="uvTkSymLabel" title="Symmetry" help="TC-Symmetry">
+        <text>Activates symmetry.</text>
+        <expanded>
+            <resourcelist>
+                <video location="Symmetry_ActivateTopo.webm">Activate topological symmetry</video>
+                <link location="TC-Symmetrical-editing">Symmetrical editing</link>
+                <link location="TC-Activate-or-deactivate-symmetry">Activate or deactivate symmetry</link>
+                <link location="TC-Edit-multiple-shells-with-topological-symmetry">Edit multiple shells with topological symmetry</link>
+                <link location="TC-Edit-a-mesh-with-topological-symmetry">Edit a mesh with topological symmetry</link>
+            </resourcelist>
+        </expanded>
+    </toolclip>
+    <toolclip key="uvTkSymPopupButton" title="Symmetry" help="TC-nexSymPopupButton">
+        <text>Activates symmetry.</text>
+        <expanded>
+            <resourcelist>
+                <video location="Symmetry_ActivateTopo.webm">Activate topological symmetry</video>
+                <link location="TC-Symmetrical-editing">Symmetrical editing</link>
+                <link location="TC-Activate-or-deactivate-symmetry">Activate or deactivate symmetry</link>
+                <link location="TC-Edit-multiple-shells-with-topological-symmetry">Edit multiple shells with topological symmetry</link>
+                <link location="TC-Edit-a-mesh-with-topological-symmetry">Edit a mesh with topological symmetry</link>
+            </resourcelist>
+        </expanded>
+    </toolclip>
+    <toolclip key="uvTkSymmetryTextField" title="Symmetry" help="TC-nexSymTextField">
+        <text>Activates symmetry.</text>
+        <expanded>
+            <resourcelist>
+                <video location="Symmetry_ActivateTopo.webm">Activate topological symmetry</video>
+                <link location="TC-Symmetrical-editing">Symmetrical editing</link>
+                <link location="TC-Activate-or-deactivate-symmetry">Activate or deactivate symmetry</link>
+                <link location="TC-Edit-multiple-shells-with-topological-symmetry">Edit multiple shells with topological symmetry</link>
+                <link location="TC-Edit-a-mesh-with-topological-symmetry">Edit a mesh with topological symmetry</link>
+            </resourcelist>
+        </expanded>
+    </toolclip>
+    <toolclip key="SymmetrizeBtn" title="Symmetrize" help="TC-SymmetrizeUVs">
+        <text>Mirror selected UV layouts across an axis.
+Shift + LMB: Options</text>
+        <expanded>
+            <default-resource index="1"/>
+            <resourcelist>
+                <video location="UV_Symmetrize_command.webm">Symmetrize UVs</video>
+                <link location="TC-SymmetrizeUVs">Symmetrize UVs</link>
+                <link location="TC-ModifyMenu">Modify > Symmetrize</link>
+            </resourcelist>
+        </expanded>
+    </toolclip>
+    <toolclip key="uvTkSelConstLabel" title="UV Selection Constraints" help="TC-Select_Tool">
+         <text>Limits the selections that can be made in the UV Editor.</text>
+         <expanded>
+             <default-resource index="1"/>
+             <resourcelist>
+                 <video location="uv_selection_constraints.webm">UV Selection Constraints</video>
+                 <link location="TC-Select_Tool">Select Tool > Selection Constraint</link>
+             </resourcelist>
+         </expanded>
+    </toolclip>
+    <toolclip key="uvTkSelConstPopupButton" title="UV Selection Constraints" help="TC-Select_Tool">
+         <text>Limits the selections that can be made in the UV Editor.</text>
+         <expanded>
+             <default-resource index="1"/>
+             <resourcelist>
+                 <video location="uv_selection_constraints.webm">UV Selection Constraints</video>
+                 <link location="TC-Select_Tool">Select Tool > Selection Constraint</link>
+             </resourcelist>
+         </expanded>
+    </toolclip>
+    <toolclip key="uvTkSelConstTextField" title="UV Selection Constraints" help="TC-Select_Tool">
+         <text>Limits the selections that can be made in the UV Editor.</text>
+         <expanded>
+             <default-resource index="1"/>
+             <resourcelist>
+                 <video location="uv_selection_constraints.webm">UV Selection Constraints</video>
+                 <link location="TC-Select_Tool">Select Tool > Selection Constraint</link>
+             </resourcelist>
+         </expanded>
+    </toolclip>
+  <toolclip key="uvTkTranConstLabel" title="Transform Constraints" help="TC-nextranConstLabel">
+    <text>Restrict transformations to the edges of the selected mesh. Hold Ctrl+Shift while using the Move, Rotate or Scale UV tools to temporarily constrain to edges.</text>
+  </toolclip>
+  <toolclip key="uvTkTranConstPopupButton" title="Transform Constraints" help="TC-nextranConstPopupButton">
+    <text>Restrict transformations to the edges of the selected mesh. Hold Ctrl+Shift while using the Move, Rotate or Scale UV tools to temporarily constrain to edges.</text>
+  </toolclip>
+  <toolclip key="uvTkTranConstTextField" title="Transform Constraints" help="TC-nextranConstTextField">
+    <text>Restrict transformations to the edges of the selected mesh. Hold Ctrl+Shift while using the Move, Rotate or Scale UV tools to temporarily constrain to edges.</text>
+  </toolclip>
+  <toolclip key="uvTkPinFrame" title="Pin Tool" help="PinUVTool">
+        <text>Locks affected vertices so they cannot be modified.</text>
+        <expanded>
+            <default-resource index="1"/>
+            <resourcelist>
+                <video location="UV_PinTool.webm">Pin UVs</video>
+                <link location="PinUVTool">Pin UV Tool</link>
+            </resourcelist>
+        </expanded>
+    </toolclip>
+    <toolclip key="uvTkTransformFrame" title="Transform" help="UVToolkit">
+             <text>Transform UVs in a region</text>
+      
+             <expanded>
+                 <default-resource index="1"/>
+                 <resourcelist>
+                     <video location="uv_distribute.webm">Distribute</video>
+                     <video location="uv_texel_density.webm">Texel Density</video>
+                 </resourcelist>
+             </expanded>
+    </toolclip>  
+    <toolclip key="uvTkMoveToolsFrame" title="UV Transform Tools" help="UVToolkit">
+         <text>Transform UVs in a region by dragging.</text>
+  
+         <expanded>
+             <default-resource index="1"/>
+             <resourcelist>
+                 <video location="UV_grab.webm">Grab UVs</video>
+                 <video location="uv_lattice_tool.webm">Pinch UVs</video>
+                 <video location="UV_pinch.webm">Pinch UVs</video>
+                 <video location="uv_smear_tool.webm">Smear UV Tool</video>
+                 <video location="uv_symmetrize_tool.webm">Symmetrize UVs</video>
+                 <link location="GrabUVTool">Grab UV Tool</link>
+                 <link location="TC-Modify_UV_Lattice">Modify UVs using the UV Lattice Tool</link>
+                 <link location="PinchUVTool">Pinch UV Tool</link>
+                 <link location="SmearUVTool">Smear UV Tool</link>
+                 <link location="TC-SymmetrizeUVs">Symmetrize UVs</link>
+                <link location="SymmetrizeUVTool">Symmetrize UV Tool</link>
+             </resourcelist>
+         </expanded>
+    </toolclip>
+     <toolclip key="uvTkCutSewFrame" title="UV Cut and Sew" help="UVToolkit">
+          <text>Create or join UV seams.</text>
+   
+        <expanded>
+            <default-resource index="1"/>
+            <resourcelist>
+                <video location="uv_cut_tool.webm">Cut Tool</video>
+                <video location="uv_sew_tool.webm">Sew Tool</video>
+                <video location="uv_stitch_together.webm">Stitch Together</video>
+                <link location="TC-Separate_Attach_UVs">Separate and attach UVs</link>                      
+                <link location="CutUVTool">Cut Tool</link>
+                <link location="SewUVTool">Sew Tool</link>
+            </resourcelist>
+        </expanded>
+     </toolclip>
+     <toolclip key="uvTkUnfoldFrame" title="Unfold" help="UVToolkit">
+          <text>Untangles and spreads out UVs.</text>
+   
+          <expanded>
+              <default-resource index="1"/>
+              <resourcelist>
+                  <video location="uv_optimize.webm">Optimize</video>
+                  <video location="uv_optimize_tool.webm">Optimize Tool</video>
+                  <video location="uv_unfold.webm">Unfold</video>
+                  <video location="uv_unfold_tool.webm">Unfold Tool</video>
+                  <video location="uv_straighten.webm">Straighten UVs</video>
+                  <video location="uv_straighten_shell.webm">Straighten Shell</video>
+                  <link location="TC-Optimize_UV_Spacing">Optimizing UVs</link>
+                  <link location="TC-Unfolding_UV_Mesh">Unfolding a UV Mesh</link>
+                  <link location="UnfoldBrush">Unfold UV and Optimize UVs Tools</link>
+                  <link location="TC-Straighten_UVs">Straighten UVs</link>
+        
+              </resourcelist>
+          </expanded>
+     </toolclip>
+     <toolclip key="uvTkAlignSnapFrame" title="Align and Snap" help="UVToolkit">
+          <text>Align UVs and shells relative to each other.</text>
+   
+          <expanded>
+              <default-resource index="1"/>
+              <resourcelist>
+                  <video location="uv_left_justify.webm">Left Justify</video>
+                  <video location="uv_mid_U_justify.webm">Middle Justify (Horizontal)</video>
+                  <video location="uv_right_justify.webm">Right Justify</video>
+                  <video location="uv_top_justify.webm">Top Justify</video>
+                  <video location="uv_mid_V_justify.webm">Middle Justify (Vertical)</video>
+                  <video location="uv_bottom_justify.webm">Bottom Justify</video>
+                  <video location="uv_snap_together.webm">Snap Together</video>
+                  <video location="uv_snap_stack.webm">Snap and Stack</video>
+                  <video location="uv_match_grid.webm">Match Grid</video>
+                  <video location="uv_normalize.webm">Normalize UVs</video>
+                  <link location="PolyGridUV">Match Grid options</link>
+                  <link location="NormalizeUVs">Normalize UVs options</link>
+              </resourcelist>
+          </expanded>
+     </toolclip>
+     <toolclip key="uvTkArrangeLayoutFrame" title="Arrange and Layout" help="UVToolkit">
+          <text>Arrange UV shells to maximize usage of the UV space.</text>
+   
+          <expanded>
+              <default-resource index="1"/>
+              <resourcelist>
+                  
+                  <video location="uv_orient.webm">Orient Shells</video>
+                  <video location="uv_stack_shells.webm">Stack Shells</video>
+                  <video location="uv_stack_orient.webm">Stack and Orient Shells</video>
+                  <video location="uv_unstack_shells.webm">Unstack Shells</video>
+                  <video location="uv_gather.webm">Gather Shells</video>
+                  <video location="uv_randomize.webm">Randomize Shells</video>
+                  <video location="uv_measure.webm">Measure</video>
+                  <video location="uv_layout_shells.webm">Layout Shells</video>
+                   <video location="uv_layout_along.webm">Layout Along</video>
+                  <link location="LayoutUVs">Layout UVs options</link>
+              </resourcelist>
+          </expanded>
+     </toolclip>
+</toolclips>

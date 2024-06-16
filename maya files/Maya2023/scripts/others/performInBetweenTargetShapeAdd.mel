@@ -1,0 +1,322 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//  Description:
+//      This script provides an option box dialog for the add in-between target shape command.
+//
+//
+//  Procedure Name:
+//      setOptionVars
+//
+//  Description:
+//		Initialize the option values.
+//
+//  Input Arguments:
+//		Whether to set the options to default values.
+//
+//  Return Value:
+//      None.
+//
+proc setOptionVars(int $forceFactorySettings)
+{
+	optionVar -init $forceFactorySettings -category "Shape Editor.Add In-Between Target"
+		-iv shapeEditorAddInBetweenType 1
+		-iv shapeEditorAddInBetweenWeightOption 0
+		-fv shapeEditorAddInBetweenWeightValue 0.0
+		-iv shapeEditorAddInBetweenTopo 1
+		;
+}
+
+//
+//  Procedure Name:
+//      shapeEditorAddInBetweenSetup
+//
+//  Description:
+//		Update the state of the option box UI to reflect the option values.
+//
+//  Input Arguments:
+//      parent               - Top level parent layout of the option box UI.
+//                             Required so that UI object names can be 
+//                             successfully resolved.
+//
+//	forceFactorySettings - Whether the option values should be set to
+//                             default values.
+//
+//  Return Value:
+//      None.
+//
+global proc shapeEditorAddInBetweenSetup(string $parent, int $forceFactorySettings)
+
+{
+	setOptionVars($forceFactorySettings);
+	setParent $parent;
+
+	int $inBetweenType = `optionVar -query shapeEditorAddInBetweenType`;
+	radioButtonGrp -edit -select $inBetweenType shapeEditorAddInBetweenTypeRadio;
+	
+	int $weightOption = `optionVar -query shapeEditorAddInBetweenWeightOption`;
+	if($weightOption == 0)
+	{
+		radioButtonGrp -edit -select 1 shapeEditorAddInBetweenCurrentWeightRadio;
+	}
+	else if($weightOption == 1)
+	{
+		radioButtonGrp -edit -select 1 shapeEditorAddInBetweenCustomWeightRadio;
+	}
+	
+	$val = `optionVar -query shapeEditorAddInBetweenWeightValue`;
+	floatSliderGrp	-edit -v $val shapeEditorAddInBetweenWeightField;
+	floatSliderGrp	-edit -enable $weightOption shapeEditorAddInBetweenWeightField;
+		
+	int $checkTopo=`optionVar -q shapeEditorAddInBetweenTopo`;
+	checkBoxGrp -edit -v1 $checkTopo shapeEditorAddInBetweenTopoWidget;
+}
+
+//
+//  Procedure Name:
+//      shapeEditorAddInBetweenCallback
+//
+//  Description:
+//		Update the option values with the current state of the option box UI.
+//
+//  Input Arguments:
+//      action - indicate if add target or add selection as target.
+//      parent - Top level parent layout of the option box UI.  Required so
+//               that UI object names can be successfully resolved.
+//	    doIt   - Whether the command should execute.
+//
+//  Return Value:
+//      None.
+//
+global proc shapeEditorAddInBetweenCallback(int $action, string $parent, int $doIt)
+{
+	setParent $parent;
+	
+	int $inBetweenType = `radioButtonGrp -q -sl shapeEditorAddInBetweenTypeRadio`;
+	optionVar -intValue shapeEditorAddInBetweenType $inBetweenType;
+	
+	int $currentWeightOption = `radioButtonGrp -q -sl shapeEditorAddInBetweenCurrentWeightRadio`;
+	if( $currentWeightOption == 1 )
+	{
+		optionVar -intValue shapeEditorAddInBetweenWeightOption 0;
+	}
+	else if( $currentWeightOption == 0)
+	{
+		optionVar -intValue shapeEditorAddInBetweenWeightOption 1;
+	}
+
+	float $floatVal= `floatSliderGrp -q -v shapeEditorAddInBetweenWeightField`;
+	optionVar -floatValue shapeEditorAddInBetweenWeightValue $floatVal;
+	
+	int $checkTopo = `checkBoxGrp -q -v1 shapeEditorAddInBetweenTopoWidget`;
+	optionVar -intValue shapeEditorAddInBetweenTopo $checkTopo;
+
+	if ($doIt)
+	{
+		performInBetweenTargetShapeAdd ($action-1);
+		string $cmd = "performInBetweenTargetShapeAdd " + string($action-1);
+		addToRecentCommandQueue $cmd "InBetweenTargetShapeAdd";
+	}
+}
+
+//
+//  Procedure Name:
+//      shapeEditorAddInBetweenOptions
+//
+//  Description:
+//		Construct the option box UI.  Involves accessing the standard option
+//		box and customizing the UI accordingly.
+//
+//  Input Arguments:
+//      action - indicate if add in-between target or add selection as in-between target.
+//
+//  Return Value:
+//      None.
+//
+proc shapeEditorAddInBetweenOptions(int $action)
+{
+	string $commandName = "shapeEditorAddInBetween";
+	string $callback = ($commandName + "Callback");
+	string $setup = ($commandName + "Setup");
+	string $layout = getOptionBox();
+	setParent $layout;
+	setUITemplate -pushTemplate DefaultTemplate;
+	waitCursor -state 1;
+
+	tabLayout -tabsVisible 0 -scrollable 1;
+
+	string $parent = `columnLayout -adjustableColumn 1`;
+
+	radioButtonGrp -label (uiRes("m_performInBetweenTargetShapeAdd.kTargetType")) 
+		-numberOfRadioButtons 2
+		-label1 (uiRes("m_performInBetweenTargetShapeAdd.kAbsolute"))
+		-label2 (uiRes("m_performInBetweenTargetShapeAdd.kRelative")) 
+		-select 1
+	shapeEditorAddInBetweenTypeRadio ;
+				
+	radioButtonGrp -numberOfRadioButtons 1 
+		-label (uiRes("m_performInBetweenTargetShapeAdd.kInBetweenTargetWeight"))
+		-label1 (uiRes("m_performInBetweenTargetShapeAdd.kCurrentWeight"))
+	shapeEditorAddInBetweenCurrentWeightRadio;
+
+	radioButtonGrp -numberOfRadioButtons 1
+		-label1 (uiRes("m_performInBetweenTargetShapeAdd.kCustom"))
+		-shareCollection shapeEditorAddInBetweenCurrentWeightRadio
+		-onCommand1 "floatSliderGrp -e -enable 1 shapeEditorAddInBetweenWeightField;"
+		-offCommand1 "floatSliderGrp -e -enable 0 shapeEditorAddInBetweenWeightField;"
+	shapeEditorAddInBetweenCustomWeightRadio;
+
+	floatSliderGrp
+		-enable `optionVar -query shapeEditorAddInBetweenWeightOption` 
+		-field true 
+		-v 0 
+		-min -10 
+		-max 10 
+		-precision 3
+		shapeEditorAddInBetweenWeightField;
+
+	separator;
+
+	checkBoxGrp
+		-label1 (uiRes("m_performInBetweenTargetShapeAdd.kCheckTopology")) 
+		-numberOfCheckBoxes 1
+		-v1 0
+		shapeEditorAddInBetweenTopoWidget;
+		
+	waitCursor -state 0;
+
+	setUITemplate -popTemplate;
+
+	string $applyBtn = getOptionBoxApplyBtn();
+	button -edit
+		-command ($callback + " " + $action + " " + $parent + " " + 1)
+		$applyBtn;
+	string $saveBtn = getOptionBoxSaveBtn();
+	button -edit 
+		-command ($callback + " " + $action + " " + $parent + " " + 0 + "; hideOptionBox")
+		$saveBtn;
+	string $resetBtn = getOptionBoxResetBtn();
+	button -edit 
+		-command ($setup + " " + $parent + " " + 1)
+		$resetBtn;
+
+	setOptionBoxTitle (uiRes("m_performInBetweenTargetShapeAdd.kAddInBetweenBlendShapeTargetOptions"));
+	setOptionBoxHelpTag( "EditBlendShapeInBetweenAdd" );
+	eval (($setup + " " + $parent + " " + 0));
+	showOptionBox();
+}
+
+//
+//  Procedure Name:
+//      assembleShapeEditorCmd
+//
+//  Description:
+//		Construct the command that will apply the option box values.
+//
+//  Input Arguments:
+//      action - indicate if add in-between target or add selection as in-between target.
+//
+//  Return Value:
+//      None.
+//
+proc string assembleShapeEditorCmd(int $action)
+{
+	string $cmd = "";
+	setOptionVars(false);
+
+	string $bsNodeName = getBlendShapeForAddTarget();
+	if($bsNodeName != "")
+	{
+		string $selectedList[];
+		string $heroTargetIndex = -1;
+		// One hero target is selected
+		if(size(getShapeEditorTreeviewSelection(14)) == 1)
+		{
+			$selectedList = getShapeEditorTreeviewSelection(14);
+		}
+		// One existing in-between target is selected.
+		if(size(getShapeEditorTreeviewSelection(16)) == 1)
+		{
+			$selectedList = getShapeEditorTreeviewSelection(16);
+		}
+		
+		// Get the target index of the hero target to add in-between.
+		string $array[] = stringToStringArray($selectedList[0], ".");
+		$heroTargetIndex = $array[1];
+		
+		int $inbetweenType = `optionVar -q shapeEditorAddInBetweenType`;
+		$inbetweenType = $inbetweenType - 1; // radioButtonGrp's selection is 1 based integer
+		
+		int $weightOption = `optionVar -q shapeEditorAddInBetweenWeightOption`;
+		float $maximumInfluenceWeight;
+		if($weightOption == 0)
+		{
+			// Get the current weight value of hero target to add in-between
+			string $weightAttr = $bsNodeName + ".weight[" + $heroTargetIndex + "]";
+			$maximumInfluenceWeight = `getAttr $weightAttr`;
+		}
+		else if($weightOption == 1)
+		{
+			$maximumInfluenceWeight = `optionVar -q shapeEditorAddInBetweenWeightValue`;
+		}
+		// Round off the weight value to three decimal number, it is a limit of blendshape. 
+		$maximumInfluenceWeight = blendShapeWeightRoundoff($maximumInfluenceWeight, 3);
+		
+		int $checkTopo = `optionVar -q shapeEditorAddInBetweenTopo`;
+		
+		int $selection = $action;
+		if($action)
+			$cmd = "doBlendShapeAddSelectionAsInBetweenTarget " + $bsNodeName + " " + $checkTopo + " " + $heroTargetIndex + " " + $maximumInfluenceWeight + " " + $inbetweenType;
+		else
+		{
+			$cmd = "string $targetShapes[]; doBlendShapeAddInBetweenTarget " + $bsNodeName + " " + $checkTopo + " " + $heroTargetIndex + " " + $maximumInfluenceWeight + " " + $inbetweenType + " $targetShapes";
+		}
+	}
+	return $cmd;
+}
+
+//
+//  Procedure Name:
+//      performInBetweenTargetShapeAdd
+//
+//  Description:
+//		Perform the targetShapeAdd command using the corresponding 
+//		option values.  This procedure will also show the option box
+//		window if necessary as well as construct the command string
+//		that will invoke the targetShapeAdd command with the current
+//		option box values.
+//
+//  Input Arguments:
+//      0 - Execute add target command.
+//      1 - Show shape editor add option box dialog.
+//      2 - Execute add selection as target command.
+//      3 - Show shape editor add option box dialog.
+//
+global proc string performInBetweenTargetShapeAdd(int $action)
+{
+	string $cmd = "";
+
+	switch ($action) {
+	case 0:
+		$cmd = `assembleShapeEditorCmd $action`; 
+		eval($cmd);
+		break;
+	case 1:
+		shapeEditorAddInBetweenOptions $action;
+		break;
+	case 2:
+		$cmd = `assembleShapeEditorCmd $action`; 
+		eval($cmd);
+		break;
+	case 3:
+		shapeEditorAddInBetweenOptions $action;
+		break;
+	}
+	return $cmd;
+}
+

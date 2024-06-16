@@ -1,0 +1,176 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+
+//****************************************************************************
+//	Builds the Maya "Render" menu (code was taken from RenRenderMenu.mel).
+//****************************************************************************
+
+global proc mayaRenderMenu(string $parent)
+{
+	setParent -m $parent;
+
+    verifyCurrentRenderer();
+
+	//
+	//	Make the dynamic 'render resolution choice' sub menu.
+	//
+	$subName = `menuItem -subMenu true -label (uiRes("m_mayaRenderMenu.kTestResolution")) `;
+	menuItem -e
+			 -pmc ("renderWindowMakeResolutionItem "+$subName+" "+$parent)
+			 $subName;
+	setParent -m ..;
+	
+	menuItem -rtc "PerformTessellationSetup";
+		menuItem -optionBox true
+			-rtc "PerformTessellationSetupOptions";
+
+	string $cmd = "RenderDiagnostics";
+	menuItem -rtc $cmd
+        diagnosticMenuItem;
+	
+	menuItem -rtc "PerformPrecompExport";
+		menuItem -optionBox true -rtc "PerformPrecompExportOptions";
+
+	menuItem -divider true -dividerLabel (uiRes("m_mayaRenderMenu.kRenderRendering"));
+	
+	// -- Render Current Frame --
+	$cmd = "RenderIntoNewWindow";
+	menuItem -rtc $cmd renderCurrentFrameMenuItem;
+
+		$cmd = "RenderOptions";
+		menuItem -optionBox true -rtc $cmd renderOptionBoxMenuItem;
+	
+	$cmd = "RedoPreviousRender";
+	menuItem -rtc $cmd redoRenderItem;
+
+	$cmd = "IPRRenderIntoNewWindow";
+	menuItem -rtc $cmd iprRenderWindowItem;
+		$cmd = "IPROptions";
+		menuItem -optionBox true -c $cmd
+			-annotation (getRunTimeCommandAnnotation($cmd))
+			-label (uiRes("m_mayaRenderMenu.kIPROptionBox"))  iprOptionBoxMenuItem;
+
+	$cmd = "RedoPreviousIPRRender";
+	menuItem -rtc $cmd redoIprRenderItem;
+
+	$cmd = "RenderSequence";
+	menuItem -version 2017 -rtc $cmd renderSequenceItem;
+		menuItem -optionBox true -rtc "RenderSequenceOptions" renderSequenceOptionBoxMenuItem;
+
+	setRenderOptionVars;
+
+	menuItem -divider true -dividerLabel (uiRes("m_mayaRenderMenu.kRenderBatchRender"));
+
+	// If the render globals is specifying an animation that have the
+	// menu item show this.
+	//
+	$cmd = "BatchRender";
+	menuItem -rtc $cmd batchRenderMenuItem;
+		$cmd = "BatchRenderOptions";
+		menuItem -optionBox true -rtc $cmd batchRenderOptionBoxMenuItem;
+			
+	$cmd = "CancelBatchRender";
+	menuItem -rtc $cmd cancelBatchRenderMenuItem;
+
+	$cmd = "ShowBatchRender";
+	menuItem -rtc $cmd showBatchRenderMenuItem;
+
+	menuItem -rtc "PerformExportToBackburner";
+    
+    // Update the render menu.
+    //
+    updateMayaRenderMenu($parent);
+}
+
+// Description:  Update the mayaRenderMenu.
+//
+global proc updateMayaRenderMenu(string $parent)
+{
+	setParent -m $parent;
+
+	int $rendererAvailable = true;
+	string $currentRenderer = currentRenderer();
+	if (!`renderer -exists ($currentRenderer)`)
+	{
+		$rendererAvailable = false;
+	}
+
+    // Update render current frame and redo previous render menuItems. 
+    //
+    int $featureAvailable = true; 
+    if (!$rendererAvailable || `renderer -q -renderProcedure ($currentRenderer)` == "")
+    {
+        $featureAvailable = false;
+    }
+    menuItem -edit -enable $featureAvailable renderCurrentFrameMenuItem;
+    menuItem -edit -enable $featureAvailable redoRenderItem;
+    
+    // Update IPR render current frame and redo previous IPR render menuItems. 
+    //
+    $featureAvailable = true; 
+    if (!$rendererAvailable || `renderer -q -iprRenderProcedure ($currentRenderer)` == "")
+    {
+        $featureAvailable = false;
+    }
+    menuItem -edit -enable $featureAvailable iprRenderWindowItem;
+    menuItem -edit -enable $featureAvailable redoIprRenderItem;
+
+    // Update render diagnostics menuItem. 
+    //
+    $featureAvailable = true;
+    if (!$rendererAvailable || `renderer -q -renderDiagnosticsProcedure ($currentRenderer)` == "")
+    {
+        $featureAvailable = false;
+    }
+    menuItem -edit -enable $featureAvailable diagnosticMenuItem;
+
+    // Update batch render menuItem. 
+    //
+    $featureAvailable = true;
+    if (!$rendererAvailable || `renderer -q -batchRenderProcedure ($currentRenderer)` == "")
+    {
+        $featureAvailable = false;
+    }
+    menuItem -edit -enable $featureAvailable batchRenderMenuItem;
+
+    // Update batch render options box menuItem. 
+    //
+    $featureAvailable = true;
+    if (!$rendererAvailable || `renderer -q -batchRenderOptionsProcedure ($currentRenderer)` == "")
+    {
+        $featureAvailable = false;
+    }
+	menuItem -e -enable $featureAvailable batchRenderOptionBoxMenuItem;
+
+    // Update cancel batch render menuItem. 
+    //
+    $featureAvailable = true;
+    if (!$rendererAvailable || `renderer -q -cancelBatchRenderProcedure ($currentRenderer)` == "")
+    {
+        $featureAvailable = false;
+    }
+    menuItem -edit -enable $featureAvailable cancelBatchRenderMenuItem;
+
+    // Update cancel batch render menuItem. 
+    //
+    $featureAvailable = true;
+    if (!$rendererAvailable || `renderer -q -batchRenderProcedure ($currentRenderer)` == "")
+    {
+        $featureAvailable = false;
+    }
+    menuItem -edit -enable $featureAvailable batchRenderMenuItem;
+
+    // Update show batch render menuItem. 
+    //
+    $featureAvailable = true;
+    if (!$rendererAvailable || `renderer -q -showBatchRenderProcedure (currentRenderer())` == "")
+    {
+        $featureAvailable = false;
+    }
+	menuItem -e -enable $featureAvailable showBatchRenderMenuItem;
+}

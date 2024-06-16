@@ -1,0 +1,44 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  2005
+//
+//  Description:
+//		
+//
+
+global proc string[] getCacheBlend( string $currObjList[], 
+									string $replaceMode )
+{
+	string $cacheBlend[];
+	string $noBlend[];
+	string $currBlend[];
+	string $newBlends[];
+	for ($currObj in $currObjList) {
+		$currBlend = `cacheFileCombine -q -ln $currObj`;
+		if (size($currBlend) == 0) {
+			$noBlend[size($noBlend)] = $currObj;
+		}
+	}
+	if ($replaceMode != "replace" && size($noBlend) > 0) {
+		string $addBlendObjs[];
+		for ($currObj in $noBlend) {
+			string $caches[] = `findExistingCaches($currObj)`;
+			if (size($caches) > 0) {
+				$addBlendObjs[size($addBlendObjs)] = $currObj;
+			}
+		}
+		if (size($addBlendObjs) > 0) {
+			cacheFileCombine $addBlendObjs;
+			$newBlends = `cacheFileCombine -q -ln $addBlendObjs`;
+		}
+	}
+	$cacheBlend = stringArrayCatenate($newBlends,$currBlend);
+	return $cacheBlend;	
+}

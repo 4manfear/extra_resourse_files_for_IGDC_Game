@@ -1,0 +1,36 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+ 
+global proc blendShapeResetTargetDelta(string $bsn, 
+										int $heroTargetIndex, 
+										int $inBetweenTargetIndex ) 
+// 
+// Description:
+//     Remove all the vertex delta at the specific target item. 
+// 
+// Input:
+//     $bsn: 	    			name of the blendShape node. 
+//     $heroTargetIndex:    	hero target.
+//     $inBetweenTargetIndex: 	delta on this target will be reset.
+//
+{ 
+	$tempAttr = $bsn + ".inputTarget";
+	$baseIndices = getAttr("-mi", $tempAttr);
+	if (size($baseIndices) <= 0)
+		return; 
+		
+	$cmd = "blendShape -e ";
+	for ($baseIndex in $baseIndices)				
+	{ 
+		$cmd += " -rtd " + $baseIndex + " " + $heroTargetIndex; 
+		$cmd += " -ibi " + $inBetweenTargetIndex;
+	}
+	$cmd += " " + $bsn; 
+	eval $cmd;
+}
+

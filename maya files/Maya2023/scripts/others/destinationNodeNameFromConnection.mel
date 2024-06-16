@@ -1,0 +1,29 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+// This is a simple function to return the first
+// node connected to from an attribute, returning
+// an empty string if there is no connection.
+
+global proc string destinationNodeNameFromConnection( string $source )
+{
+	string $outStr = "";
+	if( !`connectionInfo -is $source` ){
+		return $outStr;
+	}
+	string $con[] = `connectionInfo -dfs $source`;
+	// There is likely a more efficient way of doing
+	// this than the following tokenization.
+	if( size( $con ) > 0 ){
+		string $buffer[];
+		int $numTokens = `tokenize $con[0] "." $buffer`;
+		if( $numTokens > 1 ){
+			$outStr =  $buffer[0];
+		}
+	}
+	return $outStr;
+}

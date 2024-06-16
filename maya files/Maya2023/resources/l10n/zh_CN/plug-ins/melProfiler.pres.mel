@@ -1,0 +1,34 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+// Resources for Plug-in: melProfiler
+// 
+// ----------------------------
+// Registered string resources:
+// ----------------------------
+setPluginResource( "melProfiler", "kArgTypeAlias", "锯齿");
+setPluginResource( "melProfiler", "kArgTypeCommand", "命令");
+setPluginResource( "melProfiler", "kArgTypeEntered", "以交互方式输入 MEL 程序。");
+setPluginResource( "melProfiler", "kArgTypeMelProc", "在 ^1s 中找到 MEL 程序");
+setPluginResource( "melProfiler", "kArgTypeNoDefinition", "推测的 MEL 程序或插件命令: 当前无任何定义可用。");
+setPluginResource( "melProfiler", "kArgTypeScript", "在 ^1s 中找到脚本");
+setPluginResource( "melProfiler", "kArgTypeUnknown", "未知");
+setPluginResource( "melProfiler", "kArgTypeVariable", "^1s 变量");
+setPluginResource( "melProfiler", "kAverageCallTime", "平均调用时间(毫秒):");
+setPluginResource( "melProfiler", "kNumberOfCalls", "调用数量");
+setPluginResource( "melProfiler", "kPercentOfRunTime", "运行时百分比");
+setPluginResource( "melProfiler", "kProcLocation", "程序位置");
+setPluginResource( "melProfiler", "kProcName", "程序名称");
+setPluginResource( "melProfiler", "kSelfTime", "自时间(毫秒):");
+setPluginResource( "melProfiler", "kTotalTIme", "总时间(毫秒):");
+// 
+// --------------------------
+// Registered node resources:
+// --------------------------
+// 
+//  (Plugin has no registered nodes)
+// 

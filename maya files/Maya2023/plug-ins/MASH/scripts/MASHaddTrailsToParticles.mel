@@ -1,0 +1,46 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//  Procedure Name:
+//  MASHaddTrailsToParticles
+//
+//  Description;
+//  Adds a MASH Trails node to the selected Particles or nParticles.
+//
+
+global proc MASHaddTrailsToParticles()
+{
+
+    string $sel[] = `ls -sl`;
+    int $addedTrails = 0;
+    for ($obj in $sel) {
+        string $particleNode;
+
+        string $type = `nodeType $obj`;
+        string $shapes[];
+        $shapes = `listRelatives -shapes $obj`;
+
+        if (`nodeType $obj` == "nParticle" || $type == "particle") {
+            $particleNode = $obj;
+        } else if ((`size $shapes` > 0) && (`nodeType $shapes[0]` == "nParticle" || $type == "particle")) {
+            $particleNode = $shapes[0];
+        }
+
+        if (`size $particleNode` > 0) {
+            $addedTrails = 1;
+            string $trails = `createNode MASH_Trails`;
+            connectAttr -force ($particleNode+".position") ($trails+".positionInPP");
+        }
+
+    }
+
+    if (!$addedTrails) {
+        MASHinViewMessage((getPluginResource("MASH", "kSelectParticles")), "Warning");
+    }
+
+}

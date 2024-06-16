@@ -1,0 +1,92 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//	shelfButtonPMO.mel
+//
+//		The method shelfButtonPMO defines the post menu command that's called
+//	once the first time the rmb menu on a shelfButton is invoked.
+//
+//		Inputs:
+//			$popupMenu : name of popup menu for the shelfButton
+//			$wantPython : true iff we want Python (i.e., WANT_PYTHON is defined)
+//			$shelfButton : name of the shelfButton
+//			$shelfMagicString : magic string inserted as a comment before the 
+//								default menu item commands, so we can tell them
+//								apart.
+//
+//		The post menu command is used to add the default menu items (Open,
+//		Edit, Delete, and possibly others in the future) to the given
+//		popupMenu.
+//
+global proc shelfButtonPMO (string $popupMenu,
+							int $wantPython,
+							string $shelfButton,
+							string $shelfMagicString)
+{
+	// Check if the button is on UV Editor shelf
+	if(`shelfLayout -ex textureCustomShelf`)
+	{
+		$uvShelf = `shelfLayout -q -fpn textureCustomShelf`;
+		if(`shelfButton -q -p $shelfButton` == $uvShelf)
+		{
+		    textureWindowShelfButtonPMO($popupMenu, $shelfButton, $shelfMagicString);
+	        return;
+		}
+	}
+	setParent -m $popupMenu;
+
+	// Default menu items: labels, commands, and annotation strings
+	//
+	string $defaultItemLabels[] = {
+		  (uiRes("m_shelfButtonPMO.kOpenMenuItem"))
+		, (uiRes("m_shelfButtonPMO.kEditMenuItem"))
+		, (uiRes("m_shelfButtonPMO.kEditPopupMenuItem"))
+		, (uiRes("m_shelfButtonPMO.kDeleteMenuItem"))
+		};
+	string $defaultItemCommands[] = {
+		 $shelfMagicString +
+		"python(\"import maya.app.general.shelfEditorWindow as myTempSEW\\nmyTempSEW.doIt(selectedShelfButton='" +
+		$shelfButton + "',selectedTabIndex=1)\\ndel myTempSEW\")"
+		, $shelfMagicString +
+		"python(\"import maya.app.general.shelfEditorWindow as myTempSEW\\nmyTempSEW.doIt(selectedShelfButton='"
+		+ $shelfButton + "')\\ndel myTempSEW\")"
+		, $shelfMagicString +
+		"python(\"import maya.app.general.shelfEditorWindow as myTempSEW\\nmyTempSEW.doIt(selectedShelfButton='" +
+		$shelfButton + "',selectedTabIndex=4)\\ndel myTempSEW\")"
+		, $shelfMagicString + "evalDeferred( \"deleteUI -control "
+		+ $shelfButton + ";shelfTabRefresh\")"
+	};
+
+	string $defaultItemAnnots[] = {
+		(uiRes("m_shelfButtonPMO.kOpenMenuItemAnnot"))
+		, (uiRes("m_shelfButtonPMO.kEditMenuItemAnnot"))
+		, (uiRes("m_shelfButtonPMO.kEditPopupMenuItemAnnot"))
+		, (uiRes("m_shelfButtonPMO.kDeleteMenuItemAnnot"))
+		};
+
+	// Skip Open and Edit, and Edit Popup if we don't have Python, that is,
+    // start at the last item
+	//
+	int $numDefaultItems = size($defaultItemLabels);
+	int $firstItem = $wantPython?0:$numDefaultItems;
+
+	if( `popupMenu -q -ni $popupMenu` > 0 ){
+		// Need to insert the default items after any existing ones
+		//
+		menuItem -divider true;
+	}
+
+	int $i = $firstItem;
+	while( $i < $numDefaultItems ){
+		// Add a default item
+		//
+		menuItem -l $defaultItemLabels[$i] -c $defaultItemCommands[$i]
+				-ann $defaultItemAnnots[$i];
+		$i++;
+	}
+}

@@ -1,0 +1,15 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+// Returns the name of the clip ghost shape node that corresponds to the user-specified clip
+//
+global proc string getGhostShapeForClip( string $clip )
+{
+    string $nodes[] = `listConnections -type clipGhostShape -d 0 -s 1 $clip`;
+    return ( size($nodes) ) ? $nodes[0] : "";
+}

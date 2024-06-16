@@ -1,0 +1,55 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//<doc>
+//<name intArrayToString>
+//
+//<synopsis>
+//  string intArrayToString( int $array[], string $separationString )
+//
+//<description>
+//  Return a string that combines all the integer elements of $array,
+//  each separated by the separation string.
+//
+//<flags>
+//  int    $array[]          The integer array.
+//  string $separationString Defines the characters to place between 
+//                           each integer element.
+//
+//<returns>
+//  string : A string combining all the individual integer elements.
+//
+//
+//<examples>
+//
+//	intArrayToString( { 1, 2, 3 }, "");
+//	// Result: 123 //
+//
+//	intArrayToString({ 1, 2, 3 }, ", ");
+//	// Result: 1, 2, 3 //
+//
+//	intArrayToString({ 1, 2, 3 }, "/");
+//	// Result: 1/2/3 //
+//
+//</doc>
+//
+global proc string intArrayToString(int $array[], string $separationString)
+{
+	string $output = "";
+
+	int $count = size($array);
+	if ($count)
+	{
+		int $index;
+		$output = $array[0];
+		for ($index = 1; $index < $count; $index++)
+			$output += ($separationString + $array[$index]);
+	}
+
+	return $output;
+}

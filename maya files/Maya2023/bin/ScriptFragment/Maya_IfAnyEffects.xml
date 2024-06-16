@@ -1,0 +1,55 @@
+<!--
+Copyright 2016 Autodesk, Inc. All rights reserved. 
+
+Use of this software is subject to the terms of the Autodesk 
+license agreement provided at the time of installation or download, 
+or which otherwise accompanies this software in either electronic 
+or hard copy form.
+-->
+<fragment  uiName="Maya_IfAnyEffects" name="Maya_IfAnyEffects" type="sceneEffect" class="ScriptFragment" version="1.0" feature_level="0" >
+    <description>
+<![CDATA[
+]]>
+</description>
+    <properties>
+        <bool  name="ssaoEnabled" />
+        <bool  name="mbEnabled" />
+        <bool  name="dofEnabled" />
+        <countedObject  name="postEffectList" />
+        <countedObject  name="advancedEffectList" />
+    </properties>
+    <values>
+<bool name="dofEnabled" value="false"  />
+    </values>
+    <outputs>
+        <bool  name="anyEffects" />
+        <bool  name="noEffects" />
+    </outputs>
+    <parametershare>
+    </parametershare>
+    <implementation render="OGS" language="ScriptInterpreter" version="0.1" >
+        <scriptCommands>
+            <SetParameter name="@anyEffects" value="FALSE" />
+            <SetParameter name="@noEffects" value="FALSE" />
+            <Declare name="isPostEffectListEmpty" type="bool" />
+            <Call name="isListEmptyTwo" arg0="@postEffectList" arg1="@advancedEffectList" arg2="isPostEffectListEmpty" />
+            <IfNot value="isPostEffectListEmpty" />
+            <If value="@ssaoEnabled" />
+            <SetParameter name="@anyEffects" value="TRUE" />
+            <EndIf />
+            <If value="@mbEnabled" />
+            <SetParameter name="@anyEffects" value="TRUE" />
+            <EndIf />
+            <If value="@dofEnabled" />
+            <SetParameter name="@anyEffects" value="TRUE" />
+            <EndIf />
+            <EndIf />
+            <If value="@anyEffects" />
+            <SetParameter name="@noEffects" value="FALSE" />
+            <Else />
+            <SetParameter name="@noEffects" value="TRUE" />
+            <EndIf />
+        </scriptCommands>
+    </implementation>
+</fragment>
+

@@ -1,0 +1,735 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+// Creation Date:  14 July 1996
+//
+//  Procedure Name:
+//      EditMenu
+//
+//  Description:
+//		This procedure creates the main menubar Edit menu.
+//
+//  Input Arguments:
+//      Parent window that menu will be a part of.
+//
+//  Return Value:
+//      None.
+//
+
+
+global proc deleteSelectRigidBodies() 
+//
+//	Deletes all the rigid bodies associated
+//  with the selected items.
+//
+{
+   	string $selectedItems[] = `ls -sl`; 
+
+	for ($i = 0; $i < size( $selectedItems ); $i++)
+	{
+	     string	$leaves[] = `ls -dag -leaf -showType $selectedItems[$i]`;
+
+		// Delete all the selected rigid bodies.
+		//
+	    for ($j = 0; $j < size( $leaves ); $j += 2)
+	    {
+		    if ($leaves[$j+1] == "rigidBody")
+		    {
+			    delete $leaves[$j];
+		    }
+		}
+	}
+}
+
+global proc createCharacterMenu( string $parent )
+//
+//	Creates entries in the "Select Character" subMenu
+//	in the Edit Menu.
+{
+	setParent -m $parent;
+	menu -e -dai $parent;
+
+	// Get a list of all character sets in the
+	// system, then generate an entry per set
+	//
+	string $charSets[] = `ls -sets`;
+
+	for( $character in $charSets )
+	{
+		if( `sets -q -t $character` == "gCharacterSet" )
+		{
+			menuItem -label $character -c ( "select -r " + $character );
+		}
+	}
+
+	if( `menu -q -ni $parent` == 0 ) 
+	//
+	//	No characters defined - create a default menu item
+	//	to inform the user
+	{
+		menuItem -label (uiRes("m_buildEditMenu.kNoQuickSelect")) -enable false;
+	}
+}
+
+global proc editMenuUpdate( string $parent ) {
+
+	string $lastName;
+	string $repeat = (uiRes("m_buildEditMenu.kEditRepeat"));
+
+	// Get the name of the  recent command
+	if (`repeatLast -q -numberOfHistoryItems` <= 0) {
+		menuItem -e -label $repeat -enable false 
+			( $parent + "|lastAgainItem" );
+	} else {
+		string $label[] = `repeatLast -cnl 1`;
+		$label[0] = makeStringSingleLine( $label[0] );
+		$lastName = $repeat + " \"" + $label[0] + "\"";
+		menuItem -e -label $lastName -enable true ( $parent + "|lastAgainItem" );
+	}
+
+	// Update undo & redo
+	//
+	string $actions[] = {"undo", "redo"};
+	string $labels[] = {(uiRes("m_buildEditMenu.kEditUndo")),
+						(uiRes("m_buildEditMenu.kEditRedo"))};
+	string $annots[] = {(uiRes("m_buildEditMenu.kEditUndoAnnot")) ,
+						(uiRes("m_buildEditMenu.kEditRedoAnnot"))};
+	int $i = 0;
+	while( $i < 2 ){
+		string $info = `eval("undoInfo -q -" + $actions[$i] + "Name")`;
+		string $label = $labels[$i];
+		string $annot = $annots[$i];
+		if( $info != "" ){
+			$annot += ": " + $info;
+			// Truncate to 25 characters at most, to be consistent with the
+			// recent command item; see kREPEAT_COMMAND_NAME_MAX_LENGTH in
+			// TrepeateCommandCmd.cpp
+			//
+			string $tokens[];
+			int $numTokens = `tokenize $info $tokens`;
+			if( $numTokens > 1 ){
+				$info = $tokens[0];
+			}
+			if( size($info) > 25 ){
+				$info = startString( $info, 25 ) + "...";
+			}
+			$label += " \"" + $info + "\"";
+		}
+		menuItem -e -annotation $annot -label $label ( $parent + "|" + $actions[$i] + "Item" );
+		$i++;
+	}
+
+	//Deferring some menuItems in Edit menu for Fur plugin
+	//
+	if(`pluginInfo -q -loaded Fur`)
+	{
+		HfFurCreateEditMenuUI();
+	}
+}
+
+global proc buildEditMenu ( string $parent )
+{
+	string $cmd;
+	int $dimWhenNoSelect = 0;
+
+	menu -e -postMenuCommand ("editMenuUpdate(\"" + $parent + "\")") $parent;
+
+	setParent -menu $parent;
+
+	if( `menu -q -ni $parent` != 0 ) {
+		//
+		//  Menu is built already - just return
+		//
+		return;
+	}
+
+	string $isLocalizedTestString = (uiRes("m_buildEditMenu.kUndo"));
+
+	$cmd = "Undo";
+	menuItem 
+		-label 		`runTimeCommand -q -l $cmd`
+		-annotation `runTimeCommand -q -ann $cmd`
+		-ecr false
+		-command ($cmd) undoItem;
+	if( $dimWhenNoSelect )
+		dimWhen -f "UndoAvailable" ($parent+"|undoItem");
+
+	$cmd = "Redo";
+	menuItem 
+		-label `runTimeCommand -q -l $cmd`
+		-ecr false
+		-annotation `runTimeCommand -q -ann $cmd`
+		-command ($cmd) redoItem;
+	if( $dimWhenNoSelect )
+		dimWhen -f "RedoAvailable" ($parent+"|redoItem");
+
+	$cmd = "RepeatLast";
+	menuItem 
+		-label 		`runTimeCommand -q -l $cmd`
+		-annotation `runTimeCommand -q -ann $cmd`
+		-ecr false -enable false -command ($cmd)
+		lastAgainItem;
+	
+	scriptJob -permanent -parent $parent 
+		-event "RecentCommandChanged" ( "editMenuUpdate " + $parent );
+
+	scriptJob -permanent -parent $parent 
+		-event "Undo" ( "editMenuUpdate " + $parent );
+
+	scriptJob -permanent -parent $parent 
+		-event "Redo" ( "editMenuUpdate " + $parent );
+
+	$cmd = "RecentCommandsWindow";
+	menuItem 
+		-label 		`runTimeCommand -q -l $cmd`
+		-annotation `runTimeCommand -q -ann $cmd`
+		-ecr false 
+		-command ($cmd);
+
+	menuItem -divider true -ld false;
+
+	$cmd = "CutSelected";
+	menuItem
+		-label 		`runTimeCommand -q -l $cmd`
+		-annotation `runTimeCommand -q -ann $cmd`
+		-command ($cmd) cutItem;
+	
+	$cmd = "CopySelected";
+	menuItem 
+		-label 		`runTimeCommand -q -l $cmd`
+		-annotation `runTimeCommand -q -ann $cmd`
+		-command ($cmd) copyItem;
+	
+	$cmd = "PasteSelected";
+	menuItem 
+		-label 		`runTimeCommand -q -l $cmd`
+		-annotation `runTimeCommand -q -ann $cmd`
+		-command ($cmd) pasteItem;
+
+	//	Keys sub-menu.
+	//
+	menuItem -label (uiRes("m_buildEditMenu.kKeys")) -subMenu true -to true;
+		$cmd = "CutKeys";
+		menuItem
+			-label 		`runTimeCommand -q -l $cmd`
+			-annotation `runTimeCommand -q -ann $cmd`
+			-command ($cmd)
+			-dragMenuCommand "performCutKeyArgList 1 {\"2\", \"animationList\", \"0\"}" cutKeyItem;
+			$cmd = "CutKeysOptions";
+			menuItem -optionBox true 
+				-annotation (getRunTimeCommandAnnotation($cmd))
+				-command ($cmd)
+				cutKeyDialogItem;
+
+		$cmd = "CopyKeys";
+		menuItem 
+			-label 		`runTimeCommand -q -l $cmd`
+			-annotation `runTimeCommand -q -ann $cmd`
+			-command ($cmd)
+			-dragMenuCommand "performCopyKeyArgList 1 {\"2\", \"animationList\", \"0\"}" copyKeyItem;
+			$cmd = "CopyKeysOptions";
+			menuItem -optionBox true 
+				-annotation (getRunTimeCommandAnnotation($cmd))
+				-command ($cmd)
+				copyKeyDialogItem;
+
+		$cmd = "PasteKeys";
+		menuItem 
+			-label 		`runTimeCommand -q -l $cmd`
+			-annotation `runTimeCommand -q -ann $cmd`
+			-command ($cmd)
+			-dragMenuCommand "performPasteKeyArgList 1 {\"2\", \"animationList\", \"0\"}" pasteKeyItem;
+			$cmd = "PasteKeysOptions";
+			menuItem -optionBox true 
+				-annotation (getRunTimeCommandAnnotation($cmd))
+				-command ($cmd)
+				pasteKeyDialogItem;
+
+		$cmd = "DeleteKeys";
+		menuItem 
+			-label 		`runTimeCommand -q -l $cmd`
+			-annotation `runTimeCommand -q -ann $cmd`
+			-command ($cmd)
+			-dragMenuCommand "performClearKeyArgList 1 {\"2\", \"animationList\", \"0\", \"0\"}" clearKeyItem;
+			$cmd = "DeleteKeysOptions";
+			menuItem -optionBox true 
+				-annotation (getRunTimeCommandAnnotation($cmd))
+				-command ($cmd)
+				clearKeyDialogItem;
+
+		$cmd = "ScaleKeys";
+		menuItem 
+			-label 		`runTimeCommand -q -l $cmd`
+			-annotation `runTimeCommand -q -ann $cmd`
+			-command ($cmd)
+			-dragMenuCommand "performScaleKeyArgList 1 {\"2\", \"animationList\", \"0\"}" scaleKeyItem;
+			$cmd = "ScaleKeysOptions";
+			menuItem -optionBox true 
+				-annotation (getRunTimeCommandAnnotation($cmd))
+				-command ($cmd)
+				scaleKeyDialogItem;
+
+		$cmd = "SnapKeys";
+		menuItem 
+			-label 		`runTimeCommand -q -l $cmd`
+			-annotation `runTimeCommand -q -ann $cmd`
+			-command ($cmd)
+			-dragMenuCommand "performSnapKeyArgList 1 { \"2\", \"animationList\", \"0\" }" 
+			snapKeyItem;
+			$cmd = "SnapKeysOptions";
+			menuItem -optionBox true 
+				-annotation (getRunTimeCommandAnnotation($cmd))
+				-command ($cmd)
+				snapKeyDialogItem;
+
+		$cmd = "BakeSimulation";
+		menuItem 
+			-rtc ($cmd)
+			-dragMenuCommand "performBakeSimulationArgList 1 {\"2\", \"animationList\"}"
+			bakeSimulationItem;
+			$cmd = "BakeSimulationOptions";
+			menuItem -optionBox true 
+				-annotation (getRunTimeCommandAnnotation($cmd))
+				-command ($cmd)
+				bakeSimulationDialogItem;
+	    setParent -menu ..;
+			
+	menuItem -divider true -dividerLabel (uiRes("m_buildEditMenu.kEditDelete"));
+
+	$cmd = "Delete";
+	menuItem 
+		-label 		`runTimeCommand -q -l $cmd`
+		-annotation `runTimeCommand -q -ann $cmd`
+		-command ($cmd) clearItem;
+	if( $dimWhenNoSelect )
+		dimWhen -f "SomethingSelected" ($parent+"|clearItem");
+
+	//	Delete by Type sub-menu.
+	//
+	deleteByTypeSubMenu("");
+
+	//	Delete all by Type sub-menu.
+	//
+	if( $dimWhenNoSelect )
+		dimWhen -f "SomethingSelected" ($parent+"|clearActiveItem");
+
+	global string $gEditDeleteAllByTypeSubMenu;
+	$gEditDeleteAllByTypeSubMenu = `menuItem 
+		-label (uiRes("m_buildEditMenu.kDeleteAllByType"))
+		-subMenu true -allowOptionBoxes false 
+		-to true clearAllTypesItem`;
+		
+		$cmd = "DeleteAllHistory";
+		menuItem 
+			-label 		`runTimeCommand -q -l $cmd`
+			-annotation `runTimeCommand -q -ann $cmd`
+			-command ($cmd)
+			clearAllHistoryTypesItem;
+
+		$cmd = "BakeAllNonDefHistory";
+		menuItem 
+			-label 		`runTimeCommand -q -l $cmd`
+			-annotation `runTimeCommand -q -ann $cmd`
+			-c $cmd deleteAllNonDefHistoryItem;
+		
+		menuItem -divider true;
+
+		$cmd = "DeleteAllChannels";
+		menuItem 
+			-label 		`runTimeCommand -q -l $cmd`
+			-annotation `runTimeCommand -q -ann $cmd`
+			-command ($cmd)
+			clearAllChannelsItem;
+
+		$cmd = "DeleteAllStaticChannels";
+		menuItem 
+			-label 		`runTimeCommand -q -l $cmd`
+			-annotation `runTimeCommand -q -ann $cmd`
+			-command ($cmd)
+			clearAllStaticTypesItem;
+
+		menuItem -divider true;
+
+		$cmd = "DeleteAllClips";
+		menuItem 
+			-label 		`runTimeCommand -q -l $cmd`
+			-annotation `runTimeCommand -q -ann $cmd`
+			-command ($cmd)
+			clearAllClipsItem;
+
+		$cmd = "DeleteAllConstraints";
+		menuItem 
+			-label 		`runTimeCommand -q -l $cmd`
+			-annotation `runTimeCommand -q -ann $cmd`
+			-command ($cmd)
+			clearAllConstraintTypesItem;
+
+		$cmd = "DeleteAllMotionPaths";
+		menuItem 
+			-label 		`runTimeCommand -q -l $cmd`
+			-annotation `runTimeCommand -q -ann $cmd`
+			-command ($cmd)
+			clearAllMotionPathsItem;
+		$cmd = "DeleteAllExpressions";
+		menuItem 
+			-label 		`runTimeCommand -q -l $cmd`
+			-annotation `runTimeCommand -q -ann $cmd`
+			-command ($cmd)
+			clearAllExprTypesItem;
+
+		$cmd = "DeleteAllSounds";
+		menuItem 
+			-label 		`runTimeCommand -q -l $cmd`
+			-annotation `runTimeCommand -q -ann $cmd`
+			-command ($cmd)
+			clearAllSoundsItem;
+
+		menuItem -divider true;
+
+		$cmd = "DeleteAllIKHandles";
+		menuItem 
+			-label 		`runTimeCommand -q -l $cmd`
+			-annotation `runTimeCommand -q -ann $cmd`
+			-command ($cmd)
+			clearAllIKHandleTypeItem;
+
+		$cmd = "DeleteAllJoints";
+		menuItem 
+			-label 		`runTimeCommand -q -l $cmd`
+			-annotation `runTimeCommand -q -ann $cmd`
+			-command ($cmd)
+			clearAllJointTypeItem;
+
+		menuItem -divider true;
+
+		$cmd = "DeleteAllClusters";
+		menuItem 
+			-label 		`runTimeCommand -q -l $cmd`
+			-annotation `runTimeCommand -q -ann $cmd`
+			-command ($cmd);
+
+		$cmd = "DeleteAllLattices";
+		menuItem 
+			-label 		`runTimeCommand -q -l $cmd`
+			-annotation `runTimeCommand -q -ann $cmd`
+			-command ($cmd);
+
+		$cmd = "DeleteAllNonLinearDeformers";
+		menuItem 
+			-label 		`runTimeCommand -q -l $cmd`
+			-annotation `runTimeCommand -q -ann $cmd`
+			-command ($cmd);
+
+		$cmd = "DeleteAllSculptObjects";
+		menuItem 
+			-label 		`runTimeCommand -q -l $cmd`
+			-annotation `runTimeCommand -q -ann $cmd`
+			-command ($cmd);
+
+		$cmd = "DeleteAllWires";
+		menuItem 
+			-label 		`runTimeCommand -q -l $cmd`
+			-annotation `runTimeCommand -q -ann $cmd`
+			-command ($cmd);
+
+		menuItem -divider true;
+
+		$cmd = "DeleteAllCameras";
+		menuItem 
+			-label 		`runTimeCommand -q -l $cmd`
+			-annotation `runTimeCommand -q -ann $cmd`
+			-enable true 
+			-command ($cmd)
+			clearAllCamerasTypesItem;
+
+		$cmd = "DeleteAllImagePlanes";
+		menuItem 
+			-label 		`runTimeCommand -q -l $cmd`
+			-annotation `runTimeCommand -q -ann $cmd`
+			-command ($cmd)
+			clearAllImagePlanesTypesItem;
+
+		$cmd = "DeleteAllLights";
+		menuItem 
+			-label 		`runTimeCommand -q -l $cmd`
+			-annotation `runTimeCommand -q -ann $cmd`
+			-enable true 
+			-command ($cmd)
+			clearAllLightsTypesItem;
+
+		$cmd = "DeleteAllShadingGroupsAndMaterials";
+		menuItem 
+			-label 		`runTimeCommand -q -l $cmd`
+			-annotation `runTimeCommand -q -ann $cmd`
+			-enable true 
+			-command ($cmd)
+			clearAllMaterialTypesItem;
+
+		menuItem -divider true;
+
+		$cmd = "DeleteAllControllers";
+		menuItem 
+			-label 		`runTimeCommand -q -l $cmd`
+			-annotation `runTimeCommand -q -ann $cmd`
+			-version "2017"
+			-enable true 
+			-command ($cmd)
+			clearAllControllerItem;
+
+		menuItem -divider true;
+
+		$cmd = "DeleteAllContainers";
+		menuItem 
+			-label 		`runTimeCommand -q -l $cmd`
+			-annotation `runTimeCommand -q -ann $cmd`
+			-command ($cmd)
+			delParticlesItem;
+
+		menuItem -divider true;
+
+		$cmd = "DeleteAllFluids";
+		menuItem 
+			-label 		`runTimeCommand -q -l $cmd`
+			-annotation `runTimeCommand -q -ann $cmd`
+			-command ($cmd)
+			clearFluidsItem;
+
+		$cmd = "DeleteAllParticles";
+		menuItem 
+			-label 		`runTimeCommand -q -l $cmd`
+			-annotation `runTimeCommand -q -ann $cmd`
+			-command ($cmd)
+			selParticlesItem;
+
+		$cmd = "DeleteAllRigidBodies";
+		menuItem 
+			-label 		`runTimeCommand -q -l $cmd`
+			-annotation `runTimeCommand -q -ann $cmd`
+			-command ($cmd)
+			selRigidBodiesItem;
+
+		$cmd = "DeleteAllRigidConstraints";
+		menuItem 
+			-label 		`runTimeCommand -q -l $cmd`
+			-annotation `runTimeCommand -q -ann $cmd`
+			-command ($cmd)
+			selRigidConstraintsItem;
+
+		if(`isTrue "MayaCreatorExists"`) {
+			menuItem -d 1;
+			$cmd = "DeleteAllStrokes";
+			menuItem 
+				-label 		`runTimeCommand -q -l $cmd`
+				-annotation `runTimeCommand -q -ann $cmd`
+				-command ($cmd)
+				clearAllStrokesItem;
+		}
+
+		menuItem -divider true;
+
+		$cmd = "DeleteAllDynamicConstraints";
+		menuItem 
+			-label 		`runTimeCommand -q -l $cmd`
+			-annotation `runTimeCommand -q -ann $cmd`
+			-command ($cmd)
+			clearDynamicConstraintsItem;
+		$cmd = "DeleteAllNCloths";
+		menuItem 
+			-label 		`runTimeCommand -q -l $cmd`
+			-annotation `runTimeCommand -q -ann $cmd`
+			-command ($cmd)
+			clearNClothsItem;
+		$cmd = "DeleteAllNParticles";
+		menuItem 
+			-label 		`runTimeCommand -q -l $cmd`
+			-annotation `runTimeCommand -q -ann $cmd`
+			-command ($cmd)
+			clearNParticlesItem;
+		$cmd = "DeleteAllNRigids";
+		menuItem 
+			-label 		`runTimeCommand -q -l $cmd`
+			-annotation `runTimeCommand -q -ann $cmd`
+			-command ($cmd)
+			clearNRigidsItem;
+
+		setParent -menu ..;
+
+	menuItem -divider true -dividerLabel (uiRes("m_buildEditMenu.kEditDuplicate"));
+	
+	//	Duplicate.
+	//
+	$cmd = "Duplicate";
+	menuItem 
+		-label 		`runTimeCommand -q -l $cmd`
+		-annotation `runTimeCommand -q -ann $cmd`
+		-dmc "performDuplicate 2"
+		-command ($cmd) dupItem;
+	if( $dimWhenNoSelect )
+		dimWhen -f "SomethingSelected" ($parent+"|dupItem");
+
+	//	Duplicate special.
+	//
+	$cmd = "DuplicateSpecial";
+	menuItem 
+		-label 		`runTimeCommand -q -l $cmd`
+		-annotation `runTimeCommand -q -ann $cmd`
+		-dmc "performDuplicateSpecial 2"
+		-command ($cmd) dupSpecItem;
+		$cmd = "DuplicateSpecialOptions";
+		menuItem -optionBox true 
+			-annotation (getRunTimeCommandAnnotation($cmd))
+			-command ($cmd)
+			dupSpecOptItem;
+	if( $dimWhenNoSelect )
+		dimWhen -f "SomethingSelected" ($parent+"|dupSpecItem");
+
+	//	Duplicate with transforms.
+	//
+	$cmd = "DuplicateWithTransform";
+	menuItem 
+		-label 		`runTimeCommand -q -l $cmd`
+		-annotation `runTimeCommand -q -ann $cmd`
+		-command ($cmd) smartDupItem;
+	if( $dimWhenNoSelect )
+		dimWhen -f "SomethingSelected" ($parent+"|smartDupItem");
+
+	// Transfer attribute values and connections
+	//
+	$cmd = "TransferAttributeValues";
+	menuItem 
+		-label 		`runTimeCommand -q -l $cmd`
+		-annotation `runTimeCommand -q -ann $cmd`
+		-allowOptionBoxes true
+		-dmc "performTransferContainer 2"
+		-c $cmd;
+
+		$cmd = "TransferAttributeValuesOptions";
+		menuItem -optionBox true
+			-annotation (getRunTimeCommandAnnotation($cmd))
+			-c $cmd;
+
+	menuItem -divider true -dividerLabel (uiRes("m_buildEditMenu.kEditHierarchy"));
+
+	//	Group.
+	//
+	$cmd = "Group";
+	menuItem  
+		-label 		`runTimeCommand -q -l $cmd`
+		-annotation `runTimeCommand -q -ann $cmd`
+		-allowOptionBoxes true
+		-dmc "performGroup 2"
+		-command ($cmd) groupItem;
+	if( $dimWhenNoSelect )
+		dimWhen -f "SomethingSelected" ($parent+"|groupItem");
+		$cmd = "GroupOptions";
+		menuItem -optionBox true 
+			-annotation (getRunTimeCommandAnnotation($cmd))
+			-command ($cmd) groupOptItem;
+
+	//	Ungroup.
+	//
+	$cmd = "Ungroup";
+	menuItem  
+		-label 		`runTimeCommand -q -l $cmd`
+		-annotation `runTimeCommand -q -ann $cmd`
+		-allowOptionBoxes true 
+		-dmc "performUngroup 2"
+		-command ($cmd) ungroupItem;
+	if( $dimWhenNoSelect )
+		dimWhen -f "SomethingSelected" ($parent+"|ungroupItem");
+		$cmd = "UngroupOptions";
+		menuItem -optionBox true 
+			-annotation (getRunTimeCommandAnnotation($cmd))
+			-command ($cmd)
+			ungrpOptItem;
+
+	//	Level of Detail sub-menu.
+	//
+	menuItem -label (uiRes("m_buildEditMenu.kLODLevelOfDetail"))
+			-subMenu true -to true levelOfDetailItem;
+	menuItem -e -version "2017" levelOfDetailItem;
+		$cmd = "LevelOfDetailGroup";
+		menuItem 
+			-label 		`runTimeCommand -q -l $cmd`
+			-annotation `runTimeCommand -q -ann $cmd`
+			-image 		`runTimeCommand -q -i $cmd`
+			-dragMenuCommand "performSetupLod 2"
+			-command $cmd -ec true lodGroupItem;
+
+		$cmd = "LevelOfDetailGroupOptions";
+		menuItem -e
+			-version "2017"
+			-dragDoubleClickCommand $cmd lodGroupItem;
+		menuItem -optionBox true
+			-version "2017"
+			-annotation (getRunTimeCommandAnnotation($cmd))
+			-command $cmd -ec true lodGroupOptItem;
+		$cmd = "LODGenerateMeshes";
+		menuItem 
+			-label 		`runTimeCommand -q -l $cmd`
+			-annotation `runTimeCommand -q -ann $cmd`
+			-image 		`runTimeCommand -q -i $cmd`
+			-version "2017"
+			-dragMenuCommand "performLODGenerateMeshes 2"
+			-command $cmd -ec true lodGenerateMeshesItem;
+		$cmd = "LODGenerateMeshesOptions";
+		menuItem -optionBox true
+			-version "2017"
+			-annotation (getRunTimeCommandAnnotation($cmd))
+			-command $cmd -ec true lodGenerateMeshesOptItem;
+
+		$cmd = "LevelOfDetailUngroup";
+		menuItem 
+			-label 		`runTimeCommand -q -l $cmd`
+			-annotation `runTimeCommand -q -ann $cmd`
+			-image 		`runTimeCommand -q -i $cmd`
+			-command $cmd -ec true lodRemoveItem;
+		menuItem -e -version "2017" lodRemoveItem;
+		
+		setParent -menu ..;
+
+	menuItem -divider true -ld false;
+
+	//	Parent
+	//
+	$cmd = "Parent";
+	menuItem 
+		-label 		`runTimeCommand -q -l $cmd`
+		-annotation `runTimeCommand -q -ann $cmd`
+		-allowOptionBoxes true 
+		-dmc "performParent 2"
+		-command ($cmd) parentItem;
+	if( $dimWhenNoSelect )
+		dimWhen -f "SomethingSelected" ($parent+"|parentItem");
+		$cmd = "ParentOptions";
+		menuItem -optionBox true 
+			-annotation (getRunTimeCommandAnnotation($cmd))
+			-command ($cmd)
+			parentOptItem;
+
+	//	Unparent
+	//
+	$cmd = "Unparent";
+	menuItem  
+		-label 		`runTimeCommand -q -l $cmd`
+		-annotation `runTimeCommand -q -ann $cmd`
+		-allowOptionBoxes true
+		-dmc "performUnparent 2"
+		-command ($cmd) unparentItem;
+	if( $dimWhenNoSelect )
+		dimWhen -f "SomethingSelected" ($parent+"|unparentItem");
+		
+		$cmd = "UnparentOptions";
+		menuItem -optionBox true 
+			-annotation (getRunTimeCommandAnnotation($cmd))
+			-command ($cmd)
+			unparOptItem;
+
+	editMenuUpdate($parent);
+}

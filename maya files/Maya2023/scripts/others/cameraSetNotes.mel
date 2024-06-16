@@ -1,0 +1,41 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc cameraSetNotes( string $camera, string $note )
+{
+	if ($note == "" && `optionVar -exists CreateCameraOptions_Notes`) {
+		$note = `optionVar -query CreateCameraOptions_Notes`;
+	}
+	if ($note == "") {
+		return;
+	}
+
+	string $longAttrNameNotes = "notes";
+	string $shortAttrNameNotes = "nts";
+	string $attrTypeNotes = "string";
+
+	string $shape;
+	if ($camera == "") {
+		string $selected[] = `ls -sl -dagObjects`;
+        $shape = $selected[1];	
+	} else {
+		string $selected[] = `ls -dagObjects $camera`;
+        $shape = $selected[1];
+	}
+
+	if( !`attributeQuery -exists -n $shape $longAttrNameNotes` ) 
+	{
+		if( catch(`addAttr -dt $attrTypeNotes -ln $longAttrNameNotes -sn $shortAttrNameNotes $shape`) )
+		{
+			string $msgFormat = (uiRes("m_setNotesAttribute.kCantCreateDynAttr"));
+				
+			error(`format -s $shape -s $longAttrNameNotes -s $shape -s $shortAttrNameNotes $msgFormat`);
+		} else {
+			setAttr -type $attrTypeNotes ($shape+"."+$longAttrNameNotes) $note;
+		}
+	}
+}

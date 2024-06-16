@@ -1,0 +1,41 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//	Procedure Name:
+//	AEcurveFromSurfaceCoSTemplate
+//
+//	Description Name;
+//	Creates the attribute editor controls for the curveFromCurfaceCoS node
+//
+//	Input Value:
+//	nodeName
+//
+//	Output Value:
+//	None
+//
+
+global proc AEcurveFromSurfaceCoSTemplate( string $nodeName )
+{
+	string $inputSurface = (uiRes("m_AEcurveFromSurfaceCoSTemplate.kInputSurface"));
+	string $curveOnSurface = (uiRes("m_AEcurveFromSurfaceCoSTemplate.kCurveOnSurface"));
+	editorTemplate -beginScrollLayout;
+		editorTemplate -beginLayout (uiRes("m_AEcurveFromSurfaceCoSTemplate.kCurveFromSurfaceCOS")) -collapse 0;
+			editorTemplate -callCustom ("AEinputNew \""+$inputSurface+"\"")
+					("AEinputReplace \""+$inputSurface+"\"")
+					"inputSurface";
+			editorTemplate -callCustom ("AEinputNew \""+$curveOnSurface+"\"")
+					("AEinputReplace \""+$curveOnSurface+"\"")
+					"curveOnSurface";
+		editorTemplate -endLayout;
+
+		// include/call base class/node attributes
+		AEcurveFromSurfaceTemplate($nodeName);
+
+	editorTemplate -addExtraControls;
+	editorTemplate -endScrollLayout;
+}

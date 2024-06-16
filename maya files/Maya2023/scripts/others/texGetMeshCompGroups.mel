@@ -1,0 +1,56 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+// ===========================================================================
+//
+//  Creation Date: November 13, 2016
+//
+//  Procedure Name:
+//      texGetMeshCompGroups
+//
+//  Description:
+//      General utility function for retrieving an array of component groups
+//      split up per mesh. The components of each mesh is converted into a
+//      string before being saved into each index.
+//
+//  Input Arguments
+//      type                 - String - Component type. "Face", "UV", etc...
+//
+//  Return Value:
+//      meshCompArray        - String[] - Per-mesh list of UV groups.
+//
+//  Notes:
+//  This script is part of the implementation of Nightshade UV Editor into
+//  Autodesk Maya. This script is sourced by other scripts. Do not run it 
+//  directly.
+//
+// ===========================================================================
+
+global proc string[] texGetMeshCompGroups(string $type)
+{
+    // Make sure we have components and not meshes
+    if ($type == "face"){
+        ConvertSelectionToFaces();
+    } else if ($type == "UV"){
+        ConvertSelectionToUVs();
+    }
+
+    string $shapes[] = `ls -selection -objectsOnly`;
+    string $meshCompArray[];
+
+    // Loop through every shape node one at a time
+    for ($shape in $shapes)
+    {
+        string $meshCompList[] = `ls -sl $shape`;
+
+        // Add meshFace -sub list to main list
+        $meshCompArray[size($meshCompArray)] = stringArrayToString($meshCompList, " ");
+    }
+
+    // Return cleaned meshFace -group list
+    return $meshCompArray;
+}

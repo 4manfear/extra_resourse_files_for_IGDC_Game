@@ -1,0 +1,88 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  May, 2016
+//
+//
+
+//
+//  Procedure Name:
+//      localizedFactoryWorkspaceLabels
+//
+//  Description:
+//		Returns localized factory workspace labels..
+//
+//
+global proc string[] localizedFactoryWorkspaceLabels()
+{
+	global string $gWorkspaceLabels[];
+
+    if( size( $gWorkspaceLabels ) ) {
+        return $gWorkspaceLabels;
+    }
+
+    $gWorkspaceLabels = {
+							 "General",                (uiRes("m_localizedFactoryWorkspaceLabel.kWsMayaGeneral"))
+							,"Modeling - Standard",         (uiRes("m_localizedFactoryWorkspaceLabel.kWsModelingStandard"))
+							,"Modeling - Expert",           (uiRes("m_localizedFactoryWorkspaceLabel.kWsModelingExpert"))
+							,"Sculpting",                   (uiRes("m_localizedFactoryWorkspaceLabel.kWsSculpting"))
+							,"Pose Sculpting",              (uiRes("m_localizedFactoryWorkspaceLabel.kWsPoseSculpting"))
+							,"UV Editing",                  (uiRes("m_localizedFactoryWorkspaceLabel.kWsUvEditing"))
+							,"XGen",                     	(uiRes("m_localizedFactoryWorkspaceLabel.kWsXgen"))
+							,"XGen - Interactive Groom",    (uiRes("m_localizedFactoryWorkspaceLabel.kWsXgenInteractiveGroom"))
+							,"Rigging",              		(uiRes("m_localizedFactoryWorkspaceLabel.kWsRigging"))
+							,"Animation",					(uiRes("m_localizedFactoryWorkspaceLabel.kWsAnimation"))
+							,"Rendering - Standard",        (uiRes("m_localizedFactoryWorkspaceLabel.kWsRenderingStandard"))
+							,"Rendering - Expert",    	 	(uiRes("m_localizedFactoryWorkspaceLabel.kWsRenderingExpert"))
+							,"MASH",						(uiRes("m_localizedFactoryWorkspaceLabel.kWsMash"))
+							,"Motion Graphics",				(uiRes("m_localizedFactoryWorkspaceLabel.kWsMotionGraphics"))
+						};
+	
+	return $gWorkspaceLabels;			 				
+}
+
+//
+//  Procedure Name:
+//      localizedFactoryWorkspaceLabel
+//
+//  Description:
+//		Returns the localized workspace name.
+//
+//  Input Arguments:
+//		The english version of the workspace name.
+//
+//  Return Value:
+//      The localized version of the workspace name.
+//
+
+global proc string localizedFactoryWorkspaceLabel(string $wsNameEN)
+{
+	string $wsLabel;
+    string $wslabels[] = localizedFactoryWorkspaceLabels();
+    int $foundIt = false;
+    int $i, $count = size( $wslabels );
+
+    for( $i = 0; $i < $count-1; $i+=2 ) {
+        if( $wsNameEN == $wslabels[$i] ) {
+			// get localized name of the matched workspace..
+            $wsLabel = $wslabels[$i+1];
+            $foundIt = true;
+            break;
+        }
+    }
+
+    // If we couldn't find a match, just return what was
+    // passed in.
+    //
+    if( !$foundIt ) {
+        $wsLabel = $wsNameEN;
+    }
+
+    return $wsLabel;
+}

@@ -1,0 +1,103 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc polySelectBorderShell(int $borderOnly)
+//
+// Description:
+//		Select either a shell or border based on
+//		the current component selection
+// Arguments:
+//		borderOnly
+// Returns:
+//
+//
+{
+	string $compSel[]; 
+	
+	// Process all the subdiv components first
+	string $subdComps[];
+
+	if (`isTrue "SubdivExists"`) {
+	
+		$subdComps = `subdListComponentConversion -fv -ff -fuv -fe -tuv`;
+
+		// Process only one subd component type: UVs, Faces, edges
+ 		$subdComps = `filterExpand -ex false -sm 73 $subdComps`;
+		if (size($subdComps)) {
+	
+			// Convert selected subd uvs to shell uvs or border
+			if( $borderOnly ) {
+				$subdComps = `subdListComponentConversion -fuv -tuv -uvb $subdComps`;
+			} else {
+				$subdComps = `subdListComponentConversion -fuv -tuv -uvs $subdComps`;
+			}
+		}
+	}	// if SubdivUIExists
+
+	int $origt[] = `polySelectConstraint -q -t`;
+	int $origuv = `polySelectConstraint -q -uv`;
+	int $origbo = `polySelectConstraint -q -bo`;
+	int $origm[] = `polySelectConstraint -q -m`;
+	polySelectConstraint -t 1;
+
+	polySelectConstraint -t 0;
+
+	// Turn on shell mode for current selection. 
+	string $newSelection[] = `polySelectConstraint -uv 1 -bo 0 -m 2 -returnSelection 1`; 
+
+	// If want borders filter AFTER getting the entire shell
+	if ($borderOnly)
+	{
+		select $newSelection;
+		// // Only do one type. Order of testing is: UVs, Vtx, Face, Edge
+ 		// uv
+ 		$compSel = `filterExpand -ex false -sm 35`;
+		if (size($compSel))
+		{
+			$newSelection = `polySelectConstraint -t 0x0010 -uv 0 -bo 1 -m 2 -returnSelection 1`;
+		}
+		else
+		{
+			// Vertex
+			$compSel = `filterExpand -ex false -sm 31`;
+			if (size($compSel))
+			{
+				$newSelection = `polySelectConstraint -uv 0 -bo 1 -t 0x0001 -m 2 -returnSelection 1`;
+			}
+			else
+			{
+				// edge
+				$compSel = `filterExpand -ex false -sm 32`;
+				if (size($compSel))
+				{
+					$newSelection = `polySelectConstraint -uv 0 -bo 1 -t 0x8000 -m 2 -returnSelection 1`;
+				}
+				else
+				{
+					// face
+					$compSel = `filterExpand -ex false -sm 34`;
+					if (size($compSel))
+					{
+						$newSelection = `polySelectConstraint -uv 0 -bo 1 -t 0x0008 -m 2 -returnSelection 1`;
+					}
+				}
+			}
+		}
+	}
+	select $newSelection;
+
+	// Reset constraint
+	polySelectConstraint -t 1 -returnSelection 1;
+	polySelectConstraint -uv $origuv -bo $origbo -m $origm[0] -returnSelection 1;
+	polySelectConstraint -t $origt[0] -returnSelection 1;
+
+	// Add to the selection list the subd components
+	if( size($subdComps) > 0 ) 
+	{
+		select -add $subdComps;
+	}
+}

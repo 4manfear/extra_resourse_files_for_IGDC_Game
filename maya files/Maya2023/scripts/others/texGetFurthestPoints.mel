@@ -1,0 +1,163 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+// 
+//  Creation Date: January 18, 2017
+// 
+//  Procedure Name: 
+//      texGetFurthestPoints 
+//  Description: 
+//      UV workflow function used for finding the two UVs that are furthest apart from each other.
+// 
+//  Input Arguments 
+//      uvList               - String[] - A list of UV components
+// 
+//  Return Value: 
+//      String[]             - The coordinates for the furthest UV pair. Each 
+//                             element represent a UV point, and the coordinates
+//                             is separated by :
+// 
+//  Notes: 
+//  This script is part of the implementation of Nightshade UV Editor into 
+//  Autodesk Maya. 
+// 
+// =========================================================================== 
+ 
+global proc string[] texGetFurthestPoints(string $uvList[])
+{
+    string $result[];
+    // Sort the coordinates points by their U value
+    string $uvPointList[] = texSortUVsByValue($uvList, "U");
+    string $uvPointListReversed[] = texReverseStringArray($uvPointList);
+
+    // Find vector by first finding the UVs that make up a convex hull. Then find the two UVs on
+    // said hull that are furthest apart from each other. The vector goes through both these UVs.
+
+    // Create points in lower hull
+    float $pointCount = `size($uvPointList)`;
+    float $pointA[], $pointB[], $pointO[];
+    string $lower[], $upper[], $pointAString, $pointBString, $pointOString, $uvPoint[];
+
+    for ($i = 0; $i < $pointCount; $i++)
+    {
+        if (`size($lower)` >= 2){
+            // Break out the values from each point and convert to float arrays
+            $pointOString = $lower[`size($lower)`-2]; // 0.25:0.55 - confirmed
+            $pointAString = $lower[`size($lower)`-1];
+            $pointBString = $uvPointList[$i];
+            $pointOArray = stringToStringArray($pointOString, ":");
+            $pointO[0] = (float)$pointOArray[0];
+            $pointO[1] = (float)$pointOArray[1];
+            $pointAArray = stringToStringArray($pointAString, ":");
+            $pointA[0] = (float)$pointAArray[0];
+            $pointA[1] = (float)$pointAArray[1];
+            $pointBArray = stringToStringArray($pointBString, "%");
+            $pointBArray = stringToStringArray($pointBArray[0], ":");
+            $pointB[0] = (float)$pointBArray[0];
+            $pointB[1] = (float)$pointBArray[1];
+
+            while (`size($lower)` >= 2 && texIsCounterClockwise($pointO, $pointA, $pointB) <= 0.0){
+                stringArrayRemoveAtIndex((`size($lower)` - 1), $lower); // Remove last entry
+
+                // Update points needed for the while conditional
+                if ( catchQuiet($pointOString = $lower[`size($lower)`-2]) ){
+                    break;
+                } else {
+                    $pointOString = $lower[`size($lower)`-2];
+                    $pointAString = $lower[`size($lower)`-1];
+                    $pointOArray = stringToStringArray($pointOString, ":");
+                    $pointO[0] = (float)$pointOArray[0];
+                    $pointO[1] = (float)$pointOArray[1];
+                    $pointAArray = stringToStringArray($pointAString, ":");
+                    $pointA[0] = (float)$pointAArray[0];
+                    $pointA[1] = (float)$pointAArray[1];
+                }
+            }
+        }
+        $uvPoint = stringToStringArray($uvPointList[$i], "%");
+
+        // Insert as last entry
+        $lower[size($lower)] = $uvPoint[0];
+    }
+
+    // Create points in upper hull
+    for ($i = 0; $i < $pointCount; $i++)
+    {
+        if (`size($upper)` >= 2){
+            // Break out the values from each point and convert to float arrays
+            $pointOString = $upper[`size($upper)`-2];
+            $pointAString = $upper[`size($upper)`-1];
+            $pointBString = $uvPointListReversed[$i];
+            $pointOArray = stringToStringArray($pointOString, ":");
+            $pointO[0] = (float)$pointOArray[0];
+            $pointO[1] = (float)$pointOArray[1];
+            $pointAArray = stringToStringArray($pointAString, ":");
+            $pointA[0] = (float)$pointAArray[0];
+            $pointA[1] = (float)$pointAArray[1];
+            $pointBArray = stringToStringArray($pointBString, "%");
+            $pointBArray = stringToStringArray($pointBArray[0], ":");
+            $pointB[0] = (float)$pointBArray[0];
+            $pointB[1] = (float)$pointBArray[1];
+
+            while ((`size($upper)` >= 2) && (texIsCounterClockwise($pointO, $pointA, $pointB) <= 0)){
+                stringArrayRemoveAtIndex((`size($upper)` - 1), $upper); // Remove last entry
+                
+                // Update points needed for the while conditional
+                if ( catchQuiet($pointOString = $upper[`size($upper)`-2]) ){
+                    break;
+                } else {
+                    $pointOString = $upper[`size($upper)`-2];
+                    $pointAString = $upper[`size($upper)`-1];
+                    $pointOArray = stringToStringArray($pointOString, ":");
+                    $pointO[0] = (float)$pointOArray[0];
+                    $pointO[1] = (float)$pointOArray[1];
+                    $pointAArray = stringToStringArray($pointAString, ":");
+                    $pointA[0] = (float)$pointAArray[0];
+                    $pointA[1] = (float)$pointAArray[1];
+                }
+            }
+        }
+        $uvPoint = stringToStringArray($uvPointListReversed[$i], "%");
+
+        // Insert as last entry
+        $upper[size($upper)] = $uvPoint[0];
+    }
+
+    // Remove the last points of each list and combine the hull lists
+    stringArrayRemoveAtIndex( (`size($lower)` - 1), $lower );
+    stringArrayRemoveAtIndex( (`size($upper)` - 1), $upper );
+    string $hullPoints[] = stringArrayCatenate($lower, $upper);
+
+    // Find the UVs in the convex hull that are furthest away from each other. Method: Brute-force all combinations.
+    float $distance = 0.0;
+    int $hullPointCount = `size($hullPoints)`;
+    string $excludedList[], $extremePointA, $extremePointB;
+
+    // Loop thru all points...
+    for ($point in $hullPoints){
+        stringArrayInsertAtIndex(0, $excludedList, $point); // ...and exclude the current point from future searches
+        string $pointsToSearch[] = stringArrayRemove($excludedList, $hullPoints);
+        for ($p in $pointsToSearch){
+
+            // Break down strings and calculate distance
+            string $pointAArray[] = stringToStringArray($point,":");
+            string $pointBArray[] = stringToStringArray($p,":");
+            float $pointA[], $pointB[];
+            $pointA[0] = (float)$pointAArray[0];
+            $pointA[1] = (float)$pointAArray[1];
+            $pointB[0] = (float)$pointBArray[0];
+            $pointB[1] = (float)$pointBArray[1];
+            $temp = sqrt(`pow ($pointA[1] - $pointB[1]) 2` + `pow ($pointA[0] - $pointB[0]) 2`);
+            if ($temp > $distance){
+                $distance = $temp;
+                $result[0] = $point;
+                $result[1] = $p;
+            }
+        }
+    }
+    return $result;
+}

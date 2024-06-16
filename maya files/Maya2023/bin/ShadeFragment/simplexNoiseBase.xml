@@ -1,0 +1,742 @@
+<!--
+===========================================================================
+Copyright 2015 Autodesk, Inc. All rights reserved.
+
+Use of this software is subject to the terms of the Autodesk license
+agreement provided at the time of installation or download, or which
+otherwise accompanies this software in either electronic or hard copy form.
+===========================================================================
+-->
+
+<fragment uiName="simplexNoiseBase" name="simplexNoiseBase" type="plumbing" class="ShadeFragment" version="1.0">
+	<description><![CDATA[Constant color texture fragment]]></description>
+	<properties>
+		<float2 name="uvCoord" semantic="mayaUvCoordSemantic" flags="varyingInputParam" />
+		<float name="scale" />
+		<float name="amplitude" />
+		<float name="threshold" />
+		<float name="ratio" />
+		<int name="octaves" />
+		<float name="frequency" />
+		<float name="frequencyRatio" />
+		<float name="distortionU" />
+		<float name="distortionV" />
+		<float name="distortionRatio" />
+		<float name="gamma" />
+		<int name="noiseType" />
+	</properties>
+	<values>
+		<float name="scale" value="1.0" />
+		<float name="amplitude" value="1.0" />
+		<float name="threshold" value="0.0" />
+		<float name="ratio" value="0.707000" />
+		<int name="octaves" value="3" />
+		<float name="frequency" value="8.0" />
+		<float name="frequencyRatio" value="2.0" />
+		<float name="distortionU" value="0.0" />
+		<float name="distortionV" value="0.0" />
+		<float name="distortionRatio" value="0.0" />
+		<float name="gamma" value="1.0" />
+		<int name="noiseType" value="0"/>
+	</values>
+	<outputs>
+		<float3 name="outColor" />
+	</outputs>
+	<implementation>
+	<implementation render="OGSRenderer" language="Cg" lang_version="2.1">
+		<function_name val="simplexNoiseBase" />
+		<source>
+		<![CDATA[
+//
+// source modified for compatibility with Cg: see GLSL fragment code below
+//
+void FAST32_hash_2D( float2 gridcell, out float4 hash_0, out float4 hash_1 )
+{
+    const float2 OFFSET = float2( 26.0, 161.0 );
+    const float DOMAIN = 71.0;
+    const float2 SOMELARGEFLOATS = float2( 951.135664, 642.949883 );
+    float4 P = float4( gridcell.xy, gridcell.xy + 1.0 );
+    P = P - floor(P * ( 1.0 / DOMAIN )) * DOMAIN;
+    P += OFFSET.xyxy;
+    P *= P;
+    P = P.xzxz * P.yyww;
+    hash_0 = fract( P * ( 1.0 / SOMELARGEFLOATS.x ) );
+    hash_1 = fract( P * ( 1.0 / SOMELARGEFLOATS.y ) );
+}
+float3 invsqrt( float3 input )
+{
+	return 1.0 / sqrt(input);
+}
+float SimplexPerlin2D( float2 P )
+{
+    const float SKEWFACTOR = 0.36602540378443864676372317075294;
+    const float UNSKEWFACTOR = 0.21132486540518711774542560974902;
+    const float SIMPLEX_TRI_HEIGHT = 0.70710678118654752440084436210485;
+    const float3 SIMPLEX_POINTS = float3( 1.0-UNSKEWFACTOR, -UNSKEWFACTOR, 1.0-2.0*UNSKEWFACTOR );
+
+    P *= SIMPLEX_TRI_HEIGHT;
+    float2 Pi = floor( P + dot( P, float2( SKEWFACTOR ) ) );
+
+    float4 hash_x, hash_y;
+    FAST32_hash_2D( Pi, hash_x, hash_y );
+
+    float2 v0 = Pi - dot( Pi, float2( UNSKEWFACTOR ) ) - P;
+    float4 v1pos_v1hash = (v0.x < v0.y) ? float4(SIMPLEX_POINTS.xy, hash_x.y, hash_y.y) : float4(SIMPLEX_POINTS.yx, hash_x.z, hash_y.z);
+    float4 v12 = float4( v1pos_v1hash.xy, SIMPLEX_POINTS.zz ) + v0.xyxy;
+
+    float3 grad_x = float3( hash_x.x, v1pos_v1hash.z, hash_x.w ) - 0.49999;
+    float3 grad_y = float3( hash_y.x, v1pos_v1hash.w, hash_y.w ) - 0.49999;
+    float3 grad_results = invsqrt( grad_x * grad_x + grad_y * grad_y ) * ( grad_x * float3( v0.x, v12.xz ) + grad_y * float3( v0.y, v12.yw ) );
+
+    const float FINAL_NORMALIZATION = 99.204334582718712976990005025589;
+
+    float3 m = float3( v0.x, v12.xz ) * float3( v0.x, v12.xz ) + float3( v0.y, v12.yw ) * float3( v0.y, v12.yw );
+
+    m = max(0.5 - m, 0.0);
+    m = m*m;
+
+    return dot(m*m, grad_results) * FINAL_NORMALIZATION;
+}
+float4 Cellular_weight_samples( float4 samples )
+{
+    samples = samples * 2.0 - 1.0;
+    return (samples * samples * samples) - sign(samples);
+}
+float SimplexCellular2D( float2 P )
+{
+    const float SKEWFACTOR = 0.36602540378443864676372317075294;
+    const float UNSKEWFACTOR = 0.21132486540518711774542560974902;
+    const float SIMPLEX_TRI_HEIGHT = 0.70710678118654752440084436210485;
+    const float INV_SIMPLEX_TRI_HEIGHT = 1.4142135623730950488016887242097;
+    const float3 SIMPLEX_POINTS = float3( 1.0-UNSKEWFACTOR, -UNSKEWFACTOR, 1.0-2.0*UNSKEWFACTOR ) * INV_SIMPLEX_TRI_HEIGHT;
+
+    P *= SIMPLEX_TRI_HEIGHT;
+    float2 Pi = floor( P + dot( P, float2( SKEWFACTOR ) ) );
+
+    float4 hash_x, hash_y;
+    FAST32_hash_2D( Pi, hash_x, hash_y );
+
+    const float JITTER_WINDOW = ( 0.10566243270259355887271280487451 * INV_SIMPLEX_TRI_HEIGHT );
+    hash_x = Cellular_weight_samples( hash_x ) * JITTER_WINDOW;
+    hash_y = Cellular_weight_samples( hash_y ) * JITTER_WINDOW;
+
+    float2 p0 = ( ( Pi - dot( Pi, float2( UNSKEWFACTOR ) ) ) - P ) * INV_SIMPLEX_TRI_HEIGHT;
+    hash_x += p0.xxxx;
+    hash_y += p0.yyyy;
+    hash_x.yzw += SIMPLEX_POINTS.xyz;
+    hash_y.yzw += SIMPLEX_POINTS.yxz;
+    float4 distsq = hash_x*hash_x + hash_y*hash_y;
+    float2 tmp = min( distsq.xy, distsq.zw );
+    return min( tmp.x, tmp.y );
+}
+float fractalNoise(
+	float2 uv,
+	float amplitude,
+	float ratio,
+	int octaves,
+	float frequency,
+	float frequencyRatio,
+	float2 distortion,
+	float distortionRatio)
+{
+	float noise = 0.0f;
+	float simplex = 0.0f;
+
+	distortion *= distortionRatio;
+
+	for (int i=0; i < octaves+1; i++) {
+		noise = SimplexPerlin2D(uv+distortion) * pow(frequency, -amplitude*i);
+		simplex += amplitude * noise;
+
+		float tmp = uv.x;
+		uv.x = uv.y * frequency - 0.02f;
+		uv.y = tmp * frequency + 0.3f;
+
+		amplitude *= ratio;
+		frequency *= frequencyRatio;
+		distortion *= distortionRatio;
+	}
+
+	simplex = 0.5f * simplex + 0.5f;
+
+	return simplex;
+}
+float cellNoise(
+	float2 uv,
+	float amplitude,
+	float frequency)
+{
+	float noise = SimplexCellular2D(uv*frequency);
+	float simplex = amplitude * noise;
+
+	return simplex;
+}
+float ridgedNoise(
+	float2 uv,
+	float amplitude,
+	float ratio,
+	int octaves,
+	float frequency,
+	float frequencyRatio,
+	float2 distortion,
+	float distortionRatio)
+{
+	float simplex, signal, weight, offset;
+
+	simplex = 1.0;
+	offset = 1.0;
+
+	signal = offset - abs(SimplexPerlin2D(uv));
+	signal *= signal;
+	simplex = signal;
+	weight = 1.0;
+
+	distortion *= distortionRatio;
+
+	for(int i=1; i<octaves; ++i) {
+		uv *= frequency;
+
+		weight = clamp(signal*frequencyRatio, 0.0, 1.0);
+		signal = offset - abs(SimplexPerlin2D(uv+distortion));
+
+		signal *= signal*weight;
+		simplex += signal * pow(frequency, -ratio) * amplitude;
+		frequency *= frequencyRatio;
+		distortion *= distortionRatio;
+	}
+
+	simplex = 0.5f * simplex + 0.5f;
+
+	return simplex;
+}
+float3 simplexNoiseBase(
+	float2 uv,
+	float scale,
+	float amplitude,
+	float threshold,
+	float ratio,
+	int octaves,
+	float frequency,
+	float frequencyRatio,
+	float distortionU,
+	float distortionV,
+	float distortionRatio,
+	float gamma,
+	int noiseType)
+{
+	float simplex = 0.0f;
+
+	if (scale > 0.0001f)
+	{
+		uv *= scale;
+	}
+
+	if (noiseType == 0)
+	{
+		simplex = fractalNoise(uv, amplitude, ratio, octaves, frequency, frequencyRatio, float2(distortionU, distortionV), distortionRatio);
+		if (simplex < 0.0f)
+			simplex = 0.0f;
+	}
+
+	if (noiseType == 1)
+	{
+		if (distortionRatio > 0.0001f)
+		{
+			uv.x += distortionU * distortionRatio;
+			uv.y += (distortionV + 0.2) * distortionRatio;
+		}
+
+		simplex = cellNoise(uv, amplitude, frequency);
+	}
+
+	if (noiseType == 2)
+	{
+		simplex = ridgedNoise(uv, amplitude, ratio, octaves, frequency, frequencyRatio, float2(distortionU, distortionV), distortionRatio);
+	}
+
+	simplex += threshold;
+
+	if (gamma != 1.0f)
+		simplex = pow(simplex, (1.0f / gamma));
+
+	if (simplex < 0.0f)
+		simplex = 0.0f;
+
+	return float3(simplex, simplex, simplex);
+}
+		]]>
+		</source>
+	</implementation>
+	<implementation render="OGSRenderer" language="HLSL" lang_version="11.0">
+		<function_name val="simplexNoiseBase" />
+		<source>
+		<![CDATA[
+//
+// source modified for compatibility with HLSL: see GLSL fragment code below
+//
+void FAST32_hash_2D( float2 gridcell, out float4 hash_0, out float4 hash_1 )
+{
+    const float2 OFFSET = float2( 26.0, 161.0 );
+    const float DOMAIN = 71.0;
+    const float2 SOMELARGEFLOATS = float2( 951.135664, 642.949883 );
+    float4 P = float4( gridcell.xy, gridcell.xy + 1.0 );
+    P = P - floor(P * ( 1.0 / DOMAIN )) * DOMAIN;
+    P += OFFSET.xyxy;
+    P *= P;
+    P = P.xzxz * P.yyww;
+    hash_0 = frac( P * ( 1.0 / SOMELARGEFLOATS.x ) );
+    hash_1 = frac( P * ( 1.0 / SOMELARGEFLOATS.y ) );
+}
+float SimplexPerlin2D( float2 P )
+{
+    const float SKEWFACTOR = 0.36602540378443864676372317075294;
+    const float UNSKEWFACTOR = 0.21132486540518711774542560974902;
+    const float SIMPLEX_TRI_HEIGHT = 0.70710678118654752440084436210485;
+    const float3 SIMPLEX_POINTS = float3( 1.0-UNSKEWFACTOR, -UNSKEWFACTOR, 1.0-2.0*UNSKEWFACTOR );
+
+    P *= SIMPLEX_TRI_HEIGHT;
+    float2 Pi = floor( P + dot( P, float2( SKEWFACTOR, SKEWFACTOR ) ) );
+
+    float4 hash_x, hash_y;
+    FAST32_hash_2D( Pi, hash_x, hash_y );
+
+    float2 v0 = Pi - dot( Pi, float2( UNSKEWFACTOR, UNSKEWFACTOR ) ) - P;
+    float4 v1pos_v1hash = (v0.x < v0.y) ? float4(SIMPLEX_POINTS.xy, hash_x.y, hash_y.y) : float4(SIMPLEX_POINTS.yx, hash_x.z, hash_y.z);
+    float4 v12 = float4( v1pos_v1hash.xy, SIMPLEX_POINTS.zz ) + v0.xyxy;
+
+    float3 grad_x = float3( hash_x.x, v1pos_v1hash.z, hash_x.w ) - 0.49999;
+    float3 grad_y = float3( hash_y.x, v1pos_v1hash.w, hash_y.w ) - 0.49999;
+    float3 grad_results = rsqrt( grad_x * grad_x + grad_y * grad_y ) * ( grad_x * float3( v0.x, v12.xz ) + grad_y * float3( v0.y, v12.yw ) );
+
+    const float FINAL_NORMALIZATION = 99.204334582718712976990005025589;
+
+    float3 m = float3( v0.x, v12.xz ) * float3( v0.x, v12.xz ) + float3( v0.y, v12.yw ) * float3( v0.y, v12.yw );
+
+    m = max(0.5 - m, 0.0);
+    m = m*m;
+
+    return dot(m*m, grad_results) * FINAL_NORMALIZATION;
+}
+float4 Cellular_weight_samples( float4 samples )
+{
+    samples = samples * 2.0 - 1.0;
+    return (samples * samples * samples) - sign(samples);
+}
+float SimplexCellular2D( float2 P )
+{
+    const float SKEWFACTOR = 0.36602540378443864676372317075294;
+    const float UNSKEWFACTOR = 0.21132486540518711774542560974902;
+    const float SIMPLEX_TRI_HEIGHT = 0.70710678118654752440084436210485;
+    const float INV_SIMPLEX_TRI_HEIGHT = 1.4142135623730950488016887242097;
+    const float3 SIMPLEX_POINTS = float3( 1.0-UNSKEWFACTOR, -UNSKEWFACTOR, 1.0-2.0*UNSKEWFACTOR ) * INV_SIMPLEX_TRI_HEIGHT;
+
+    P *= SIMPLEX_TRI_HEIGHT;
+    float2 Pi = floor( P + dot( P, float2( SKEWFACTOR, SKEWFACTOR ) ) );
+
+    float4 hash_x, hash_y;
+    FAST32_hash_2D( Pi, hash_x, hash_y );
+
+    const float JITTER_WINDOW = ( 0.10566243270259355887271280487451 * INV_SIMPLEX_TRI_HEIGHT );
+    hash_x = Cellular_weight_samples( hash_x ) * JITTER_WINDOW;
+    hash_y = Cellular_weight_samples( hash_y ) * JITTER_WINDOW;
+
+    float2 p0 = ( ( Pi - dot( Pi, float2( UNSKEWFACTOR, UNSKEWFACTOR ) ) ) - P ) * INV_SIMPLEX_TRI_HEIGHT;
+    hash_x += p0.xxxx;
+    hash_y += p0.yyyy;
+    hash_x.yzw += SIMPLEX_POINTS.xyz;
+    hash_y.yzw += SIMPLEX_POINTS.yxz;
+    float4 distsq = hash_x*hash_x + hash_y*hash_y;
+    float2 tmp = min( distsq.xy, distsq.zw );
+    return min( tmp.x, tmp.y );
+}
+float fractalNoise(
+	float2 uv,
+	float amplitude,
+	float ratio,
+	int octaves,
+	float frequency,
+	float frequencyRatio,
+	float2 distortion,
+	float distortionRatio)
+{
+	float noise = 0.0f;
+	float simplex = 0.0f;
+
+	distortion *= distortionRatio;
+
+	for (int i=0; i < octaves+1; i++) {
+		noise = SimplexPerlin2D(uv+distortion) * pow(frequency, -amplitude*i);
+		simplex += amplitude * noise;
+
+		float tmp = uv.x;
+		uv.x = uv.y * frequency - 0.02f;
+		uv.y = tmp * frequency + 0.3f;
+
+		amplitude *= ratio;
+		frequency *= frequencyRatio;
+		distortion *= distortionRatio;
+	}
+
+	simplex = 0.5f * simplex + 0.5f;
+
+	return simplex;
+}
+float cellNoise(
+	float2 uv,
+	float amplitude,
+	float frequency)
+{
+	float noise = SimplexCellular2D(uv*frequency);
+	float simplex = amplitude * noise;
+
+	return simplex;
+}
+float ridgedNoise(
+	float2 uv,
+	float amplitude,
+	float ratio,
+	int octaves,
+	float frequency,
+	float frequencyRatio,
+	float2 distortion,
+	float distortionRatio)
+{
+	float simplex, signal, weight, offset;
+
+	simplex = 1.0;
+	offset = 1.0;
+
+	signal = offset - abs(SimplexPerlin2D(uv));
+	signal *= signal;
+	simplex = signal;
+	weight = 1.0;
+
+	distortion *= distortionRatio;
+
+	for(int i=1; i<octaves; ++i) {
+		uv *= frequency;
+
+		weight = clamp(signal*frequencyRatio, 0.0, 1.0);
+		signal = offset - abs(SimplexPerlin2D(uv+distortion));
+
+		signal *= signal*weight;
+		simplex += signal * pow(frequency, -ratio) * amplitude;
+		frequency *= frequencyRatio;
+		distortion *= distortionRatio;
+	}
+
+	simplex = 0.5f * simplex + 0.5f;
+
+	return simplex;
+}
+float3 simplexNoiseBase(
+	float2 uv,
+	float scale,
+	float amplitude,
+	float threshold,
+	float ratio,
+	int octaves,
+	float frequency,
+	float frequencyRatio,
+	float distortionU,
+	float distortionV,
+	float distortionRatio,
+	float gamma,
+	int noiseType)
+{
+	float simplex = 0.0f;
+
+	if (scale > 0.0001)
+	{
+		uv *= scale;
+	}
+
+	if (noiseType == 0)
+	{
+		simplex = fractalNoise(uv, amplitude, ratio, octaves, frequency, frequencyRatio, float2(distortionU, distortionV), distortionRatio);
+		if (simplex < 0.0f)
+			simplex = 0.0f;
+	}
+
+	if (noiseType == 1)
+	{
+		if (distortionRatio > 0.0001)
+		{
+			uv.x += distortionU * distortionRatio;
+			uv.y += (distortionV + 0.2) * distortionRatio;
+		}
+
+		simplex = cellNoise(uv, amplitude, frequency);
+	}
+
+	if (noiseType == 2)
+	{
+		simplex = ridgedNoise(uv, amplitude, ratio, octaves, frequency, frequencyRatio, float2(distortionU, distortionV), distortionRatio);
+	}
+
+	simplex += threshold;
+
+	if (gamma != 1.0f)
+		simplex = pow(simplex, (1.0f / gamma));
+
+	if (simplex < 0.0f)
+		simplex = 0.0f;
+
+	return float3(simplex, simplex, simplex);
+}
+		]]>
+		</source>
+		</implementation>
+		<implementation render="OGSRenderer" language="GLSL" lang_version="3.0">
+			<function_name val="simplexNoiseBase" />
+			<source>
+				<![CDATA[
+//
+//	source: https://briansharpe.wordpress.com/2012/01/13/simplex-noise, https://github.com/BrianSharpe
+//
+void FAST32_hash_2D( vec2 gridcell, out vec4 hash_0, out vec4 hash_1 )
+{
+    const vec2 OFFSET = vec2( 26.0, 161.0 );
+    const float DOMAIN = 71.0;
+    const vec2 SOMELARGEFLOATS = vec2( 951.135664, 642.949883 );
+    vec4 P = vec4( gridcell.xy, gridcell.xy + 1.0 );
+    P = P - floor(P * ( 1.0 / DOMAIN )) * DOMAIN;
+    P += OFFSET.xyxy;
+    P *= P;
+    P = P.xzxz * P.yyww;
+    hash_0 = fract( P * ( 1.0 / SOMELARGEFLOATS.x ) );
+    hash_1 = fract( P * ( 1.0 / SOMELARGEFLOATS.y ) );
+}
+vec3 invsqrt( vec3 input_is_glsl_kw )
+{
+	return vec3(1.0f / sqrt(input_is_glsl_kw));
+}
+float SimplexPerlin2D( vec2 P )
+{
+    //	simplex math constants
+    const float SKEWFACTOR = 0.36602540378443864676372317075294;			// 0.5*(sqrt(3.0)-1.0)
+    const float UNSKEWFACTOR = 0.21132486540518711774542560974902;			// (3.0-sqrt(3.0))/6.0
+    const float SIMPLEX_TRI_HEIGHT = 0.70710678118654752440084436210485;	// sqrt( 0.5 )	height of simplex triangle
+    const vec3 SIMPLEX_POINTS = vec3( 1.0-UNSKEWFACTOR, -UNSKEWFACTOR, 1.0-2.0*UNSKEWFACTOR );		//	vertex info for simplex triangle
+
+    //	establish our grid cell.
+    P *= SIMPLEX_TRI_HEIGHT;		// scale space so we can have an approx feature size of 1.0  ( optional )
+    vec2 Pi = floor( P + dot( P, vec2( SKEWFACTOR ) ) );
+
+    //	calculate the hash.
+    //	( various hashing methods listed in order of speed )
+    vec4 hash_x, hash_y;
+    FAST32_hash_2D( Pi, hash_x, hash_y );
+    //SGPP_hash_2D( Pi, hash_x, hash_y );
+
+    //	establish vectors to the 3 corners of our simplex triangle
+    vec2 v0 = Pi - dot( Pi, vec2( UNSKEWFACTOR ) ) - P;
+
+    vec4 v1pos_v1hash = (v0.x < v0.y) ? vec4(SIMPLEX_POINTS.xy, hash_x.y, hash_y.y) : vec4(SIMPLEX_POINTS.yx, hash_x.z, hash_y.z);
+    vec4 v12 = vec4( v1pos_v1hash.xy, SIMPLEX_POINTS.zz ) + v0.xyxy;
+
+    //	calculate the dotproduct of our 3 corner vectors with 3 random normalized vectors
+    vec3 grad_x = vec3( hash_x.x, v1pos_v1hash.z, hash_x.w ) - 0.49999;
+    vec3 grad_y = vec3( hash_y.x, v1pos_v1hash.w, hash_y.w ) - 0.49999;
+    //	rd: 2015 07 03: modified code to fix inverse square root results.
+    // 	vec3 grad_results = inversesqrt( grad_x * grad_x + grad_y * grad_y ) * ( grad_x * vec3( v0.x, v12.xz ) + grad_y * vec3( v0.y, v12.yw ) );
+    vec3 grad_results = invsqrt( grad_x * grad_x + grad_y * grad_y ) * ( grad_x * vec3( v0.x, v12.xz ) + grad_y * vec3( v0.y, v12.yw ) );
+
+    //	Normalization factor to scale the final result to a strict 1.0->-1.0 range
+    //	x = ( sqrt( 0.5 )/sqrt( 0.75 ) ) * 0.5
+    //	NF = 1.0 / ( x * ( ( 0.5 – x*x ) ^ 4 ) * 2.0 )
+    //	http://briansharpe.wordpress.com/2012/01/13/simplex-noise/#comment-36
+    const float FINAL_NORMALIZATION = 99.204334582718712976990005025589;
+
+    //	evaluate the surflet, sum and return
+    vec3 m = vec3( v0.x, v12.xz ) * vec3( v0.x, v12.xz ) + vec3( v0.y, v12.yw ) * vec3( v0.y, v12.yw );
+    m = max(0.5 - m, 0.0);		//	The 0.5 here is SIMPLEX_TRI_HEIGHT^2
+    m = m*m;
+    return dot(m*m, grad_results) * FINAL_NORMALIZATION;
+}
+vec4 Cellular_weight_samples( vec4 samples )
+{
+    samples = samples * 2.0 - 1.0;
+    return (samples * samples * samples) - sign(samples);	// cubic (even more variance)
+}
+float SimplexCellular2D( vec2 P )
+{
+    //	simplex math based off Stefan Gustavson's and Ian McEwan's work at...
+    //	http://github.com/ashima/webgl-noise
+
+    //	simplex math constants
+    const float SKEWFACTOR = 0.36602540378443864676372317075294;			// 0.5*(sqrt(3.0)-1.0)
+    const float UNSKEWFACTOR = 0.21132486540518711774542560974902;			// (3.0-sqrt(3.0))/6.0
+    const float SIMPLEX_TRI_HEIGHT = 0.70710678118654752440084436210485;	// sqrt( 0.5 )	height of simplex triangle.
+    const float INV_SIMPLEX_TRI_HEIGHT = 1.4142135623730950488016887242097;	//	1.0 / sqrt( 0.5 )
+    const vec3 SIMPLEX_POINTS = vec3( 1.0-UNSKEWFACTOR, -UNSKEWFACTOR, 1.0-2.0*UNSKEWFACTOR ) * INV_SIMPLEX_TRI_HEIGHT;		//	vertex info for simplex triangle
+
+    //	establish our grid cell.
+    P *= SIMPLEX_TRI_HEIGHT;		// scale space so we can have an approx feature size of 1.0  ( optional )
+    vec2 Pi = floor( P + dot( P, vec2( SKEWFACTOR ) ) );
+
+    //	calculate the hash.
+    //	( various hashing methods listed in order of speed )
+    vec4 hash_x, hash_y;
+    FAST32_hash_2D( Pi, hash_x, hash_y );
+    //SGPP_hash_2D( Pi, hash_x, hash_y );
+
+    //	push hash values to extremes of jitter window
+    const float JITTER_WINDOW = ( 0.10566243270259355887271280487451 * INV_SIMPLEX_TRI_HEIGHT );		// this will guarentee no artifacts.
+    hash_x = Cellular_weight_samples( hash_x ) * JITTER_WINDOW;
+    hash_y = Cellular_weight_samples( hash_y ) * JITTER_WINDOW;
+
+    //	calculate sq distance to closest point
+    vec2 p0 = ( ( Pi - dot( Pi, vec2( UNSKEWFACTOR ) ) ) - P ) * INV_SIMPLEX_TRI_HEIGHT;
+    hash_x += p0.xxxx;
+    hash_y += p0.yyyy;
+    hash_x.yzw += SIMPLEX_POINTS.xyz;
+    hash_y.yzw += SIMPLEX_POINTS.yxz;
+    vec4 distsq = hash_x*hash_x + hash_y*hash_y;
+    vec2 tmp = min( distsq.xy, distsq.zw );
+    return min( tmp.x, tmp.y );
+}
+float fractalNoise(
+	vec2 uv,
+	float amplitude,
+	float ratio,
+	int octaves,
+	float frequency,
+	float frequencyRatio,
+	vec2 distortion,
+	float distortionRatio)
+{
+	float noise = 0.0f;
+	float simplex = 0.0f;
+
+	distortion *= distortionRatio;
+
+	for (int i=0; i < octaves+1; i++) {
+		noise = SimplexPerlin2D(uv+distortion) * pow(frequency, -amplitude*i);
+		simplex += amplitude * noise;
+
+		float tmp = uv.x;
+		uv.x = uv.y * frequency - 0.02f;
+		uv.y = tmp * frequency + 0.3f;
+
+		amplitude *= ratio;
+		frequency *= frequencyRatio;
+		distortion *= distortionRatio;
+	}
+
+	simplex = 0.5f * simplex + 0.5f;
+
+	return simplex;
+}
+float cellNoise(
+	vec2 uv,
+	float amplitude,
+	float frequency)
+{
+	float noise = SimplexCellular2D(uv*frequency);
+	float simplex = amplitude * noise;
+
+	return simplex;
+}
+float ridgedNoise(
+	vec2 uv,
+	float amplitude,
+	float ratio,
+	int octaves,
+	float frequency,
+	float frequencyRatio,
+	vec2 distortion,
+	float distortionRatio)
+{
+	float simplex, signal, weight, offset;
+
+	simplex = 1.0;
+	offset = 1.0;
+
+	signal = offset - abs(SimplexPerlin2D(uv));
+	signal *= signal;
+	simplex = signal;
+	weight = 1.0;
+
+	distortion *= distortionRatio;
+
+	for(int i=1; i<octaves; ++i) {
+		uv *= frequency;
+
+		weight = clamp(signal*frequencyRatio, 0.0, 1.0);
+		signal = offset - abs(SimplexPerlin2D(uv+distortion));
+
+		signal *= signal*weight;
+		simplex += signal * pow(frequency, -ratio) * amplitude;
+		frequency *= frequencyRatio;
+		distortion *= distortionRatio;
+	}
+
+	simplex = 0.5f * simplex + 0.5f;
+
+	return simplex;
+}
+vec3 simplexNoiseBase(
+	vec2 uv,
+	float scale,
+	float amplitude,
+	float threshold,
+	float ratio,
+	int octaves,
+	float frequency,
+	float frequencyRatio,
+	float distortionU,
+	float distortionV,
+	float distortionRatio,
+	float gamma,
+	int noiseType)
+{
+	float simplex = 0.0f;
+
+	if (scale > 0.0001)
+	{
+		uv *= scale;
+	}
+
+	if (noiseType == 0)
+	{
+		simplex = fractalNoise(uv, amplitude, ratio, octaves, frequency, frequencyRatio, vec2(distortionU, distortionV), distortionRatio);
+		if (simplex < 0.0f)
+			simplex = 0.0f;
+	}
+
+	if (noiseType == 1)
+	{
+		if (distortionRatio > 0.0001)
+		{
+			uv[0] += distortionU * distortionRatio;
+			uv[1] += (distortionV + 0.2) * distortionRatio;
+		}
+
+		simplex = cellNoise(uv, amplitude, frequency);
+	}
+
+	if (noiseType == 2)
+	{
+		simplex = ridgedNoise(uv, amplitude, ratio, octaves, frequency, frequencyRatio, vec2(distortionU, distortionV), distortionRatio);
+	}
+
+	simplex += threshold;
+
+	if (gamma != 1.0f)
+	{
+		simplex = pow(simplex, (1.0f / gamma));
+	}
+
+	if (simplex < 0.0f)
+	{
+		simplex = 0.0f;
+	}
+
+	return vec3(simplex, simplex, simplex);
+}
+		]]>
+		</source>
+	</implementation>
+	</implementation>
+</fragment>

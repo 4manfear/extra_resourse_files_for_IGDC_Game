@@ -1,0 +1,98 @@
+/*-----------------------------------------------------------------------------
+*	CREATED: 16 VII 2020
+*-----------------------------------------------------------------------------*/
+
+proc register(string $key, string $value)
+{
+    catchQuiet(registerPluginResource("sweep", $key, $value));
+}
+
+global proc registerSweepStringResources()
+{
+    register("kAlignment", "Alignment");
+    register("kAlign", "Align");
+    register("kAmplitude", "Amplitude");
+    register("kAngle", "Angle");
+    register("kArc", "Arc");
+    register("kAutomaticRoll", "Automatic Roll");
+    register("kCancel", "Cancel");
+    register("kCap", "Cap");
+    register("kCircle", "Circle");
+    register("kConvex", "Convex");
+    register("kCornerDepth", "Corner Depth");
+    register("kCornerRadius", "Corner Radius");
+    register("kCornerSegments", "Corner Segments");
+    register("kCoverage", "Coverage");
+    register("kCurveObject", "Curve Object");
+    register("kCustom", "Custom");
+    register("kCustomSweepProfile", "Custom Sweep Profile");
+    register("kCycles", "Cycles");
+    register("kDependent", "One node for multiple curves");
+    register("kDistance", "Distance");
+    register("kDistanceValue", "Distance Value");
+    register("kDistribution", "Distribution");
+    register("kDistribute", "Distribute");
+    register("kEnable", "Enable");
+    register("kFirstSelection", "Sweep Mesh Creator node:");
+    register("kHeight", "Height");
+    register("kHorizontal", "Horizontal");
+    register("kHorizontalOffset", "Horizontal Offset");
+    register("kIndependent", "One node for each curve");
+    register("kInnerRadius", "Inner Radius");
+    register("kInterpolation", "Interpolation");
+    register("kLine", "Line");
+    register("kMode", "Mode");
+    register("kNatural", "Natural");
+    register("kNormals", "Normals");
+    register("kNoRoll", "No Roll");
+    register("kNumberOfInstances", "Number of Instances");
+    register("kOffset", "Offset");
+    register("kOK", "OK");
+    register("kOptimize", "Optimize");
+    register("kPattern", "Pattern");
+    register("kPatternElementsUniformScale", "Uniform Instance Scale");
+    register("kPatternElementsAutomaticOrientation", "Relative Instance Orientation");
+    register("kPoly", "Poly");
+    register("kPolyEdge", "Poly Edge");
+    register("kPolyFace", "Poly Face");
+    register("kPolyObject", "Poly Object");
+    register("kPosition", "Position");
+    register("kPrecision", "Precision");
+    register("kPrecisionValue", "Precision Value");
+    register("kProfile", "Profile");
+    register("kRectangle", "Rectangle");
+    register("kProfileUniformScale", "Uniform Profile Scale");
+    register("kReverse", "Reverse");
+    register("kRotateInstances", "Rotate Instances");
+    register("kScaleInstances", "Scale Instances");
+    register("kScaleInstancesX", "Scale Instances X");
+    register("kScaleInstancesY", "Scale Instances Y");
+    register("kScaleProfile", "Scale Profile");
+    register("kScaleProfileX", "Scale Profile X");
+    register("kScaleProfileY", "Scale Profile Y");
+    register("kSegments", "Segments");
+    register("kSelect", "Select");
+    register("kSelected", "Selected");
+    register("kSettings", "Advanced Settings");
+    register("kSides", "Sides");
+    register("kSmallOperationWidgetSystem", "Small Operation Widget System");
+    register("kSmoothing", "Smoothing");
+    register("kStar", "Star");
+    register("kSteps", "Steps");
+    register("kSweepMeshFromCurve", "Sweep Mesh");
+    register("kSweepMeshFromCurveOptions", "Sweep Mesh Options");
+    register("kSweepMeshFromCurveAnn", "Create sweep mesh based on selected curve(s)");
+    register("kSweepProfiles", "Sweep Profiles");
+    register("kTaperCurve", "Taper Curve");
+    register("kTransformation", "Transformation");
+    register("kType", "Type");
+    register("kUV", "UV");
+    register("kValue", "Value");
+    register("kVertical", "Vertical");
+    register("kVerticalOffset", "Vertical Offset");
+    register("kWave", "Wave");
+    register("kWidth", "Width");
+
+    // Load any localized string resources
+    loadPluginLanguageResources("sweep", "sweep.pres.mel");
+}

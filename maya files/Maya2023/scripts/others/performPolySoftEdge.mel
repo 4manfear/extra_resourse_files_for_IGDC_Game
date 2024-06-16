@@ -1,0 +1,166 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+
+//
+//  Creation Date:  4 April 1997
+//
+//  Procedure Name:
+//      performPolySoftEdge
+//
+//  Description:
+//        soften the selected polygon edges
+//         
+//  Input Arguments:
+//        $option : Whether to set the options to default values.
+//  Return Value:
+//        command string iff $option==2
+//
+
+proc setOptionVars (int $forceFactorySettings)
+{			   
+	optionVar -init $forceFactorySettings -category "Modeling.Mesh Display.Soften/Harden Edges"
+		-iv polySoftEdgeMethod 1
+		-fv polySoftEdge 30.0
+		;
+}
+
+global proc performPolySoftEdgeSetup (string $parent, int $forceFactorySettings)
+{
+	setOptionVars($forceFactorySettings);
+	setParent $parent;
+    float $fval = `optionVar -query polySoftEdge`;
+    floatSliderGrp -edit -value $fval polySoftEdge;
+	
+	int $method = `optionVar -query polySoftEdgeMethod`;
+	if($method == 1)
+		radioButtonGrp -e -select 1 polySoftEdgeAngleRadio;
+	else
+		radioButtonGrp -e -select 1 polySoftEdgeTextureRadio;
+	
+	performPolySoftEdgeMethodToggle();
+}
+
+global proc performPolySoftEdgeCallback (string $parent, int $doIt)
+{
+	setParent $parent;
+	optionVar -floatValue polySoftEdge `floatSliderGrp -query -value polySoftEdge`;
+	
+	int $angleRadio	= `radioButtonGrp -q -select polySoftEdgeAngleRadio`;
+	int $textureRadio = `radioButtonGrp -q -select polySoftEdgeTextureRadio`;
+	optionVar -intValue polySoftEdgeMethod ($angleRadio?1:2);
+	
+	if ($doIt) {
+		performPolySoftEdge 0;
+		addToRecentCommandQueue "performPolySoftEdge 0" "PolySoftEdge";
+	}
+}
+
+proc polySoftEdgeOptions ()
+{
+	string $commandName = "performPolySoftEdge";
+	string $callback = ($commandName + "Callback");
+	string $setup = ($commandName + "Setup");
+	   
+	string $layout = getOptionBox();
+	setParent $layout;
+	setUITemplate -pushTemplate DefaultTemplate;
+	waitCursor -state 1;
+	tabLayout -scr true -tv false;
+	
+	string $parent = `columnLayout -adj 1`;
+	
+	radioButtonGrp 
+		-nrb 1 
+		-label (uiRes("m_performPolySoftEdge.kMethod")) 
+		-label1 (uiRes("m_performPolySoftEdge.kAngle")) 
+		-cc performPolySoftEdgeMethodToggle 
+		polySoftEdgeAngleRadio;
+		
+	floatSliderGrp
+	    -cw 1 185	
+		-min 0.0 
+		-max 180.0 
+		-fmn 0.0 
+		-fmx 180.0 
+		polySoftEdge;
+	
+	radioButtonGrp 
+		-nrb 1 
+		-label1 (uiRes("m_performPolySoftEdge.kTextureBorders")) 
+		-scl polySoftEdgeAngleRadio 
+		polySoftEdgeTextureRadio;
+	
+	setParent ..;
+
+	waitCursor -state 0;
+	setUITemplate -popTemplate;
+	   
+	string $applyBtn = getOptionBoxApplyBtn();
+	button -edit -label (uiRes("m_performPolySoftEdge.kSoftHard"))
+	       -command ($callback + " " + $parent + " " + 1)
+		$applyBtn;
+	string $saveBtn = getOptionBoxSaveBtn();
+	button -edit 
+		-command ($callback + " " + $parent + " " + 0 + "; hideOptionBox")
+		$saveBtn;
+	string $resetBtn = getOptionBoxResetBtn();
+	button -edit 
+		-command ($setup + " " + $parent + " " + 1)
+		$resetBtn;
+	
+
+	setOptionBoxTitle( (uiRes("m_performPolySoftEdge.kOptionBoxTitle")) );
+
+	setOptionBoxHelpTag( "NormalsSoftenHarden" );
+
+	eval (($setup + " " + $parent + " " + 0));      
+	showOptionBox();
+}
+
+global proc performPolySoftEdgeMethodToggle()
+{
+	$enable = `radioButtonGrp -q -select polySoftEdgeAngleRadio` == 1;
+	if(`floatSliderGrp -q -ex polySoftEdge`)
+		floatSliderGrp -e -en $enable polySoftEdge;
+}
+
+proc string assembleCmd()
+{
+	setOptionVars(false);
+	$method = `optionVar -query polySoftEdgeMethod`;
+	if($method == 1)
+	{
+		$fval = `optionVar -query polySoftEdge`;
+		$cmd = "polySoftEdge -a " + $fval;
+		return ("polyPerformAction \"" + $cmd + "\" e 0");
+	}
+	else
+	{
+		return "expandPolyGroupSelection; polyUVBorderHard";
+	}
+	
+}
+
+global proc string performPolySoftEdge (int $option)
+{
+	string $cmd="";
+	switch ($option) {
+	case 0:
+		$cmd = `assembleCmd`;
+		evalEcho($cmd);
+		break;
+	case 1:
+		polySoftEdgeOptions;
+		break;
+	case 2:
+	default:
+		$cmd = `assembleCmd`;
+		break;
+	}
+	return $cmd;
+}

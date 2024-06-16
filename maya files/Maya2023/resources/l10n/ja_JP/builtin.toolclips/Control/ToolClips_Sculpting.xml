@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<toolclips ui="ui/ToolClipUI.qml" simple="ui/SimpleTooltip.qml" locale="ja_JP">
+  <toolclip key="meshSculptBtn" title="スカルプト ツール" help="TC-Sculpt-Tool">
+    <text>サーフェスを持ち上げます。</text>
+    <expanded>
+      <resourcelist>
+        <video location="Sculpting_SculptTool.webm">サーフェスをスカルプトする</video>
+        <video location="Sculpting_SculptTool_Steady.webm">スムーズ ストロークをスカルプトする</video>
+        <link location="TC-Sculpting-basics">スカルプトの基本</link>
+        <link location="TC-Sculpting-tool-settings">スカルプト ツールの設定</link>
+        <link location="TC-Produce-smooth-tool-strokes">スムーズ　ツールのストロークを生成する</link>
+      </resourcelist>
+    </expanded>
+  </toolclip>
+  <toolclip key="meshSmoothBtn" title="スムーズ ツール" help="TC-Smooth-Tool">
+    <text>サーフェスの詳細を平らにします。</text>
+    <expanded>
+      <resourcelist>
+        <video location="Sculpting_SmoothTool.webm">サーフェスをスムーズする</video>
+        <link location="TC-Sculpting-tool-settings">スカルプト ツールの設定</link>
+      </resourcelist>
+    </expanded>
+  </toolclip>
+  <toolclip key="meshRelaxBtn" title="リラックス ツール" help="TC-Relax-Tool">
+    <text>そのシェイプに影響を与えずに、メッシュのサーフェスをスムーズします。</text>
+    <expanded>
+      <resourcelist>
+        <video location="Sculpting_RelaxTool.webm">サーフェスをリラックスさせる</video>
+        <link location="TC-Sculpting-tool-settings">スカルプト ツールの設定</link>
+		</resourcelist>
+    </expanded>
+  </toolclip>
+  <toolclip key="meshGrabBtn" title="グラブ ツール" help="TC-Grab-Tool">
+    <text>1 つの頂点を任意の方向にサーフェスに沿って引き出します。</text>
+    <expanded>
+      <resourcelist>
+        <video location="Sculpting_GrabTool.webm">頂点を引き出す</video>
+        <link location="TC-Sculpting-tool-settings">スカルプト ツールの設定</link>
+		</resourcelist>
+    </expanded>
+  </toolclip>
+  <toolclip key="meshPinchBtn" title="ピンチ ツール" help="TC-Pinch-Tool">
+    <text>ソフト エッジをシャープにします。</text>
+    <expanded>
+      <resourcelist>
+        <video location="Sculpting_PinchTool.webm">エッジをつまむ</video>
+        <link location="TC-Sculpting-tool-settings">スカルプト ツールの設定</link>
+		</resourcelist>
+    </expanded>
+  </toolclip>
+  <toolclip key="meshFlattenBtn" title="フラット化ツール" help="TC-Flatten-Tool">
+    <text>サーフェスを平らにします。</text>
+    <expanded>
+      <resourcelist>
+        <video location="Sculpting_FlattenTool.webm">頂点を平らにする</video>
+        <link location="TC-Sculpting-tool-settings">スカルプト ツールの設定</link>
+		</resourcelist>
+    </expanded>
+  </toolclip>
+  <toolclip key="meshFoamyBtn" title="フォーミー ツール" help="TC-Foamy-Tool ">
+    <text>サーフェスを少し持ち上げます。</text>
+    <expanded>
+      <resourcelist>
+        <video location="Sculpting_FoamyTool.webm">サーフェスを少し持ち上げる</video>
+        <link location="TC-Sculpting-tool-settings">スカルプト ツールの設定</link>
+		</resourcelist>
+    </expanded>
+  </toolclip>
+  <toolclip key="meshSprayBtn" title="スプレー ツール" help="TC-Spray-Tool">
+    <expanded>
+      <resourcelist>
+        <video location="Sculpting_SprayTool.webm">スタンプをスプレーする</video>
+        <link location="TC-Sculpting-tool-settings">スカルプト ツールの設定</link>
+        <link location="TC-Stamps">スタンプ</link>
+      </resourcelist>
+    </expanded>
+  </toolclip>
+  <toolclip key="meshRepeatBtn" title="繰り返しツール" help="TC-Repeat-Tool">
+    <text>サーフェスにパターンをスタンプします。</text>
+    <expanded>
+      <resourcelist>
+        <video location="Sculpting_RepeatTool.webm">サーフェスにパターンをスタンプする</video>
+        <link location="TC-Sculpting-tool-settings">スカルプト ツールの設定</link>
+        <link location="TC-Stamps">スタンプ</link>
+      </resourcelist>
+    </expanded>
+  </toolclip>
+  <toolclip key="meshImprintBtn" title="インプリント ツール" help="TC-Imprint-Tool">
+    <text>サーフェスにスタンプの単一コピーをインプリントします。</text>
+    <expanded>
+      <resourcelist>
+        <video location="Sculpting_ImprintTool.webm">サーフェスにスタンプをインプリントする</video>
+        <link location="TC-Sculpting-tool-settings">スカルプト ツールの設定</link>
+        <link location="TC-Stamps">スタンプ</link>
+        <link location="TC-Sculpt-using-stamps">スタンプを使用してスカルプトする</link>
+      </resourcelist>
+    </expanded>
+  </toolclip>
+  <toolclip key="meshWaxBtn" title="ワックス ツール" help="TC-Wax-Tool">
+    <text>サーフェスを作成します。</text>
+    <expanded>
+      <resourcelist>
+        <video location="Sculpting_WaxTool.webm">サーフェスを作成する</video>
+        <link location="TC-Sculpting-tool-settings">スカルプト ツールの設定</link>
+		</resourcelist>
+    </expanded>
+  </toolclip>
+  <toolclip key="meshScrapeBtn" title="削り取りツール" help="TC-Scrape-Tool">
+    <text>高くなっているサーフェスの領域を最小化または除去します。</text>
+    <expanded>
+      <resourcelist>
+        <video location="Sculpting_ScrapeTool.webm">サーフェスを削り取る</video>
+        <link location="TC-Sculpting-tool-settings">スカルプト ツールの設定</link>
+		</resourcelist>
+    </expanded>
+  </toolclip>
+  <toolclip key="meshFillBtn" title="塗り潰しツール" help="TC-Fill-Tool">
+    <text>サーフェスのくぼみを塗り潰します。</text>
+    <expanded>
+      <resourcelist>
+        <video location="Sculpting_FillTool.webm">サーフェスのくぼみを塗り潰す</video>
+        <link location="TC-Sculpting-tool-settings">スカルプト ツールの設定</link>
+      </resourcelist>
+    </expanded>
+  </toolclip>
+  <toolclip key="meshKnifeBtn" title="ナイフ ツール" help="TC-Knife-Tool">
+    <text>サーフェスに微細なストロークを切り込みます。</text>
+    <expanded>
+      <resourcelist>
+        <video location="Sculpting_KnifeTool.webm">サーフェスにストロークを切り込む</video>
+        <link location="TC-Sculpting-tool-settings">スカルプト ツールの設定</link>
+      </resourcelist>
+    </expanded>
+  </toolclip>
+  <toolclip key="meshSmearBtn" title="塗り付けツール" help="TC-Smear-Tool">
+    <text>ストロークの方向にサーフェスを引き伸ばします。</text>
+    <expanded>
+      <resourcelist>
+        <video location="Sculpting_SmearTool.webm">サーフェスを塗り付ける</video>
+        <link location="TC-Sculpting-tool-settings">スカルプト ツールの設定</link>
+      </resourcelist>
+    </expanded>
+  </toolclip>
+  <toolclip key="meshBulgeBtn" title="バルジ ツール" help="TC-Bulge-Tool">
+    <text>サーフェス上の領域を膨らませます。</text>
+    <expanded>
+      <resourcelist>
+        <video location="Sculpting_BulgeTool.webm">サーフェスに膨らみを作成する</video>
+        <link location="TC-Sculpting-tool-settings">スカルプト ツールの設定</link>
+      </resourcelist>
+    </expanded>
+  </toolclip>
+  <toolclip key="meshAmplifyBtn" title="増幅ツール" help="TC-Amplify-Tool">
+    <text>サーフェスの詳細を強調します。</text>
+    <expanded>
+      <resourcelist>
+        <video location="Sculpting_AmplifyTool.webm">サーフェスを増幅させる</video>
+         <link location="TC-Sculpting-tool-settings">スカルプト ツールの設定</link>
+      </resourcelist>
+    </expanded>
+  </toolclip>
+  <toolclip key="meshFreezeBtn" title="フリーズ ツール" help="TC-Freeze-Tool">
+    <text>これ以上変更されないように、サーフェスの領域をペイントします。</text>
+    <expanded>
+      <resourcelist>
+        <video location="Sculpting_FreezeTool.webm">サーフェスをフリーズする</video>
+         <link location="TC-Sculpting-tool-settings">スカルプト ツールの設定</link>
+		 <link location="TC-Freeze-regions-on-a-model">モデル上の領域をフリーズする</link>
+      </resourcelist>
+    </expanded>
+  </toolclip>
+</toolclips>

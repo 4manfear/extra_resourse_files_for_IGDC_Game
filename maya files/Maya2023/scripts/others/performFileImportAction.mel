@@ -1,0 +1,41 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  May 30, 2014
+//
+//  Description:
+//      performFileImportAction, helper function to import files
+//
+
+global proc int
+performFileImportAction (string $theFile)
+{
+	global string $gOperationMode;
+
+	string $save_gv_operationMode = $gOperationMode;
+	$gOperationMode = "Import";
+	int $result = performFileAction ($theFile, 1, "");
+	$gOperationMode = $save_gv_operationMode;
+
+	return ($result);
+}
+
+// Does everything import does, but will not change the 
+// workspace path.
+global proc int
+performFileSilentImportAction (string $theFile)
+{
+	global string $gOperationMode;
+	string $save_gv_operationMode = $gOperationMode;
+	$gOperationMode = "SilentImport";
+	int $result = performFileAction ($theFile, 1, "");
+	$gOperationMode = $save_gv_operationMode;
+
+	return ($result);
+}

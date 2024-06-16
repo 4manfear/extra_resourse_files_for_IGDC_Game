@@ -1,0 +1,240 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc xgmToggleGrabInvertFrozenEffect()
+{
+	int $newInvertFrozenValue = !`xgmGrabBrushContext -q -freezeMode xgmGrabBrushTool`;
+	xgmGrabBrushContext -e -freezeMode $newInvertFrozenValue xgmGrabBrushTool;
+}
+
+global proc xgmToggleGrabFalloffColor()
+{
+	int $newFalloffColorValue = !`xgmGrabBrushContext -q -fc xgmGrabBrushTool`;
+	xgmGrabBrushContext -e -fc $newFalloffColorValue xgmGrabBrushTool;
+}
+
+global proc xgmToggleGrabPreselectionHighlight()
+{
+	int $newPreselectionHighlight = !`xgmGrabBrushContext -q -ps xgmGrabBrushTool`;
+	xgmGrabBrushContext -e -ps $newPreselectionHighlight xgmGrabBrushTool;
+}
+
+global proc xgmToggleGrabShowFrozen()
+{
+	int $newShowFrozen = !`xgmGrabBrushContext -q -sf xgmGrabBrushTool`;
+	xgmGrabBrushContext -e -sf $newShowFrozen xgmGrabBrushTool;
+}
+
+global proc xgmToggleGrabLockLength()
+{
+	int $newLockLength = !`xgmGrabBrushContext -q -preserveLength xgmGrabBrushTool`;
+	xgmGrabBrushContext -e -preserveLength $newLockLength xgmGrabBrushTool;
+}
+
+global proc xgmToggleGrabEnableCollide()
+{
+	int $newEnableCollide = !`xgmGrabBrushContext -q -ec xgmGrabBrushTool`;
+	xgmGrabBrushContext -e -ec $newEnableCollide xgmGrabBrushTool;
+}
+
+global proc xgmToggleGrabEnableRootToTipFalloff()
+{
+	int $newEnableRootToTip = !`xgmGrabBrushContext -q -ert xgmGrabBrushTool`;
+	xgmGrabBrushContext -e -ert $newEnableRootToTip xgmGrabBrushTool;
+}
+
+global proc xgmToggleGrabFilterBackfaces()
+{
+	int $newFilterBackfaces = !`xgmGrabBrushContext -q -fb xgmGrabBrushTool`;
+	xgmGrabBrushContext -e -fb $newFilterBackfaces xgmGrabBrushTool;
+}
+
+global proc xgmSwitchGrabFallOffType(string $falloffType) 
+{
+	xgmGrabBrushContext -e -brushFalloffType $falloffType xgmGrabBrushTool;
+}
+
+global proc contextXGenGrabToolMM()
+{
+	int $currentInvertFrozen = !`xgmGrabBrushContext -q -freezeMode xgmGrabBrushTool`;
+	menuItem
+		-label (uiRes("m_contextXGenGrabToolMM.kInvertFrozenEffect"))
+		-command xgmToggleGrabInvertFrozenEffect
+		-checkBox $currentInvertFrozen
+		-radialPosition "N" 
+		-enableCommandRepeat 1
+		;
+
+	int $currentFalloffColor = `xgmGrabBrushContext -q -fc xgmGrabBrushTool`;
+	menuItem
+		-label (uiRes("m_contextXGenGrabToolMM.kBrushFalloffColor"))
+		-command xgmToggleGrabFalloffColor
+		-checkBox $currentFalloffColor
+		-radialPosition "NE" 
+		-enableCommandRepeat 1
+		;
+
+	int $currentPreselectionHighlight = `xgmGrabBrushContext -q -ps xgmGrabBrushTool`;
+	menuItem
+		-label (uiRes("m_contextXGenGrabToolMM.kPreselectionHighlight"))
+		-command xgmToggleGrabPreselectionHighlight 
+		-checkBox $currentPreselectionHighlight
+		-radialPosition "E"
+		-enableCommandRepeat 1
+		;
+
+	int $currentShowFrozen = `xgmGrabBrushContext -q -sf xgmGrabBrushTool`;
+	menuItem
+		-label (uiRes("m_contextXGenGrabToolMM.kShowFrozen"))
+		-command xgmToggleGrabShowFrozen 
+		-checkBox $currentShowFrozen
+		-radialPosition "SE" 
+		-enableCommandRepeat 1
+		;
+
+	int $currentPreserveLength = `xgmGrabBrushContext -q -preserveLength xgmGrabBrushTool`;
+	menuItem
+		-label (uiRes("m_contextXGenGrabToolMM.kPreserveLength"))
+		-command xgmToggleGrabLockLength 
+		-checkBox $currentPreserveLength
+		-radialPosition "S" 
+		-enableCommandRepeat 1
+		;
+
+	int $currentEnableCollide = `xgmGrabBrushContext -q -ec xgmGrabBrushTool`;
+	menuItem
+		-label (uiRes("m_contextXGenGrabToolMM.kCollideWithMeshes"))
+		-command xgmToggleGrabEnableCollide 
+		-checkBox $currentEnableCollide
+		-radialPosition "SW" 
+		-enableCommandRepeat 1
+		;
+
+	int $currentRootToTipFalloff = `xgmGrabBrushContext -q -ert xgmGrabBrushTool`;
+	menuItem
+		-label (uiRes("m_contextXGenGrabToolMM.kRootToTipFalloff"))
+		-command xgmToggleGrabEnableRootToTipFalloff
+		-checkBox $currentRootToTipFalloff
+		-radialPosition "W" 
+		-enableCommandRepeat 1
+		;
+
+	int $currentFilterBackFaces = `xgmGrabBrushContext -q -fb xgmGrabBrushTool`;
+	menuItem
+		-label (uiRes("m_contextXGenGrabToolMM.kFilterBackFaces"))
+		-command xgmToggleGrabFilterBackfaces
+		-checkBox $currentFilterBackFaces
+		-radialPosition "NW" 
+		-enableCommandRepeat 1
+		;
+		
+	menuItem
+		-label (uiRes("m_contextXGenGrabToolMM.kFalloffType"))
+		-subMenu 1
+		-enableCommandRepeat 1
+		;
+		
+		radioMenuItemCollection;
+		string $currentFallOffType = `xgmGrabBrushContext -q -bft xgmGrabBrushTool`;
+		menuItem
+			-label (uiRes("m_contextXGenGrabToolMM.kScreen"))
+			-command "xgmSwitchGrabFallOffType(\"screen\")"
+			-radioButton ($currentFallOffType == "screen")
+			-enableCommandRepeat 1
+			;
+			
+		menuItem
+			-label (uiRes("m_contextXGenGrabToolMM.kVolume"))
+			-command "xgmSwitchGrabFallOffType(\"volume\")"
+			-radioButton ($currentFallOffType == "volume")
+			-enableCommandRepeat 1
+			;
+			
+		setParent -m ..;
+
+	string $brushCmd = "xgmGrabBrushContext";
+	string $tool = "xgmGrabBrushTool";
+	string $flag = "-brushFalloffCurve";
+	string $defaultValFlag = "-defaultBrushFalloffCurve";
+	string $param = $brushCmd + "\", \"" + $tool + "\", \"" + $flag + "\", \"" + $defaultValFlag;
+	menuItem
+		-label (uiRes("m_contextXGenGrabToolMM.kAdjustBrushFalloffCurve"))
+		-command ("xgmMarkingMenuAdjustFalloffCurve( \"" + $param + "\" )")
+		-enableCommandRepeat 1
+		;
+
+	$flag = "-rootToTipCurve";
+	$defaultValFlag = "-defaultRootToTipCurve";
+	$param = $brushCmd + "\", \"" + $tool + "\", \"" + $flag + "\", \"" + $defaultValFlag;
+	menuItem
+		-label (uiRes("m_contextXGenGrabToolMM.kAdjustRootToTipFalloffCurve"))
+		-command ("xgmMarkingMenuAdjustFalloffCurve( \"" + $param + "\" )")
+		-enableCommandRepeat 1
+		;
+		
+	
+	menuItem
+		-label (uiRes("m_contextXGenGrabToolMM.kSymmetry"))
+		-subMenu 1
+		-enableCommandRepeat 1
+		;
+		
+		radioMenuItemCollection;
+		string $currentSymmetryType = `xgmGrabBrushContext -q -brushSymmetryType xgmGrabBrushTool`;
+		menuItem
+			-label (uiRes("m_contextXGenGrabToolMM.kOff"))
+			-command "xgmSwitchSymmetryType(\"xgmGrabBrushContext\", \"xgmGrabBrushTool\", 0)"
+			-radioButton ($currentSymmetryType == 0)
+			-enableCommandRepeat 1
+			;
+			
+		menuItem
+			-label (uiRes("m_contextXGenGrabToolMM.kObjectX"))
+			-command "xgmSwitchSymmetryType(\"xgmGrabBrushContext\", \"xgmGrabBrushTool\", 1)"
+			-radioButton ($currentSymmetryType == 1)
+			-enableCommandRepeat 1
+			;
+
+		menuItem
+			-label (uiRes("m_contextXGenGrabToolMM.kObjectY"))
+			-command "xgmSwitchSymmetryType(\"xgmGrabBrushContext\", \"xgmGrabBrushTool\", 2)"
+			-radioButton ($currentSymmetryType == 2)
+			-enableCommandRepeat 1
+			;
+			
+		menuItem
+			-label (uiRes("m_contextXGenGrabToolMM.kObjectZ"))
+			-command "xgmSwitchSymmetryType(\"xgmGrabBrushContext\", \"xgmGrabBrushTool\", 3)"
+			-radioButton ($currentSymmetryType == 3)
+			-enableCommandRepeat 1
+			;
+			
+		menuItem
+			-label (uiRes("m_contextXGenGrabToolMM.kWorldX"))
+			-command "xgmSwitchSymmetryType(\"xgmGrabBrushContext\", \"xgmGrabBrushTool\", 4)"
+			-radioButton ($currentSymmetryType == 4)
+			-enableCommandRepeat 1
+			;
+
+		menuItem
+			-label (uiRes("m_contextXGenGrabToolMM.kWorldY"))
+			-command "xgmSwitchSymmetryType(\"xgmGrabBrushContext\", \"xgmGrabBrushTool\", 5)"
+			-radioButton ($currentSymmetryType == 5)
+			-enableCommandRepeat 1
+			;
+			
+		menuItem
+			-label (uiRes("m_contextXGenGrabToolMM.kWorldZ"))
+			-command "xgmSwitchSymmetryType(\"xgmGrabBrushContext\", \"xgmGrabBrushTool\", 6)"
+			-radioButton ($currentSymmetryType == 6)
+			-enableCommandRepeat 1
+			;
+
+	setParent -m ..;
+	
+	setParent -menu ..;
+}

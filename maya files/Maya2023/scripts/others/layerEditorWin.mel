@@ -1,0 +1,39 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+// Creation Date:  11 July 1997
+//
+//
+//  Procedure Name:
+//		layerEditorWin
+//
+//  Description:
+//		Obsolete
+//
+
+global proc renameLayer( string $currentLayerName )
+{
+	obsoleteProc("renameLayer", "layerEditorWin.mel");
+}
+global proc updateLayerEditorButtons( )
+{
+	obsoleteProc("updateLayerEditorButtons", "layerEditorWin.mel");
+}
+global proc updateLayerEditorWnd( )
+{
+	obsoleteProc("updateLayerEditorWnd", "layerEditorWin.mel");
+}
+global proc layerCmd( string $cmd ) 
+{
+	obsoleteProc("layerCmd", "layerEditorWin.mel");
+}
+global proc layerEditorWin( )
+{
+	obsoleteProc("layerEditorWin", "layerEditorWin.mel");
+}

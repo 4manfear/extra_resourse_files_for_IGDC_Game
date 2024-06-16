@@ -1,0 +1,39 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+// Description:  This procedure is used to automatically generate
+//      new hyper graph panel label, so that we can pick a label
+//      which has not been used by other scripted panels.
+//      This will help avoid confusion.
+//
+global proc string hyperGraphGenerateNewPanelLabel(string $type)
+{
+    string $defaultName = localizedPanelLabel("Hypergraph Hierarchy");
+    if ($type == "DG")
+    {
+        $defaultName = localizedPanelLabel("Hypergraph InputOutput");
+    }
+
+    int $i = 1;
+    int $foundUniqueName = false;
+
+    while (!$foundUniqueName)
+    {
+        string $panelLabel = $defaultName + $i;
+
+        // Check if this name has been used or not.
+        //
+        string $panelName = `getPanel -withLabel $panelLabel`;
+        if ($panelName == "")
+        {
+            // This is panel label has not been used.
+            //
+            return $panelLabel;
+        }
+        $i++;
+    }
+}

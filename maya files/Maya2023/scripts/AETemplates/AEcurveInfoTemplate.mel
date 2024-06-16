@@ -1,0 +1,44 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//  Procedure Name:
+//	AEcurveInfoTemplate
+//
+//  Description Name;
+//	Creates the attribute editor controls for the curveInfo Node
+//
+//  Input Value:
+//	nodeName 
+//
+//  Output Value:
+//	None
+//
+
+global proc AEcurveInfoTemplate ( string $nodeName )
+{
+	editorTemplate -beginScrollLayout;
+
+		editorTemplate -beginLayout (uiRes("m_AEcurveInfoTemplate.kCurveInfoAttributes"))  -collapse 0;
+			string $input = (uiRes("m_AEcurveInfoTemplate.kInput")) ;
+            editorTemplate -callCustom ("AEinputNew \"" + $input + "\"")
+				("AEinputReplace \"" + $input + "\"")
+				"inputCurve";
+			
+			// the results
+			editorTemplate -addControl "arcLength";
+			editorTemplate -addControl "controlPoints";
+			editorTemplate -addControl "weights";
+			editorTemplate -addControl "knots";
+		editorTemplate -endLayout;
+
+		// include/call base class/node attributes
+		AEabstractBaseCreateTemplate $nodeName;
+
+	editorTemplate -addExtraControls;
+	editorTemplate -endScrollLayout;
+}

@@ -1,0 +1,95 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//  Description:
+//      addRecentFile, used currently used by Project Viewer.
+//		adds filenames to the recent file list.
+//
+
+
+
+global proc addRecentFile ( string $theFile, string $theType )
+{
+	string $RecentFilesList[];
+	int $i;
+	int $nNum;
+	int $maxNum;
+
+	$maxNum = `optionVar -q "RecentFilesMaxSize"`;
+	string $callbackWarn = (uiRes("m_addRecentFile.kMelCallbackAddRecentFile"));
+   
+   // We make sure that optionavars in recent category are upto date.(In case they were updated by
+   // separate Maya instance)
+   string $prefRecent = `internalVar -userPrefDir`;
+   $prefRecent += "userPrefs_recents.mel";
+   if (`filetest -f $prefRecent`)
+      eval( "source \"" + $prefRecent + "\"");
+
+	// do not add crash file information into "RecentFilesList" optionVar
+	string $crashFileName = `crashInfo -q -crashFile`;
+	if ( size($crashFileName) > 0 && $crashFileName == $theFile) return;
+
+
+	if (!`optionVar -exists "RecentFilesList"`)
+	{
+		if ( $maxNum > 0 ) {
+			optionVar -sva "RecentFilesList" $theFile;
+			optionVar -sva "RecentFilesTypeList" $theType;
+		}
+		savePrefs -file "recents";
+      
+		if (catch(melCallbackAddRecentFile($theFile)))
+			warning( $callbackWarn );
+		return;
+	}
+
+	// get the list
+	$RecentFilesList = `optionVar -q "RecentFilesList"`;
+	$nNum = size($RecentFilesList);
+
+	if ($nNum > 0 )
+	{
+		if ( !`optionVar -exists "RecentFilesTypeList"`)
+		{
+			initRecentFilesTypeList( $RecentFilesList );
+		}
+		// search for name in the list.
+		for ($i = 0; $i < $nNum; $i++)
+		{
+			if ($RecentFilesList[$i] == $theFile)
+			{
+				// move it to the top.
+				optionVar -rfa "RecentFilesList" $i;
+				optionVar -rfa "RecentFilesTypeList" $i;
+				optionVar -sva "RecentFilesList" $theFile;
+				optionVar -sva "RecentFilesTypeList" $theType;
+				savePrefs -file "recents";
+				if (catch(melCallbackAddRecentFile($theFile)))
+					warning ( $callbackWarn );
+				return;
+			}
+		}
+	}
+
+	// not found, append at the end.
+	optionVar -sva "RecentFilesList" $theFile;
+	optionVar -sva "RecentFilesTypeList" $theType;
+	$nNum = `optionVar -arraySize "RecentFilesList"`;
+	if ( $nNum > $maxNum )  // default maximum size
+	{
+		for ( $i = 0; $i < $nNum - $maxNum; $i++ )
+		{
+			// remove the oldest one.
+			optionVar -rfa "RecentFilesList" 0;
+			optionVar -rfa "RecentFilesTypeList" 0;
+		}
+	}
+	savePrefs -file "recents";
+
+	if (catch(melCallbackAddRecentFile($theFile)))
+		warning( $callbackWarn );
+}

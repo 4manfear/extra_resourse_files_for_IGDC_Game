@@ -1,0 +1,17 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  Apr 1 1996
+//
+//  Description:
+//      This script is called on startup to setup any preferences
+//		that the user cannot alter.  In an ideal world this
+//		file would be empty.
+//  
+

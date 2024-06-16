@@ -1,0 +1,222 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  11 June 2014
+//
+//  Description:
+//      This implements the "Playback" menu on the Animation Menu Set.
+//
+
+
+
+//  Procedure Name:
+//      AniKeyMenu
+//
+//  Description:
+//      Create the ANIMATION->Playback menu
+//
+//  Input Arguments:
+//      The parent control for the menu.
+//
+//  Return Value:
+//      None.
+//
+
+global proc updatePlaybackLoopMenu(string $parent) {
+	setParent -menu $parent;
+	// update the checkbox for the Playback Loop option
+	string $looping = `playbackOptions -q -loop`;
+	menuItem -e 
+			 -radioButton ($looping == "continuous") 
+			 playbackLoopContinuousItem;
+	menuItem -e 
+			 -radioButton ($looping == "once") 
+			 playbackLoopOnceItem;
+	menuItem -e 
+			 -radioButton ($looping == "oscillate") 
+			 playbackLoopOscillateItem;
+}
+
+global proc updatePlaybackSpeedMenu(string $parent) {
+	setParent -menu $parent;
+	// update the radioButton for the Playback Speed option
+	float $speed = `playbackOptions -q -playbackSpeed`;
+	float $maxSpeed = `playbackOptions -q -maxPlaybackSpeed`;
+	menuItem -e
+			-radioButton ($speed == 0 && $maxSpeed == 0)
+			playbackFreeItem;
+
+	menuItem -e
+			-radioButton ($speed == 0 && $maxSpeed == 1)
+			playbackPefRealtimeItem;
+
+	menuItem -e
+			-radioButton ($speed == 1 && $maxSpeed == 0)
+			playbackRealtimeItem;
+}
+
+global proc AniPlaybackMenu ( string $parent ) {
+	setParent -menu $parent;
+
+	if( `menu -q -ni $parent` != 0 ) {
+		//
+		//	Menu is built already - just return
+		//
+		return;
+	}
+	
+	if( `isTrue AnimationExists` ) {
+		menuItem -divider true;
+		$cmd = "PlayblastWindow";
+		menuItem
+			-rtc $cmd playblastItem;
+			$cmd = "PlayblastOptions";
+			menuItem -optionBox true 
+				-annotation (getRunTimeCommandAnnotation($cmd))
+				-c $cmd playblastDialogItem;
+	} 
+
+	python( "from maya.plugin.evaluator.cache_ui import cache_ui_menu_create" );
+	python( "cache_ui_menu_create( 'cache_playback_menu' )" );
+
+	// Controls
+	menuItem -divider true -dividerLabel (uiRes("m_AniPlaybackMenu.kPlaybackControls"));
+	
+	$cmd = "PlaybackForward";
+	menuItem -rtc $cmd 
+			playbackPlayItem;
+	
+	$cmd = "PlaybackBackward";
+	menuItem -rtc $cmd 
+			playbackPlayBackwardItem;
+			
+	$cmd = "PlaybackStop";
+	menuItem -rtc $cmd
+			playbackStopItem;
+			
+	$cmd = "NextKey";
+	menuItem
+			-rtc $cmd 
+			playbackNextKeyItem;
+
+	$cmd = "PreviousKey";
+	menuItem
+			-rtc $cmd
+			playbackPrevKeyItem;
+
+    $cmd = "SelectNextKey";
+    menuItem
+        -rtc $cmd
+        -version "2020"
+        playbackSelectNextKey;
+
+    $cmd = "SelectPreviousKey";
+    menuItem
+        -rtc $cmd
+        -version "2020"
+        playbackSelectPrevKey;
+
+	$cmd = "NextFrame";
+	menuItem
+			-rtc $cmd
+			playbackNextFrameItem;
+
+	$cmd = "PreviousFrame";
+	menuItem 
+			-rtc $cmd
+			playbackPrevFrameItem;
+
+	$cmd = "GoToMinFrame";
+	menuItem 
+			-rtc $cmd
+			playbackPlayRangeStartItem;
+
+	$cmd = "GoToMaxFrame";
+	menuItem 
+			-rtc $cmd
+			playbackPlayRangeEndItem;
+
+	// Controls
+	menuItem -divider true -dividerLabel (uiRes("m_AniPlaybackMenu.kPlaybackSettings"));
+
+	// Set Range to...
+	menuItem -label (uiRes("m_AniPlaybackMenu.kSetRange"))  -subMenu true -tearOff yes playbackRangeItem;
+		menuItem -rtc "PlaybackRangeEnabledClips"
+			playbackRangeEnabledClipsItem;
+		menuItem -rtc "PlaybackRangeMinMax"
+			playbackRangeMinMaxItem;
+		menuItem -rtc "PlaybackRangePrefs"
+			playbackRangePrefsItem;
+		menuItem -rtc "PlaybackRangeHighlight"
+			playbackRangeHighlightItem;
+		menuItem -rtc "PlaybackRangeSound"
+			playbackRangeSoundItem;
+		menuItem -rtc "PlaybackRangeStartEnd"
+			playbackRangeStartEndItem;
+		setParent -m ..;
+
+	// Playback Speed 
+	float $speed = `playbackOptions -q -playbackSpeed`;
+	float $maxSpeed = `playbackOptions -q -maxPlaybackSpeed`;
+	
+	menuItem -label (uiRes("m_AniPlaybackMenu.kPlaybackSpeed"))  
+		-subMenu true -tearOff yes 
+		-pmc ("updatePlaybackSpeedMenu " + $parent)
+		playbackSpeedItem;
+		
+		radioMenuItemCollection;
+		menuItem -rtc "PlaybackFree"
+			-radioButton ($speed == 0 && $maxSpeed == 0)
+			playbackFreeItem;
+
+		menuItem -rtc "PlaybackPefRealtime"
+			-radioButton ($speed == 0 && $maxSpeed == 1)
+			playbackPefRealtimeItem;
+
+		menuItem -rtc "PlaybackRealtime"
+			-radioButton ($speed == 1 && $maxSpeed == 0)
+			playbackRealtimeItem;
+		setParent -m ..;
+		
+	// Playback Looping
+	menuItem -label (uiRes("m_AniPlaybackMenu.kPlaybackLooping"))  
+		-subMenu true -tearOff yes 
+		-pmc ("updatePlaybackLoopMenu " + $parent)
+		playbackLoopItem;
+
+	string $looping = `playbackOptions -q -loop`;
+
+		menuItem -rtc "PlaybackLoopContinuous"
+			-radioButton ($looping == "continuous")
+			playbackLoopContinuousItem;
+		menuItem -rtc "PlaybackLoopOnce"
+			-radioButton ($looping == "once")
+			playbackLoopOnceItem;
+		menuItem -rtc "PlaybackLoopOscillate"
+			-radioButton ($looping == "oscillate")
+			playbackLoopOscillateItem;
+		setParent -m ..;
+
+	menuItem -rtc "PlaybackSteppedPreview"
+		-checkBox `playbackOptions -q -blockingAnim`
+		playbackSteppedPreviewItem;
+
+	// Render
+	menuItem -divider true -dividerLabel (uiRes("m_AniPlaybackMenu.kPlaybackRender"));
+	
+	// Render Current Frame
+	menuItem 
+		-rtc "RenderIntoNewWindow"
+		playbackRenderCurrentFrameMenuItem;
+
+	menuItem 
+		-rtc "RenderGlobalsWindow"
+		playbackDisplayRenderSettingsItem;
+	
+}

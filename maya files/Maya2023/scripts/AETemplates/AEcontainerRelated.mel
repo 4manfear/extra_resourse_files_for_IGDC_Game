@@ -1,0 +1,26 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+// Return a list of nodes enclosed in container
+
+global proc string[] AEcontainerRelated( string $node )
+//
+//	Description:
+//		Returns the list of related nodes for the container, which is the list
+//	of published nodes for the container, plus the container node itself.
+//
+//	Inputs:
+//		$node	: container node
+//
+//	Return Value:
+//		Array of related nodes.
+//
+{
+	string $relatedNodes[] = getPublishedNodes( $node );
+	$relatedNodes[size($relatedNodes)] = $node;	
+	return $relatedNodes;
+}

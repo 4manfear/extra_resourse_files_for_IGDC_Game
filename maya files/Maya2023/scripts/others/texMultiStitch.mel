@@ -1,0 +1,344 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+// ===========================================================================
+//
+//  Procedure Name:
+//      texMultiStitch
+//
+//  Description:
+//      UV workflow function used for stitching together UV shells. Works like
+//      "Stitch Selected" from 3ds Max except that it also work on multiple
+//      edge selections. Stitch will translate, rotate, scale and sew together
+//      shells based on shared edges.
+//
+//  Input Arguments
+//      order                - Int - Determines the order to stitch and thus,
+//                                   how to scale the shells. 0 for stitching
+//                                   smaller shells to larger, 1 for stitching
+//                                   larger shells to smaller ones.
+//
+//  Return Value:
+//      None.
+//
+//  Notes:
+//  This script is part of the implementation of Nightshade UV Editor into
+//  Autodesk Maya.
+//
+// ===========================================================================
+
+global proc texMultiStitch(int $order)
+{
+	// Vars
+	string $edgeList[], $edgeUVs[], $selectionEdges[], $shellList[], $sourceShell[], $uvEdgeA[], $uvEdgeB[];
+
+	// Validate selection
+	texCheckSelection("edgeUV");
+
+	// Get original selection
+	string $selection[] = `ls -selection`;
+	string $compSelType = `getComponentMask`;
+
+	// Convert the selection to border edges
+	$selectionEdges = `filterExpand -selectionMask 32`;
+	string $selectionUVs[] = $selection;
+	if (size(`filterExpand -selectionMask 35`) == 0){
+		ConvertSelectionToUVs;
+		$selectionUVs = `ls -selection`;
+	}
+
+	ConvertSelectionToUVBorder;
+	string $uvBorder[] = `ls -selection $selectionUVs`;
+	string $selectionVertices[] = `polyListComponentConversion -toVertex $uvBorder`;
+	select `polyListComponentConversion -toEdge -internal $selectionVertices`;
+	if (size($selectionEdges) != 0)
+		$selectionEdges = `ls -selection -flatten $selectionEdges`;
+	else
+		$selectionEdges = `ls -selection -flatten`;
+
+	// Filter out non-boundary edges and sew together semi-connected edges
+	for ($edge in $selectionEdges)
+	{
+		$edgeUVs = `polyListComponentConversion -fromEdge -toUV $edge`;
+		$edgeUVs = `ls -flatten $edgeUVs`;
+		int $uvCount = size($edgeUVs);
+		if ($uvCount == 4){ // Open edge
+			$edgeList[size($edgeList)] = $edge;
+		}
+	}
+
+	// Early exit due to empty edge list
+	if (`size($edgeList)` == 0){
+		setComponentMask($compSelType); 
+		select -replace $selection;
+		return;
+	}
+
+	// Get UV shells
+	ConvertSelectionToUVs;
+	$shellList = texGetShells();
+
+	// Progress window
+	global string $gMainProgressBar;
+	progressBar -e
+		-beginProgress
+		-isInterruptable true
+		-minValue 0
+		-maxValue (size($shellList) + size($edgeList))
+		-status (uiRes("m_texMultiStitch.kUvEditorMultiStitchMsg"))
+		$gMainProgressBar;
+
+	// Get the UV area of each shell
+	$shellList = texGetShellAreas($shellList, true);
+
+	// Start stitching
+	int $shellCount = size($shellList);
+	for ($edge in $edgeList)
+	{
+		// Break if cancelled by user
+		if (`progressBar -q -isCancelled $gMainProgressBar`)
+		{
+			warning((uiRes("m_texMultiStitch.kUvEditorMultiStitchInteruptMsg")));
+			break;
+		}
+
+		// Update the progress window
+		progressBar -edit -step 1 $gMainProgressBar;
+
+		if ($shellCount <= 1) break;
+
+		string $shellA, $shellB;
+
+		// Get UV edge -pairs
+		string $uvEdgePairs[] = `polyEvaluate -uvEdgePairs $edge`;
+		string $uvPair[] = stringToStringArray($uvEdgePairs[0], " ");
+		if (size($uvPair) != 4) continue;
+		string $uvPairA[], $uvPairB[];
+		$uvPairA[0] = $uvPair[0];
+		$uvPairA[1] = $uvPair[1];
+		$uvPairB[0] = $uvPair[2];
+		$uvPairB[1] = $uvPair[3];
+
+		// Loop over shells comparing ownership of the uvPair towards them
+		int $i = 0;
+		for ($i=0; $i < $shellCount; $i++){
+			// Extract size and shell list from current string value - add shells to shellA and shellB vars
+			string $shellAttributes[] = stringToStringArray($shellList[$i], "%");
+			string $shellArray[] = stringToStringArray($shellAttributes[1], " ");
+
+			if (texShellArrayContains($uvPairA[0], $shellArray) || texShellArrayContains($uvPairA[1], $shellArray)){
+				$shellA = $shellAttributes[0] + "%" + $shellAttributes[1];
+			} else if (texShellArrayContains($uvPairB[0], $shellArray) || texShellArrayContains($uvPairB[1], $shellArray)){
+				$shellB = $shellAttributes[0] + "%" + $shellAttributes[1];
+			}
+
+			if ((`size($shellA)` != 0) && (`size($shellB)` != 0)) break; // Shells have been found - break out!
+		}
+
+		if ((`size($shellA)` == 0) || (`size($shellB)` == 0)) continue;
+
+		// Set stitch order for the shells by comparing their area sizes
+		string $largestShell = "";
+		string $smallestShell = ""; // Not really a necessary variable but makes the code easier to read
+		string $shellAArray[] = stringToStringArray($shellA, "%");
+		string $shellBArray[] = stringToStringArray($shellB, "%");
+
+		// Check which shell is larger
+		if ((float)$shellAArray[0] > (float)$shellBArray[0]){
+			$largestShell = "A";
+			$smallestShell = "B";
+		} else {
+			$largestShell = "B";
+			$smallestShell = "A";
+		}
+
+		// State machine for making sure that the right uvPair is on uvEdgeA (which will be transformed)
+		if ($order == 0){ // Stitching the smallest shell to the largest.
+			if ($largestShell == "A"){
+					$uvEdgeB = $uvPairA;
+					$uvEdgeA = $uvPairB;
+				$sourceShell = stringToStringArray($shellBArray[1], " ");
+			} else { // $largestShell == "B"
+					$uvEdgeB = $uvPairB;
+					$uvEdgeA = $uvPairA;
+				$sourceShell = stringToStringArray($shellAArray[1], " ");
+			}
+		} else { // Stitching the LARGEST shell to the smallest.
+			if ($smallestShell == "A"){
+					$uvEdgeB = $uvPairA;
+					$uvEdgeA = $uvPairB;
+				$sourceShell = stringToStringArray($shellBArray[1], " ");
+			} else { // $smallestShell == "B"
+					$uvEdgeB = $uvPairB;
+					$uvEdgeA = $uvPairA;
+				$sourceShell = stringToStringArray($shellAArray[1], " ");
+			}
+		}
+
+		// Create vectors and calculate angles offset and ratio between the uvEdge pairs
+		float $pivotRotate[], $pivotScale[], $sourceMid[], $sourceP0[], $sourceP1[], $targetMid[], $targetP0[], $targetP1[];
+
+		$targetP0 = `polyEditUV -q $uvEdgeA[0]`;
+		if ( catch(`polyEditUV -q $uvEdgeA[1]`) ){
+			continue;
+		} else {
+			$targetP1 = `polyEditUV -q $uvEdgeA[1]`;
+		}
+		$sourceP0 = `polyEditUV -q $uvEdgeB[0]`;
+		if ( catch(`polyEditUV -q $uvEdgeB[1]`) ){
+			continue;
+		} else {
+			$sourceP1 = `polyEditUV -q $uvEdgeB[1]`;
+		}
+
+		// Calculate midpoints for the offset vector and pivot position for rotation and scaling
+		floatArrayInsertAtIndex(0, $targetMid, (($targetP0[0] + $targetP1[0]) / 2));
+		floatArrayInsertAtIndex(1, $targetMid, (($targetP0[1] + $targetP1[1]) / 2));
+		floatArrayInsertAtIndex(0, $sourceMid, (($sourceP0[0] + $sourceP1[0]) / 2));
+		floatArrayInsertAtIndex(1, $sourceMid, (($sourceP0[1] + $sourceP1[1]) / 2));
+		$pivotRotate = $sourceMid;
+		$pivotScale = $sourceMid;
+
+		// Calculate and create vectors
+		vector $offsetVector = << $sourceMid[0] - $targetMid[0], $sourceMid[1] - $targetMid[1], 0.0>>;
+		vector $sourceVector = << $sourceP1[0] - $sourceP0[0], $sourceP1[1] - $sourceP0[1], 0.0 >>;
+		vector $targetVector = << $targetP0[0] - $targetP1[0], $targetP0[1] - $targetP1[1], 0.0 >>;
+
+		// Get edge length ratio
+		float $ratio = `mag $sourceVector` / `mag $targetVector`;
+
+		// The two uvEdge pairs (which are two vectors going from UV1 to UV2 in each pair) of an open seam lies on
+		// precisely two faces. When stitching together an open edge it is very important that one of those faces
+		// lie on the right-hand side of one of the pairs, while the other is on the left-hand side of the other
+		// pair. If they don't we will end up with an incorrect angular value of 180 degrees between the vectors.
+		// This code below makes sure that we have one of each - and in case we don't: flips the source vector.
+		int $sideASign, $sideBSign;
+		int $uvPairAonFaceA = false;
+		string $faces[] = `polyListComponentConversion -fromEdge -toFace $edge`;
+		$faces = `ls -flatten $faces`; // Flatten
+
+		// Find face center points
+		float $uvBoxA[] = `polyEvaluate -boundingBoxComponent2d $faces[0]`; // A
+		float $uvBoxB[] = `polyEvaluate -boundingBoxComponent2d $faces[1]`; // B
+		$faceACenter[0] = 0.5 * ( $uvBoxA[0] + $uvBoxA[1] );
+		$faceACenter[1] = 0.5 * ( $uvBoxA[2] + $uvBoxA[3] );
+		$faceBCenter[0] = 0.5 * ( $uvBoxB[0] + $uvBoxB[1] );
+		$faceBCenter[1] = 0.5 * ( $uvBoxB[2] + $uvBoxB[3] );
+
+		// See which uvEdge pair are on faceA
+		string $faceUVsA[] = `polyListComponentConversion -fromFace -toUV $faces[0]`;
+		$faceUVsA = `ls -flatten $faceUVsA`; // Flatten
+		for ($uv in $faceUVsA){
+			if (($uv == $uvEdgeA[0]) || ($uv == $uvEdgeA[1])){
+				$uvPairAonFaceA = true;
+				break;
+			}
+		}
+
+		// Calculate vector cross product from P0 in the target and source vectors, to the point of the face centers.
+		// The returned vector from the cross product calculation has the sign on Z. These need to differ and not be 0.
+		if ($uvPairAonFaceA){
+			vector $vectorToFaceA = << $targetP0[0] - $faceACenter[0], $targetP0[1] - $faceACenter[1], 0.0 >>;
+			vector $sideA = cross($targetVector, $vectorToFaceA);
+			$sideASign = sign($sideA.z);
+
+			vector $vectorToFaceB = << $sourceP1[0] - $faceBCenter[0], $sourceP1[1] - $faceBCenter[1], 0.0 >>;
+			vector $sideB = cross($sourceVector, $vectorToFaceB);
+			$sideBSign = sign($sideB.z);
+
+		} else {
+			vector $vectorToFaceB = << $targetP0[0] - $faceBCenter[0], $targetP0[1] - $faceBCenter[1], 0.0 >>;
+			vector $sideA = cross($targetVector, $vectorToFaceB);
+			$sideASign = sign($sideA.z);
+
+			vector $vectorToFaceA = << $sourceP1[0] - $faceACenter[0], $sourceP1[1] - $faceACenter[1], 0.0 >>;
+			vector $sideB = cross($sourceVector, $vectorToFaceA);
+			$sideBSign = sign($sideB.z);
+		}
+
+		// Check failed - or all three points are colinear (which cannot happen unless the face is 1-dimensional)
+		if ($sideASign == $sideBSign){
+			$sourceVector = -$sourceVector;
+		}
+
+		// Break out vector values and calculate the angle
+		float $tVX = $targetVector.x; // Yes, absolutely necessary as dot-attributes cannot be read in MEL
+		float $tVY = $targetVector.y;
+		float $tVZ = $targetVector.z;
+		float $sVX = $sourceVector.x;
+		float $sVY = $sourceVector.y;
+		float $sVZ = $sourceVector.z;
+		$angle = `angleBetween
+			-v1 $tVX $tVY $tVZ
+			-v2 $sVX $sVY $sVZ
+			`;
+
+		$angle[3] *= $angle[2];
+
+		// Move
+		float $offsetU = $offsetVector.x;
+		float $offsetV = $offsetVector.y;
+		polyEditUV
+			-relative true
+			-uValue $offsetU
+			-vValue $offsetV
+			$sourceShell
+		;
+
+		// Rotate
+		polyEditUV
+			-angle ($angle[3])
+			-pivotU $pivotRotate[0]
+			-pivotV $pivotRotate[1]
+			-relative true
+			$sourceShell
+		;
+
+		// Scale
+		polyEditUV
+			-pivotU $pivotScale[0]
+			-pivotV $pivotScale[1]
+			-relative true
+			-scaleU $ratio
+			-scaleV $ratio
+			$sourceShell
+		;
+
+		// Stitch complete. Now add the shells together for future comparisons.
+		$shellAArray = stringToStringArray($shellA, "");
+		$shellBArray = stringToStringArray($shellB, "");
+		$shellList = stringArrayRemove($shellAArray, $shellList);
+		$shellList = stringArrayRemove($shellBArray, $shellList);
+		string $combinedShell = texAddShellToShell($shellA, $shellB, $order);
+		stringArrayInsertAtIndex(0, $shellList, $combinedShell);
+		$shellCount = size($shellList);
+	}
+
+	// Sew
+	select $selectionEdges;
+	string $selectionEdgesPerObj[];
+	string $selectObj[] = `ls -objectsOnly -selection`;
+	for ($o in $selectObj)
+	{
+		string $edges[] = `ls -sl $o`;
+		$selectionEdgesPerObj[size($selectionEdgesPerObj)] = stringArrayToString($edges, " ");
+	}
+	for ($edges in $selectionEdgesPerObj)
+	{
+		eval("select " + $edges);
+		polyMapSewMove();
+	}
+
+	// Close the progress window and reselect the original selection
+	progressBar -e -endProgress $gMainProgressBar;
+
+	//restore the original component mask	
+	setComponentMask($compSelType); 
+
+	//select the original selection
+	select -replace $selection;
+}

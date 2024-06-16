@@ -1,0 +1,253 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+// Procedures for handling UI for the connection override nodes.
+//
+
+// Utility to return node, given node.plug string.
+proc string nodeFromPlug(string $plug)
+{
+	string $buffer[];
+	tokenize($plug, ".", $buffer);
+	return $buffer[0];
+}
+
+// Utility to get the shading group from a shader.
+proc string shadingGroupFromShader(string $node)
+{
+    string $connections[] = `listConnections $node`;
+    string $connectedNode;
+    int $found = false;
+    for ($connectedNode in $connections) {
+        if (`nodeType $connectedNode` == "shadingEngine") {
+            $found = true;
+            break;
+        }
+    }
+    return ($found ? $connectedNode : "");
+}
+
+//Utility to make sure the node to be created is a surface shader
+proc verifyNodeIsSurfaceShader(string $node)
+{
+    string $errFmt;
+	$typeName = `nodeType $node`;
+	if (!`getClassification -satisfies "shader/surface" $typeName`)
+	{
+		$errFmt = (uiRes("m_connectionOverrideUI.kNoSurfaceShader"));
+	}
+	if (size($errFmt)) {
+        error(`format -stringArg $node $errFmt`);
+    }
+}
+
+//  Global Procedure:
+//      connectionOverrideNewNode
+//
+//  Description:
+//      Callback used when the user has clicked on the "Map" button for an override.
+//      Create a new node and connect it.
+//
+global proc connectionOverrideNewNode(string $overridePlug)
+{
+	createRenderNode "-all" ("defaultNavigation -force true -connectToExisting -source %node -destination " + $overridePlug) "";
+}
+
+//  Global Procedure:
+//      connectionOverrideReplaceNode
+//
+//  Description:
+//      Callback used when the user has typed the name of a node into the text field for an override.
+//      Connects the specified node.
+//
+global proc connectionOverrideReplaceNode(string $overridePlug, string $dashSource, string $node)
+{
+	defaultNavigation -force true -connectToExisting -source $node -destination $overridePlug;
+}
+
+// Callback used when the user has clicked on the "Map" button for a
+// shader override.  Create a new node and connect it.
+//
+global proc shaderOverrideNewNode(string $overridePlug)
+{
+	createRenderNode "-all" ("shaderOverrideAssignNew %node "+$overridePlug) "";
+}
+
+//  Global Procedure:
+//      shaderOverrideAssignNew
+//
+//  Description:
+//      Callback used when the user has created a new shader as override.
+//      Makes sure the node is a surface shader.
+//
+global proc shaderOverrideAssignNew(string $node, string $overridePlug)
+{
+    verifyNodeIsSurfaceShader($node);
+    string $overrideNode = nodeFromPlug($overridePlug);
+	python("maya.app.renderSetup.model.utils.nameToUserNode('"+ $overrideNode + "').setShader('"+$node+"')");
+}
+
+// Callback used when the user has typed the name of a node into the text
+// field for a shader override.  Connects the specified node.
+//
+global proc shaderOverrideReplaceNode(string $overridePlug, string $dashSource, string $node)
+{
+    shaderOverrideAssignNew($node, $overridePlug);
+}
+
+
+//  Global Procedure:
+//      materialOverrideAssignNew
+//
+//  Description:
+//      Callback used when the user has created a new shader as override. Makes sure a shading group
+//      is connect to it, and assigns the shading group as override material.
+//
+global proc materialOverrideAssignNew(string $node, string $overridePlug)
+{
+    verifyNodeIsSurfaceShader($node);
+	// Make sure a shading group was created for the shader,
+	// creating it if it doesn't exist
+	string $sgName = $node + "SG";
+	if (!`objExists $sgName`)
+	{
+		sets -renderable true -noSurfaceShader true -empty -name $sgName;
+		defaultNavigation -connectToExisting -source $node -destination $sgName;
+		warning((uiRes("m_connectionOverrideUI.kNoShadingGroup")) + 
+			" (" + 
+			$node + 
+			")"
+		);
+	}
+
+	// Connect the shading group to our override
+	string $overrideNode = nodeFromPlug($overridePlug);
+	python("maya.app.renderSetup.model.utils.nameToUserNode('"
+	       + $overrideNode + "').setMaterial('" + $sgName + "')");
+}
+
+//  Global Procedure:
+//      materialOverrideNewNode
+//
+//  Description:
+//      Callback used when the user has clicked on the "Map" button for a shading group
+//      override, create a new shading group and connect it.
+//
+global proc materialOverrideNewNode(string $overridePlug)
+{
+	createRenderNode "-all" ("materialOverrideAssignNew %node "+$overridePlug) "";
+}
+
+//  Global Procedure:
+//      materialOverrideReplaceNode
+//
+//  Description:
+//      Callback used when the user has typed the name of a node into the text field for an override.
+//      Connects the specified node.
+//
+global proc materialOverrideReplaceNode(string $overridePlug, string $dashSource, string $node)
+{
+    // We accept surface shader and shading engine (a.k.a. shading group) node
+    // arguments.  If the source node is already a shading engine, we're done.
+    string $overrideNode = nodeFromPlug($overridePlug);
+    string $errFmt;
+    string $sgName = $node;
+    $typeName = `nodeType $node`;
+    if ($typeName != "shadingEngine") {
+        if (`getClassification -satisfies "shader/surface" $typeName`) {
+            // Get the shading group from the shader.
+            $sgName = shadingGroupFromShader($node);
+            if (size($sgName) == 0) {
+                $errFmt = (uiRes("m_connectionOverrideUI.kShaderWithoutSG"));
+            }
+        }
+        else {
+            $errFmt = (uiRes("m_connectionOverrideUI.kNeitherShaderNorSG"));
+        }
+    }
+
+    if (size($errFmt)) {
+        error(`format -stringArg $node $errFmt`);
+    }
+
+    python("maya.app.renderSetup.model.utils.nameToUserNode('"
+           + $overrideNode + "').setMaterial('" + $sgName + "')");
+}
+
+//  Global Procedure:
+//      materialTemplateOverrideAssignNew
+//
+//  Description:
+//      Callback used when the user has created a new material template as override. 
+//      Assigns the material template as the override material template.
+//
+global proc materialTemplateOverrideAssignNew(string $node, string $overridePlug)
+{
+    $typeName = `nodeType $node`;
+    if ($typeName != "materialTemplate") {
+        string $errFmt = (uiRes("m_connectionOverrideUI.kNotMaterialTemplate"));
+        error(`format -stringArg $node $errFmt`);
+    }
+
+    // Connect the material template to our override
+    string $overrideNode = nodeFromPlug($overridePlug);
+    python("maya.app.renderSetup.model.utils.nameToUserNode('"
+            + $overrideNode + "').setMaterialTemplate('" + $node + "')");
+}
+
+//  Global Procedure:
+//      materialTemplateOverrideNewNode
+//
+//  Description:
+//      Callback used when the user has clicked on the "Map" button for a material template
+//      override, create a new material template and connect it.
+//
+global proc materialTemplateOverrideNewNode(string $overridePlug)
+{
+    // Should we first have a dialog to see if the user wants to create a new material template or a new shader?
+    string $mtNode = `createNode materialTemplate`;
+    materialTemplateOverrideAssignNew $mtNode $overridePlug;
+}
+
+//  Global Procedure:
+//      materialTemplateOverrideReplaceNode
+//
+//  Description:
+//      Callback used when the user has typed the name of a node into the text field for an override.
+//      Connects the specified node.
+//
+global proc materialTemplateOverrideReplaceNode(string $overridePlug, string $dashSource, string $node)
+{
+    // We accept surface shader and shading engine (a.k.a. shading group) node
+    // arguments.  If the source node is already a shading engine, we're done.
+    string $overrideNode = nodeFromPlug($overridePlug);
+    string $errFmt;
+    string $mtName = $node;
+    $typeName = `nodeType $node`;
+
+    if ($typeName != "shadingEngine" && $typeName != "materialTemplate") {
+        if (`getClassification -satisfies "shader/surface" $typeName`) {
+            // Get the shading group from the shader.
+            $mtName = shadingGroupFromShader($node);
+            if (size($mtName) == 0) {
+                $errFmt = (uiRes("m_connectionOverrideUI.kShaderAsTemplateWithoutSG"));
+            }
+        }
+        else {
+            $errFmt = (uiRes("m_connectionOverrideUI.kNeitherMaterialTemplateNorShaderNorSG"));
+        }
+    }
+
+    if (size($errFmt)) {
+        error(`format -stringArg $node $errFmt`);
+    }
+
+    python("maya.app.renderSetup.model.utils.nameToUserNode('"
+           + $overrideNode + "').setMaterialTemplate('" + $mtName + "')");
+}
+

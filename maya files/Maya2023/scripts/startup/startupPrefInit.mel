@@ -1,0 +1,23 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+
+// NOTE: This script intentionally does nothing. 
+//  
+//  This script allows pipelines that hook directly into Maya to customize
+//  the creation of the preference directory.  When the environment variable
+//  MAYA_CREATE_PREFS_ON_STARTUP=1 then this script is called only when 
+//  existing preference directory does not exist preventing users from 
+//  being allowed to copy over old preferences.  
+//
+//  This script is executed very early in the Maya startup process.  So 
+//  GUI and other controls are not available.  It is recommended that 
+//  you limit code to
+//    a) not call any Maya UI commands 
+//    b) not call any Maya commands that would alter scene state. 
+//  
+

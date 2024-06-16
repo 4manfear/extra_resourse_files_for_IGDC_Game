@@ -1,0 +1,265 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  18 December 2016
+//
+//  Description:
+//		Select a shared border edge to stitch neighboring UV shells together by moving, 
+//		rotating and scaling one of them to fit
+//
+//
+//  Procedure Name:
+//		setOptionVars
+//
+//  Description:
+//		Initialize the option values.
+//
+//  Input Arguments:
+//		forceFactorySettings - Whether to set the options to default values.
+//
+//  Return Value:
+//		None.
+//
+proc setOptionVars(int $forceFactorySettings)
+{
+	optionVar -init $forceFactorySettings -category "UV Editor.Stitch Together"
+		-iv stitchTogetherOrder 0
+		;
+}
+
+proc polyUVStitchTogetherOptions()
+{
+	// Global template variables for form spacing
+	global int $gOptionBoxTemplateFrameSpacing;
+	
+	//	Name of the command for this option box.
+	//
+	string $commandName;
+
+	$commandName = "UVStitchTogether";
+	
+	//	Build the option box actions.
+	//
+	string $callback = $commandName + "Callback";
+	string $setup	= $commandName + "Setup";
+	
+	//	STEP 1:  Get the option box.
+	//	============================
+	//
+	//	The value returned is the name of the layout to be used as
+	//	the parent for the option box UI.
+	//
+	string $layout = getOptionBox();
+	
+	//	STEP 2:  Pass the command name to the option box.
+	//	=================================================
+	//
+	//	Any default option box behaviour based on the command name is set
+	//	up with this call. For example, updating the 'Help' menu item with
+	//	the name of the command.
+	//
+	setOptionBoxCommandName($commandName);
+	
+	//	STEP 3:  Create option box contents.
+	//	====================================
+	//
+	setParent $layout;
+	setUITemplate -pushTemplate OptionBoxTemplate;
+	waitCursor -state 1;
+	
+	// Form layout
+	string $parent = `formLayout polyUVStitchTogetherOptions`;
+
+		// Settings frame
+		string $settingsFrame = 
+		`frameLayout -label (uiRes("m_performPolyUVStitchTogether.kSettingsFrame"))`;
+	
+			columnLayout -adjustableColumn true;
+			
+				//Order
+				radioButtonGrp -numberOfRadioButtons 2
+					-vertical
+					-label (uiRes("m_performPolyUVStitchTogether.kStitchTogetherOrder"))
+					-label1 (uiRes("m_performPolyUVStitchTogether.kSmallestToLargest"))
+					-label2 (uiRes("m_performPolyUVStitchTogether.kLargestToSmallest"))
+					stitchTogetherOrderRadio;
+	
+			setParent..; // columnLayout;
+			
+		setParent $parent; // frameLayout
+
+	setParent ..; // formLayout
+	
+	// Attach Settings frame to form layout
+	formLayout -e
+		-af $settingsFrame "top" $gOptionBoxTemplateFrameSpacing
+		-af $settingsFrame "left" $gOptionBoxTemplateFrameSpacing
+		-af $settingsFrame "right" $gOptionBoxTemplateFrameSpacing
+		-an $settingsFrame "bottom"
+	$parent;
+
+	waitCursor -state 0;
+	setUITemplate -popTemplate;
+	
+	//	STEP 4:  Customize the buttons.
+	//	===============================
+	//
+	//	Provide more descriptive labels for the buttons.
+	//	Disable those buttons that are not applicable to the option box.
+	//	Attach actions to those buttons that are applicable to the option box.
+  
+	string $applyAndCloseBtn = getOptionBoxApplyAndCloseBtn();
+	button -e -command ($callback + " " + $parent + " 1; hideOptionBox;") $applyAndCloseBtn;
+	
+	string $applyBtn = getOptionBoxApplyBtn();
+	button -e -command ($callback + " " + $parent + " 1;") $applyBtn;
+
+	string $resetBtn = getOptionBoxResetBtn();
+	button -e -command($setup + " " + $parent + " 1") $resetBtn;
+
+	string $saveBtn = getOptionBoxSaveBtn();
+	button -e -command($callback + " " + $parent + " 0; hideOptionBox;") $saveBtn;
+		   
+	//	STEP 5:  Set the option box title.
+	//	==================================
+	//
+	setOptionBoxTitle((uiRes("m_performPolyUVStitchTogether.kStitchTogetherOptions")));
+
+	//	STEP 6:  Customize the 'Help' menu item text.
+	//	=============================================
+	//
+	setOptionBoxHelpTag($commandName);
+
+	//	Set the current values of the option box.
+	//	=========================================
+	//
+	eval ($setup + " " + $parent + " 0");
+
+	//	Show the option box.
+	//	====================
+	//
+	showOptionBox();
+}
+
+//
+//  Procedure Name:
+//		UVStitchTogetherCallback
+//
+//  Description:
+//		Update the option values and execute command
+//
+//  Input Arguments:
+//		parent - Top level parent layout of the option box UI.  Required so
+//				 that UI object names can be successfully resolved.
+//
+//		doIt	- Whether the command should execute.
+//
+//  Return Value:
+//		None.
+//
+global proc UVStitchTogetherCallback(string $parent, int $doIt)
+{
+	setOptionVars(false);
+	setParent $parent;
+	if(`radioButtonGrp -q -ex stitchTogetherOrderRadio`)
+	{
+		if(`radioButtonGrp -q -select stitchTogetherOrderRadio` == 1)
+			optionVar -iv stitchTogetherOrder 0;
+		else if(`radioButtonGrp -q -select stitchTogetherOrderRadio` == 2)
+			optionVar -iv stitchTogetherOrder 1;
+	}
+
+	if($doIt)
+		performPolyUVStitchTogether 0;
+}
+
+//
+//  Procedure Name:
+//		UVStitchTogetherSetup
+//
+//  Description:
+//		Update the state of the option box UI to reflect the option values.
+//
+//  Input Arguments:
+//		parent				- Top level parent layout of the option box UI.
+//							  Required so that UI object names can be 
+//							  successfully resolved.
+//
+//		forceFactorySettings - Whether the option values should be set to
+//							 default values.
+//
+//  Return Value:
+//		None.
+//
+global proc UVStitchTogetherSetup(string $parent, int $forceFactorySettings)
+{
+	// Retrieve the option settings
+	//
+	setOptionVars($forceFactorySettings);
+	setParent $parent;
+	if(`radioButtonGrp -q -ex stitchTogetherOrderRadio`)
+	{
+		int $order = `optionVar -q stitchTogetherOrder`;
+		$order += 1;
+		radioButtonGrp -e -select $order stitchTogetherOrderRadio;	
+	}
+}
+
+proc string assembleCmd()
+{
+	setOptionVars(false);
+	string $cmd = "texMultiStitch ";
+	int $order = `optionVar -q stitchTogetherOrder`;
+	$cmd += $order;
+	return $cmd;
+}
+
+//
+//  Procedure Name:
+//		performPolyUVStitchTogether
+//
+//  Description:
+//		Prepare parameters and run texMultiStitch
+//
+//  Input Arguments:
+//		0 - Execute the command.
+//		1 - Show the option box dialog.
+//		2 - Return the command.
+//
+global proc string performPolyUVStitchTogether(int $action)
+{
+	string $cmd = "";
+	
+	switch ($action) {
+
+		//	Execute the command.
+		//
+		case 0:
+			$cmd = assembleCmd();
+			//  Execute the command with the option settings.
+			//
+			eval($cmd);
+			break;
+
+		//	Show the option box.
+		//
+		case 1:
+			polyUVStitchTogetherOptions();
+			break;
+
+		//	Return the command string.
+		//
+		case 2:
+			//	Get the command.
+			//
+			$cmd = assembleCmd();
+			break;
+	}
+	return $cmd;
+}

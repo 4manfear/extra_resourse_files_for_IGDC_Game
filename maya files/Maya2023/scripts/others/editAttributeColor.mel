@@ -1,0 +1,26 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+
+global proc editAttributeColor( string $attr )
+{
+	// opens a modal color editor and sets value
+	string $type = `getAttr -type $attr`;
+	if( $type != "float3" && $type != "double3" ){
+		string $msgFormat = (uiRes("m_editAttributeColor.kAttrNotAFloat"));
+		warning( `format -s $attr $msgFormat`);
+		return;
+	}
+	float $c[] = `getAttr $attr`;
+	colorEditor -rgb $c[0] $c[1] $c[2];
+	if(`colorEditor -q -r`){
+		$c = `colorEditor -query -rgb`;
+		setAttr $attr -type $type $c[0] $c[1] $c[2];
+	}
+}

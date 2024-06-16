@@ -1,0 +1,33 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+// Create popup menu for texture editor rotate tool options
+//
+
+global proc texRotateOptionsPopup()
+{
+	commonTexReflectionOptionsPopup(); // North: Symmetry
+
+	menuItem
+		-label (uiRes("m_texRotateOptionsPopup.kStepSnap"))
+		-ecr true 
+		-radialPosition "E" 
+		-checkBox `texRotateContext -q -snap texRotateContext`
+		-command "texRotateContext -e -snap #1 texRotateContext"
+		;
+
+	commonTexSelectOptionsPopup(); // South
+
+	commonTexSelectionConstraintsOptionsPopup();
+	commonTexTransformConstraintsOptionsPopup();
+	menuItem -divider 1;
+	menuItem
+		-label (uiRes("m_texRotateOptionsPopup.kRotateOptions"))
+		-command ( "RotateTool; " + "toolPropertyWindow; " )
+		;
+}

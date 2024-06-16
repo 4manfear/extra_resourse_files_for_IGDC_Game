@@ -1,0 +1,56 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  11 January 2002
+//
+//  Procedure Name:
+//      buildScaleMM
+//
+//  Description:
+//	Creates a marking menu that allows the user
+//	to select an axis of a manipulator - reuses
+//	the name tempMM for the name of the menu, to
+//	ensure that there's only one of these at
+//	any one time.
+//
+//  Input Arguments:
+//      None
+//
+//  Return Value:
+//      None.
+//
+global proc buildScaleMM()
+{
+	// see comment in destroySTRSMarkingMenu.mel for what these values are for.
+	//
+	global int $gSTRSMarkingMenuStatus;
+	$gSTRSMarkingMenuStatus = 0;
+
+	if (`popupMenu -exists tempMM`)
+	{
+		deleteUI tempMM;
+	} 
+
+	if ("scaleSuperContext" != `currentCtx`)
+	{
+		ScaleTool;
+		$gSTRSMarkingMenuStatus = 2;
+	}
+
+	string $ppp = `findPanelPopupParent`;
+	string $parent = `popupMenu -markingMenu true 
+						-button 1 
+						-parent $ppp
+						-postMenuCommand ("global int $gSTRSMarkingMenuStatus; $gSTRSMarkingMenuStatus = 1;")
+						tempMM`;
+		
+	buildToolOptionsMM($parent);
+	
+	setParent -menu ..;
+}

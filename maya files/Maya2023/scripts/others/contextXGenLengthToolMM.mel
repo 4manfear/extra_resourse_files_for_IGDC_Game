@@ -1,0 +1,284 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc xgmToggleLengthInvertFrozenEffect()
+{
+	int $newInvertFrozenValue = !`xgmLengthBrushContext -q -freezeMode xgmLengthBrushTool`;
+	xgmLengthBrushContext -e -freezeMode $newInvertFrozenValue xgmLengthBrushTool;
+}
+
+global proc xgmToggleLengthFalloffColor()
+{
+	int $newFalloffColorValue = !`xgmLengthBrushContext -q -fc xgmLengthBrushTool`;
+	xgmLengthBrushContext -e -fc $newFalloffColorValue xgmLengthBrushTool;
+}
+
+global proc xgmToggleLengthPreselectionHighlight()
+{
+	int $newPreselectionHighlight = !`xgmLengthBrushContext -q -ps xgmLengthBrushTool`;
+	xgmLengthBrushContext -e -ps $newPreselectionHighlight xgmLengthBrushTool;
+}
+
+global proc xgmToggleLengthShowFrozen()
+{
+	int $newShowFrozen = !`xgmLengthBrushContext -q -sf xgmLengthBrushTool`;
+	xgmLengthBrushContext -e -sf $newShowFrozen xgmLengthBrushTool;
+}
+
+global proc xgmSwitchLengthOperation(int $newOperation)
+{
+	xgmLengthBrushContext -e -operation $newOperation xgmLengthBrushTool;
+}
+
+global proc xgmSwitchLengthSelectionMode(int $newSelectMode)
+{
+	xgmLengthBrushContext -e -selectMode $newSelectMode xgmLengthBrushTool;
+}
+
+global proc xgmToggleLengthEnableRootToTipFalloff()
+{
+	int $newEnableRootToTip = !`xgmLengthBrushContext -q -ert xgmLengthBrushTool`;
+	xgmLengthBrushContext -e -ert $newEnableRootToTip xgmLengthBrushTool;
+}
+
+global proc xgmToggleLengthFilterBackfaces()
+{
+	int $newFilterBackfaces = !`xgmLengthBrushContext -q -fb xgmLengthBrushTool`;
+	xgmLengthBrushContext -e -fb $newFilterBackfaces xgmLengthBrushTool;
+}
+
+global proc xgmSwitchLengthFallOffType(string $falloffType) 
+{
+	xgmLengthBrushContext -e -brushFalloffType $falloffType xgmLengthBrushTool;
+}
+
+global proc contextXGenLengthToolMM()
+{
+	int $currentInvertFrozen = !`xgmLengthBrushContext -q -freezeMode xgmLengthBrushTool`;
+	menuItem
+		-label (uiRes("m_contextXGenLengthToolMM.kInvertFrozenEffect"))
+		-command xgmToggleLengthInvertFrozenEffect
+		-checkBox $currentInvertFrozen
+		-radialPosition "N" 
+		-enableCommandRepeat 1
+		;
+
+	int $currentFalloffColor = `xgmLengthBrushContext -q -fc xgmLengthBrushTool`;
+	menuItem
+		-label (uiRes("m_contextXGenLengthToolMM.kBrushFalloffColor"))
+		-command xgmToggleLengthFalloffColor
+		-checkBox $currentFalloffColor
+		-radialPosition "NE" 
+		-enableCommandRepeat 1
+		;
+
+	int $currentPreselectionHighlight = `xgmLengthBrushContext -q -ps xgmLengthBrushTool`;
+	menuItem
+		-label (uiRes("m_contextXGenLengthToolMM.kPreselectionHighlight"))
+		-command xgmToggleLengthPreselectionHighlight 
+		-checkBox $currentPreselectionHighlight
+		-radialPosition "E"
+		-enableCommandRepeat 1
+		;
+
+	int $currentShowFrozen = `xgmLengthBrushContext -q -sf xgmLengthBrushTool`;
+	menuItem
+		-label (uiRes("m_contextXGenLengthToolMM.kShowFrozen"))
+		-command xgmToggleLengthShowFrozen 
+		-checkBox $currentShowFrozen
+		-radialPosition "SE" 
+		-enableCommandRepeat 1
+		;
+
+	menuItem
+		-label (uiRes("m_contextXGenLengthToolMM.kFlood"))
+		-command "xgmLengthBrushContext -e -flood xgmLengthBrushTool"
+		-radialPosition "S" 
+		-enableCommandRepeat 1
+		;
+
+	menuItem
+		-label (uiRes("m_contextXGenLengthToolMM.kSelectionMode"))
+		-subMenu 1
+		-radialPosition "SW" 
+		-enableCommandRepeat 1
+		;
+		
+		radioMenuItemCollection;
+		int $currentSelectMode = `xgmLengthBrushContext -q -selectMode xgmLengthBrushTool`;
+		menuItem
+			-label (uiRes("m_contextXGenLengthToolMM.kLocked"))
+			-command "xgmSwitchLengthSelectionMode(0)"
+			-radioButton ($currentSelectMode == 0)
+			-radialPosition "W" 
+			-enableCommandRepeat 1
+			;
+			
+		menuItem
+			-label (uiRes("m_contextXGenLengthToolMM.kFloating"))
+			-command "xgmSwitchLengthSelectionMode(1)"
+			-radioButton ($currentSelectMode == 1)
+			-radialPosition "S" 
+			-enableCommandRepeat 1
+			;
+			
+		setParent -m ..;
+		
+	int $currentRootToTipFalloff = `xgmLengthBrushContext -q -ert xgmLengthBrushTool`;
+	menuItem
+		-label (uiRes("m_contextXGenLengthToolMM.kRootToTipFalloff"))
+		-command xgmToggleLengthEnableRootToTipFalloff
+		-checkBox $currentRootToTipFalloff
+		-radialPosition "W" 
+		-enableCommandRepeat 1
+		;
+
+	int $currentFilterBackFaces = `xgmLengthBrushContext -q -fb xgmLengthBrushTool`;
+	menuItem
+		-label (uiRes("m_contextXGenLengthToolMM.kFilterBackFaces"))
+		-command xgmToggleLengthFilterBackfaces
+		-checkBox $currentFilterBackFaces
+		-radialPosition "NW" 
+		-enableCommandRepeat 1
+		;
+		
+	menuItem
+		-label (uiRes("m_contextXGenLengthToolMM.kFalloffType"))
+		-subMenu 1
+		-enableCommandRepeat 1
+		;
+		
+		radioMenuItemCollection;
+		string $currentFallOffType = `xgmLengthBrushContext -q -bft xgmLengthBrushTool`;
+		menuItem
+			-label (uiRes("m_contextXGenLengthToolMM.kScreen"))
+			-command "xgmSwitchLengthFallOffType(\"screen\")"
+			-radioButton ($currentFallOffType == "screen")
+			-enableCommandRepeat 1
+			;
+			
+		menuItem
+			-label (uiRes("m_contextXGenLengthToolMM.kVolume"))
+			-command "xgmSwitchLengthFallOffType(\"volume\")"
+			-radioButton ($currentFallOffType == "volume")
+			-enableCommandRepeat 1
+			;
+			
+		menuItem
+			-label (uiRes("m_contextXGenLengthToolMM.kSurface"))
+			-command "xgmSwitchLengthFallOffType(\"surface\")"
+			-radioButton ($currentFallOffType == "surface")
+			-enableCommandRepeat 1
+			;
+			
+		setParent -m ..;
+
+	string $brushCmd = "xgmLengthBrushContext";
+	string $tool = "xgmLengthBrushTool";
+	string $flag = "-brushFalloffCurve";
+	string $defaultValFlag = "-defaultBrushFalloffCurve";
+	string $param = $brushCmd + "\", \"" + $tool + "\", \"" + $flag + "\", \"" + $defaultValFlag;
+	menuItem
+		-label (uiRes("m_contextXGenLengthToolMM.kAdjustBrushFalloffCurve"))
+		-command ("xgmMarkingMenuAdjustFalloffCurve( \"" + $param + "\" )")
+		-enableCommandRepeat 1
+		;
+
+	$flag = "-rootToTipCurve";
+	$defaultValFlag = "-defaultRootToTipCurve";
+	$param = $brushCmd + "\", \"" + $tool + "\", \"" + $flag + "\", \"" + $defaultValFlag;
+	menuItem
+		-label (uiRes("m_contextXGenLengthToolMM.kAdjustRootToTipFalloffCurve"))
+		-command ("xgmMarkingMenuAdjustFalloffCurve( \"" + $param + "\" )")
+		-enableCommandRepeat 1
+		;
+		
+	menuItem
+		-label (uiRes("m_contextXGenLengthToolMM.kOperation"))
+		-subMenu 1
+		-enableCommandRepeat 1
+		;
+		
+		radioMenuItemCollection;
+		int $currentOperation = `xgmLengthBrushContext -q -operation xgmLengthBrushTool`;
+		menuItem
+			-label (uiRes("m_contextXGenLengthToolMM.kScale"))
+			-command "xgmSwitchLengthOperation(0)"
+			-radioButton ($currentOperation == 0)
+			-enableCommandRepeat 1
+			;
+			
+		menuItem
+			-label (uiRes("m_contextXGenLengthToolMM.kSmooth"))
+			-command "xgmSwitchLengthOperation(1)"
+			-radioButton ($currentOperation == 1)
+			-enableCommandRepeat 1
+			;
+			
+		setParent -m ..;
+	
+	menuItem
+		-label (uiRes("m_contextXGenLengthToolMM.kSymmetry"))
+		-subMenu 1
+		-enableCommandRepeat 1
+		;
+		
+		radioMenuItemCollection;
+		string $currentSymmetryType = `xgmLengthBrushContext -q -brushSymmetryType xgmLengthBrushTool`;
+		menuItem
+			-label (uiRes("m_contextXGenLengthToolMM.kOff"))
+			-command "xgmSwitchSymmetryType(\"xgmLengthBrushContext\", \"xgmLengthBrushTool\", 0)"
+			-radioButton ($currentSymmetryType == 0)
+			-enableCommandRepeat 1
+			;
+			
+		menuItem
+			-label (uiRes("m_contextXGenLengthToolMM.kObjectX"))
+			-command "xgmSwitchSymmetryType(\"xgmLengthBrushContext\", \"xgmLengthBrushTool\", 1)"
+			-radioButton ($currentSymmetryType == 1)
+			-enableCommandRepeat 1
+			;
+
+		menuItem
+			-label (uiRes("m_contextXGenLengthToolMM.kObjectY"))
+			-command "xgmSwitchSymmetryType(\"xgmLengthBrushContext\", \"xgmLengthBrushTool\", 2)"
+			-radioButton ($currentSymmetryType == 2)
+			-enableCommandRepeat 1
+			;
+			
+		menuItem
+			-label (uiRes("m_contextXGenLengthToolMM.kObjectZ"))
+			-command "xgmSwitchSymmetryType(\"xgmLengthBrushContext\", \"xgmLengthBrushTool\", 3)"
+			-radioButton ($currentSymmetryType == 3)
+			-enableCommandRepeat 1
+			;
+			
+		menuItem
+			-label (uiRes("m_contextXGenLengthToolMM.kWorldX"))
+			-command "xgmSwitchSymmetryType(\"xgmLengthBrushContext\", \"xgmLengthBrushTool\", 4)"
+			-radioButton ($currentSymmetryType == 4)
+			-enableCommandRepeat 1
+			;
+
+		menuItem
+			-label (uiRes("m_contextXGenLengthToolMM.kWorldY"))
+			-command "xgmSwitchSymmetryType(\"xgmLengthBrushContext\", \"xgmLengthBrushTool\", 5)"
+			-radioButton ($currentSymmetryType == 5)
+			-enableCommandRepeat 1
+			;
+			
+		menuItem
+			-label (uiRes("m_contextXGenLengthToolMM.kWorldZ"))
+			-command "xgmSwitchSymmetryType(\"xgmLengthBrushContext\", \"xgmLengthBrushTool\", 6)"
+			-radioButton ($currentSymmetryType == 6)
+			-enableCommandRepeat 1
+			;
+
+	setParent -m ..;
+	
+	setParent -menu ..;
+}

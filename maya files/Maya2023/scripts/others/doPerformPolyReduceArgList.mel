@@ -1,0 +1,491 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//  doPerformPolyReduceArgList:
+//		Method called to perform a polyReduce operation, both directly (via
+//	performPolyReduce) and indirectly (via performLODGenerateMeshes).
+//
+//
+//////////////////////////////////////////////////////////////////////
+
+
+proc string[] findShapes( string $node )
+//
+//	Description:
+//		Given a node, return all descendant shapes.
+//
+{
+    string $shapes[] = `listRelatives -ni -s -f $node`;
+    string $kids[] = `listRelatives -type "transform" -c -f $node`;
+    int $numKids = size($kids);
+    if( size( $kids ) > 0 ){
+        int $i = 0;
+        while( $i < $numKids ){
+            string $kid = $kids[$i];
+            string $grandShapes[] = findShapes( $kid );
+            $shapes = stringArrayCatenate( $shapes, $grandShapes );
+			$i++;
+        }
+    }
+    return( $shapes );
+}
+
+proc string findLodAncestor( string $node )
+//
+//	Description:
+//		Given a node, find its lodGroup ancestor node, if any.
+//
+//	Return:
+//		Ancestor lodGroup node, if any, else an empty string.
+{
+	string $lodGroup;
+	if( !`objExists $node` ){
+		return( $lodGroup );
+	}
+	string $currNode = $node;
+	while( true ){
+		if(`objectType -isType "lodGroup" $currNode` ){
+			$lodGroup = $currNode;
+			break;
+		}
+		string $parents[] = `listRelatives -parent -fullPath $currNode`;
+		if( size($parents) != 1 ){
+			// Bail
+			break;
+		}
+		$currNode = $parents[0];
+	}
+	return( $lodGroup );
+}
+
+proc string[] findBones( string $node )
+//
+//	Description:
+//		Find the joints in the history of the node, if any, and return them.
+//
+//	Return:
+//		Associated joints.
+{
+	string $history[] = `listHistory $node`;
+
+	string $joints[] = `ls -type "joint" $history`;
+	return( $joints );
+
+}
+
+global proc doPerformPolyReduceArgList( string $version, string $args[])
+//
+//	Description:
+//		Invoke PolyReduce one or more times.
+//
+//	Input Arguments:
+//		$version:	The version of doPerformPolyReduceArgList, to facilitate
+//					backwards compatibility.
+//					1 - first version
+//		$args (Version 1)
+//			[0]		-ver
+//			[1]		-trm
+//			[2]		-shp
+//			[3]		-keepBorder
+//			[4]		-keepMapBorder
+//			[5]		-keepColorBorder
+//			[6]		-keepFaceGroupBorder
+//			[7]		-keepHardEdge
+//			[8]		-keepCreaseEdge
+//			[9]		-keepBorderWeight
+//			[10]	-keepMapBorderWeight
+//			[11]	-keepColorBorderWeight
+//			[12]	-keepFaceGroupBorderWeight
+//			[13]	-keepHardEdgeWeight
+//			[14]	-keepCreaseEdgeWeight
+//			[15]	-useVirtualSymmetry
+//			[16]	-symmetryTolerance
+//			[17]	-sx
+//			[18]	-sy
+//			[19]	-sz
+//			[20]	-sw
+//			[21]	-preserveTopology
+//			[22]	-keepQuadsWeight
+//			[23]	-vertexMapName
+//			[24]	-cachingReduce
+//			[25]	-ch
+//			[26]	-p
+//			[27]	-vct
+//			[28]	-tct
+//			[29]	-replaceOriginal
+//			[30]	-preserveLocation
+//			[31]	lodLevel if called from LODGenerateMeshes, 0 otherwise
+//	(Version 2)
+//			[32]	Copy Skin Weights, if called from LODGenerateMeshes,
+//					needs to be false otherwise
+//	(Version 3)
+//			[33]	Max LOD threshold we want to compute
+//
+{
+	// Since $version is a string, convert it to an int, so that we can do
+	// greater than comparisons.
+	//
+	int $intVersion = $version;
+	if( ( ($intVersion == 1) && (size($args) != 32) ) ||
+		( ($intVersion == 2) && (size($args) != 33) ) ||
+		( ($intVersion == 3) && (size($args) != 34) ) )
+	{
+		print (uiRes("m_doPerformPolyReduceArgList.kPolyReduceArgListWrongLength"));
+		return;
+	}
+	int $ver = $args[0];
+	int $trm = $args[1];
+	float $shp = $args[2];
+	int $keepBorder = $args[3];
+	int $keepMapBorder = $args[4];
+	int $keepColorBorder = $args[5];
+	int $keepFaceGroupBorder = $args[6];
+	int $keepHardEdge = $args[7];
+	int $keepCreaseEdge = $args[8];
+	float $keepBorderWeight = $args[9];
+	float $keepMapBorderWeight = $args[10];
+	float $keepColorBorderWeight = $args[11];
+	float $keepFaceGroupBorderWeight = $args[12];
+	float $keepHardEdgeWeight = $args[13];
+	float $keepCreaseEdgeWeight = $args[14];
+	$useVirtualSymmetry = $args[15];
+	float $symmetryTolerance = $args[16];
+	float $sx = $args[17];
+	float $sy = $args[18];
+	float $sz = $args[19];
+	float $sw = $args[20];
+	int $preserveTopology = $args[21];
+	float $keepQuadsWeight = $args[22];
+	string $vertexMapName = $args[23];
+	int $cachingReduce = $args[24];
+	int $ch = $args[25];
+	float $p = $args[26];
+	int $vct = $args[27];
+	int $tct = $args[28];
+	int $replaceOriginal = $args[29];
+	int $preserveLocation = $args[30];
+	int $lodLevel = $args[31];
+	int $copySkinWeights = false;
+	if( $intVersion >= 2 ){
+		$copySkinWeights = $args[32];
+	}
+	int $maxThreshold = $lodLevel;
+	if( $intVersion == 3 ){
+		$maxThreshold = $args[33];
+	}
+
+	string $cmd = "polyReduce ";
+	$cmd += (" -ver " + $ver );
+	$cmd += (" -trm " + $trm);
+	$cmd += (" -shp " + $shp);
+	$cmd += (" -keepBorder " + $keepBorder);
+	$cmd += (" -keepMapBorder " + $keepMapBorder );
+	$cmd += (" -keepColorBorder " + $keepColorBorder );
+	$cmd += (" -keepFaceGroupBorder " + $keepFaceGroupBorder );
+	$cmd += (" -keepHardEdge " + $keepHardEdge);
+	$cmd += (" -keepCreaseEdge " + $keepCreaseEdge);
+
+	$cmd += (" -keepBorderWeight " + $keepBorderWeight);
+	$cmd += (" -keepMapBorderWeight " + $keepMapBorderWeight );
+	$cmd += (" -keepColorBorderWeight " + $keepColorBorderWeight );
+	$cmd += (" -keepFaceGroupBorderWeight " + $keepFaceGroupBorderWeight );
+	$cmd += (" -keepHardEdgeWeight " + $keepHardEdgeWeight);
+	$cmd += (" -keepCreaseEdgeWeight " + $keepCreaseEdgeWeight);
+	$cmd += (" -useVirtualSymmetry " + $useVirtualSymmetry );
+    $cmd += (" -symmetryTolerance " + $symmetryTolerance);
+	$cmd += (" -sx " + $sx);
+	$cmd += (" -sy " + $sy);
+	$cmd += (" -sz " + $sz);
+	$cmd += (" -sw " + $sw);
+	$cmd += (" -preserveTopology " + $preserveTopology);
+	$cmd += (" -keepQuadsWeight " + $keepQuadsWeight);
+    $cmd += (" -vertexMapName \"" + $vertexMapName + "\"");
+	$cmd += (" -cachingReduce " + $cachingReduce );
+	$cmd += (" -ch " + $ch);
+	$cmd += (" -p " + $p);
+	$cmd += (" -vct " + $vct);
+	$cmd += (" -tct " + $tct);
+
+	// The $replaceFlags are used if the orginal geometry has already been
+	// copied, and should be replaced by the polyReduced version. This will
+	// typically be used when $copySkinWeights is true.
+	//
+	string $replaceFlags = (" -replaceOriginal 1 ");
+	
+	// The $copyFlags are used if the polyReduced version is made directly
+	// from the original geometry, and we must therefore instruct polyReduce to
+	// make a copy of the original geometry.
+	//
+	string $copyFlags = (" -replaceOriginal " + $replaceOriginal);
+	if( $preserveLocation ){
+		$copyFlags += (" -preserveLocation " );
+	}
+	string $sel[];
+
+	// Preserve selection
+	//
+	$sel = `ls -l -sl`;
+	if( $lodLevel > 0 ){
+		int $newGroup = false;
+		int $i = 0;
+		int $numSelections = size($sel);
+		string $lodGroup;
+		string $lodZero;
+		while( $i < $numSelections ){
+			string $ancestor = findLodAncestor( $sel[$i] );
+			if( $ancestor != "" ){
+				if( $lodGroup == "" ){
+					$lodGroup = $ancestor;
+				} else if( !isSameObject( $lodGroup, $ancestor ) ){
+					error (uiRes("m_doPerformPolyReduceArgList.kTooMany"));
+					return;
+				}
+			}
+			$i++;
+		}
+		if( $lodGroup == "" ){
+			// No lodGroup selected. If geometry has been selected, attempt to
+			// create an lodGroup from it.
+			//
+			string $result[] = performSetupLodPercentage( true );
+			if( size($result) == 1 ){
+				$lodGroup = $result[0];
+				$newGroup = true;
+			} else {
+				error (uiRes("m_doPerformPolyReduceArgList.kZero"));
+				return;
+			}
+		}
+		// Find the LOD_0 child
+		//
+		if( !`exists lodRoot`){
+			eval("source \"lodUtils.mel\"");
+		}
+		string $lodRoot = lodRoot();
+		$lodZero = $lodGroup + "|" + $lodRoot + "0";
+		if( !`objExists $lodZero` ){
+			error (uiRes("m_doPerformPolyReduceArgList.kNoZero"));
+			return;
+		}
+		int $needsBase = needsBaseThreshold( $lodGroup );
+
+		// Does LOD_0 have any children? If not, bail.
+		//
+		string $zeroChildren[] = `listRelatives -children $lodZero`;
+		int $numZeroChildren = size($zeroChildren);
+		if( $numZeroChildren == 0 ){
+			string $fmt = (uiRes("m_doPerformPolyReduceArgList.kNoZeroChildren"));
+			string $err = `format -s $lodZero $fmt`;
+			error $err;
+			return;
+		}
+
+		// We have a valid selection, proceed
+		//
+
+		// First, remove any existing children of target level, if any
+		//
+		string $levelName = $lodRoot + $lodLevel;
+		string $levelNode = ($lodGroup + "|" + $levelName );
+		if( `objExists $levelNode` ){
+			string $children[] = `listRelatives -children $levelNode`;
+			int $numChildren = size($children);
+			if( $numChildren > 0 ){
+				string $fmt = (uiRes("m_doPerformPolyReduceArgList.kRemovingExistingChildren"));
+				string $wrn = `format -s $levelName $fmt`;
+				warning $wrn;
+
+				$i = 0;
+				while( $i < $numChildren ){
+					delete ($levelNode + "|" + $children[$i]);
+					$i++;
+				}
+			}
+		} else {
+			int $usePercentage = getAttr ($lodGroup + ".useScreenHeightPercentage");
+			$i = 1;
+			while( $i <= $lodLevel ){
+				$levelName = $lodRoot + $i;
+				$levelNode = ($lodGroup + "|" + $levelName);
+				if( !`objExists $levelNode` ){
+					// Create level node
+					//
+					string $node = `createNode -n $levelName transform`;
+					string $fullNode = ("|" + $node);
+					parent ($fullNode) ($lodGroup);
+					setAttr ($lodGroup + ".displayLevel[" + $i + "]") 0;
+					if( $usePercentage ){
+						setPercentageThreshold( ($i-1), $lodGroup, $needsBase );
+					} else {
+						if( $needsBase ){
+							setBaseDistanceThreshold( $maxThreshold, $lodGroup );
+							$needsBase = false;
+						}
+						setDistanceThreshold( ($i-1), $lodGroup );
+					}
+				}
+				$i++;
+			}
+		}
+
+		// Need to duplicate the hierarchy under $lodZero, otherwise we can only
+		// handle a flat hierarcy. Re-parent each immediate child to the
+		// desired level node, and rename appropriately. Find the duplicated
+		// shapes, and if copying skin weights, find the original shapes as
+		// well.
+		//
+		$i = 0;
+		string $zeroShapes[];
+		string $duplicatedShapes[];
+		while( $i < $numZeroChildren ){
+			string $child = $zeroChildren[$i];
+			string $zeroChild = $lodZero + "|" + $child;
+
+			string $nodes[] = `duplicate ($lodZero+"|"+$child)`;
+			parent ($lodZero + "|" + $nodes[0]) $levelNode;
+			rename ($levelNode + "|" + $nodes[0]) $child;
+
+			string $shapes[];
+			$shapes = findShapes( ($levelNode + "|" + $child ) );
+			$duplicatedShapes = stringArrayCatenate( $duplicatedShapes, $shapes );
+			if( $copySkinWeights ){
+				// Need the original shapes as well.
+				//
+				clear $shapes;
+				$shapes = findShapes( $zeroChild );
+				$zeroShapes = stringArrayCatenate( $zeroShapes, $shapes );
+				if( size($duplicatedShapes) != size($zeroShapes ) ){
+					// Mismatch occurred, don't copy weights
+					//
+					$copySkinWeights = false;
+				}
+			}
+			$i++;
+		}
+		int $numShapes = size($duplicatedShapes);
+
+		// Now for each shape, apply polyReduce
+		//
+		$i = 0;
+		while( $i < $numShapes ){
+			string $zeroShape = $zeroShapes[$i];
+			string $duplicatedShape = $duplicatedShapes[$i];
+
+			string $newNodes[];
+			int $doCopySkinWeights = $copySkinWeights;
+			string $joints[];
+			if( $doCopySkinWeights ){
+				$joints = findBones( $zeroShape );
+				if( size($joints) == 0 ){
+					TODO( "FINISH", "Decide how to handle partial mesh skinning", "MAYA-67955" );
+					// What happens if part of the mesh is skinned, and part
+					// isn't?
+					//
+					$doCopySkinWeights = false;
+				}
+			}
+			string $doCmd = $cmd;
+			// Since we've already made a copy of the original geometry, we
+			// want to tell polyReduce to replace the copied geometry with
+			// the reduced geometry, to avoid having an intermediate copy
+			// lying around.
+			//
+			$doCmd += $replaceFlags;
+
+			// Perform polyReduce on child or its copy
+			//
+			if( !catch($newNodes = `evalEcho ($doCmd + $duplicatedShape)`) ){
+				if( size($newNodes) > 0 ){
+
+					if( $doCopySkinWeights ){
+						// Now skin the new node, and copy the weights.
+						//
+						string $copySel[] = $joints;
+						$copySel[size($copySel)] = $duplicatedShape;
+						select -r $copySel;
+
+						newSkinCluster "-toSelectedBones -bindMethod 1 -normalizeWeights 1 -weightDistribution 0 -mi 4 -omi true -dr 4 -rui true,multipleBindPose,1";
+						clear $copySel;
+						$copySel[0] = $zeroShape;
+						$copySel[1] = $duplicatedShape;
+						select -r $copySel;
+						copySkinWeights  -noMirror -surfaceAssociation closestPoint -influenceAssociation closestJoint;
+					}
+
+				}
+			}
+			$i++;
+		}
+		if( $newGroup ){
+			// Created a new group, select it.
+			//
+			select -r $lodGroup;
+		} else {
+			// Restore selection
+			//
+			select -r $sel;
+		}
+	} else {
+		$cmd += $copyFlags;
+		if ( size($sel) == 0 ) {
+			error (uiRes("m_doPerformPolyReduceArgList.kInvalidSelection"));
+			return;
+		}
+		int $index = 0;
+		while (size($sel) > $index) {
+			string $cursel[];
+			int $i;
+
+			// if multiple objects/components are selected, this returns
+			// batches of same object selections (i.e. all faces from
+			// the same object, or an object itself, etc...)
+			$index=`polyNextSelectionBatch $sel $cursel $index`;
+
+			// find out which object is selected
+			string $buf[2];
+			tokenize $cursel[0] "." $buf;
+			string $selObject = ("\"" + $buf[0] + "\"");
+
+			string $selComponents = "";
+
+			int $areComponentsSelected = 0;
+
+			// if components are selected (i.e. there was a "." in one
+			// of the cursel elements), collate them all into 1 string.
+			if ( size($buf) > 1 ) {
+				$areComponentsSelected = 1;
+				for ($i=0; $i<size($cursel); $i++)
+					$selComponents=($selComponents + " " + $cursel[$i]);
+			}
+
+			// Append current selection to command, and execute
+			//
+			string $doCmd = $cmd + " " + ($areComponentsSelected
+										?$selComponents:$selObject);
+
+			catch(`evalEcho $doCmd`);
+		}
+
+		// make sure node is selected when there is history
+		if ( 0 != size(`ls -sl`) || (0 != size(`ls -hl`)) ) {
+			string $tmp[] = `listHistory`;
+			string $totalSel[];
+			for ($opNode in $tmp) {
+				if (`nodeType $opNode` == "polyReduce") {
+					$totalSel[size($totalSel)] = $opNode;
+				}
+			}
+		
+			if (size($totalSel) > 0) 
+				select -add $totalSel[0];
+		}
+
+		setToolTo ShowManips;
+	}
+}
+

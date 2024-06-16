@@ -1,0 +1,42 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+// Create popup menu for texture editor move tool options
+//
+
+global proc texMoveOptionsPopup()
+{
+	commonTexReflectionOptionsPopup(); // North: Symmetry
+
+	menuItem
+		-version "2018"
+		-label (uiRes("m_texMoveOptionsPopup.kStepSnap"))
+		-ecr true 
+		-radialPosition "E" 
+		-checkBox `texMoveContext -q -snap texMoveContext`
+		-command "texMoveContext -e -snap #1 texMoveContext"
+		;
+
+	menuItem
+		-label (uiRes("m_texMoveOptionsPopup.kKeepSpacing"))
+		-ecr true 
+		-checkBox `texMoveContext -q -snapComponentsRelative texMoveContext`
+		-radialPosition "SE" 
+		-command "texMoveContext -e -snapComponentsRelative #1 texMoveContext"
+		;
+
+	commonTexSelectOptionsPopup(); // South
+
+	commonTexSelectionConstraintsOptionsPopup();
+	commonTexTransformConstraintsOptionsPopup();
+	menuItem -divider 1;
+	menuItem
+		-label (uiRes("m_texMoveOptionsPopup.kMoveOptions"))
+		-command ( "MoveUVTool; " + "toolPropertyWindow; " )
+		;
+}

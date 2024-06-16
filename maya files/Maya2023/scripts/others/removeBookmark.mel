@@ -1,0 +1,55 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  October 24, 1996
+//
+//  Description:
+//      This a helper script which will remove any or
+//		all of the bookmarks (sets) of a certain type.
+//
+//  Input Arguments:
+//      A list of bookmarks to remove (an empty list means remove all)
+//		The type of the bookmark to remove
+//
+//  Return Value:
+//      None.
+//
+
+proc int
+stringArrayContains (string $array[], string $element)
+{
+	for ($entry in $array) {
+		if ($entry == $element) {
+			return (true);
+		}
+	}
+
+	return (false);
+}
+
+global proc
+removeBookmark (string $bookmarkList[], string $type)
+{
+	int $numBookmarks = size ($bookmarkList);
+
+	// Find all the sets (bookmarks are fancy sets)
+	//
+	string $sets[] = `ls -sets`;
+	for ($set in $sets) {
+		// look for sets of $type
+		//
+		if (`sets -query -text $set` != $type) {
+			continue;
+		}
+		if (($numBookmarks > 0) && !stringArrayContains ($bookmarkList, $set)) {
+			continue;
+		}
+		delete $set;
+	}
+}

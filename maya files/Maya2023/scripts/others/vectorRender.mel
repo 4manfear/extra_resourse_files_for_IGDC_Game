@@ -1,0 +1,60 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//  Creation Date:  23 December 2002
+//
+//  Procedure Name:
+//		vectorRender	
+//
+//  Description:
+//		This script executes a command to render the current frame 
+//		and send it to the render view.
+//
+//  Input Arguments:
+//		None
+//  Return Value:
+//		None
+//
+
+////////////////////////////////////////////////////////////////////////////////
+//
+////////////////////////////////////////////////////////////////////////////////
+
+// vectorRender
+//
+// renders the current frame and displays the result in the render view.  This 
+// function is invoked when the Render button or Render Current Frame menu
+// item is accessed.  
+//
+// Parameters:
+// $width      - width of the output
+// $height     - height of the output
+// $doShadows  - not used by the Maya Vector Renderer
+// $doGlowPass - not used by the Maya Vector Renderer
+// $camera     - the camera to use in the render
+// $option     - rendering option. 
+// 
+global proc string vectorRender( int $width, int $height, int $doShadows, int $doGlowPass, string $camera, string $option ) {
+	// If the user has selected a camera in the UI, then 
+	// use it to render.  By default, the viewport camera is used
+	// if no camera is specified.
+	//
+	string $selectedCamera;
+	if ( "transform" == `nodeType $camera` ) {
+		$selectedCamera = $camera;
+	}
+
+	// Build the vectorize command.
+	string $command = vrVectorBuildCommand( true, $width, $height, $selectedCamera, $option );
+
+	string $result = "";
+	
+	// Execute it. 
+	$result = `evalEcho( $command )`;
+	return $result;
+} 

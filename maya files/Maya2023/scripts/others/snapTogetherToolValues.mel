@@ -1,0 +1,60 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//  Description:
+//		Updates the controls for the Snap Together Tool property sheet.
+//
+//  Input Arguments:
+//		$toolName: Instance name of the tool context.
+//
+//  Return Value:
+//		None.
+//
+global proc snapTogetherToolValues(string $toolName)
+{
+	string $icon = "snapTogetherTool.png";
+	string $helpTag = "snapTogetherTool";
+	toolPropertySetCommon $toolName $icon $helpTag;
+
+	string $parent = (`toolPropertyWindow -query -location` + "|snapTogetherTool");
+	setParent $parent;
+
+	radioButton
+		-edit
+		-onCommand("snapTogetherCtx -edit -setOrientation true  " + $toolName)
+		moveAndRotateBtn;
+
+	radioButton
+		-edit
+		-onCommand("snapTogetherCtx -edit -setOrientation false " + $toolName)
+		moveOnlyBtn;
+
+	checkBoxGrp 
+		-edit
+		-onCommand  ("snapTogetherCtx -edit -snapPolygonFace on " + $toolName)
+		-offCommand ("snapTogetherCtx -edit -snapPolygonFace off " + $toolName)
+		snapTogetherToolSnapPolygonFace;
+
+	if (`snapTogetherCtx -query -setOrientation $toolName`)
+	{
+		radioButton -edit -select moveAndRotateBtn;
+	}
+	else
+	{
+		radioButton -edit -select moveOnlyBtn;
+	}
+
+	if (`snapTogetherCtx -query -snapPolygonFace $toolName`) {
+		checkBoxGrp -edit -value1 on snapTogetherToolSnapPolygonFace;
+	} else {
+		checkBoxGrp -edit -value1 off snapTogetherToolSnapPolygonFace;
+	}
+
+	toolPropertySelect snapTogetherTool;
+
+}	//	snapTogetherToolValues()

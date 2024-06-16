@@ -1,0 +1,49 @@
+#ifndef _COMMON_OGSFH_
+#define _COMMON_OGSFH_
+uniform mat4 gWVPXf : WorldViewProjection;
+uniform vec2 gScreenSize : ViewportPixelSize;
+attribute VS_INPUT_ScreenQuad
+{
+vec3 Pos : POSITION;
+vec2 UV : TEXCOORD0;
+}
+attribute VS_TO_PS_ScreenQuad
+{
+vec2 VSUV : TEXCOORD0;
+}
+GLSLShader VS_ScreenQuad
+{
+void main() {
+VSUV = UV;
+gl_Position=gWVPXf*vec4(Pos,1.0);
+}
+}
+#endif // _COMMON_OGSFH_
+uniform texture2D gColorTex : InputTexture;
+uniform sampler2D gColorSamp = sampler_state
+{
+Texture   = <gColorTex>;
+};
+attribute pixelOut {
+vec4 colorOut:COLOR0;
+}
+GLSLShader PS_CopyResult
+{
+void main()
+{
+vec4 result = texture2D(gColorSamp, VSUV );
+#if GL_ES && SHADER_VERSION == 2
+gl_FragColor = result / result.w;
+#else
+colorOut = result / result.w;
+#endif
+}
+}
+technique Main
+{
+pass p0
+{
+VertexShader (in VS_INPUT_ScreenQuad, out VS_TO_PS_ScreenQuad) = VS_ScreenQuad;
+PixelShader (in VS_TO_PS_ScreenQuad, out pixelOut) = PS_CopyResult;
+}
+}

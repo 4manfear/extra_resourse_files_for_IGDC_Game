@@ -1,0 +1,1301 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc int[] teGetClipSelection(int $id, int $warn)
+//
+//	Description:
+//		Determines which clip(s) should an operation be executed on. 
+//		This should be used by clip functions that allow an operation to be executed on multiple clips.
+//
+//		This is described in the following scenario:
+//			1. User select a clip and right click on it. Return value: Clip Id of the selected clip.
+//			2. User select a clip and right click on another clip. Return Value: Clip Id of the clip under the mouse cursor.
+//			3. User select more than one clip and right click on any of the clips. Return Value: Clip Ids of all the selected clips.
+//			4. User select more than one clip and right click on a clip that is not selected. Return Value: Clip Id of the clip under the mouse cursor.
+//			5. $id == 1. Return Value: Clip Ids of the current selected clips, if any.
+//
+//	Input:
+//		$id - Id of the clip under the mouse cursor. -1 if id is unknown.
+//		$warn - Should a warning be prompted if a valid clip id cannot be found.
+//
+//	Return:
+//		Array of clip ids.
+//
+{
+	int $selectedClips[] = `timeEditor -selectedClips ""`;
+	
+	if($id != -1)
+	{
+		if(intArrayFind($id, 0, $selectedClips) == -1)
+		{
+			// if the given clip id is not part of the selection, then return the given clip id.
+			clear($selectedClips);
+			$selectedClips[0] = $id;
+		}
+	}
+	
+	if(size($selectedClips) == 0 && $warn)
+	{
+		warning( (uiRes("m_teClipEditFunctions.kNoClipsSelected")) );
+	}
+	
+	return $selectedClips;
+}
+
+global proc int[] teGetClipSelectionAndClip(int $id, int $warn)
+//
+//	Description:
+//		Returns ids of the selected clips plus the specified clip id, if valid.
+//		Used when an edit operation is invoked from a context-menu, in which case
+//		both the clicked clip as well as all selected should be the targets of
+//		an action.
+//
+//	Input:
+//		$id - Id of the clip to be added to the returned list (or -1).
+//
+//	Return:
+//		Array of clip ids.
+//
+{
+	int $selectedClips[] = `timeEditor -selectedClips ""`;
+
+	if ($id != -1)
+	{
+		if (intArrayFind($id, 0, $selectedClips) == -1)
+		{
+			$selectedClips[ size($selectedClips) ] = $id;
+		}
+	}
+
+	if(size($selectedClips) == 0 && $warn)
+	{
+		warning( uiRes("m_teClipEditFunctions.kNoClipsSelected") );
+	}
+	
+	return $selectedClips;	
+}
+
+global proc int teGetFirstClipInSelection(int $id, int $warn)
+//
+//	Description:
+//		Helper function to teGetClipSelection(). 
+//		Returns only the first clip id in a list of selected clips determined by teGetClipSelection(), if the give $id is invalid.
+//		This should be used by clip functions that only an operation to be executed on a single clip at any one time.
+//
+//	Input:
+//		$id - Id of the clip under the mouse cursor. -1 if id is unknown.
+//		$warn - Should a warning be prompted if a valid clip id cannot be found.
+//
+//	Return:
+//		clip id. -1 if a valid clip id cannot be found
+//
+{
+	int $ret = -1;
+	
+	if($id > -1)
+	{
+		$ret = $id;
+	}
+	else
+	{
+		int $selectedClips[] = teGetClipSelection($id, $warn);
+		
+		if(size($selectedClips) > 0)
+		{
+			$ret = $selectedClips[0];
+		}
+	}
+	
+	return $ret;
+}
+
+global proc tePerformSmartingBakingOnSelectedClips(int $clipId, int $bakeMode)
+// 
+//	Description:
+//		Perfroms the required smarting baking on selected clips depending on
+//		the $operation parameter
+//
+//	Input Param:
+//		operation: 	0 - bake to new clip
+//					1 - trim to new clip and delete
+//					2 - bake to scene
+//					3 - bake to scene and delete
+//					4 - flatten layers
+//
+//		clipId: clip id of the initial clip, or -1 if there is none.
+//
+{
+	// Get the current selected clips
+	int $selectedClips[] = teGetClipSelection($clipId, 0);
+	
+	string $bakeSelectionArg = "";
+	
+	if (size($selectedClips) > 1 && $clipId != -1)
+	{
+		// We have selected clips, check if the context menu clip ID also belongs to the
+		// selection, in which case we can ignore the bake command's clipId argument and
+		// let the baking command read the scene selection. 
+		//
+		// If the context menu clip ID is not part of the selection, we'll ignore the
+		// selection and explicitly clip ID given to us.
+		
+		// Determine if clipId is part of the selected clips
+		if(intArrayFind($clipId, 0, $selectedClips) == -1)
+		{
+			$bakeSelectionArg = "-clipId " + $clipId;
+		}
+	}
+	else if( size($selectedClips) == 1 )
+	{
+		// No selection but a sepcified clip, then use it
+		$bakeSelectionArg = "-clipId " + $selectedClips[0];
+	}
+		
+	string $cmdToRun = "";
+	
+	if($bakeMode == 0)			// 0: Bake to New Clip
+	{
+		$cmdToRun = "timeEditorBakeClips -sampleBy 1 -keepOriginalClip 1 -bakeToClip Baked -tti -2 " + $bakeSelectionArg;
+	}
+	else if($bakeMode == 1)	// 1: Bake to New Clip & Delete
+	{
+		$cmdToRun = "timeEditorBakeClips -sampleBy 1 -bakeToClip Baked " + $bakeSelectionArg;
+	}
+	else if($bakeMode == 2)	// 2: Bake to Scene
+	{
+		$cmdToRun = "timeEditorBakeClips -sampleBy 1 -keepOriginalClip 1 " + $bakeSelectionArg;
+	}
+	else if($bakeMode == 3)	// 3: Bake to Scene & Delete
+	{
+		$cmdToRun = "timeEditorBakeClips -sampleBy 1 " + $bakeSelectionArg;
+	}
+	else if($bakeMode == 4)	// 4: Flatten Layers
+	{
+		$cmdToRun = "timeEditorBakeClips -combineLayers 1 " + $bakeSelectionArg;
+	}
+	else
+	{
+		return;
+	}
+	
+	evalEcho($cmdToRun);
+}
+
+global proc tePerformClipEditOnSelectedClips(int $clipId, int $operation)
+// 
+//	Description:
+//		Perfroms the required operation on selected clips depending on
+//		the $operation parameter
+//
+//	Input Param:
+//		$clipId: Id of clip under mouse cursor.
+//
+//		$operation: 0 - split clip
+//					1 - trim to start
+//					2 - trim to end
+//					3 - scale to start
+//					4 - scale to end
+//					5 - reset timing
+//
+{
+	int $selectedClips[] = teGetClipSelection($clipId, 1);
+	if(size($selectedClips) == 0)
+		return;
+	
+	string $cmdToRun 	= "";
+	string $editorPanel = "timeEditorPanel1TimeEd";
+	float $time 		= `timeEditorPanel -query -activeTabTime $editorPanel`;			// time inside current tab (global or local tab time)
+	int $rootClipId 	= `timeEditorPanel -query -activeTabRootClipId $editorPanel`;	// root clip id for current tab
+	string $rootCmd 	= ($rootClipId == -1) ? "" : (" -rootClipId "+$rootClipId+" ");	// root clip related part of the command
+	string $rippleCmd	= teGetRippleStatus() == 1 ? " -ripple" : "";					// should ripple
+	
+	if($operation == 0)			// 0 : razor clip @ current time
+	{
+		$cmdToRun = "timeEditorClip -edit -razorClip " + $time + $rootCmd;
+	}
+	else if($operation == 1)	// 1: trim to start of clip
+	{
+		$cmdToRun = "timeEditorClip -edit -trimStart " + $time + $rippleCmd + $rootCmd;
+	}
+	else if($operation == 2)	// 2: trim to end of clip
+	{
+		$cmdToRun = "timeEditorClip -edit -trimEnd " + $time + $rippleCmd + $rootCmd;
+	}
+	else if($operation == 3)	// 3: scale to start of clip
+	{
+		$cmdToRun = "timeEditorClip -edit -scaleStart " + $time + $rippleCmd + $rootCmd;
+	}
+	else if($operation == 4)	// 4: scale to end of clip
+	{
+		$cmdToRun = "timeEditorClip -edit -scaleEnd " + $time + $rippleCmd + $rootCmd;
+	}
+	else if($operation == 5)	// 5: reset timing
+	{
+		$cmdToRun = "timeEditorClip -edit -resetTiming";
+	}
+	else 
+	{
+		return;
+	}
+	
+	for($clipId in $selectedClips)
+	{
+		$cmdToRun = $cmdToRun + " -clipId " + $clipId;
+	}
+	
+	$cmdToRun = $cmdToRun + ";";
+	
+	evalEcho($cmdToRun);
+}
+
+global proc tePasteClip()
+//
+//	Description:
+//		Pastes copied clip(s) into the Time Editor
+//
+{
+	string $track = teGetFirstTrackInSelection("", -1, 0);
+	float $time = `timeEditorPanel -query -activeTabTime timeEditorPanel1TimeEd`;
+	int $rootClipId = `timeEditorPanel -query -activeTabRootClipId timeEditorPanel1TimeEd`;	
+	
+	if($track == "")
+	{
+		// Retrieve a track node from Time Editor
+		$track = teGetActiveTabNewTrackIdString();
+	}
+	
+	if($track == "")
+	{
+		error((uiRes("m_teClipEditFunctions.kNoActiveTrack")) );
+		return;
+	}
+	
+	string $result = `timeEditorClip -e -pasteClip $time -track $track -rootClipId $rootClipId`;
+	if ($result != "") 
+	{
+		string $cmd = "timeEditorPanel -e -focusTrack \"" + $result + "\" timeEditorPanel1TimeEd;";
+		evalDeferred -lowestPriority $cmd;
+	}
+}
+global proc teCutClip(int $clipId)
+//
+//	Description:
+//		Cut clip into the Time Editor
+//
+{
+	int $selectedClips[] = teGetClipSelection($clipId,1);
+	int $i,$j;
+	//Check that clips that are cut are not from the same track
+	for($i = 0; $i < size($selectedClips)-1;$i++)
+	{
+		for($j = $i+1; $j < size($selectedClips);$j++)
+		{
+			if(`timeEditorClip -q -track $selectedClips[$i]` !=`timeEditorClip -q -track $selectedClips[$j]`)
+			{
+				error((uiRes("m_teClipEditFunctions.kCTECannotCutClipOnDiffTracks")));
+				return;
+			}
+		}
+	}
+
+	string $cmdToRun = "TimeEditorCopyClips; \ntimeEditorClip -e -removeClip";
+	for($clipId in $selectedClips)
+	{
+		$cmdToRun += " -clipId "+ $clipId;
+	}
+	$cmdToRun += " ;";
+	eval($cmdToRun);
+}
+
+global proc teDeleteClip(int $clipId)
+//
+//	Description:
+//		Deletes clip into the Time Editor
+//
+{
+	int $selectedClips[] = teGetClipSelection($clipId,1);
+
+	string $cmdToRun = "timeEditorClip -e -removeClip";
+	
+	for($clipId in $selectedClips)
+	{
+		$cmdToRun += " -clipId "+ $clipId ;
+	}
+	$cmdToRun+= " ;";
+	eval($cmdToRun);
+}
+
+global proc teClipExtendParent(int $clipId)
+//
+//	Description:
+//		Extends the parent clip of the given clip id to fit the clip length
+//
+//	Input Param:
+//		$clipId: Id of clip under mouse cursor.
+//
+{
+	int $selectedClips[] = teGetClipSelection($clipId, 1);
+	if(size($selectedClips) == 0)
+	{
+		return;
+	}
+	
+	string $cmdToRun = "timeEditorClip -e -extendParent";
+
+	int $rootClipId = teGetRootClipId();
+	if ($rootClipId != -1)
+		$cmdToRun += " -rootClipId " + $rootClipId;
+	
+	for($clipId in $selectedClips)
+	{
+		$cmdToRun = $cmdToRun + " -clipId " + $clipId;
+	}
+		
+	$cmdToRun = $cmdToRun + ";";
+	evalEcho($cmdToRun);
+}
+
+global proc teAddEditExpressionToLayerAttribute(string $attrPlug, int $add)
+//
+// Description:
+//		Add/Edit an expression connected to an Layer Attribute
+//
+// Input Argument:
+//		attrPlug - the path of the layer attribute
+//		add 	 - whether to add or edit (add = 1 | edit = 0)
+//
+{
+	// do nothing if empty string
+	if($attrPlug == "")
+	{
+		error( (uiRes("m_teClipEditFunctions.kCTEInvalidAttrPlug")) );
+		return;
+	}
+	
+	string $nodeName = `plugNode $attrPlug`;
+	string $plugName = `plugAttr $attrPlug`;
+	
+	if($nodeName == "" || $plugName == "")
+	{
+		error(uiRes("m_teClipEditFunctions.kCTEInvalidAttrPlug"));
+		return ;
+	}
+	
+	// if $add == 0, we are trying to edit expression, then we need to make sure there is an expression
+	// for we to edit.
+	if($add == 0)
+	{
+		if(!`connectionInfo -isDestination $attrPlug`)
+		{
+			error( (uiRes("m_teClipEditFunctions.kCTENoSourceConnected")) );
+			return;
+		}
+		
+		string $sourceNodePlug = `connectionInfo -sourceFromDestination $attrPlug`;
+		if ($sourceNodePlug == "")
+		{
+			error(uiRes("m_teClipEditFunctions.kCTENoSourceConnected"));
+			return;
+		}
+		
+		string $sourceNode = `plugNode $sourceNodePlug`;
+		if ($sourceNode == "")
+		{
+			error(uiRes("m_teClipEditFunctions.kCTENoSourceConnected"));
+			return;
+		}
+		
+		string $sourceNodeType = `nodeType $sourceNode`;
+		if ($sourceNodeType != "expression")
+		{
+			error( (uiRes("m_teClipEditFunctions.kCTESourceNotExpr")) );
+			return;
+		}
+	}
+	else
+	{
+		// we are trying to add but we need to check if it is already connected to a source
+		// if true, we need check with user if they want to delete existing connection.
+		// because Expression Editor will complain if there is already an existing connection.
+		//
+		if(`connectionInfo -isDestination $attrPlug`)
+		{
+			string $reply = `confirmDialog 	-title (uiRes("m_teClipEditFunctions.kCTEConfirmExistingConnectionTitle")) 
+								-message (uiRes("m_teClipEditFunctions.kCTEConfirmExistingConnectionMsg"))
+								-button (uiRes("m_teClipEditFunctions.kCTEConfirmYes"))
+								-button (uiRes("m_teClipEditFunctions.kCTEConfirmNo"))
+								-defaultButton (uiRes("m_teClipEditFunctions.kCTEConfirmYes"))
+								-cancelButton (uiRes("m_teClipEditFunctions.kCTEConfirmNo"))
+								-dismissString (uiRes("m_teClipEditFunctions.kCTEConfirmNo"))`;
+			
+			if($reply == uiRes("m_teClipEditFunctions.kCTEConfirmYes"))
+			{
+				// we will disconnect the existing connection to the layer attributes input plug
+				string $sourceNodePlug = `connectionInfo -sourceFromDestination $attrPlug`;
+				
+				evalEcho( "disconnectAttr " + $sourceNodePlug + " " + $attrPlug + ";" );
+			}
+			else
+			{
+				// do nothing and return 
+				return;
+			}
+		}
+	}
+	
+	// call ExpressionEditor
+	expressionEditor("EE", $nodeName, $plugName);
+}
+
+global proc teDeleteExprConnectedToLayerAttribute(string $attrPlug)
+//
+//	Description:
+//		Delete an expression connected to a given attribute plug
+//
+//	Input Argument:
+//		Plug path
+//
+{
+	// do nothing if empty string
+	if($attrPlug == "")
+	{
+		error(uiRes("m_teClipEditFunctions.kCTEInvalidAttrPlug"));
+		return;
+	}
+	
+	if(!`connectionInfo -isDestination $attrPlug`)
+	{
+		error(uiRes("m_teClipEditFunctions.kCTEInvalidAttrPlug"));
+		return;
+	}
+	
+	string $sourceNodePlug = `connectionInfo -sourceFromDestination $attrPlug`;
+	if ($sourceNodePlug == "")
+	{
+		error(uiRes("m_teClipEditFunctions.kCTESourceNotExpr"));
+		return;
+	}
+	
+	string $sourceNode = `plugNode $sourceNodePlug`;
+	if ($sourceNode == "")
+	{
+		error(uiRes("m_teClipEditFunctions.kCTESourceNotExpr"));
+		return;
+	}
+	
+	string $sourceNodeType = `nodeType $sourceNode`;
+	if($sourceNodeType != "expression")
+	{
+		error(uiRes("m_teClipEditFunctions.kCTESourceNotExpr"));
+		return;
+	}
+	
+	string $reply = `confirmDialog 	-title (uiRes("m_teClipEditFunctions.kCTEConfirmDeleteExpressionTitle")) 
+									-message (uiRes("m_teClipEditFunctions.kCTEConfirmDeleteExpressionMsg"))
+									-button (uiRes("m_teClipEditFunctions.kCTEConfirmYes"))
+									-button (uiRes("m_teClipEditFunctions.kCTEConfirmNo"))
+									-defaultButton (uiRes("m_teClipEditFunctions.kCTEConfirmYes"))
+									-cancelButton (uiRes("m_teClipEditFunctions.kCTEConfirmNo"))
+									-dismissString (uiRes("m_teClipEditFunctions.kCTEConfirmNo"))`;
+	
+	//perform the delete
+	if($reply == uiRes("m_teClipEditFunctions.kCTEConfirmYes"))
+	{
+		// disconnect the expression from the layer attribute
+		evalEcho("disconnectAttr " + $sourceNodePlug + " " + $attrPlug + ";");
+
+		// if source expression not connected to anything anymore, delete it
+		if (size(`listConnections -s 0 -d 1 $sourceNodePlug`) == 0)
+			evalEcho("delete " + $sourceNode + ";");
+	}
+}
+
+global proc int teIsLayerAttributeConnectedToExpr(string $attrPlug)
+//
+//	Description:
+//		Check a given destination attribute plug if it is connected to an expression
+//
+//	Input Argument:
+//		Plug path
+//
+//	Return:
+//		1 if plug is connect to a source expression, 0 otherwise
+//
+{
+	if($attrPlug == "")
+	{
+		return 0;
+	}
+	
+	if(!`connectionInfo -isDestination $attrPlug`)
+	{
+		return 0;
+	}
+	
+	string $sourceNode = `connectionInfo -sourceFromDestination $attrPlug`;
+	if ($sourceNode == "")
+	{
+		return 0;
+	}
+	
+	string $sourceNodeType = `nodeType $sourceNode`;
+	if($sourceNodeType != "expression")
+	{
+		return 0;
+	}
+	
+	return 1;
+}
+
+global proc teSelectDrivenObjects(int $id)
+// 
+//	Description:
+//		Selects the objects in the scene that is/are driven by the clipId
+//
+//	Input:
+//		id - clipId of the current clip under the mouse cursor.
+//
+{
+	// get the first clip id in current selected
+	int $selectedClips[] = teGetClipSelection($id, 1);
+	if(size($selectedClips) == 0)
+	{
+		return;
+	}
+	
+	select -cl;
+	string $allObject = "";
+	
+	// iterate through selected clip ids
+	for($clipId in $selectedClips)
+	{
+		// for each clip id, select the driven objects
+		string $objectsNameArray[] = `timeEditorClip -q -dos $clipId`;
+		for($name in $objectsNameArray) 
+		{
+			$allObject += " " + $name;
+		}
+	}
+	
+	// execute the select command
+	evalEcho("select -add" + $allObject);
+}
+
+global proc teRenameClipLayer(int $clipId, int $layerId) 
+{
+	string $oldName = `timeEditorClipLayer -clipId $clipId -layerId $layerId -q -layerName`;
+
+	string $newName[];
+	
+	if(teRenamePromptBox($oldName, $newName) == 1)
+	{
+		evalEcho("timeEditorClipLayer -e -clipId " + $clipId + " -layerId " + $layerId + " -layerName " + $newName[0]);
+	}
+}
+
+global proc teRenameClip(int $id)
+//
+//	Description:
+//		Perform the renaming of a clip given a clip Id
+//
+//	Input Argument:
+//		Id of the clip to be renamed.
+//
+//	Return:
+//		None
+//
+{
+	// get the first clip id in current selected
+	int $clipId = teGetFirstClipInSelection($id, 1);
+	if($clipId == -1)
+	{
+		return;
+	}
+	
+	string $oldName = `timeEditorClip -q -clipId $clipId -name`;
+	string $newName[];
+	
+	if(teRenamePromptBox($oldName, $newName) == 1)
+	{
+		$cmd = "timeEditorClip -e -clipId " + $clipId + " -name " + $newName[0];
+		evalEcho($cmd);
+	}
+}
+
+global proc int teRenamePromptBox(string $oldName, string $newString[])
+//
+//	Description:
+//		Create a renaming dialog window using the given information
+//
+//	Input Argument:
+//		oldName - The existing name of the given object.
+//		newString - The new name. [return]
+//
+{
+	string $result = `promptDialog -title (uiRes("m_teClipEditFunctions.kCTERenameClipDialogTitle"))
+								   -message (uiRes("m_teClipEditFunctions.kCTERenameClipDialogMsg"))
+								   -text $oldName
+								   -button (uiRes("m_teClipEditFunctions.kCTERenameClipDialogOK"))
+								   -button (uiRes("m_teClipEditFunctions.kCTERenameClipDialogCancel"))
+								   -defaultButton (uiRes("m_teClipEditFunctions.kCTERenameClipDialogOK"))
+								   -cancelButton  (uiRes("m_teClipEditFunctions.kCTERenameClipDialogCancel"))
+								   -dismissString (uiRes("m_teClipEditFunctions.kCTERenameClipDialogCancel"))`;
+
+	if($result == uiRes("m_teClipEditFunctions.kCTERenameClipDialogOK"))
+	{
+		string $text = `promptDialog -query -text`;
+
+		if($text != $oldName)
+		{
+			$newString[0] ="\"" + $text + "\"";
+			return 1;
+		}
+	}
+	
+	return 0;
+}
+
+global proc int teSetClipWeight(string $trackNode, int $trackIndex, float $time, float $weight, int $snapLastKey)
+{
+    // Get the clip with the currently active clip weight
+    int $clipId = `timeEditorTracks -activeClipWeightId $time -trackIndex $trackIndex -q $trackNode`;
+
+    // Get the weight curve for this clip
+    string $weightCurve = `timeEditorClip -weightCurve -q $clipId`;
+    
+    // Create a weight curve if not available
+    if ($weightCurve == "")
+    {
+        $weightCurve = `timeEditorClip -e -weightCurve -clipId $clipId`;
+        
+        // Still no weight curve?
+        if ($weightCurve == "")
+            return 0;
+    }
+        
+    // Get the local curve time to evaluate the weight curve
+    int $keyTime = `timeEditorClip -curveTime $time -q $clipId`;
+    int $setKeys = `setKeyframe -breakdown 0 -time $keyTime -hierarchy none -controlPoints 0 -shape 0 -value $weight $weightCurve`; 
+    
+    // Check if we need to automatically set the last key frame
+    if ($snapLastKey == 1 && $setKeys == 1)
+    {
+        float $lastTime = `findKeyframe -which last $weightCurve`;
+        float $nextTime = `findKeyframe -which next -time $keyTime $weightCurve`;
+        
+        // Is the next key the last key?
+        if ($lastTime == $nextTime)
+            $setKeys += `setKeyframe -breakdown 0 -time $lastTime -hierarchy none -controlPoints 0 -shape 0 -value $weight $weightCurve`; 
+    }
+    return $setKeys;
+}
+
+global proc int teCreateGroupBySelection(int $id)
+//
+//	Description:
+//		Groups the selected clips under a common parent track
+//
+// 	Input Arg:
+//		id - clipId. 
+//
+{
+	// collected the selected containers and groups
+	int $clipIds[] = teGetClipSelection($id, 1);
+	if(size($clipIds) == 0)
+	{
+		return -1;
+	}
+	
+	string $idString = "";
+	int $i;
+	for($i=0; $i< size($clipIds); ++$i) 
+	{
+		$idString += "-clipId " + $clipIds[$i] + " ";
+	}
+
+	string $track_details;
+	string $cmd_string;
+
+	$cmd_string = "timeEditor " + $idString + "-commonParentTrack;";
+	$track_details = eval($cmd_string);
+
+	// construct the command string that will be executed to create the group.
+	$cmd_string = "timeEditorClip -group -track \"" + $track_details + "\" ";
+
+	// give the new group a default name
+	$cmd_string += $idString + "Group;";
+	
+	print( "teCreateGroupBySelection " + $id + "\n");
+	return eval($cmd_string);
+}
+
+global proc teExplodeSelectedGroup(int $id)
+//
+// Description:
+//		Explodes a give group by moving its children tracks to the parent track node
+//
+// Input Arg:
+//		id - clipId.
+//
+{
+	// get the first clip id in current selected
+	int $clipIds[] = teGetClipSelection($id, 1);
+	if(size($clipIds) == 0)
+	{
+		return;
+	}
+	
+	for($clipId in $clipIds)
+	{
+		int $clipType = `timeEditorClip -q -clipDataType $clipId`;
+		
+		if($clipType != 3)
+		{
+			warning ( (uiRes("m_teClipEditFunctions.kCTESelectedClipNotGroup")) );
+		}
+		else
+		{
+			string $cmd = "timeEditorClip -e -explode "+$clipId+";";
+			evalEcho($cmd);
+		}
+	}
+}
+
+global proc teCreateRelocatorWithRoots(int $id, string $roots[])
+//
+// Description:
+//		Creates a relocator on the given clipId
+//
+// Input Arg:
+//		id - clipId.
+//
+{
+	int $firstEditedClip = $id;
+	int $selectedClips[] = teGetClipSelectionAndClip($id, 1);
+	for ($clipId in $selectedClips)
+	{	
+		int $clipType = `timeEditorClip -q -clipDataType $clipId`;
+		
+		if($clipType != 0 && $clipType != 3)
+		{
+			warning( (uiRes("m_teClipEditFunctions.kInvalidClipType2")));
+			continue;
+		}
+		
+		string $cmd = "timeEditorClipOffset -offsetTransform -rootObj " + (stringArrayToString($roots, " -rootObj ")) + " -clipId "+$clipId;
+		eval($cmd);
+		if ($firstEditedClip <= 0)
+			$firstEditedClip = $clipId;
+	}
+
+	// select the offset transform after creating it
+	if ($firstEditedClip)
+	{
+		teSelectRelocator($firstEditedClip);
+	}
+}
+
+global proc teCreateRelocator(int $id)
+//
+// Description:
+//		Creates a relocator on the given clipId
+//
+// Input Arg:
+//		id - clipId.
+//
+{
+	int $firstEditedClip = $id;
+	int $selectedClips[] = teGetClipSelectionAndClip($id, 1);
+	for ($clipId in $selectedClips)
+	{	
+		int $clipType = `timeEditorClip -q -clipDataType $clipId`;
+		
+		if($clipType != 0 && $clipType != 3)
+		{
+			warning( (uiRes("m_teClipEditFunctions.kInvalidClipType")));
+			continue;
+		}
+		
+		timeEditorClipOffset -offsetTransform -applyToAllRoots -clipId $clipId;
+		if ($firstEditedClip <= 0)
+			$firstEditedClip = $clipId;
+	}
+
+	// select the offset transform after creating it
+	if ($firstEditedClip)
+	{
+		teSelectRelocator($firstEditedClip);
+	}
+}
+
+global proc teSelectRelocator(int $id)
+//
+// Description:
+//		Selects the relocator on the given clipId
+//
+// Input Arg:
+//		id - clipId.
+//
+{
+	// get the first clip id in current selected
+	int $clipId = teGetFirstClipInSelection($id, 1);
+	if($clipId == -1)
+		return;
+	
+	int $clipType = `timeEditorClip -q -clipDataType $clipId`;
+	
+	if($clipType != 0 && $clipType != 3)
+	{
+		warning( uiRes( "m_teClipEditFunctions.kInvalidClipType" ) );
+		return;
+	}
+	
+	string $offset = `timeEditorClipOffset -offsetTransform -q $clipId`;
+	if ($offset == "")
+	{
+		warning( (uiRes("m_teClipEditFunctions.kHasNoRelocator")) );
+		return ;
+	}
+	
+	select -r $offset;
+}
+
+global proc teResetRelocator(int $id)
+//
+// Description:
+//		Resets the relocator on the given clipId
+//
+// Input Arg:
+//		id - clipId.
+//
+{
+	int $selectedClips[] = teGetClipSelectionAndClip($id, 1);
+	for ($clipId in $selectedClips)
+	{
+		int $clipType = `timeEditorClip -q -clipDataType $clipId`;
+		
+		if($clipType != 0 && $clipType != 3)
+		{
+			warning( uiRes( "m_teClipEditFunctions.kInvalidClipType" ) );
+			continue;
+		}
+			
+		string $offset = `timeEditorClipOffset -offsetTransform -q $clipId`;
+		if ($offset == "")
+		{
+			warning( uiRes( "m_teClipEditFunctions.kHasNoRelocator" ) );
+			continue;
+		}
+		
+		timeEditorClipOffset -resetMatch $clipId;
+	}
+}
+
+global proc teDeleteRelocator(int $id)
+//
+// Description:
+//		Deletes a existing relocator on the given clipId
+//
+// Input Arg:
+//		id - clipId.
+//
+{
+	int $selectedClips[] = teGetClipSelectionAndClip($id, 1);
+	for ($clipId in $selectedClips)
+	{
+		int $clipType = `timeEditorClip -q -clipDataType $clipId`;
+		
+		if($clipType != 0 && $clipType != 3)
+		{
+			warning( uiRes( "m_teClipEditFunctions.kInvalidClipType" ) );
+			continue;
+		}
+		
+		string $offset = `timeEditorClipOffset -offsetTransform -q $clipId`;
+		if ($offset == "")
+		{
+			warning( uiRes( "m_teClipEditFunctions.kHasNoRelocator" ) );
+			continue;
+		}
+
+		string $clipNode = `timeEditorClip -q -clipNode $clipId`;
+		
+		delete $offset;
+		makeIdentity ($clipNode + ".pivotMtx");
+	}
+}
+
+global proc int teIsTwoAdjClipSelected()
+//
+//	Description:
+//		For a given clipId check if there is another clip on the same track 
+//		that is selected
+//
+{
+	int $selectedClips[] = `timeEditor -selectedClips "container"`;
+	
+	// to create a transition you will need more than 2 clips selected
+	if(size($selectedClips) < 2)
+		return 0;
+		
+	string $refClipTrack = `timeEditorClip -q -track -clipId $selectedClips[0]`;
+	
+	int $idx = 0;
+	for($idx=0; $idx < size($selectedClips); $idx++)
+	{
+		if(`timeEditorClip -q -track -clipId $selectedClips[$idx]` != $refClipTrack)
+			return 0;
+	}
+	
+	return 1;
+}
+
+global proc teEditWeightCurve(int $id, string $attr)
+//
+//	Description:
+//		Select the clipWeight plug and open GraphEditor
+//
+//	Input Argument:
+//		Id of the clip. If -1 is give, it will use id of the first clip in the current selection
+//
+//	Return:
+//		None
+//
+{
+	// get the first clip id in current selected
+	int $clipId = teGetFirstClipInSelection($id, 1);
+	if($clipId == -1)
+		return;
+	
+	string $clipNode   = `timeEditorClip -q -clipNode -clipId $clipId`;
+	string $weightPlug = $clipNode + "." + $attr;
+
+	string $sources[] = `listConnections $weightPlug`;
+	if (size($sources) == 0)
+	{
+		warning( (uiRes("m_teClipEditFunctions.kHasNoWeightCurve")) );
+		return;
+	}
+
+	// select the entire clip and show it inside Graph Editor
+	select ($clipNode + ".clip[0]");
+
+	GraphEditor;	
+	
+	evalDeferred (			
+		"selectionConnection -e -clear graphEditor1FromOutliner;\n" +
+		"selectionConnection -e -select " + $clipNode + ".clipWeight graphEditor1FromOutliner;\n" +		// select the weight curve inside Graph Editor's outliner
+		"animCurveEditor -e -lookAt selected graphEditor1GraphEd;");									// frame the weight curve
+}
+
+global proc teEditCrossfadeCurve(int $clipId1, int $clipId2)
+//
+//	Description:
+//		Opens the Graph Editor with the custom crossfade curve between 2 clips
+//
+//	Input Argument:
+//		clipId1, clipId2 : Clips ids with a custom crossfade curve between them
+//
+{
+	string $path = `timeEditorClip -q -crossfadePlug $clipId1 $clipId2`;
+	if ($path == "-1") return;
+	
+	string $sources[] = `listConnections $path`;
+	if (size($sources) == 0)
+	{
+		warning( (uiRes("m_teClipEditFunctions.kHasNoCrossfadeCurve")) );
+		return;
+	}
+	
+	float $fps = currentTimeUnitToFPS();
+	float $start = 0;
+	float $end = 1 / $fps;
+	
+	// open graph editor and frame the curve in 0-1 range
+	select $sources[0];
+	GraphEditor;
+	animCurveEditor -e -viewLeft $start -viewRight $end graphEditor1GraphEd;
+}
+
+global proc string teInsertTrackInGroup(int $id, int $index, int $type)
+//
+//	Description:
+//		Create new track in a group clip.
+//
+//	Input Argument:
+//		id    : Id of the group
+//		index : index of where to insert the new track
+//		type  : Type of track to insert.
+//
+//	Return:
+//		TrackInfo of the created clip in the format "<track_node_name>:<track_index>"
+//
+{
+	// get the first clip id in current selected
+	int $clipId = teGetFirstClipInSelection($id, 1);
+	if($clipId == -1)
+		return "";
+	
+	// Ensure that the clip is a group
+	int $clipDataType = `timeEditorClip -q -clipDataType $clipId`;
+	if($clipDataType != 3)
+	{
+		warning( (uiRes("m_teClipEditFunctions.kTENotCompounnd")) );
+		return "";
+	}
+	
+	string $tracksNode = `timeEditorClip -q -tracksNode $id`;
+	if ($tracksNode == "")
+	{
+		warning( uiRes( "m_teClipEditFunctions.kTENotCompounnd" ) );
+		return "";
+	}
+	
+	int $retIndex = `timeEditorTracks -e -addTrack $index -trackType $type $tracksNode`;
+	
+	print( "teInsertTrackInGroup "+$id+" "+$index+" "+$type+";" );
+	return $tracksNode+":"+$retIndex;
+}
+
+global proc teEditGroupTabView(int $id)
+//
+//	Description:
+//		Opens a new tab windows for the Group's local view
+//
+//	Input Argument:
+//		Id of the clip. 
+//
+{
+	// get the first clip id in current selected
+	int $clipId = teGetFirstClipInSelection($id, 1);
+	if($clipId == -1)
+		return;
+	
+	// Ensure that the clip is a group
+	int $clipDataType = `timeEditorClip -q -clipDataType $clipId`;
+	if($clipDataType != 3)
+	{
+		warning( uiRes("m_teClipEditFunctions.kTENotCompounnd") );
+		return;
+	}
+	
+	timeEditorPanel -e -tabView $clipId timeEditorPanel1TimeEd;
+}
+
+global proc teCreateAndEditTimeWarp(int $id, int $type)
+//
+//	Description:
+//		Create time warp/speed curve and open it in graph editor
+//
+//	Input Argument:
+//		Id of the clip.
+//
+//	Return:
+//		None
+//
+{
+	int $firstEditedClip = $id;
+	int $selectedClips[] = teGetClipSelectionAndClip($id, 1);
+	for ($clipId in $selectedClips)
+	{
+		int $hasSpeedCurve = `timeEditorClip -q -speedRamping -clipId $clipId`;
+		if($hasSpeedCurve != 0)
+		{
+			warning( (uiRes("m_teClipEditFunctions.kHasSpeedCurve")) );			
+			continue;
+		}
+
+		timeEditorClip -e -clipId $clipId -speedRamping 1 -timeWarpType $type;		// create
+
+		if ($firstEditedClip <= 0)
+			$firstEditedClip = $clipId;		
+	}
+
+	if ($firstEditedClip)
+	{
+		timeEditorClip -e -clipId $firstEditedClip -speedRamping 2;							// edit
+	}
+}
+
+global proc teChangeSpeedCurveAndEdit(int $id, int $flag)
+// 
+//	Input Arg:
+//		$flag - 6 : Reset Curve
+//				-1: Edit Curve
+//				8 : Convert to Speed Curve
+//				7 : Convert to Time Warp Curve
+//
+{
+	int $firstEditedClip = $id;
+	int $selectedClips[] = teGetClipSelectionAndClip($id, 1);
+	for ($clipId in $selectedClips)
+	{
+		int $hasSpeedCurve = `timeEditorClip -q -speedRamping -clipId $clipId`;
+		if($hasSpeedCurve == 0)
+		{
+			warning( (uiRes("m_teClipEditFunctions.kHasNoSpeedCurve")) );
+			continue;
+		}
+		
+		// Ensure the conversion can be done
+		// $timeWarType = 0 - time warp
+		//                1 - speed curve 
+		//
+		int $timeWarpType = `timeEditorClip -q -timeWarpType -clipId $clipId`;
+		if($timeWarpType == 0 && $flag == 8)
+		{
+			error( (uiRes("m_teClipEditFunctions.kAlreadyTimeWarp")) );
+			continue;
+		}
+		else if($timeWarpType == 1 && $flag == 7)
+		{
+			error( (uiRes("m_teClipEditFunctions.kAlreadySpeedCurve")) );
+			continue;			
+		}
+		
+		if($flag > -1)
+		{
+			if ($firstEditedClip <= 0)
+				$firstEditedClip = $clipId;
+			timeEditorClip -e -clipId $clipId -speedRamping $flag;
+		}
+	}
+	
+	// open first 
+	if ($firstEditedClip)
+	{
+		timeEditorClip -e -clipId $firstEditedClip -speedRamping 2;	// edit
+	}
+}
+
+global proc teDeleteSpeedCurve(int $id)
+{
+	int $selectedClips[] = teGetClipSelectionAndClip($id, 1);
+	for ($clipId in $selectedClips)
+	{
+		int $hasSpeedCurve = `timeEditorClip -q -speedRamping -clipId $clipId`;
+		if($hasSpeedCurve == 0)
+		{
+			warning( uiRes("m_teClipEditFunctions.kHasNoSpeedCurve") );
+			continue;
+		}
+		
+		timeEditorClip -e -clipId $clipId -speedRamping 5;
+	}
+}
+
+global proc teEnableDisableSpeedCurve(int $id)
+{
+	int $selectedClips[] = teGetClipSelectionAndClip($id, 1);
+	for ($clipId in $selectedClips)
+	{	
+		int $hasSpeedCurve = `timeEditorClip -q -speedRamping -clipId $clipId`;
+		if($hasSpeedCurve == 0)
+		{
+			warning( uiRes("m_teClipEditFunctions.kHasNoSpeedCurve") );
+			continue;
+		}
+		
+		int $isWarped	    = `timeEditorClip -q -timeWarp -clipId $clipId`;
+		int $speedRampValue = $hasSpeedCurve ? ($isWarped ? 4 : 3) : 1;
+		
+		timeEditorClip -e -clipId $clipId -speedRamping $speedRampValue;
+	}
+}
+
+global proc teMakeAnimSourceUnique(int $id)
+{
+	int $selectedClips[] = teGetClipSelectionAndClip($id, 1);
+	for ($clipId in $selectedClips)
+	{	
+		// check if clip type supports anim source
+		int $clipType = `timeEditorClip -q -clipDataType $clipId`;
+		if($clipType != 0 || $clipType != 0)
+		{
+			warning( uiRes( "m_teClipEditFunctions.kInvalidClipType" ) );
+			return;
+		}
+		
+		// check if source is already unique
+		string $source = `timeEditorClip -q -animSource -clipId $clipId`;
+		if(`timeEditorAnimSource -q -isUnique $source`)
+		{
+			warning ( (uiRes("m_teClipEditFunctions.kTESourceAlreadyUnique")) );
+			return;
+		}		
+	
+		timeEditorClip -e -uniqueAnimSource -clipId $clipId;
+	}
+}
+
+//
+//	Description:
+//		Extract full paths of attributes selected in the channel box for all selected objects
+//		that contain those attributes.
+//
+global proc string[] teGetSelectedAttributes()
+{
+	string $results[];
+	string $selectedObjects[] = `ls -selection`;
+	string $selectedAttributes[] = `channelBox -q -sma mainChannelBox`;
+	int $i = 0;
+
+	for ($attr in $selectedAttributes)
+	{
+		for ($obj in $selectedObjects)
+		{
+			if (`attributeExists $attr $obj`)
+			{
+				$results[$i++] = $obj + "." + $attr;
+			}
+		}
+	}
+
+	return $results;
+}
+
+global proc teClipAddAttributes(int $id)
+//
+//	Description:
+//		Adds selected attributes to the clip with specified id and its Anim Source, if not aded yet.
+//
+//	Input Argument:
+//		Id of the clip. 
+//
+{
+	string $selectedAttributes[] = teGetSelectedAttributes();
+	if (size($selectedAttributes) > 0)
+	{
+		string $cmd = "timeEditorClip -e -clipId " + $id + " ";
+		for ($attr in $selectedAttributes)
+		{
+			$cmd += " -addAttribute \"" + $attr + "\" ";
+		}
+		evalEcho($cmd);
+	}
+}
+
+global proc teClipRemoveAttributes(int $id)
+//
+//	Description:
+//		Remove selected attributes from specified clip. Anim Source will not be affected.
+//
+//	Input Argument:
+//		Id of the clip. 
+//
+{
+	string $selectedAttributes[] = teGetSelectedAttributes();
+	if (size($selectedAttributes) > 0)
+	{
+		string $cmd = "timeEditorClip -e -clipId " + $id + " ";
+		for ($attr in $selectedAttributes)
+		{
+			$cmd += " -removeAttribute \"" + $attr + "\" ";
+		}
+		evalEcho($cmd);
+	}
+}

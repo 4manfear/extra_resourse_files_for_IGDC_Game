@@ -1,0 +1,542 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//Largely based on falloffUtility.mel used by the Sculpting tools.
+
+//What we do here:
+//Creates and edits falloff curves used by the type tools
+//Creates the curve presets
+//Loads preset curves
+//Loads and Saves custom presets
+//Other curve utilities such as a large editor, snapping to curve functionality
+
+global int $gCurrCustomIndex = -1;
+
+//Attribute Editor edit proc
+global proc editTypeFalloffCurve(string $nodeAttr) {
+
+    global string $gExtrudeCurvePresets[];
+    int $maxTypeCustomCurveSize = 12; //number of presets we allow
+
+    string $buffer[];
+    tokenize($nodeAttr, ".", $buffer);
+    string $attr = $buffer[ size($buffer) - 1];
+
+    string $curveAttrName = $attr + "Curve";
+    string $snapControlName = $attr + "Snap";
+    string $resetControlName = $attr + "Reset";
+    string $maximiseControlName = $attr + "Maximise";
+    string $saveCustomControlName = $attr + "Save";
+
+    string $resetCurveCommand = "python \"import maya.app.type.typeUtilityScripts; maya.app.type.typeUtilityScripts.resetTypeCurve('"+$nodeAttr+"','"+$curveAttrName+"')\";";
+    string $saveCustomCommand = "saveCustomCurveType(\""+$nodeAttr+"\")";
+    string $toggleSnapCommand = "toggleSnapToCurve(\""+$nodeAttr+"\")";
+    string $maximiseCurveCommand = "largeCurveAttr(\""+$nodeAttr+"\")";
+
+    checkBox -e -cc $toggleSnapCommand $snapControlName;
+    iconTextButton -e -command $maximiseCurveCommand $maximiseControlName;
+    iconTextButton -e -command $resetCurveCommand $resetControlName;
+
+    falloffCurveAttr -e -at $nodeAttr $curveAttrName; //main curve
+
+    iconTextButton -e -command $saveCustomCommand $saveCustomControlName;
+
+    //presets
+
+    int $sz = size($gExtrudeCurvePresets);
+
+    string $falloffCurvePresetName;
+    for($i = 0; $i < $sz; ++$i)
+    {
+        if ($attr == "extrudeCurve") {
+             $falloffCurvePresetName = "typeExtrudePresetCurve" + $i;
+             falloffCurve -e -cc("loadTypeCurvePreset( \"" + $nodeAttr + "\",\"" + $curveAttrName + "\", \"#1\")\n") -readOnly true $falloffCurvePresetName;
+
+        } else if ($attr == "frontBevelCurve") {
+            $falloffCurvePresetName = "typeBevelPresetCurve" + $i;
+            falloffCurve -e-cc("loadTypeCurvePreset( \"" + $nodeAttr + "\",\"" + $curveAttrName + "\", \"#1\")\n") -readOnly true $falloffCurvePresetName;
+        }
+        else if ($attr == "backBevelCurve") {
+            int $offsetBevelNumber = $i+$maxTypeCustomCurveSize;
+            $falloffCurvePresetName = "typeBevelPresetCurve" + $offsetBevelNumber;
+            falloffCurve -e -cc("loadTypeCurvePreset( \"" + $nodeAttr + "\",\"" + $curveAttrName + "\", \"#1\")\n") -readOnly true $falloffCurvePresetName;
+        }
+        else if ($attr == "outerBevelCurve") {
+            int $offsetBevelNumber = $i+$maxTypeCustomCurveSize+$maxTypeCustomCurveSize;
+            $falloffCurvePresetName = "typeBevelPresetCurve" + $offsetBevelNumber;
+            falloffCurve -e-cc("loadTypeCurvePreset( \"" + $nodeAttr + "\",\"" + $curveAttrName + "\", \"#1\")\n") -readOnly true $falloffCurvePresetName;
+        }
+    }
+
+    //custom curves
+
+    for($i = 0 ; $i<$maxTypeCustomCurveSize; $i++)
+    {
+        string $falloffCurveName;
+        string $customCurves[];
+
+        if ($attr == "extrudeCurve") {
+            $falloffCurveName = "typeExtrudeCustomCurve" + $i;
+            falloffCurve -e  -cc( ("customTypeCurveOnClick( \"" + $nodeAttr + "\",\"" + $falloffCurveName + "\", \"#1\"," + $i + ")") )  $falloffCurveName;
+        } else if ($attr == "frontBevelCurve") {
+            $falloffCurveName = "typeBevelCustomCurve" + $i;
+            falloffCurve -e  -cc( ("customTypeCurveOnClick( \"" + $nodeAttr + "\",\"" + $falloffCurveName + "\", \"#1\"," + $i + ")") )  $falloffCurveName;
+        }
+        else if ($attr == "backBevelCurve") {
+            int $offsetBevelNumber = $i+$maxTypeCustomCurveSize;
+            $falloffCurveName = "typeBevelCustomCurve" + $offsetBevelNumber;
+            falloffCurve -e  -cc( ("customTypeCurveOnClick( \"" + $nodeAttr + "\",\"" + $falloffCurveName + "\", \"#1\"," + $i + ")") )  $falloffCurveName;
+        }
+        else if ($attr == "outerBevelCurve") {
+            int $offsetBevelNumber = $i+$maxTypeCustomCurveSize+$maxTypeCustomCurveSize;
+            $falloffCurveName = "typeBevelCustomCurve" + $offsetBevelNumber;
+            falloffCurve -e  -cc( ("customTypeCurveOnClick( \"" + $nodeAttr + "\",\"" + $falloffCurveName + "\", \"#1\"," + $i + ")") )  $falloffCurveName;
+        }
+
+
+    }
+
+}
+
+//creates a falloff curve and it's associated controls. This is really only suited for use with the type tool, but theoretically it could be used elsewhere.
+global proc createTypeFalloffCurve(string $nodeAttr) {
+
+
+    global string $gExtrudeCurvePresets[];
+    global string $gBevelCurvePresets[];
+    global string $gCustomExtrudeCurvePresets[];
+    global string $gCustomBevelCurvePresets[];
+
+    int $maxTypeCustomCurveSize = 12;
+
+    string $buffer[];
+    tokenize($nodeAttr, ".", $buffer);
+    string $attr = $buffer[ size($buffer) - 1];
+
+    string $curveAttrName = $attr + "Curve";
+    string $snapControlName = $attr + "Snap";
+    string $resetControlName = $attr + "Reset";
+    string $maximiseControlName = $attr + "Maximise";
+    string $saveCustomControlName = $attr + "Save";
+    string $spName = $attr +"Sp";
+    string $svName = $attr +"Sv";
+
+    string $resetCurveCommand = "python \"import maya.app.type.typeUtilityScripts; maya.app.type.typeUtilityScripts.resetTypeCurve('"+$nodeAttr+"','"+$curveAttrName+"')\";";
+    string $saveCustomCommand = "saveCustomCurveType(\""+$nodeAttr+"\")";
+    string $toggleSnapCommand = "toggleSnapToCurve(\""+$nodeAttr+"\")";
+    string $maximiseCurveCommand = "largeCurveAttr(\""+$nodeAttr+"\")";
+
+    columnLayout;
+
+        rowLayout -numberOfColumns 4 -columnWidth4 76 89 20 20; 
+            text -label "";
+            checkBox -label (getPluginResource("Type", "kSnapToGrid")) -en 1 -cc $toggleSnapCommand $snapControlName;
+            iconTextButton -width 23 -height 23 -image "TypeMaximiseCurve.png" -style "iconAndTextHorizontal" -command $maximiseCurveCommand -ann (getPluginResource("Type", "kOpenCurveEditorAnn")) $maximiseControlName;
+            iconTextButton -width 23 -height 23 -image "TypeResetCurve.png" -style "iconAndTextHorizontal" -command $resetCurveCommand -ann (getPluginResource("Type", "kResetCurveAnn")) $resetControlName;
+        setParent ..;
+
+        rowLayout -h 152 -nc 2 -columnWidth 1 223 -columnAlign 1 "center" -columnAttach 1 "right" 1;
+            columnLayout;
+                string $widgetName = `falloffCurveAttr -at $nodeAttr -w 150 -h 178 $curveAttrName`;
+            setParent..;
+
+            columnLayout;
+                text -label(getPluginResource("Type", "kProfilesLbl")) -height 23 falloffPresetsText;
+                int $presetCellSize1 = 26;
+                int $curvePreviewSize = 24;
+                int $sz = size($gExtrudeCurvePresets);
+
+                gridLayout -numberOfColumns 6 -cellWidthHeight $presetCellSize1 $presetCellSize1 falloffProfilePresetsGrid;
+
+                    for($i = 0; $i < $sz; ++$i){
+                        string  $falloffCurvePresetName;
+                        formLayout;
+                            if ($attr == "extrudeCurve") {
+                                 $falloffCurvePresetName = "typeExtrudePresetCurve" + $i;
+                                 falloffCurve -backgroundColor 0.51 0.51 0.51 -h $curvePreviewSize -w $curvePreviewSize -asString $gExtrudeCurvePresets[$i] -cc("loadTypeCurvePreset( \"" + $nodeAttr + "\",\"" + $curveAttrName + "\", \"#1\")\n") -readOnly true $falloffCurvePresetName;
+
+                            } else if ($attr == "frontBevelCurve") {
+                                $falloffCurvePresetName = "typeBevelPresetCurve" + $i;
+                                falloffCurve -backgroundColor 0.51 0.51 0.51 -h $curvePreviewSize -w $curvePreviewSize -asString $gBevelCurvePresets[$i] -cc("loadTypeCurvePreset( \"" + $nodeAttr + "\",\"" + $curveAttrName + "\", \"#1\")\n") -readOnly true $falloffCurvePresetName;
+                            }
+                            else if ($attr == "backBevelCurve") {
+                                int $offsetBevelNumber = $i+$maxTypeCustomCurveSize;
+                                $falloffCurvePresetName = "typeBevelPresetCurve" + $offsetBevelNumber ;
+                                falloffCurve -backgroundColor 0.51 0.51 0.51 -h $curvePreviewSize -w $curvePreviewSize -asString $gBevelCurvePresets[$i] -cc("loadTypeCurvePreset( \"" + $nodeAttr + "\",\"" + $curveAttrName + "\", \"#1\")\n") -readOnly true $falloffCurvePresetName;
+                            }
+                            else if ($attr == "outerBevelCurve") {
+                                int $offsetBevelNumber = $i+$maxTypeCustomCurveSize+$maxTypeCustomCurveSize;
+                                $falloffCurvePresetName = "typeBevelPresetCurve" + $offsetBevelNumber;
+                                falloffCurve -backgroundColor 0.51 0.51 0.51 -h $curvePreviewSize -w $curvePreviewSize -asString $gBevelCurvePresets[$i] -cc("loadTypeCurvePreset( \"" + $nodeAttr + "\",\"" + $curveAttrName + "\", \"#1\")\n") -readOnly true $falloffCurvePresetName;
+                            }
+                        setParent ..;
+                    }
+                setParent..;
+
+                rowLayout -nc 3 -columnWidth3 84 44 20 ;
+                    text -label(getPluginResource("Type", "kCustomProfilesLbl")) falloffCustomText;
+                    text -label "";
+                    iconTextButton -width 23 -height 23 -image "TypeSaveCurve.png" -style "iconAndTextHorizontal" -command $saveCustomCommand -ann (getPluginResource("Type", "kSaveCurveAnn")) $saveCustomControlName;
+                setParent ..;
+
+                gridLayout -numberOfColumns 6 -cellWidthHeight $presetCellSize1 $presetCellSize1 falloffProfileCustomGrid;
+                    for($i = 0 ; $i<$maxTypeCustomCurveSize; $i++)
+                    {
+                        string $falloffCurveName;
+                        string $customCurves[];
+
+                        formLayout;
+                        if ($attr == "extrudeCurve") {
+                            $falloffCurveName = "typeExtrudeCustomCurve" + $i;
+                            falloffCurve -backgroundColor 0.51 0.51 0.51 -h $curvePreviewSize -w $curvePreviewSize -asString $gCustomExtrudeCurvePresets[$i] -customCurveWidget true -readOnly true  -cc( ("customTypeCurveOnClick( \"" + $nodeAttr + "\",\"" + $falloffCurveName + "\", \"#1\"," + $i + ")") )  $falloffCurveName;
+                        } else if ($attr == "frontBevelCurve") {
+                            $falloffCurveName = "typeBevelCustomCurve" + $i;
+                            falloffCurve -backgroundColor 0.51 0.51 0.51 -h $curvePreviewSize -w $curvePreviewSize -asString $gCustomBevelCurvePresets[$i] -customCurveWidget true -readOnly true  -cc( ("customTypeCurveOnClick( \"" + $nodeAttr + "\",\"" + $falloffCurveName + "\", \"#1\"," + $i + ")") ) $falloffCurveName;
+                        } else if ($attr == "backBevelCurve") {
+                            int $offsetBevelNumber = $i+$maxTypeCustomCurveSize;
+                            $falloffCurveName = "typeBevelCustomCurve" + $offsetBevelNumber;
+                            falloffCurve -backgroundColor 0.51 0.51 0.51 -h $curvePreviewSize -w $curvePreviewSize -asString $gCustomBevelCurvePresets[$i] -customCurveWidget true -readOnly true  -cc( ("customTypeCurveOnClick( \"" + $nodeAttr + "\",\"" + $falloffCurveName + "\", \"#1\"," + $i + ")") ) $falloffCurveName;
+                        } else if ($attr == "outerBevelCurve") {
+                            int $offsetBevelNumber = $i+$maxTypeCustomCurveSize+$maxTypeCustomCurveSize;
+                            $falloffCurveName = "typeBevelCustomCurve" + $offsetBevelNumber;
+                            falloffCurve -backgroundColor 0.51 0.51 0.51 -h $curvePreviewSize -w $curvePreviewSize -asString $gCustomBevelCurvePresets[$i] -customCurveWidget true -readOnly true  -cc( ("customTypeCurveOnClick( \"" + $nodeAttr + "\",\"" + $falloffCurveName + "\", \"#1\"," + $i + ")") ) $falloffCurveName;
+                        }
+                        setParent ..;
+                    }
+                setParent ..;
+                
+            setParent ..;
+
+        setParent ..;
+
+    setParent ..;
+
+}
+
+global proc initExtrudeCurvePreset()
+{
+    global string $gExtrudeCurvePresets[];
+    if (size($gExtrudeCurvePresets) == 0)
+    {
+        $gExtrudeCurvePresets = {  "0,1,0.12,0.422,0.452,0,1,0",
+                            "0,1,0.3,0.5,0.6,0.2,1,0",
+                            "0,1,0.5,1,0.5,0,1,0",
+                            "0,1,0.7,1,0.709,0,1,0",
+                            "0,1,0.547,1,0.834,0.555,1,0",
+                            "0,0,0.25,1,0.75,1,1,0",
+                            "0,0,0.25,0.25,0.75,0.75,1,1",
+                            "0,1,0.25,0.75,0.75,0.25,1,0",
+                            "0,0.5,0.5,1,0.5,0,1,0.5",
+                            "0,0.502703,0,0.845946,0,1,0.0906736,1,0.173575,1,0.173575,0.832432,0.176166,0.167568,0.178756,0,0.26943,0,0.378238,0,0.378238,0.154054,0.38342,0.832432,0.38601,1,0.497409,1,0.57513,1,0.57513,0.835135,0.582902,0.156757,0.580311,0,0.69171,0,0.84715,0,0.84456,0.156757,0.852332,0.845946,0.852332,1,0.927461,1,1,1,1,0.813514,1,0.502703",
+                            "0,0.5,0,0,0.497409,0,0.497409,1,1,1,1,0.5",
+                            "0,1,0.273,0,0.772,0,1,1"
+                        };
+    }
+}
+
+
+global proc initBevelCurvePreset()
+{
+    global string $gBevelCurvePresets[];
+    if (size($gBevelCurvePresets) == 0)
+    {
+        $gBevelCurvePresets = {  "0,1,0.12,0.422,0.452,0,1,0",
+                            "0,1,0.3,0.5,0.6,0.2,1,0",
+                            "0,1,0.5,1,0.5,0,1,0",
+                            "0,1,0.7,1,0.709,0,1,0",
+                            "0,1,0.547,1,0.834,0.555,1,0",
+                            "0,0,0.25,1,0.75,1,1,0",
+                            "0,0,0.25,0.25,0.75,0.75,1,1",
+                            "0,1,0.25,0.75,0.75,0.25,1,0",
+                            "0,1,0.194301,1,0.248705,1,0.248705,0.943243,0.248705,0.816216,0.248705,0.751351,0.303109,0.751351,0.437824,0.751351,0.497409,0.751351,0.497409,0.689189,0.497409,0.564865,0.497409,0.502703,0.546632,0.502703,0.707254,0.502703,0.746114,0.502703,0.746114,0.445946,0.746114,0.318919,0.746114,0.254054,0.792746,0.254054,0.955959,0.254054,0.994819,0.254054,0.994819,0.197297,1,0",
+                            "0,1,0.42487,1,0.497409,1,0.497409,0.910811,0.497409,0.57027,0.497409,0.502703,0.567358,0.502703,0.92228,0.502703,0.994819,0.502703,0.994819,0.445946,1,0",
+                            "0,1,0.25,0,0.5,0,0.75,1,1,0",
+                            "0,1,0.170984,1,0.248705,1,0.248705,0.889189,0.248705,0.118919,0.248705,0.00540543,0.321244,0,0.432642,0.00540543,0.497409,0.00540543,0.497409,0.105405,0.497409,0.608108,0.497409,0.672973,0.567358,0.672973,0.746114,0.375676,0.994819,0"
+                        };
+    }
+}
+
+
+//if we've loaded the text tool before, get the custom curves from the prefrences, otherwise, create the prefrences.
+global proc initCustomCurvePresets()
+{
+    global string $gCustomExtrudeCurvePresets[];
+    optionVar -init false -category "Type"
+        -sa  optionvarCustomCurvesTypeExtrude
+        -sva optionvarCustomCurvesTypeExtrude ""
+        -sva optionvarCustomCurvesTypeExtrude ""
+        -sva optionvarCustomCurvesTypeExtrude ""
+        -sva optionvarCustomCurvesTypeExtrude ""
+        -sva optionvarCustomCurvesTypeExtrude ""
+        -sva optionvarCustomCurvesTypeExtrude ""
+        -sva optionvarCustomCurvesTypeExtrude ""
+        -sva optionvarCustomCurvesTypeExtrude ""
+        -sva optionvarCustomCurvesTypeExtrude ""
+        -sva optionvarCustomCurvesTypeExtrude ""
+        -sva optionvarCustomCurvesTypeExtrude ""
+        -sva optionvarCustomCurvesTypeExtrude ""
+        ;
+
+    $gCustomExtrudeCurvePresets = `optionVar -q "optionvarCustomCurvesTypeExtrude"`;
+
+    global string $gCustomBevelCurvePresets[];
+    optionVar -init false -category "Type"
+        -sa  optionvarCustomCurvesTypeBevel
+        -sva optionvarCustomCurvesTypeBevel ""
+        -sva optionvarCustomCurvesTypeBevel ""
+        -sva optionvarCustomCurvesTypeBevel ""
+        -sva optionvarCustomCurvesTypeBevel ""
+        -sva optionvarCustomCurvesTypeBevel ""
+        -sva optionvarCustomCurvesTypeBevel ""
+        -sva optionvarCustomCurvesTypeBevel ""
+        -sva optionvarCustomCurvesTypeBevel ""
+        -sva optionvarCustomCurvesTypeBevel ""
+        -sva optionvarCustomCurvesTypeBevel ""
+        -sva optionvarCustomCurvesTypeBevel ""
+        -sva optionvarCustomCurvesTypeBevel ""
+        ;
+
+    $gCustomBevelCurvePresets = `optionVar -q "optionvarCustomCurvesTypeBevel"`;
+}
+
+
+//is there a curve at this index?
+global proc checkCustomCurveIndex(string $nodeAttr, int $currCustomIndex, string $falloffCurveName) {
+
+    string $buffer[];
+    tokenize($nodeAttr, ".", $buffer);
+    string $attr = $buffer[ size($buffer) - 1];
+    string $curveAttrName = $attr + "Curve";
+    string $customCurvePrefix;
+    string $opVar;
+
+    if ($attr == "extrudeCurve") {
+        $customCurvePrefix = "typeExtrudeCustomCurve";
+        $opVar = "optionvarCustomCurvesTypeExtrude";
+    } else {
+        $customCurvePrefix = "typeBevelCustomCurve";
+        $opVar = "optionvarCustomCurvesTypeBevel";
+    }
+
+    string $ccName = $customCurvePrefix + $currCustomIndex;
+
+    string $vars[];
+    if ( `optionVar -exists $opVar` )
+    {
+        $vars = `optionVar -q $opVar`;
+        if($vars[$currCustomIndex] !="") {
+            loadTypeCurvePreset($nodeAttr, $ccName, $vars[$currCustomIndex]);
+        }
+    }
+
+}
+
+//we've clicked on a custom curve
+global proc int customTypeCurveOnClick(string $nodeAttr, string $falloffCurveName, string $curveValue, int $index)
+{
+    string $buffer[];
+    tokenize($nodeAttr, ".", $buffer);
+    string $attr = $buffer[ size($buffer) - 1];
+
+
+    global int $gCurrCustomIndex;
+    int $size = 0;
+    $gCurrCustomIndex = $index ;
+
+    if($gCurrCustomIndex != -1)
+    {
+        //first check the curve has a value - if it doesn't it means it's either blank - or we just deleted the curve in it.
+        string $curveResult = `falloffCurve -q -asString $falloffCurveName`;
+        if (size($curveResult) == 0) {
+            //curve has been deleted or slot is empty, update the opvar.
+            string $opVar;
+            //get correct optionvar to update the saved curves (we do this in case the user has just deleted a curve).
+            if ($attr == "extrudeCurve") {
+                $customCurvePrefix = "typeExtrudeCustomCurve";
+                $opVar = "optionvarCustomCurvesTypeExtrude";
+            } else {
+                $customCurvePrefix = "typeBevelCustomCurve";
+                $opVar = "optionvarCustomCurvesTypeBevel";
+            }
+            //opvar update
+            updateTypeCustomCurveOptionVar($gCurrCustomIndex,"", $opVar);
+        } else {
+            //safely load a curve
+            checkCustomCurveIndex($nodeAttr, $gCurrCustomIndex, $falloffCurveName);
+            if( $curveValue == " "||$curveValue == " " )
+                $gCurrCustomIndex = -1;
+        }
+    }
+    return $gCurrCustomIndex;
+}
+
+//save custom curve preset
+global proc saveCustomCurveType(string $nodeAttr)
+{
+
+    string $buffer[];
+    tokenize($nodeAttr, ".", $buffer);
+    string $attr = $buffer[ size($buffer) - 1];
+    string $curveAttrName = $attr + "Curve";
+
+    string $customCurvePrefix;
+    string $opVar;
+
+    if ($attr == "extrudeCurve") {
+        $customCurvePrefix = "typeExtrudeCustomCurve";
+        $opVar = "optionvarCustomCurvesTypeExtrude";
+    } else {
+        $customCurvePrefix = "typeBevelCustomCurve";
+        $opVar = "optionvarCustomCurvesTypeBevel";
+    }
+
+    global int $gCurrCustomIndex;
+
+    //no selection so find the first unused slot
+    if ($gCurrCustomIndex == -1) {
+        $gCurrCustomIndex = getFirstUnusedSlot($opVar);
+        //print ("modified curve slot: " + $gCurrCustomIndex +  " \n");
+    }
+
+    if ($gCurrCustomIndex > 11) 
+    {
+        error (getPluginResource("Type", "kNoSaveSlotError"));
+    }
+
+    string $ccName = $customCurvePrefix + $gCurrCustomIndex;
+    string $cFalloffCurve = `falloffCurveAttr -q -asString $curveAttrName`;
+    falloffCurve -e -asString $cFalloffCurve $ccName;
+    updateTypeCustomCurveOptionVar($gCurrCustomIndex,$cFalloffCurve, $opVar);
+
+    //not an extrude curve so update the back bevel and outer bevel custom profile as well.
+    if ($attr != "extrudeCurve") {
+        $gCurrCustomIndex+=12;
+        string $ccBackName = $customCurvePrefix + $gCurrCustomIndex;
+        falloffCurve -e -asString `falloffCurveAttr -q -asString $curveAttrName` $ccBackName;
+        $gCurrCustomIndex+=12;
+        $ccBackName = $customCurvePrefix + $gCurrCustomIndex;
+        falloffCurve -e -asString `falloffCurveAttr -q -asString $curveAttrName` $ccBackName;
+    }
+
+    $gCurrCustomIndex = -1;
+}
+
+global proc int getFirstUnusedSlot (string $opVar) {
+    string $vars[];
+
+    if ( `optionVar -exists $opVar` )
+    {
+        $vars = `optionVar -q $opVar`;
+    }
+
+    int $index = 0;
+
+    for ($curve in $vars) {
+        if ($curve == "") {
+            break;
+        }
+        $index++;
+    }
+
+    return $index;
+}
+
+//insert saved custom curve into option var
+global proc updateTypeCustomCurveOptionVar(int $index, string $value, string $opVar)
+{
+
+    if ( $index >= 0 )
+    {
+      // Array contents of the optionVar
+      //
+      string $vars[];
+
+      if ( `optionVar -exists $opVar` )
+      {
+        $vars = `optionVar -q $opVar`;
+      }
+
+      // This index restriction allows only replacing of existing elements;
+      // remove this to allow for insertion of new elements.
+      //
+      if ( $index < `size $vars` )
+      {
+        $vars[$index] = $value;
+      }
+
+      // Must first clear the entire array.
+      //
+      optionVar -clearArray $opVar;
+
+      // then insert the elements and rebuild the optionVar.
+      //
+      for ( $item in $vars )
+      {
+        optionVar -sva $opVar $item;
+      }
+  }
+
+}
+
+//load custom curve (python required for this)
+global proc loadTypeCurvePreset(string $attr, string $curveName, string $value) {
+
+
+    string $cmd = "python \"import maya.app.type.typeUtilityScripts; maya.app.type.typeUtilityScripts.setCurvePreset('"+$attr+"','"+$value+"')\";";
+    print ($cmd+"\n");
+    eval($cmd);
+
+}
+
+global proc toggleSnapToCurve(string $nodeAttr) {
+
+    string $buffer[];
+    tokenize($nodeAttr, ".", $buffer);
+    string $attr = $buffer[ size($buffer) - 1];
+
+    string $curveAttrName = $attr + "Curve";
+    string $snapControlName = $attr + "Snap";
+
+    int $snap = `checkBox -q -v $snapControlName`;
+
+    falloffCurveAttr -e -snapToGrid $snap $curveAttrName;
+
+}
+
+//big version of the curve for easy editing
+global proc largeCurveAttr(string $nodeAttr) {
+
+    if(`window -exists largeCurveWindow`)
+        showWindow largeCurveWindow;
+    else
+    {
+        string $buffer[];
+        tokenize($nodeAttr, ".", $buffer);
+        string $attr = $buffer[ size($buffer) - 1];
+        string $curveAttrName = $attr + "Curve";
+
+        string $window = `window -title (getPluginResource("Type", "kCurveEditorLbl")) largeCurveWindow`;
+        string $form = `formLayout -numberOfDivisions 100`;
+        string $curve = `falloffCurveAttr -at $nodeAttr -w 400 -h 400 $curveAttrName`;
+        string $column = `columnLayout`;
+
+        formLayout -edit
+        -attachForm     $curve     "top"    5
+        -attachForm     $curve     "left"   5
+        -attachControl  $curve     "bottom" 1 $column
+        -attachForm     $curve     "right"  5
+
+        -attachNone     $column     "top"
+        -attachForm     $column     "left"   5
+        -attachForm     $column     "bottom" 5
+        -attachForm     $column     "right"  5
+        $form;
+
+        showWindow;
+    }
+
+}

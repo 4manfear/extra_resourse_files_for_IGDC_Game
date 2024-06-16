@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    The QML used to display the toolclip is found in a path relative to this file. If not set. then the system default UI
+    is used. If present, the following variables will be interpolated into the string:
+    %(language)s      - the language i.e. en, ja, etc.
+    %(country)s       - the country code i.e. us, jp, etc.
+    %(localecode)s          - the locale code i.e. en-us, ja-jp, etc
+
+    If a qml file cannot be loaded from the given path, the built-in path is used instead.
+ 
+    The ui attribute may be specified in the toolclips or toolclip elements. If specified in both, the toolclip version is used.
+ -->
+<toolclips ui="ui/ToolClipUI.qml" simple="ui/SimpleTooltip.qml" locale="zh_CN">
+    <toolclip key="renderViewButton" title="打开渲染视图" help="TC-renderViewButton">
+        <text>打开“渲染视图”窗口。</text>
+    </toolclip>
+    <toolclip key="renderButton" title="渲染当前帧" help="TC-renderButton">
+        <text>渲染“渲染视图”窗口中的场景。(%(currentRendererName)s)。</text>
+    </toolclip>
+    <toolclip key="iprRenderButton" title="IPR 渲染当前帧" help="TC-iprRenderButton">
+        <text>使用交互式真实照片级渲染器渲染场景。(%(currentRendererName)s)</text>
+    </toolclip>
+    <toolclip key="renderGlobalsButton" title="显示渲染设置" help="TC-renderGlobalsButton">
+        <text>打开“渲染设置”窗口。(%(currentRendererName)s)。</text>
+    </toolclip>
+	<toolclip key="hypershadeButton" title="显示 Hypershade 窗口">
+		<text>打开 Hypershade 窗口。</text>
+	</toolclip>
+    <toolclip key="renderExposureGroup" title="曝光" help="TC-renderExposureGroup">
+        <text>调整显示亮度。单击图标在默认值和修改值之间切换。通过减小曝光，可查看默认在高光下看不见的细节。除键入值或使用滑块外，您还可以执行以下操作：
+    - 按 Ctrl+减号键以按微调增量减少。
+    - 按 Ctrl+Alt+减号键以按粗调增量减少。
+    - 按 Ctrl+= 以按微调增量增加。
+    - 按 Ctrl+Alt+= 以按粗调增量增加。
+    - 在数字框中单击，然后在按住 Ctrl 的情况下使用鼠标中键进行拖动。
+</text>
+    </toolclip>
+    <toolclip key="renderGammaGroup" title="Gamma" help="TC-renderGammaGroup">
+        <text>调整要显示的图像的对比度和中间调亮度。单击图标在默认值和修改值之间切换。增加 Gamma 值，可查看图像阴影部分的细节。除键入值或使用滑块外，您还可以执行以下操作：
+    - 按 Ctrl+; 以按微调增量减少。
+    - 按 Ctrl+Alt+; 以按粗调增量减少。
+    - 按 Ctrl+&apos; 以按微调增量增加。
+    - 按 Ctrl+Alt+&apos; 以按粗调增量增加。
+    - 在数字框中单击，然后在按住 Ctrl 的情况下使用鼠标中键进行拖动。
+</text>
+    </toolclip>
+    <toolclip key="renderViewTransformGroup" title="视图变换" help="TC-renderViewTransformGroup">
+        <text>视图变换会转化渲染颜色空间中显示的颜色值。出于诊断或其他原因，单击图标以临时关闭视图变换并显示原始渲染空间值。也可以临时选择列表中的不同视图变换。</text></toolclip>
+    <toolclip key="modelPanelExposureGroup" title="曝光" help="TC-modelPanelExposureGroup">
+        <text>调整显示亮度。单击图标在默认值和修改值之间切换。通过减小曝光，可查看默认在高光下看不见的细节。除了键入值，还可以单击数字框，然后按住 Ctrl 键并拖动鼠标中键。
+</text>
+    </toolclip>
+    <toolclip key="modelPanelGammaGroup" title="Gamma" help="TC-modelPanelGammaGroup">
+        <text>调整要显示的图像的对比度和中间调亮度。单击图标在默认值和修改值之间切换。增加 Gamma 值，可查看图像阴影部分的细节。除了键入值，还可以单击数字框，然后按住 Ctrl 键并拖动鼠标中键。
+</text>
+    </toolclip>
+    <toolclip key="modelPanelViewTransformGroup" title="视图变换" help="TC-modelPanelViewTransformGroup">
+        <text>视图变换会转化渲染颜色空间中显示的颜色值。出于诊断或其他原因，单击图标以临时关闭视图变换并显示原始渲染空间值。也可以临时选择列表中的不同视图变换。</text>
+    </toolclip>
+
+    <toolclip key="uvEditorExposureGroup" title="曝光" help="TC-uvEditorExposureGroup">
+        <text>调整显示亮度。单击图标在默认值和修改值之间切换。通过减小曝光，可查看默认在高光下看不见的细节。除了键入值，还可以单击数字框，然后按住 Ctrl 键并拖动鼠标中键。
+</text>
+    </toolclip>
+    <toolclip key="uvEditorGammaGroup" title="Gamma" help="TC-uvEditorGammaGroup">
+        <text>调整要显示的图像的对比度和中间调亮度。单击图标在默认值和修改值之间切换。增加 Gamma 值，可查看图像阴影部分的细节。除了键入值，还可以单击数字框，然后按住 Ctrl 键并拖动鼠标中键。
+</text>
+    </toolclip>
+    <toolclip key="uvEditorViewTransformGroup" title="视图变换" help="TC-uvEditorViewTransformGroup">
+        <text>视图变换会转化渲染颜色空间中显示的颜色值。出于诊断或其他原因，单击图标以临时关闭视图变换并显示原始渲染空间值。也可以临时选择列表中的不同视图变换。</text>
+    </toolclip>
+</toolclips>

@@ -1,0 +1,43 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc AEcMuscleDisplaceTemplate(string $nodeName)
+{
+
+    editorTemplate -beginScrollLayout;
+	editorTemplate -beginLayout (uiRes("m_AEcMuscleDisplaceTemplate.kMuscleDisplaceAttributes")) -collapse 0;
+		editorTemplate -addControl "mode";
+		editorTemplate -addControl "length";
+		editorTemplate -addControl "sizeRadius";
+		editorTemplate -addControl "amplitude";
+		editorTemplate -addControl "falloff";
+		editorTemplate -addControl "pushMode";
+		editorTemplate -addControl "combineMode";
+		editorTemplate -addControl "shader";
+		editorTemplate -addSeparator ;
+		editorTemplate -addControl "draw";
+		editorTemplate -addControl "highlight";
+		editorTemplate -addControl "colorWireframe";
+		editorTemplate -addControl "colorWireframe2";
+		editorTemplate -addControl "nSides";
+
+	editorTemplate -endLayout;
+
+
+    editorTemplate -suppress "localPosition";
+
+    // and these
+    editorTemplate -suppress "dispData";
+    
+    
+    AElocatorInclude $nodeName ;
+
+    editorTemplate -addExtraControls;
+    editorTemplate -endScrollLayout;
+
+}
+

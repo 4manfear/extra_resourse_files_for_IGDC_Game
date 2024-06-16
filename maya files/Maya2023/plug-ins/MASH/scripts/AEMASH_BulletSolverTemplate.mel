@@ -1,0 +1,159 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+
+global proc AEMASH_BulletSolverTemplate( string $nodeName )
+{
+
+    editorTemplate -beginScrollLayout;
+    python("import MASH.nodeHeaders; MASH.nodeHeaders.addHeader('" + $nodeName + "', 'kMASHSolver', False)")
+    editorTemplate -endLayout;
+
+    editorTemplate -beginLayout (getPluginResource("MASH", "kSolverSettings")) -collapse 0;
+    editorTemplate -label (getPluginResource("MASH", "kStartFrame")) -addControl "startFrame";
+    editorTemplate -label (getPluginResource("MASH", "kCollisionIterations")) -addControl "collisionIterations";
+    editorTemplate -label (getPluginResource("MASH", "kInternalFrameRate")) -addControl "internalFrameRate";
+    editorTemplate -label (getPluginResource("MASH", "kCollisionMargin")) -addControl "collisionMargin";
+    editorTemplate -label (getPluginResource("MASH", "kGravity")) -addControl "gravity";
+    editorTemplate -beginLayout (getPluginResource("MASH", "kGround")) -collapse 0;
+    editorTemplate -label (getPluginResource("MASH", "kGround")) -addControl "groundPlane";
+    editorTemplate -label (getPluginResource("MASH", "kPosition")) -addControl "groundPlanePosition";
+    editorTemplate -label (getPluginResource("MASH", "kFriction")) -addControl "groundFriction";
+    editorTemplate -label (getPluginResource("MASH", "kBounce")) -addControl "groundBounce";
+    editorTemplate -label (getPluginResource("MASH", "kDamping")) -addControl "groundDamping";
+    editorTemplate -beginLayout (getPluginResource("MASH", "kInteractionMasks")) -collapse 1;
+    editorTemplate -label (getPluginResource("MASH", "kContactMaskLayers")) -addControl "groundContactMaskLayers";
+    editorTemplate -label (getPluginResource("MASH", "kCollisionGroupLayers")) -addControl "groundCollisionGroupLayers";
+    editorTemplate -label (getPluginResource("MASH", "kCollisionMaskLayers")) -addControl "groundCollisionMaskLayers";
+    editorTemplate -endLayout;
+    editorTemplate -endLayout;
+
+    editorTemplate -beginLayout (getPluginResource("MASH", "kExternalColliders")) -collapse 0;
+    editorTemplate -callCustom "MASHSolverExternalColliderListWidgetBuildQt" "MASHSolverExternalColliderWidgetUpdateQt" "";
+    editorTemplate -endLayout;
+
+    editorTemplate -beginLayout (getPluginResource("MASH", "kFields")) -collapse 1;
+    editorTemplate -callCustom "MASHSolverMayaForcesListWidgetBuildQt" "MASHSolverMayaForcesWidgetUpdateQt" "";
+    editorTemplate -endLayout;
+
+    editorTemplate -beginLayout (getPluginResource("MASH", "kEmitFromCollisions")) -collapse 1;
+    editorTemplate -callCustom "MASHCollisionPointsBuildQt" "MASHCollisionPointsUpdateQt" "";
+    editorTemplate -endLayout;
+
+    editorTemplate -beginLayout (getPluginResource("MASH", "kDebugging")) -collapse 0;
+    editorTemplate -bn;
+
+    editorTemplate -label (getPluginResource("MASH", "kPrintInformation")) -addControl "printInformation";
+    editorTemplate -label (getPluginResource("MASH", "kDrawStyle")) -addControl "debugDrawStyle";
+    editorTemplate -label (getPluginResource("MASH", "kCollisionShapes")) -addControl "displayMashCollisionShapes";
+    editorTemplate -label (getPluginResource("MASH", "kRigidBodyColor")) -addControl "activeRigidBodyColor";
+    editorTemplate -label (getPluginResource("MASH", "kSleepingBodyColor")) -addControl "sleepingRigidBodyColor";
+    editorTemplate -label (getPluginResource("MASH", "kGround")) -addControl "displayGround";
+    editorTemplate -label (getPluginResource("MASH", "kConstraints")) -addControl "displayConstraints";
+    editorTemplate -label (getPluginResource("MASH", "kCollisionPositions")) -addControl "displayCollisionPositions";
+    editorTemplate -label (getPluginResource("MASH", "kForceDirection")) -addControl "displayMashForceVectors";
+    editorTemplate -label (getPluginResource("MASH", "kLineThickness")) -addControl "lineThickness";
+    editorTemplate -label (getPluginResource("MASH", "kLineColor")) -addControl "lineColour";
+
+    editorTemplate -en;
+    editorTemplate -endLayout;
+
+    editorTemplate -endLayout;
+
+    editorTemplate -addControl "time";
+
+    editorTemplate -suppress "componentTags";
+    editorTemplate -suppress "componentTagName";
+    editorTemplate -suppress "componentTagContents";
+
+    AEdependNodeTemplate $nodeName;
+    editorTemplate -addExtraControls;
+    editorTemplate -endScrollLayout;
+    editorTemplate -suppress "inputNetworks";
+    editorTemplate -suppress "collisionObjects";
+    editorTemplate -suppress "enable";
+    editorTemplate -suppress "lastTime";
+}
+
+
+global proc MASHSolverExternalColliderListWidgetBuildQt(string $nodeName)
+{
+    string $buffer[];
+    tokenize($nodeName, ".", $buffer);
+    $nodeName = $buffer[0];
+
+    python("import MASHlistQtWidget");
+    string $parent = `setParent -q`;
+    //get python to create the widget, include the desired nodeType as an arguement
+    python("MASHlistQtWidget.build_qt_widget('" + $parent + "','" + $nodeName + "', 'mesh', 'collisionObjects', '', 'ConnectColliderObject', 'kExternalColliders')");
+    setParent..;
+
+}
+
+global proc MASHSolverExternalColliderWidgetUpdateQt(string $nodeName )
+{
+    string $buffer[];
+    tokenize($nodeName, ".", $buffer);
+    $nodeName = $buffer[0];
+    string $parent = `setParent -q`;
+    python("import MASHlistQtWidget");
+    python("MASHlistQtWidget.update_qt_widget('" + $parent + "', '" + $nodeName + "', 'mesh', 'collisionObjects', '', 'ConnectColliderObject', 'kExternalColliders')");
+}
+
+global proc MASHSolverMayaForcesListWidgetBuildQt(string $nodeName)
+{
+    string $buffer[];
+    tokenize($nodeName, ".", $buffer);
+    $nodeName = $buffer[0];
+
+    python("import MASHlistQtWidget");
+    string $parent = `setParent -q`;
+    //get python to create the widget, include the desired nodeType as an arguement
+    python("MASHlistQtWidget.build_qt_widget('" + $parent + "','" + $nodeName + "', 'vortexField,uniformField,turbulenceField,dragField,gravityField,newtonField,radialField,airField,volumeAxisField', 'fields', 'message', '', 'kFields')");
+    setParent..;
+
+}
+
+global proc MASHSolverMayaForcesWidgetUpdateQt(string $nodeName )
+{
+    string $buffer[];
+    tokenize($nodeName, ".", $buffer);
+    $nodeName = $buffer[0];
+    string $parent = `setParent -q`;
+    python("import MASHlistQtWidget");
+    python("MASHlistQtWidget.update_qt_widget('" + $parent + "', '" + $nodeName + "',  'vortexField,uniformField,turbulenceField,dragField,gravityField,newtonField,radialField,airField,volumeAxisField', 'fields', 'message', '', 'kFields')");
+}
+
+global proc MASHCollisionPointsBuildQt(string $nodeName)
+{
+    string $buffer[];
+    tokenize($nodeName, ".", $buffer);
+    $nodeName = $buffer[0];
+    string $nodeType = `nodeType($nodeName)`;
+    string $layout = ($nodeType+"collisionPointsLayout");
+
+    python("import MASHsingleOutputQtWidget");
+    rowLayout -numberOfColumns 2 -columnWidth2 139 250 $layout;
+    text -w 105 -h 20 -vis 1
+    -label (getPluginResource("MASH", "kEmissionNetwork"))
+    -align "right" -font "plainLabelFont" ;
+    //get python to create the widget, include the desired nodeType as an arguement
+    python("MASHsingleOutputQtWidget.build_qt_widget('" + $layout + "', '" + $nodeName + "', 'MASH_Waiter', 'outputCollisionPoints', 'inputPoints', '')");
+    setParent..;
+}
+
+global proc MASHCollisionPointsUpdateQt(string $nodeName )
+{
+    string $buffer[];
+    tokenize($nodeName, ".", $buffer);
+    $nodeName = $buffer[0];
+    string $nodeType = `nodeType($nodeName)`;
+    string $layout = ($nodeType+"collisionPointsLayout");
+
+    python("import MASHsingleOutputQtWidget");
+    python("MASHsingleOutputQtWidget.update_qt_widget('" + $layout + "', '" + $nodeName + "', 'MASH_Waiter', 'outputCollisionPoints', 'inputPoints', '')");
+}

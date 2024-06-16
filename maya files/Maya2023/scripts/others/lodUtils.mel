@@ -1,0 +1,343 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//	Description:
+//		lodGroup utility functions.
+//
+
+global proc int needsBaseThreshold( string $lodGroup )
+//
+//	Description:
+//		Returns true if the given lodGroup has no base threshold yet.
+//
+{
+	int $usePercentage = getAttr ($lodGroup + ".useScreenHeightPercentage");
+	string $attr = ($lodGroup +
+					($usePercentage?".percentageThreshold":".threshold"));
+	int $indices[] = `getAttr -multiIndices $attr`;
+	return( size($indices) == 0 );
+}
+
+global proc setBaseDistanceThreshold( int $maxThreshold, string $lodGroup )
+//
+//	Description:
+//		Assign initial threshold distances using inverse-square law.
+//	Set the middle threshold to be the one that will be visible at
+//	the current camera distance.
+//
+{
+	// Get current camera distance. This will be used to choose some
+	// reasonable initial values for the thresholds.
+	//
+	string $attr = ($lodGroup + ".threshold");
+	float $cameraDistance = getAttr ($lodGroup + ".distance");
+
+	float $nearestDist;
+	if( $maxThreshold == 1 ){
+		// For historical reasons, when there is only one threshold, it's
+		// set to twice the camera distance.
+		//
+		$nearestDist = 2*$cameraDistance;
+	} else {
+		// The threshold is chosen to be the camera distance, divided by
+		// the halfway point between
+		// (m+1)*(m+1) and (m+2)*(m+2), where m = ($maxThreshold-2)/2.
+		// This is (m*m + 2*m + 1 + m*m + 4*m + 4) / 2
+		// = m*m + 3*m + 2.5
+		//
+		int $m = ($maxThreshold-2) / 2;
+		$nearestDist = $cameraDistance/ ($m*$m+3*$m+2.5);
+	}
+	setAttr ($attr + "[0]") $nearestDist;
+}
+
+global proc setDistanceThreshold( int $level, string $lodGroup)
+//
+//	Description:
+//		Set the threshold for level $level of lodGroup node $lodGroup. The
+//	first level (multi index 0) should already be set. Further levels are based
+//	on the sequence of squared ints times the value of element 0. So if element
+//	0 is v, then element 1 is v*4, element 2 is v*9, etc. If the first element
+//	hasn't been set yet, do so now.
+//	
+{		
+	string $attr = ($lodGroup + ".threshold");
+	if( $level > 0 ){
+		int $prevLevel = $level - 1;
+		int $indices[] = `getAttr -multiIndices $attr`;
+		if( !intArrayContains( $prevLevel, $indices ) ){
+			// Previous threshold does not exist, set it
+			//
+			setDistanceThreshold( $prevLevel, $lodGroup );
+		}
+	}
+	float $zeroVal = `getAttr ($attr+"[0]")`;
+	float $levelVal = ($level+1)*($level+1)*$zeroVal;
+	setAttr ($attr+"["+$level+"]") $levelVal;
+}
+
+global proc float setPercentageThreshold( int $level,
+										  string $lodGroup,
+										  int $needsBase )
+//
+//	Description:
+//		Set the percentage threshold for level $level of lodGroup node
+//	$lodGroup. If this is the first level, set it to a default value, if it's
+//	any other level, set it to half the value of the previous level.
+//	
+//	Note: If $needsBase is true, recurse until we get to the first level, set
+//	it's value to the default (64), and cut the values in half for each
+//	subsequent level.
+//
+//	Returns the percentage set for the given level.
+//
+{
+	float $percentage = 64.0;	// Default 1st percentage threshold
+	string $attr = ($lodGroup + ".percentageThreshold");
+	if( $level > 0 ){
+		int $prevLevel = $level - 1;
+		if( $needsBase ){
+			// Index does not exist, set the previous level
+			//
+			$percentage = setPercentageThreshold( $prevLevel, $lodGroup,
+												  $needsBase );
+		} else {
+			// Index exists, query the percentageThreshold
+			//
+			$percentage = `getAttr ($attr + "[" + $prevLevel + "]")`;
+		}
+		$percentage *= 0.5;
+	}
+	setAttr ($attr + "[" + $level + "]") $percentage;
+	return $percentage;
+}
+
+global proc connectOrthoToLod( string $ortho, string $lodPlug )
+//	Description:
+//		Connect the given ortho camera to the given lodGroup plug, creating the
+//	intermediate 4x4 matrix.
+//
+{
+	// Need to create a 4x4 matrix; connect to camera, and determine which
+	// connection to make to the 4x4 matrix, depending on the view.
+	//
+	string $matrix = `createNode fourByFourMatrix`;
+	connectAttr -force ($matrix + ".output") $lodPlug;
+	string $matrixAttr = $matrix;
+	float $viewVector[] = nurbsViewDirectionVector( 1 );
+	if( ($viewVector[2] > $viewVector[0]) &&
+		($viewVector[2] > $viewVector[1])) {
+		// For front camera, whose view vector is in the Z direction,
+		// use the camera's ortho width to set the "translate Z" value
+		// in the matrix.
+		//
+		$matrixAttr += ".i32";
+	} else if( ($viewVector[1] > $viewVector[0]) &&
+			  ($viewVector[1] > $viewVector[2])) {
+		// For top camera, whose view vector is in the Y direction,
+		// use the camera's ortho width to set the "translate Y" value
+		// in the matrix.
+		//
+		$matrixAttr += ".i31";
+	} else {
+		$matrixAttr += ".i30";
+	}
+	connectAttr ($ortho+".orthographicWidth") $matrixAttr;
+}
+
+//
+//	Description:
+//		Return the root of all LOD names.
+//
+global proc string lodRoot()
+{
+	return( "LOD_");
+}
+
+//
+//	Description:
+//		Returns 1 if one of the transforms has lodVisibility attribute
+//		already connected to.  Otherwise, returns 0.
+//
+//
+proc int isAlreadyConnected( string $transforms[] ) 
+{
+	int $numTransforms = size($transforms);
+
+	int $i;
+	for( $i = 0; $i < $numTransforms; $i++ ) {
+		if( `connectionInfo -id ($transforms[$i] + ".lodVisibility")` > 0 ) {
+			return 1;
+		}
+	}
+
+	return 0;
+}
+
+//
+//	Description:
+//		This script sets up the appropriate transforms for the LOD setup, and
+//		is used for both Distance and Percentage. Returns a string array
+//		consisting of:
+//			$result[0] - camera transform
+//			$result[1] - lodGroup node
+//
+//		In case of an error, an empty array is returned.
+//
+//		* The LOD levels will be called LOD_0 (hi res), LOD_1, etc
+//		* If a selected transform already has the correct name, we will use
+//		  it directly, otherwise, the transform will be parented to a
+//		  group node with the appropriate name.  (e.g., if the first
+//		  selected transform is "LOD_0", we will use it directly; if the
+//		  first transform is anything else, say "foo", we will group it
+//		  under a node called "LOD_0").
+//		* If no (non-camera) transforms are selected, we will create three
+//		  default group nodes called "LOD_0", "LOD_1", and "LOD_2".
+//		* If the parameter $usePercentage is set to true, the lodGroup
+//		  node's useScreenHeightPercentage will be set to true.
+//		* If multiple transforms are selected, and $mergeTransforms is
+//		  true, these objects will be merged under LOD_0.
+//
+//
+global proc string[] createLodGroup( int $usePercentage, int $mergeTransforms )
+{
+	string $result[];
+	//-------------------------------------------------------
+	// Parse the selected objects: camera + transforms or group
+	//-------------------------------------------------------
+
+	// Get list of selected dag objects
+	//
+	string $sel[] = `ls -sl -tr`;
+
+	// Check at least something has been selected
+	int $numSelectedItems = size($sel);
+
+	// get the camera. If none selected, use the currently active camera
+	//
+	string $selShapes[] = `listRelatives -s $sel`;
+	string $camerasSh[] = `ls -ca $selShapes`;
+	int $numCameras = size($camerasSh);
+	if( $numCameras > 1 ) {
+		error( (uiRes("m_lodUtils.kSelectOnlyOneCamera")));
+		return $result;
+	}
+	string $camera;
+	if( $numCameras == 0 ) {
+	    // get current camera
+		$camera = `lookThru -q`;
+	} else if( $numCameras == 1 ) {
+	    string $cameras[] = `listRelatives -parent $camerasSh[0]`;
+		$camera = $cameras[0];
+	}
+	int $numTransforms = $numSelectedItems - $numCameras;
+
+	string $transforms[];
+	string $groupName = ""; // the group object containing all the transforms
+
+
+	// User has selected more than one transform besides the camera. 
+	// Treat each separately from a list of the transforms, and check 
+	// none of them are currently grouped. If any are grouped, display
+	// error message and abort.
+	//
+	int $numTr = 0;
+	int $i;
+	for($i=0; $i<$numSelectedItems; $i++) {
+		if($sel[$i] != $camera) {
+			$transforms[$numTr++] = $sel[$i];
+			string $relatives[] = `listRelatives -parent $sel[$i]`;
+			if(size($relatives) > 0) {
+				string $errFormat = (uiRes("m_lodUtils.kHasParent"));
+				string $errMsg = `format -stringArg	$sel[$i] $errFormat`;
+				error $errMsg;
+				return $result;
+			}
+		}
+	}
+	
+	// check that transforms aren't already connected under an lod group
+	if( isAlreadyConnected($transforms) > 0 ) {
+		error( (uiRes("m_lodUtils.kSomeTransformsChildrenOfGroup")));
+		return $result;
+	}
+	
+	// create new transform group here and add the transforms as children
+	//
+	string $lodGroup = `createNode -n ("LOD_Group_#") lodGroup`;
+	if( $usePercentage ){
+		// Set the attr now, so that when the children are added below, the
+		// right threshold array gets populated.
+		//
+		setAttr ($lodGroup + ".useScreenHeightPercentage") 1;
+	}
+	// Use the new naming convention - see note in the description of this
+	// method.
+	//
+	string $fullLodGroup = "|"+$lodGroup;
+	string $lodRoot = lodRoot();
+	// Default to 3 dummy levels, if no transforms have been selected
+	//
+	int $numLevels = 3;	
+	if( $numTransforms > 0){
+		if( $mergeTransforms ){
+			$numLevels = 1;
+		} else {
+			$numLevels = $numTransforms;
+		}
+	}
+	// Parent each transform, if need be
+	//
+	$i = 0;
+	int $ti = 0;	// Transform index
+	while( $i < $numLevels ){
+		// Process next transform; if none, use empty string to denote it.
+		//
+		// Note: since we re-use the same names (LOD_n), we need to be
+		// extra careful that we reference the desired node, otherwise Mel
+		// will complain that the node is non-unique.
+		//
+		string $transform = ($ti<$numTransforms)?$transforms[$ti]:"";
+		string $fullTransform = "|"+$transform;
+		string $lodName = $lodRoot + $i;
+		string $fullLodName = "|"+$lodName;
+		if( !isSameObject( $fullTransform, $fullLodName ) ){
+			// Need an intermediate transform
+			//
+			string $node = `createNode -n $lodName transform`;
+			string $fullNode = ("|" + $node);
+			parent ($fullNode) ($fullLodGroup);
+			string $fullLod = $fullLodGroup+$fullLodName;
+			if( !isSameObject(	($fullLodGroup+$fullNode),
+								($fullLod) ) ){
+				rename $node $lodName;
+			}
+			if( $transform != "" ){
+				parent ($fullTransform) ($fullLod);
+			}
+		} else {
+			parent ($fullTransform) ($fullLodGroup);
+		}
+		$ti++;
+		if( $mergeTransforms ){
+			// Parent all other selected transforms to LOD_0
+			//
+			string $fullLod = ($fullLodGroup+"|LOD_0");
+			while( $ti < $numTransforms ){
+				string $fullTransform = "|"+$transforms[$ti];
+				parent $fullTransform $fullLod;
+				$ti++;
+			}
+		}
+		$i++;
+	}
+	$result[0] = $camera;
+	$result[1] = $lodGroup;
+	return $result;
+}
+

@@ -1,0 +1,81 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+// Creation Date:  August, 2015
+//
+//
+//  Procedure Name:
+//     fluidSetSubVolumeLocation
+//
+//  Description:
+//    used with hotkeys for specifying fluid subvolume being painted
+//
+//  Input Arguments:
+//      amount to offset subvolume center by in the current paint orientation
+//
+//  Return Value:
+//      None.
+//
+
+
+global proc fluidSetSubVolumeLocation( int $relAmount ) 
+//
+// Description:
+//	Increase the center slice location of the fluid subvolume
+//	by the relative amount passed in.
+//
+{
+	if( !`exists getActiveFluidShapes` ) {
+		source "getFluidShape.mel";
+	}
+
+	string $fluids[] = getActiveFluidShapes();
+	if( size( $fluids ) == 0 ) {
+		error (uiRes("m_fluidSetSubVolumeLocation.kNoFluidsSelected"));
+	}
+
+
+	for( $f in $fluids ) {
+		if( `getAttr ($f + ".is2d")` ) {
+			warning (uiRes("m_fluidSetSubVolumeLocation.kFlu2DSubVolWarn"));
+			continue;
+		}
+
+		// If not displaying a subvolume, issue a warning that you
+		// won't see any effect...  (But don't prevent it -- you might
+		// want to see the manipulator slice move around?)
+		//
+		if( `getAttr ($f + ".dsv" )` == 0 ) {
+			string $msg = (uiRes("m_fluidSetSubVolumeLocation.kNotSubVolume"));
+			warning `format -s $f $msg`;
+		}
+
+		int $axis = 0;
+		float $center[] = `getAttr ($f + ".svc")`;
+		for( $i = 0; $i <= 2; $i++ ) {
+			if( $center[$i] != -1 ) {
+				$axis = $i;
+				break;
+			}
+		}
+
+		$center[$axis] = $center[$axis] + $relAmount;
+
+		float $dim[] = `getAttr ($f + ".resolution")`;
+		if( $center[$axis] >= $dim[$axis] ) {
+			error (uiRes("m_fluidSetSubVolumeLocation.kLocationGreater"));
+		} else if( $center[$axis] < 0 ) {
+			error (uiRes("m_fluidSetSubVolumeLocation.kLocationLessThan"));
+		} else {
+			setAttr ($f + ".svc") $center[0] $center[1] $center[2];
+		}
+	}
+}
+
+

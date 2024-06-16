@@ -1,0 +1,61 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  1 April 1996
+//
+//
+//  Description:
+//      A function to hide the selected objects 
+//
+
+global proc hideKeepSelection (string $items[], int $invertComponents) 
+{
+	if (size($items) != 0) 
+	{
+		string $cmd;
+		string $hidden[];
+		if ( $invertComponents )
+			$cmd = "hide -returnHidden -clearLastHidden -ic ";
+		else
+			$cmd = "hide -returnHidden -clearLastHidden ";
+
+		// There is a bug in the MEL parser when you have multiple UFE path strings
+		// in the string array passed to the command. See MAYA-107302
+		// As a workaround until fixed add each item in the string array
+		// as an individual string to the command.
+		string $object;
+		for ($object in $items)
+		{
+			$cmd += ("\"" + $object + "\" ");
+		}
+		string $hiddenObjects[] = eval($cmd);
+
+		// The returned hidden objects string array can contain both Maya
+		// and non-Maya objects. We must separate them so we can run the code
+		// below as ls does not understand non-Maya objects.
+		global string $gLastNonMayaHiddenSelection[];
+		clear $gLastNonMayaHiddenSelection;
+		for ($object in $hiddenObjects)
+		{
+			int $result = python("import maya.internal.ufeSupport.utils as ufeUtils; ufeUtils.isPathStringValidMayaObject('" + $object + "')");
+			if ($result)
+				$hidden[`size($hidden)`] = $object;
+			else
+				$gLastNonMayaHiddenSelection[`size($gLastNonMayaHiddenSelection)`] = $object;
+		}
+
+		global string $gLastHiddenSelection[];
+		clear $gLastHiddenSelection;
+		$gLastHiddenSelection = `ls -typ transform -typ shape $hidden`;
+	} 
+	else 
+	{
+		warning (uiRes("m_hideKeepSelection.kNoObjects"));
+	}
+}

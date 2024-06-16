@@ -1,0 +1,69 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  April 2016
+//
+//  Description:
+//      Helper proc for "tearOffPanel" which separates -tearOff from -tearOffRestore
+// 		This should be used to open an existing panel( should be called from all menu items & icons from where a panel is opened) 
+// 		"tearOffPanel" should only be called from the panels menu or from a custom script to actually tear off the panel.
+//
+
+global proc string tearOffRestorePanel (string $panelLabel, string $panelType, int $isScripted) {
+
+	string $wndName = "";
+	string $cmdStr;
+	string $whichPanel = `getPanel -withLabel $panelLabel`;
+
+	// Before Maya 8.5, panel labels were stored with
+	// hard-coded English names.  When opening pre-8.5
+	// scenes with UI configuration into a localized Maya, the
+	// "getPanel -withLabel" cmd above (using a localized value
+	// for $panelLabel) returns NULL, since panels are named
+	// according to the English values read in from the pre-8.5
+	// file.  
+	// 
+	// A reasonable fall-back of looking for the EN-named panel
+	// minimizes problems when opening pre-8.5 scenes
+	// with UI configuration information -- but keeps those older
+	// panel labels in English, until the scene is saved in 8.5.
+	//
+	if( $whichPanel == "" ) {
+		string $enLabel = unlocalizedPanelLabel( $panelLabel );
+		if( $enLabel != $panelLabel ) {
+			$whichPanel = `getPanel -withLabel $enLabel`;
+		}
+	}
+
+	if ("" != $whichPanel) {
+		$wndName = $whichPanel + "Window";
+
+		//
+		// Tear off restore the panel which will set the focus to the panel 
+		// if it is already existing, might be docked in the main window or in a floating panel.
+		// if not creates a new floating panel..
+		//
+		if ($isScripted) {
+			$cmdStr = ("scriptedPanel -e -tor " + $whichPanel);
+		} else {
+			$cmdStr = ($panelType + " -e -tor " + $whichPanel);
+		}
+		eval $cmdStr;
+	}
+	else {
+		if ($isScripted) {
+			catch (`scriptedPanel -l $panelLabel -type $panelType -tor`);
+		} 
+		else {
+			$cmdStr = ($panelType + " -l \""+ $panelLabel +"\" -tor;");
+			eval $cmdStr;
+		}
+	}
+	return $wndName;
+}

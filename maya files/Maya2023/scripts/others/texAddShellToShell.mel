@@ -1,0 +1,65 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+// ===========================================================================
+//
+//  Procedure Name:
+//      texAddShellToShell
+//
+//  Description:
+//      UV workflow function used by texMultiStitch() for adding a shell to
+//      another. See notes for a more-indepth description on the format.
+//
+//  Input Arguments
+//      shellA               - String   - UV shell A
+//      shellB               - String   - UV shell B
+//      order                - Int      - Determines how to add up the areas. 0 for
+//                                        keeping the area of the larger shell, 1
+//                                        for keeping the smaller one, 2 for adding
+//                                        the two areas together.
+//
+//  Return Value:
+//      String               - The finalized list of UV shells. See notes
+//                             below for info on the format.
+//
+//  Notes:
+//  This script is part of the implementation of Nightshade UV Editor into
+//  Autodesk Maya. This script is sourced by other scripts. Do not run it 
+//  directly. The inbound shell strings and the outbound string array elements
+//  have two properties: the actual component list (UVs) and the size of their
+//  UV face area. The attributes are separated by % and the UVs by spaces.
+//  The format is of the below style:
+//  0.2513%pCube1.map[13] pCube1.map[7] pCube1.map[1] pCube1.map[2]
+//
+// ===========================================================================
+
+
+global proc string texAddShellToShell(string $shellA, string $shellB, int $order)
+{
+    string $shellAAttributes[] = stringToStringArray($shellA, "%");
+    string $shellBAttributes[] = stringToStringArray($shellB, "%");
+
+    // Add together shell list and size attributes
+    float $area, $areaA, $areaB;
+    if ($shellAAttributes[0] != "") // Attribute will be empty for the last edge being stitched
+        $areaA = (float)$shellAAttributes[0];
+    if ($shellBAttributes[0] != "")
+        $areaB = (float)$shellBAttributes[0];
+
+    if ($order == 0){
+        $area = ($areaA > $areaB) ? $areaA : $areaB;
+    } else if ($order == 1){
+        $area = ($areaA > $areaB) ? $areaB : $areaA;
+    } else{
+        $area = ((float)$shellAAttributes[0] + (float)$shellBAttributes[0]);
+    }
+
+    string $shellString = $shellAAttributes[1] + " " + $shellBAttributes[1];
+    $shellString = (string)$area + "%" + $shellString;
+
+    return $shellString;
+}

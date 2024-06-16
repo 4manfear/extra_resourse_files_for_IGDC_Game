@@ -1,0 +1,75 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc mainPaneStateCallback(string $objectName)
+{
+
+	// Do not change the viewport state when toggling through zoom-in or full-screen modes
+	// MAYA-82456
+	global int $gToggleMainWindowFullScreenModeDefer;
+	global int $gToggleMainWindowZoomInModeDefer;
+
+	if (`workspaceControl -query -exists $objectName` 
+		&& !$gToggleMainWindowFullScreenModeDefer
+		&& !$gToggleMainWindowZoomInModeDefer) {
+		
+		string $state[] = `workspaceControl -query -stateString $objectName`;
+
+		if (`size($state[0])` > 0) {
+			evalDeferred($state[0]);
+		}
+	}
+}
+
+global proc mainPaneStateCallbackSave(string $objectName)
+{
+	global string $gMainPane;
+	if (`paneLayout -exists $gMainPane`){
+		
+		int $nvp = `paneLayout -query -numberOfVisiblePanes $gMainPane`;
+
+		string $panels[];
+		string $panel = `paneLayout -query -p1 $gMainPane`;
+		appendStringArray($panels, {$panel}, 1);
+
+		if ($nvp > 1){
+			$panel = `paneLayout -query -p2 $gMainPane`;
+			appendStringArray($panels, {$panel}, 1);
+		}
+
+		if ($nvp > 2){
+			$panel = `paneLayout -query -p3 $gMainPane`;
+			appendStringArray($panels, {$panel}, 1);
+		}
+
+		if ($nvp > 3){
+			$panel = `paneLayout -query -p4 $gMainPane`;
+			appendStringArray($panels, {$panel}, 1);
+		}
+
+		string $config = `paneLayout -query -configuration $gMainPane`;
+		string $stateString = `format -stringArg $config "global string $gMainPane; paneLayout -edit -configuration ^1s $gMainPane;"`;
+
+		string $index, $thisPanel, $parentMainPane, $panelType ;
+		int $size = `size($panels)`;
+		int $i;
+		for ($i = 0; $i < $size ; $i++) {
+
+			$panelType = `getPanel -typeOf $panels[$i]`;
+
+			$parentMainPane = `format -stringArg $panelType -stringArg $panels[$i] "^1s -edit -parent $gMainPane ^2s;"`;
+
+			$thisPanel = "if(`^1s -exists ^2s`){ ^3s paneLayout -edit -setPane ^2s ^4s  $gMainPane;}";
+			$index = (string)($i+1);
+			$thisPanel = `format -stringArg $panelType -stringArg $panels[$i] -stringArg $parentMainPane -stringArg $index $thisPanel`;
+
+			$stateString = $stateString + $thisPanel;
+		}
+
+		workspaceControl -edit -stateString $stateString $objectName;
+	}
+}

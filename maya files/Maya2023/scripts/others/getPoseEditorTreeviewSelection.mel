@@ -1,0 +1,70 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc string[] getPoseEditorTreeviewSelection(int $scope)
+//
+//  Description:
+//		Get selections from pose editor tree view
+//
+//  Input Arguments:
+//	    int $scope - Scope of tree view selection:
+//
+//          0: Selected pose interpolator group indices.          e.g. {"-1", "-3"}
+//          1: Selected pose interpolators.			              e.g. {"Interpolator1", "Interpolator2"}
+//          2: Selected poses with pose interpolator name prefix. e.g. {"Interpolator1.0", "Interpolator2.1"}
+//          3: Selected PI and PI group indices without overlap.  e.g. {"-1", "Interpolator1", "-2"}
+//          4: If selected items in PI treeview contains reference item. return {"1"} if true; {"0"} if false; 
+//          5: If selected items in P treeview contains reference item. return {"1"} if true; {"0"} if false; 
+//
+//  Return Value:
+//      String array of given scope
+//
+{
+	$TypeRoof = 6;
+	int $TypeArray[];
+	for ($i = 0; $i < $TypeRoof; ++ $i)
+		$TypeArray[$i] = $i; // initialize type arrary
+	if(!`optionVar -exists poseEditorTreeViewSelection`)
+		return{};
+	string $ov[] = `optionVar -q poseEditorTreeViewSelection`;
+	if($scope > -1 && $scope < $TypeRoof) //Scope 0 ~ 5
+        return stringToStringArray($ov[$scope], "/");
+}
+
+global proc int isPoseEditorPIRefItemSelected()
+//
+//  Description:
+// 		Return 1 if reference item selected in pose interpolator treeview
+//
+{
+	$ResultL = getPoseEditorTreeviewSelection(4);
+	if(size($ResultL) == 1)
+	{
+		if($ResultL[0] == "1")
+			return 1;
+		else
+			return 0;
+	}
+	return 0;
+}
+
+global proc int isPoseEditorPoseRefItemSelected()
+//
+//  Description:
+// 		Return 1 if reference item selected in pose treeview
+//
+{
+	$ResultL = getPoseEditorTreeviewSelection(5);
+	if(size($ResultL) == 1)
+	{
+		if($ResultL[0] == "1")
+			return 1;
+		else
+			return 0;
+	}
+	return 0;
+}

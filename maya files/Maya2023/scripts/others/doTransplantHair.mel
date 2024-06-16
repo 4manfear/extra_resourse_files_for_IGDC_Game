@@ -1,0 +1,22 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  2005 
+//
+//  Description:
+//      transplant hair from selected follicles to selected object 
+//		
+//
+global proc doTransplantHair( int $method, int $doCopy)
+{
+	string $cmd = ("transplantHair " + $method + " " + $doCopy);
+
+	evalEcho $cmd;
+}
+

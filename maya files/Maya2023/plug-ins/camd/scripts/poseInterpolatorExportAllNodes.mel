@@ -1,0 +1,43 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc int poseInterpolatorExportAllNodes()
+{
+	// get all the pose interpolator nodes
+	string $tplL[] = listPoseInterpolators();
+	for($tpl in $tplL)
+	{
+	    $destL = eval("connectionInfo -destinationFromSource "+$tpl+".midLayerParent");
+	    for($dest in $destL)
+	    {
+	        string $destStrings[] = stringToStringArray($dest, ".");
+	        if(size($destStrings) != 2)
+                continue;
+            if(nodeType($destStrings[0]) != "poseInterpolatorManager")
+                continue;
+            if(startString($destStrings[0], 23) != "poseInterpolatorManager")
+			{
+				string $warningMsg = getPluginResource("poseInterpolator", "kHasReferenceNode");
+				warning ($warningMsg);
+                return 0;
+			}
+	    }
+	}
+	
+	// get the file path 
+	string $shpFileFilter = getPluginResource("poseInterpolator", "kPose") + " (*.pose) (*.pose)"; 
+	string $title = getPluginResource("poseInterpolator", "kExportPoses");
+	string $result[] = `fileDialog2 -fileFilter $shpFileFilter -caption $title`;
+	if (size($result) == 0)
+	{
+		// for example Cancel button is clicked.
+		return -1;
+	}
+	string $filePath = $result[0];
+		
+	return poseInterpolatorExport($filePath, $tplL, 1);
+} 

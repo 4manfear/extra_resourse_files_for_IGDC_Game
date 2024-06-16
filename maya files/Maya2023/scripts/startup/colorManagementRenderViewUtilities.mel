@@ -1,0 +1,321 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+// Color Management Utilities for render view
+//
+
+// Bring in utility methods for non-linear sliders
+source colorManagementNonLinearSliderUtilities.mel;
+
+// Saved states of exposure and gamma attributes of the render view
+// TODO: Remove these when a generic state toggle solution is found
+global int   $gRvToggleGamma        = 0;
+global int   $gRvToggleExposure     = 0;
+global float $gRvSavedGammaValue    = 0.0;
+global float $gRvSavedExposureValue = 0.0;
+
+// Global variables used to track the render view's gamma and exposure ranges
+global float $gRvGammaMinRange;
+global float $gRvGammaMaxRange;
+global float $gRvExposureMinRange;
+global float $gRvExposureMaxRange;
+
+//
+// Purpose: Resets all toggle states
+//
+global proc resetRVTogleStates()
+{
+	resetRVGammaTogleState();
+	resetRVExposureTogleState();
+}
+
+//
+// Purpose: Resets the gamma toggle states
+//
+global proc resetRVGammaTogleState()
+{
+	global int $gRvToggleGamma;
+	$gRvToggleGamma = 0;
+}
+
+//
+// Purpose: Resets the exposure toggle states
+//
+global proc resetRVExposureTogleState()
+{
+	global int $gRvToggleExposure;
+	$gRvToggleExposure = 0;
+}
+
+//
+// Purpose: Updates the gamma controls of the render view
+//
+global proc updateRenderViewGammaControls(float $value)
+{
+	floatField -e -value $value gammaRenderViewFieldItem;
+	updateRenderViewGammaSlider();
+}
+
+//
+// Purpose: Updates the exposure controls of the render view
+//
+global proc updateRenderViewExposureControls(float $value)
+{
+	floatField -e -value $value exposureRenderViewFieldItem;
+	updateRenderViewExposureSlider();
+}
+
+//
+// Purpose: Resets the render view min/max control ranges
+//
+global proc resetColorManagementControlRange()
+{
+	global float $gRvGammaMinRange;
+	global float $gRvGammaMaxRange;
+	global float $gRvExposureMinRange;
+	global float $gRvExposureMaxRange;
+
+	$gRvGammaMinRange = 0.000001;
+	$gRvGammaMaxRange = 4.0;
+	$gRvExposureMinRange =-5.0;
+	$gRvExposureMaxRange = 5.0;
+}
+
+//
+// Purpose: Used to toggle the between the current and default of the renderview gamma.
+//
+global proc toggleRenderViewGamma()
+{
+	global int   $gRvToggleGamma;
+	global float $gRvSavedGammaValue;
+	global float $gRvGammaMaxRange;
+
+	float $newGammaValue;
+
+	if($gRvToggleGamma == 0)
+	{
+		// The gamma button is being pressed, we need to set the default value
+		// and save the current value
+		$newGammaValue = 1.0;
+		$gRvToggleGamma = 1;
+		$gRvSavedGammaValue = `floatField -q -value gammaRenderViewFieldItem`;
+
+		// We also need to adjust the ranges
+		$gRvGammaMaxRange = clamp(4.0, $gRvGammaMaxRange, $gRvSavedGammaValue);
+	}
+	else
+	{
+		// The gamma button was pressed, we need to restore the saved value
+		$newGammaValue = $gRvSavedGammaValue;
+		$gRvToggleGamma = 0;
+	}
+
+	updateRenderViewGammaControls($newGammaValue);
+	updateRenderViewGammaState();
+}
+
+//
+// Purpose: Used to toggle the between the current and default of the renderview gamma.
+//
+global proc toggleRenderViewExposure()
+{
+	global int   $gRvToggleExposure;
+	global float $gRvSavedExposureValue;
+	global float $gRvExposureMinRange;
+	global float $gRvExposureMaxRange;
+
+	float $newExposureValue;
+
+	if($gRvToggleExposure == 0)
+	{
+		// The exposure button is being pressed, we need to set the default value
+		// and save the current value
+		$gRvSavedExposureValue = `floatField -q -value exposureRenderViewFieldItem`;
+		$newExposureValue = 0.0;
+		$gRvToggleExposure = 1;
+
+		// We also need to adjust the ranges
+		if($gRvSavedExposureValue > 0)
+		{
+			$gRvExposureMaxRange = clamp(5.0, $gRvExposureMaxRange, $gRvSavedExposureValue);
+		}
+		else
+		{
+			$gRvExposureMinRange = clamp($gRvExposureMinRange, -5.0, $gRvSavedExposureValue);
+		}
+	}
+	else
+	{
+		// The exposure button was pressed, we need to restore the saved value
+		$newExposureValue = $gRvSavedExposureValue;
+		$gRvToggleExposure = 0;
+	}
+
+	updateRenderViewExposureControls($newExposureValue);
+	updateRenderViewExposureState();
+}
+
+//
+// Purpose: Callback used for the exposure update slider.
+//
+global proc updateRenderViewExposureState()
+{
+    float $fieldValue = `floatField -q -value "exposureRenderViewFieldItem"`;
+	string $renderPanels[] = `getPanel -scriptType "renderWindowPanel"`;
+	if (size($renderPanels) > 0) {
+		renderWindowEditor -e -exposure $fieldValue $renderPanels[0];
+	}
+}
+
+//
+// Purpose: Callback used for the gamma update slider.
+//
+global proc updateRenderViewGammaState()
+{
+    float $fieldValue = `floatField -q -value "gammaRenderViewFieldItem"`;
+	string $renderPanels[] = `getPanel -scriptType "renderWindowPanel"`;
+	if (size($renderPanels) > 0) {
+		renderWindowEditor -e -gamma $fieldValue $renderPanels[0];
+	}
+}
+
+//
+// Purpose: Updates the field of the gamma control
+//
+global proc updateRenderViewGammaField()
+{
+    if(`floatField -exists gammaRenderViewFieldItem` == 0)
+    {
+        return;
+    }
+
+    global float $gRvGammaMinRange;
+    global float $gRvGammaMaxRange;
+
+    float $linearValue = `floatSlider -q -value gammaRenderViewSliderItem`;
+    float $nonLinearValue = getGammaNonLinearFromLinear($linearValue, $gRvGammaMaxRange);
+    floatField -e -value $nonLinearValue gammaRenderViewFieldItem;
+
+    updateRenderViewGammaState();
+}
+
+//
+// Purpose: Updates the slider of the gamma control
+//
+global proc updateRenderViewGammaSlider()
+{
+    if(`floatSlider -exists gammaRenderViewSliderItem` == 0)
+    {
+        return;
+    }
+
+    global float $gRvGammaMaxRange;
+    global float $gRvGammaMinRange;
+
+    float $fieldValue = `floatField -q -value gammaRenderViewFieldItem`;
+
+    if($fieldValue > $gRvGammaMaxRange)
+    {
+        $gRvGammaMaxRange = $fieldValue;
+    }
+    else
+    if($fieldValue < $gRvGammaMinRange)
+    {
+        // Gamma has to be > 0
+        $gRvGammaMinRange = max($fieldValue, 0.000001);
+    }
+
+    float $normalizedValue = getGammaLinearFromNonLinear($fieldValue, $gRvGammaMaxRange);
+    floatSlider -e -value $normalizedValue gammaRenderViewSliderItem;
+
+    updateRenderViewGammaState();
+}
+
+//
+// Purpose: Updates the field of the exposure control
+//
+global proc updateRenderViewExposureField()
+{
+    if(`floatField -exists exposureRenderViewFieldItem` == 0)
+    {
+        return;
+    }
+
+    global float $gRvExposureMinRange;
+    global float $gRvExposureMaxRange;
+
+    float $linearValue = `floatSlider -q -value exposureRenderViewSliderItem`;
+    float $nonLinearValue = getNonLinearFromLinear($linearValue, $gRvExposureMinRange, $gRvExposureMaxRange);
+    floatField -e -value $nonLinearValue exposureRenderViewFieldItem;
+
+    updateRenderViewExposureState();
+}
+
+//
+// Purpose: Updates the slider of the exposure control
+//
+global proc updateRenderViewExposureSlider()
+{
+    if(`floatSlider -exists exposureRenderViewSliderItem` == 0)
+    {
+        return;
+    }
+
+    global float $gRvExposureMaxRange;
+    global float $gRvExposureMinRange;
+
+    float $fieldValue = `floatField -q -value exposureRenderViewFieldItem`;
+
+    if($fieldValue > $gRvExposureMaxRange)
+    {
+        $gRvExposureMaxRange = $fieldValue;
+    }
+    else
+    if($fieldValue < $gRvExposureMinRange)
+    {
+        $gRvExposureMinRange = $fieldValue;
+    }
+
+    float $linearValue = getLinearFromNonLinear($fieldValue, $gRvExposureMinRange, $gRvExposureMaxRange);
+    floatSlider -e -value $linearValue exposureRenderViewSliderItem;
+
+    updateRenderViewExposureState();
+}
+
+//
+// Purpose: Used to increment/decrement the value of a color management dynamic property
+//
+global proc incrementDynamicPropertyField(string $nameOfView, string $nameOfProperty, string $nameOfFieldItem, float $deltaValue)
+{
+    global float $gRvGammaMinRange;
+    global float $gRvGammaMaxRange;
+    global float $gRvExposureMinRange;
+    global float $gRvExposureMaxRange;
+
+    if(`floatField -exists $nameOfFieldItem` != 0)
+    {
+        float $currentValue = `floatField -q -value -value $nameOfFieldItem`;
+        float $newValue = $currentValue + $deltaValue;
+
+        if($nameOfProperty == "exposure")
+        {
+            $gRvExposureMinRange = min($gRvExposureMinRange, $newValue);
+            $gRvExposureMaxRange = max($gRvExposureMaxRange, $newValue);
+         }
+        else
+        if($nameOfProperty == "gamma")
+        {
+            $gRvGammaMaxRange = max($gRvGammaMaxRange, $newValue);
+            $newValue = clamp($gRvGammaMinRange, $gRvGammaMaxRange, $newValue);
+        }
+
+        floatField -e -value $newValue $nameOfFieldItem;
+        string $cmd = "renderWindowEditor -e -" + $nameOfProperty + " " + $newValue + " " + $nameOfView;
+        eval($cmd);
+    }
+}

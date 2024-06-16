@@ -1,0 +1,3336 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+/////////////////////////////////////////////////////////////////////////////
+//    Main menubar code
+/////////////////////////////////////////////////////////////////////////////
+
+global proc menuItemToUVShelf(string $itemName) 
+{
+	if(`shelfLayout -exists textureCustomShelf`)
+	{
+		if(`frameLayout -q -visible textureEditorShelfTextBarFrameLayout`)
+			frameLayout -e -visible false textureEditorShelfTextBarFrameLayout;
+	}
+    catchQuiet( `callPython "maya.app.general.menuItemToShelf" "menuItemToShelf" {"textureCustomShelf",$itemName}` );
+	shelfLayout -e -cellWidthHeight 22 22 textureCustomShelf;
+}
+
+global proc buildTextureViewContextHelpItems(string $nameRoot, string $menuParent)
+//
+//  Description:
+//		Build context sensitive menu items
+//		
+//  Input Arguments:
+//		$nameRoot - name to use as the root of all item names
+//		$menuParent - the name of the parent of this menu
+//
+//  Return Value:
+//      None
+//
+{
+	menuItem -label (uiRes("m_texturePanelMenus.kHelpOnUVEditor"))
+		-enableCommandRepeat false
+		-command "showHelp TextureView";
+}
+
+global proc textureWindowCreateMenubar(string $editor, string $editorCmd)
+//
+// Description:
+//		Texture window menu bar creation.
+//
+//		When adding a new menuitem to an existing menu, modify the
+//		appropriate textureWindowBuildNAMEMenu. If adding a new menu
+//		create a new textureWindowBuildNAMEMenu proc.
+//
+//		In either case, if the new menuItem is a checkbox, it should
+//		call txtWndUpdateEditor when selected. See
+//		textureWindowBuildViewMenu for examles.
+//		In addition, code should be added to txtWndUpdateEditor to update
+//		the state of all controls which provide an interface to the new
+//		functionality. This is to ensure that all the controls are in
+//		sync.
+//
+//		Keep in mind that there is also a textureWindoCreatePopup proc. If
+//		you wish your new menuItem to be in the popup, you must modify that
+//		proc as well.
+// Arguments:
+//
+// Returns:
+//
+//
+{
+	global string $gTextureEditorMenubarPrefix;
+
+	//
+	//	Make the Edit sub menu.
+	//
+	string	$subName = `menu -label (uiRes("m_texturePanelMenus.kEdit"))
+		-tearOff true
+		-familyImage "menuIconEdit.png"
+		($editor+"EditMenu")`;
+	textureWindowBuildEditMenu( $subName, $editor, $editorCmd, 1 );
+	
+	//
+	//	Make the Create sub menu.
+	//
+	$subName = `menu -label (uiRes("m_texturePanelMenus.kCreate"))
+		-tearOff true
+		-familyImage "menuIconEdit.png"
+		($editor+"CreateMenu")`;
+	textureWindowBuildCreateMenu( $subName, $editor, $editorCmd, 1 );
+
+	//
+	//	Make the Select sub menu.
+	//
+	$subName = `menu -label (uiRes("m_texturePanelMenus.kSelect"))
+		-tearOff true
+		-familyImage "menuIconEdit.png"
+		($editor+"SelectMenu")`;
+	textureWindowBuildSelectMenu( $subName, $editor, $editorCmd, 1 );
+
+	//
+	//	Make the Cut/Sew sub menu.
+	//
+	$subName = `menu -label (uiRes("m_texturePanelMenus.kCutSew"))
+		-tearOff true
+		-familyImage "menuIconEdit.png"
+		($editor+"CutSewMenu")`;
+	textureWindowBuildCutSewMenu( $subName, $editor, $editorCmd, 1 );
+	
+	//
+	//	Make the Modify sub menu.
+	//
+	$subName = `menu -label (uiRes("m_texturePanelMenus.kModify"))
+		-tearOff true
+		-familyImage "menuIconEdit.png"
+		($editor+"ModifyMenu")`;
+	textureWindowBuildModifyMenu( $subName, $editor, $editorCmd, 1 );
+	
+	//
+	//	Make the Modify sub menu.
+	//
+	$subName = `menu -label (uiRes("m_texturePanelMenus.kTools"))
+		-tearOff true
+		-familyImage "menuIconEdit.png"
+		($editor+"ToolsMenu")`;
+	menu -edit -postMenuCommand ( "textureWindowBuildToolsMenu " + 
+							$subName + " " +
+							$editor + " " +
+							$editorCmd + " 1" )
+							$subName;
+
+	//
+	//	Make the Edit Subdiv sub menu.
+	//
+	if (`isTrue "SubdivUIExists"`) {
+		string	$subName = `menu -label (uiRes("m_texturePanelMenus.kSubdivs"))
+			-to 1 
+			-aob true
+			-familyImage "menuIconEdit.png"
+			($editor+"EditSubdivMenu")`;
+		textureWindowBuildEditSubdivMenu( $subName, $editor, $editorCmd, 1 );
+	}
+
+	// Disabling NURBS UV Menu - NURBS UVs are only partially implemented.
+	// Here we are limiting their exposure. When the remaining features of
+	// NURBS UVs are implemented, the following lines can be uncommented.
+	// [lli]
+	//
+	/*
+	//
+	//	Make the Edit NURBS sub menu.
+	//
+	// Note: we must issue a -pmc to update this item since it is based on
+	// the object selection rather than the txtWndUpdateEditor method - which
+	// only responds to editor changes.
+	//
+	string $nurbsPostMenuCommand = "updateNurbsEditUVModeMenuItem(\"" +
+									$gTextureEditorMenubarPrefix +
+									$editor +
+									"NurbsEditUVModeItem\")";
+	$subName = `menu -l "NURBS"
+		-tearOff true
+		-aob true
+		-pmc $nurbsPostMenuCommand
+		-familyImage "menuIconEdit.png"
+		($editor+"EditNurbsMenu")`;
+	textureWindowBuildEditNurbsMenu( $subName, $editor, $editorCmd, 1 );
+	*/
+
+	//
+	//	Make the View sub menu.
+	//
+	$subName = `menu -label (uiRes("m_texturePanelMenus.kView"))
+		-tearOff true
+		-aob true
+		-familyImage "menuIconView.png"
+		($editor+"ViewMenu")`;
+	textureWindowBuildViewMenu( $subName, $editor, $editorCmd, 1 );
+
+	//
+	// Make the image sub menu
+	//
+	$subName = `menu -label (uiRes("m_texturePanelMenus.kImage"))
+		-tearOff true
+		-aob true
+		-familyImage "menuIconImages.png"
+		($editor+"ImageMenu")`;
+	textureWindowBuildImageMenu( $subName, $editor, $editorCmd, 1 );
+
+	// 
+	// Make the textures sub menu
+	//
+	$subName = `menu -label (uiRes("m_texturePanelMenus.kTextures")) 
+		-tearOff true
+		-allowOptionBoxes false
+		($editor+"TexturesMenu")`;
+	menu -edit -postMenuCommand ( "textureWindowBuildTexturesMenu " + 
+									$subName + " " +
+									$editor + " " +
+									$editorCmd + " 1" )
+		$subName;
+	setParent -menu ..;
+
+	scriptJob -parent $editor
+			  -event "SelectionChanged"
+			  ( "textureWindowUpdateTextures " + $subName + " " + $editor + " " + $editorCmd + " 1" );
+			  
+	//
+	// Make uv set sub menu
+	//
+	$subName = `menu -label (uiRes("m_texturePanelMenus.kUVSets"))  
+		-tearOff true
+		-allowOptionBoxes false
+		($editor+"UVSetsMenu")`;
+	menu -edit -postMenuCommand ( "textureWindowBuildUVSetsMenu " + 
+									$subName + " " +
+									$editor + " " +
+									$editorCmd + " 1" )
+		$subName;
+	setParent -menu ..;
+
+	scriptJob -parent $editor
+			  -event "SelectionChanged"
+			  ( "textureWindowUpdateUVSets " + $subName + " " + $editor + " 1" );
+	scriptJob -parent $editor
+			  -event "PolyUVSetChanged"
+			  ( "textureWindowUpdateUVSets " + $subName + " " + $editor + " 1" );
+	//
+	//	Create the common tools of the menuBar.
+	//
+	//iiWindowEditorMenuBar( $editor, $editorCmd );
+
+	//	Add support for the Context Sensitive Help Menu.
+	//
+	addContextHelpProc $editor "buildTextureViewContextHelpItems";
+	
+	scriptedPanel -e -mrl true $editor;
+}
+
+
+/////////////////////////////////////////////////////////////////////////////
+//    Main menu code
+/////////////////////////////////////////////////////////////////////////////
+
+global proc textureWindowBuildEditMenu( string $parent, string $editor, 
+										string $editorCmd, int $menuBar )
+//
+// Description:
+//		Edit menu
+// Arguments:
+//
+// Returns:
+//
+//
+{
+	global string $gTextureEditorMenubarPrefix;
+
+	setParent -m $parent;
+
+	// Add a prefix to have a different name in the menuBar from the popup menu
+	string $prefix="";
+	if ($menuBar == 1) {
+		$prefix = ($gTextureEditorMenubarPrefix + $editor);
+	} 
+	else {
+		$prefix = $editor;
+	}
+
+	////////////////////////////////////////////////////////////////	
+	menuItem -label (uiRes("m_texturePanelMenus.kCopy")) -ecr true
+		-annotation (getRunTimeCommandAnnotation("CopyUVs"))
+		-command "CopyUVs"
+		( $prefix + "CopyUVsItem" );
+
+	menuItem -label (uiRes("m_texturePanelMenus.kPaste")) -ecr true
+		-annotation (getRunTimeCommandAnnotation("PasteUVs"))
+		-command "PasteUVs"
+		( $prefix + "PasteUVsItem" );
+
+    menuItem -label (uiRes("m_texturePanelMenus.kDelete")) -ecr true -i "polyMapDel.png"
+        -annotation (getRunTimeCommandAnnotation("DeleteUVs"))
+        -command "DeleteUVs" 
+		( $prefix + "DeleteUVsItem" );
+	
+	////////////////////////////////////////////////////////////////
+	menuItem -divider true -dividerLabel (uiRes("m_texturePanelMenus.kPinning"));
+	
+	menuItem -label (uiRes("m_texturePanelMenus.kPinSelection")) -ecr true
+		-version "2016"
+		-annotation ( getRunTimeCommandAnnotation("PinSelection") )
+		-image "polyPinUV.png"
+		-command "PinSelection"
+		( $prefix + "PinSelectionUVsItem" ); 
+		
+	menuItem -optionBox true -ecr false
+        -annotation ( getRunTimeCommandAnnotation("PinSelectionOptions") )
+		-command "PinSelectionOptions"
+		( $prefix + "PinSelectionUVsOptionItem" ); 
+		
+	menuItem -label (uiRes("m_texturePanelMenus.kInvertPinning")) -ecr true
+		-version "2016"
+		-annotation ( getRunTimeCommandAnnotation("UVEditorInvertPin") )
+		-image "invertUVpinning.png"
+		-command "UVEditorInvertPin"
+		( $prefix + "InvertPinUVsItem" );
+	
+	menuItem -label (uiRes("m_texturePanelMenus.kUnpinSelection")) -ecr true
+		-version "2016"
+		-annotation ( getRunTimeCommandAnnotation("UnpinSelection") )
+		-image "unpinUV.png"
+		-command "UnpinSelection"
+		( $prefix + "UnpinSelectionUVsItem" );
+		
+	menuItem -label (uiRes("m_texturePanelMenus.kUnpinAll")) -ecr true
+		-version "2016"
+		-annotation (getRunTimeCommandAnnotation("UVEditorUnpinAll"))
+		-image "unpinAllUV.png"
+		-command "UVEditorUnpinAll"
+		( $prefix + "UnpinAllUVsItem" );
+
+	menuItem -divider true -dividerLabel (uiRes("m_texturePanelMenus.kResetSettings"));
+	menuItem  -version 2019
+	          -l (uiRes("m_texturePanelMenus.kResetUVEditorUI"))
+	          -annotation (getRunTimeCommandAnnotation("UVEditorResetAllToDefault"))
+			  -c "UVEditorResetAllToDefault" 
+			  ( $prefix + "ResetSettings" );
+
+    setParent -m ..;
+}
+
+global proc textureWindowBuildCreateMenu( string $parent, string $editor, 
+									      string $editorCmd, int $menuBar )
+//
+// Description:
+//		Create menu
+// Arguments:
+//
+// Returns:
+//
+//
+{
+	global string $gTextureEditorMenubarPrefix;
+
+	setParent -m $parent;
+
+	// Add a prefix to have a different name in the menuBar from the popup menu
+	string $prefix="";
+	if ($menuBar == 1) {
+		$prefix = ($gTextureEditorMenubarPrefix + $editor);
+	} 
+	else {
+		$prefix = $editor;
+	}
+
+	////////////////////////////////////////////////////////////////
+	menuItem -divider true -dividerLabel (uiRes("m_texturePanelMenus.kUVMapping"));
+
+	string $cmd = "TogglePolyUVsCreateShader";
+	menuItem -label (uiRes("m_texturePanelMenus.kAssignCheckerShader")) -ecr false
+		-annotation (getRunTimeCommandAnnotation($cmd))
+		-image "polyCheck.png"
+		-checkBox false
+		-dragMenuCommand "polygonUVsItemToShelf \"togglePolyCreateShaderWithMapping\""
+		-command $cmd
+		( $prefix + "toggleCreateShaderItem" );
+
+	////////////////////////////////////////////////////////////////
+	menuItem -divider true;
+
+	// Automatic mapping
+	menuItem -label (uiRes("m_texturePanelMenus.kAutomatic")) -ecr true
+		-annotation (getRunTimeCommandAnnotation("UVAutomaticProjection"))
+		-image "polyAutoProj.png"
+		-command "UVAutomaticProjection"
+		( $prefix + "AutomaticProjectionItem" );
+	
+	menuItem -optionBox true -ecr false
+		-annotation (getRunTimeCommandAnnotation("UVAutomaticProjectionOptions"))
+		-image "polyAutoProj.png"
+		-command "UVAutomaticProjectionOptions"
+		( $prefix + "AutomaticProjectionOptionItem" );
+
+	// Camera Based mapping
+	menuItem -label (uiRes("m_texturePanelMenus.kCameraBased")) -ecr true
+		-annotation (getRunTimeCommandAnnotation("UVCameraBasedProjection"))
+		-image "polyCameraProj.png"
+		-command "UVCameraBasedProjection" 
+		( $prefix + "CameraProjectionItem" );
+		
+	menuItem -optionBox true -ecr false
+		-annotation (getRunTimeCommandAnnotation("UVCameraBasedProjectionOptions"))
+		-image "polyCameraProj.png"
+		-command "UVCameraBasedProjectionOptions" 
+		( $prefix + "CameraProjectionOptionItem" );
+		
+	// Normal Based mapping
+	menuItem -label (uiRes("m_texturePanelMenus.kNormalBased")) -ecr true
+		-version "2018"
+		-annotation (getRunTimeCommandAnnotation("UVNormalBasedProjection"))
+		-image "polyNormalProj.png"
+		-command "UVNormalBasedProjection" 
+		( $prefix + "NormalProjectionItem" );
+		
+	menuItem -optionBox true -ecr false
+		-annotation (getRunTimeCommandAnnotation("UVNormalBasedProjectionOptions"))
+		-image "polyNormalProj.png"
+		-command "UVNormalBasedProjectionOptions" 
+		( $prefix + "NormalProjectionOptionItem" );
+
+	menuItem -divider true;
+
+	// Cylinder mapping
+	menuItem -label (uiRes("m_texturePanelMenus.kCylindrical")) -ecr true
+		-annotation (getRunTimeCommandAnnotation("UVCylindricProjection"))
+		-image "polyCylProj.png"
+		-command "UVCylindricProjection"
+		( $prefix + "CylindricProjectionItem" );
+		
+	menuItem -optionBox true -ecr false
+		-annotation (getRunTimeCommandAnnotation("UVCylindricProjectionOptions"))
+		-image "polyCylProj.png"
+		-command "UVCylindricProjectionOptions"
+		( $prefix + "CylindricProjectionOptionItem" );
+
+	// Planar mapping
+	menuItem -label (uiRes("m_texturePanelMenus.kPlanar")) -ecr true
+		-annotation (getRunTimeCommandAnnotation("UVPlanarProjection"))
+		-image "polyPlanProj.png"
+		-command "UVPlanarProjection"
+		( $prefix + "PlanarProjectionItem" );
+		
+	menuItem -optionBox true -ecr false
+		-annotation (getRunTimeCommandAnnotation("UVPlanarProjectionOptions"))
+		-image "polyPlanProj.png"
+		-command "UVPlanarProjectionOptions"
+		( $prefix + "PlanarProjectionOptionItem" );
+
+	// Spherical mapping
+	menuItem -label (uiRes("m_texturePanelMenus.kSpherical")) -ecr true
+		-annotation (getRunTimeCommandAnnotation("UVSphericalProjection"))
+		-image "polySphereProj.png"
+		-command "UVSphericalProjection"
+		( $prefix + "SphericalProjectionItem" );
+		
+	menuItem -optionBox true -ecr false
+		-annotation (getRunTimeCommandAnnotation("UVSphericalProjectionOptions"))
+		-image "polySphereProj.png"
+		-command "UVSphericalProjectionOptions"
+		( $prefix + "SphericalProjectionOptionItem" );
+
+	menuItem -divider true;
+
+	// Best Plane
+	menuItem 
+		-version "2018"
+		-label (uiRes("m_texturePanelMenus.kBestPlaneTexturingTool")) -ecr true
+		-annotation (getRunTimeCommandAnnotation("BestPlaneTexturingTool"))
+		-image "polyBestPlanProj.png"
+		-dragMenuCommand "polygonsMenuItemToShelf \"BestPlaneTexturingTool\""
+		-command "BestPlaneTexturingTool" 
+		( $prefix + "BestPlaneTexturingToolItem" );
+
+	// Contour stretch mapping
+	menuItem -label (uiRes("m_texturePanelMenus.kContour")) -ecr true
+		-version "2016"
+		-annotation (getRunTimeCommandAnnotation("UVContourStretchProjection"))
+		-image "polyContourProj.png"
+		-dragMenuCommand ("performPolyProjectionArgList \"1\" {\"2\", \"Contour\", \"ls -selection\", \"0\"} \"\";")
+		-command "UVContourStretchProjection"
+		( $prefix + "ContourProjectionItem" );
+		
+	$cmd = "UVContourStretchProjectionOptions";
+	menuItem -optionBox true -ecr false
+		-annotation (getRunTimeCommandAnnotation($cmd))
+		-image "polyContourProj.png"
+		-command $cmd
+		( $prefix + "ContourProjectionOptionItem" );
+
+    setParent -m ..;
+}
+
+global proc textureWindowBuildSelectMenu( string $parent, string $editor, 
+										  string $editorCmd, int $menuBar )
+//
+// Description:
+//		Select menu
+// Arguments:
+//
+// Returns:
+//
+//
+{
+	global string $gTextureEditorMenubarPrefix;
+
+	setParent -m $parent;
+
+	// Add a prefix to have a different name in the menuBar from the popup menu
+	string $prefix="";
+	if ($menuBar == 1) {
+		$prefix = ($gTextureEditorMenubarPrefix + $editor);
+	} 
+	else {
+		$prefix = $editor;
+	}
+
+	string $updateEditor = ( "txtWndUpdateEditor(\"" + $editor + "\", \"" +
+							 $editorCmd + "\", \"null\", 101);" );
+	
+	////////////////////////////////////////////////////////////////
+	menuItem -label (uiRes("m_texturePanelMenus.kSelectAll")) -ecr true
+		-annotation ( getRunTimeCommandAnnotation("SelectAll") )
+		-command ( "SelectAll" )
+		( $prefix + "SelectAllItem" );
+
+	menuItem -label (uiRes("m_texturePanelMenus.kClearSelection")) -ecr true
+		-annotation (uiRes("m_texturePanelMenus.kClearSelectionAnnot"))
+		-command ( "string $hiliteList[] = `ls -hilite`;" +
+					"if(`size($hiliteList)`!=0)" + 
+					"	select -cl;")
+		( $prefix + "ClearAllItem" );
+
+	menuItem -label (uiRes("m_texturePanelMenus.kInvertSelection")) -ecr true
+		-annotation ( getRunTimeCommandAnnotation("InvertSelection") )
+		-command ( "InvertSelection" )
+		( $prefix + "InverseSelectionItem" );
+
+	menuItem -divider true;
+
+	menuItem -label (uiRes("m_texturePanelMenus.kSelectComponents"))  
+		-subMenu true
+		-tearOff true
+		( $prefix + "SelectComponentsItem" );
+
+		string $cmd = "SelectVertexMask";
+		menuItem -label (uiRes("m_texturePanelMenus.kVertex"))
+			-annotation (getRunTimeCommandAnnotation($cmd))
+			-image "UVEditorVertex.png"
+			-command ( $cmd )
+			( $prefix + "VertexItem" );
+
+		$cmd = "SelectEdgeMask";
+		menuItem -label (uiRes("m_texturePanelMenus.kEdge"))
+			-annotation (getRunTimeCommandAnnotation($cmd))
+			-image "UVEditorEdge.png"
+			-command ( $cmd )
+			( $prefix + "EdgeItem" );
+
+		$cmd = "SelectFacetMask";
+		menuItem -label (uiRes("m_texturePanelMenus.kFace"))
+			-annotation (getRunTimeCommandAnnotation($cmd))
+			-image "UVEditorFace.png"
+			-command ( $cmd )
+			( $prefix + "FaceItem" );
+
+		$cmd = "SelectUVMask";
+		menuItem -label (uiRes("m_texturePanelMenus.kUV"))
+			-annotation (getRunTimeCommandAnnotation($cmd))
+			-image "UVEditorUV.png"
+			-command ( $cmd )
+			( $prefix + "UVItem" );
+
+		$cmd = "SelectMeshUVShell";
+		menuItem -label (uiRes("m_texturePanelMenus.kUVShell"))
+			-annotation (getRunTimeCommandAnnotation($cmd))
+			-image "UVEditorShell.png"
+			-command ( $cmd )
+			( $prefix + "UVShellItem" );
+
+		setParent -m $parent;
+
+	////////////////////////////////////////////////////////////////
+	menuItem -divider true;
+	
+	menuItem -label (uiRes("m_texturePanelMenus.kBackFacing"))
+		-version "2018"
+		-annotation (getRunTimeCommandAnnotation("SelectUVBackFacingComponents"))
+		-image "selectBackFacingUV.png"
+		-command ( "SelectUVBackFacingComponents" )
+		( $prefix + "SelectUVBackFacingItem" );
+		
+	menuItem -label (uiRes("m_texturePanelMenus.kFrontFacing"))
+		-version "2018"
+		-annotation (getRunTimeCommandAnnotation("SelectUVFrontFacingComponents"))
+		-image "selectFrontFacingUV.png"
+		-command ( "SelectUVFrontFacingComponents" )
+		( $prefix + "SelectUVFrontFacingItem" );
+		
+	menuItem -label (uiRes("m_texturePanelMenus.kOverlapping"))
+		-version "2018"
+		-annotation (getRunTimeCommandAnnotation("SelectUVOverlappingComponents"))
+		-image "selectOverlappingUV.png"
+		-command ( "SelectUVOverlappingComponents" )
+		( $prefix + "SelectOverlappingItem" );
+		
+	menuItem -label (uiRes("m_texturePanelMenus.kNonOverlapping"))
+		-version "2018"
+		-annotation (getRunTimeCommandAnnotation("SelectUVNonOverlappingComponents"))
+		-image "selectNonOverlappingUV.png"
+		-command ( "SelectUVNonOverlappingComponents" )
+		( $prefix + "SelectNonOverlappingItem" );
+		
+	menuItem -label (uiRes("m_texturePanelMenus.kTextureBorders"))
+		-version "2018"
+		-annotation (getRunTimeCommandAnnotation("SelectUVBorderComponents"))
+		-image "selectTextureBorders.png"
+		-command ( "SelectUVBorderComponents" )
+		( $prefix + "SelectUVBorderItem" );
+	
+	menuItem -label (uiRes("m_texturePanelMenus.kUnmappedFaces"))
+		-version "2018"
+		-annotation (getRunTimeCommandAnnotation("SelectUnmappedFaces"))
+		-image "selectUnmapedFace.png"
+		-command ( "SelectUnmappedFaces" )
+		( $prefix + "SelectUnmappedFacesItem" );
+		
+	////////////////////////////////////////////////////////////////
+	menuItem -divider true;
+
+	menuItem -label (uiRes("m_texturePanelMenus.kSelectShortestEdgePathTool"))
+		-annotation (getRunTimeCommandAnnotation("SelectShortestEdgePathTool"))
+		-image "textureEditorShortestEdgePath.png"
+		-command ( "SelectShortestEdgePathTool" )
+		( $prefix + "ShortestEdgePathToolItem" );
+
+	////////////////////////////////////////////////////////////////
+	menuItem -divider true;
+
+	$cmd = "GrowPolygonSelectionRegion";
+	menuItem -label (uiRes("m_texturePanelMenus.kSelectGrow"))
+		-annotation (getRunTimeCommandAnnotation($cmd))
+		-image "growUVSelection.png"
+        -command ( $cmd )
+		( $prefix + "growSelectionItem" );
+
+	$cmd = "GrowLoopPolygonSelectionRegion";
+	menuItem -label (uiRes("m_texturePanelMenus.kSelectGrowLoop"))
+		-version "2018"
+		-annotation (getRunTimeCommandAnnotation($cmd))
+		-image "growUVSelectionAlongLoop.png"
+        -command ( $cmd )
+		( $prefix + "growLoopSelectionItem" );
+
+	$cmd = "ShrinkPolygonSelectionRegion";
+	menuItem -label (uiRes("m_texturePanelMenus.kSelectShrink"))
+		-annotation (getRunTimeCommandAnnotation($cmd))
+		-image "shrinkUVSelection.png"
+        -command ( $cmd )
+		( $prefix + "ShrinkSelectionItem" );
+
+	$cmd = "ShrinkLoopPolygonSelectionRegion";
+	menuItem -label (uiRes("m_texturePanelMenus.kSelectShrinkLoop"))
+		-version "2018"
+		-annotation (getRunTimeCommandAnnotation($cmd))
+		-image "shrinkUVSelectionAlongLoop.png"
+        -command ( $cmd )
+		( $prefix + "ShrinkLoopSelectionItem" );
+
+	////////////////////////////////////////////////////////////////
+	menuItem -divider true;
+
+	// Face selection filter
+	string $cmdStr = ( "txtWndRelFacesMode( \"" + $editor
+						+ "\", \"" + $editorCmd + "\", " );
+
+	string $cmdStr2 = ( "textureWindowShaderFacesMode( \"" + $editor
+						+ "\", \"" + $editorCmd + "\", " );
+
+	menuItem -label (uiRes("m_texturePanelMenus.kFilterSelection"))  
+		-subMenu true
+		-tearOff true
+		( $prefix + "FilterSelection" );
+
+		menuItem -label (uiRes("m_texturePanelMenus.kFacesOfSelectedImages"))
+			-annotation (uiRes("m_texturePanelMenus.kFacesOfSelectedImagesAnnot"))
+			-checkBox false
+			-command ( $cmdStr2 + " 0);" + $updateEditor ) 
+			( $prefix + "shaderFacesItem" );
+
+		menuItem -label (uiRes("m_texturePanelMenus.kConnectedFaces"))
+			-annotation (uiRes("m_texturePanelMenus.kConnectedFacesAnnot"))
+			-checkBox false
+			-command ( $cmdStr + " 0);" + $updateEditor )
+			( $prefix + "connectedFacesItem" );
+
+		menuItem -label (uiRes("m_texturePanelMenus.kContainedFaces"))
+			-annotation (uiRes("m_texturePanelMenus.kContainedFacesAnnot"))
+			-checkBox false
+			-command ( $cmdStr + " 1);" + $updateEditor )
+			( $prefix + "containedFacesItem" );
+
+		setParent -m $parent;
+
+	menuItem -label (uiRes("m_texturePanelMenus.kConvertSelection"))  
+		-subMenu true
+		-tearOff true
+		( $prefix + "ConvertSelection" );
+
+		menuItem -label (uiRes("m_texturePanelMenus.kConvertSelectionToVertices"))
+			-annotation ( getRunTimeCommandAnnotation("ConvertSelectionToVertices") )
+			-command ( "ConvertSelectionToVertices" )
+			( $prefix + "ConvertToVerticesItem" );
+
+		menuItem -label (uiRes("m_texturePanelMenus.kConvertSelectionToVertexPerimeter"))
+			-annotation ( getRunTimeCommandAnnotation("ConvertSelectionToVertexPerimeter") )
+			-version "2015"
+			-command ( "ConvertSelectionToVertexPerimeter" )
+			( $prefix + "ConvertToVertexPerimeterItem" );
+
+		menuItem -divider true;
+
+		menuItem -label (uiRes("m_texturePanelMenus.kConvertSelectionToEdges"))
+			-annotation ( getRunTimeCommandAnnotation("ConvertSelectionToEdges") )
+			-command ( "ConvertSelectionToEdges" )
+			( $prefix + "ConvertToEdgesItem" );
+
+		menuItem -label (uiRes("m_texturePanelMenus.kConvertSelectionToEdgeLoop"))
+			-annotation ( getRunTimeCommandAnnotation("SelectEdgeLoop") )
+			-command ( "SelectEdgeLoop" )
+			( $prefix + "ConvertToEdgeLoopItem" );
+			
+		menuItem -label (uiRes("m_texturePanelMenus.kConvertSelectionToEdgeRing"))
+			-annotation ( getRunTimeCommandAnnotation ("SelectEdgeRing") )
+			-command ( "SelectEdgeRing" )
+			( $prefix + "ConvertToEdgeRingItem" );
+			
+		menuItem -label (uiRes("m_texturePanelMenus.kConvertSelectionToContainedEdges"))
+			-annotation ( getRunTimeCommandAnnotation("ConvertSelectionToContainedEdges") )
+			-command ( "ConvertSelectionToContainedEdges" )
+			( $prefix + "ConvertToContainedEdgesItem" );
+
+		menuItem -label (uiRes("m_texturePanelMenus.kConvertSelectionToEdgePerimeter"))
+			-annotation ( getRunTimeCommandAnnotation("ConvertSelectionToEdgePerimeter") )
+			-version "2015"
+			-command ( "ConvertSelectionToEdgePerimeter" )
+			( $prefix + "ConvertToEdgePerimeterItem" );
+
+		menuItem -divider true;
+
+		menuItem -label (uiRes("m_texturePanelMenus.kConvertSelectionToFaces"))
+			-annotation ( getRunTimeCommandAnnotation("ConvertSelectionToFaces") )
+			-command ( "ConvertSelectionToFaces" )
+			( $prefix + "ConvertToFacesItem" );
+
+		menuItem -label (uiRes("m_texturePanelMenus.kConvertSelectionToFacePath"))
+			-annotation ( getRunTimeCommandAnnotation("SelectFacePath") )
+			-command ( "SelectFacePath" )
+			( $prefix + "ConvertToFacesPathItem" );
+			
+		menuItem -label (uiRes("m_texturePanelMenus.kConvertSelectionToConnectedFaces"))
+			-annotation (uiRes("m_texturePanelMenus.kConvertSelectionToConnectedFacesAnnot"))
+			-command ( $editorCmd + " -e -selectRelatedFaces " + $editor )
+			( $prefix + "ConvertToConnectedFacesItem" );
+
+		menuItem -label (uiRes("m_texturePanelMenus.kConvertSelectionToContainedFaces"))
+			-annotation (uiRes("m_texturePanelMenus.kConvertSelectionToContainedFacesAnnot"))
+			-command ( $editorCmd + " -e -selectInternalFaces " + $editor )
+			( $prefix + "ConvertToContainedFacesItem" );
+			
+		menuItem -label (uiRes("m_texturePanelMenus.kConvertSelectionToFacePerimeter"))
+			-annotation ( getRunTimeCommandAnnotation("ConvertSelectionToFacePerimeter") )
+			-command ( "ConvertSelectionToFacePerimeter" )
+			( $prefix + "ConvertToFacePerimeterItem" );
+
+		menuItem -divider true;
+
+		menuItem -label (uiRes("m_texturePanelMenus.kConvertSelectionToUVs"))
+			-annotation ( getRunTimeCommandAnnotation("ConvertSelectionToUVs") )
+			-command ( "ConvertSelectionToUVs" )
+			( $prefix + "ConvertToUVsItem" );
+
+		menuItem -label (uiRes("m_texturePanelMenus.kConvertSelectionToUVShell"))
+			-annotation ( getRunTimeCommandAnnotation ("SelectUVShell") )
+			-command ( "SelectUVShell" )
+			( $prefix + "ConvertToUVShellItem" );
+			
+		menuItem -label (uiRes("m_texturePanelMenus.kConvertSelectionToUVShellBorder"))
+			-annotation ( getRunTimeCommandAnnotation ("SelectUVBorder") )
+			-command ( "SelectUVBorder" )
+			( $prefix + "ConvertToUVShellBorderItem" );
+			
+		menuItem -label (uiRes("m_texturePanelMenus.kConvertSelectionToUVPerimeter"))
+			-annotation ( getRunTimeCommandAnnotation("ConvertSelectionToUVPerimeter") )
+			-version "2015"
+			-command ("ConvertSelectionToUVPerimeter")
+			( $prefix + "ConvertToUVPerimeterItem" );
+
+		menuItem -label (uiRes("m_texturePanelMenus.kConvertSelectionToUVEdgeLoop"))
+			-annotation ( getRunTimeCommandAnnotation("ConvertSelectionToUVEdgeLoop") )
+			-command ( "ConvertSelectionToUVEdgeLoop" )
+			($prefix+"ConvertToUVEdgeLoopItem");
+
+		
+
+
+
+		setParent -m $parent;
+
+    setParent -m ..;
+}
+
+global proc textureWindowBuildCutSewMenu( string $parent, string $editor, 
+										  string $editorCmd, int $menuBar )
+//
+// Description:
+//		Cut/Sew menu
+// Arguments:
+//
+// Returns:
+//
+//
+{
+	global string $gTextureEditorMenubarPrefix;
+
+	setParent -m $parent;
+
+	// Add a prefix to have a different name in the menuBar from the popup menu
+	string $prefix="";
+	if ($menuBar == 1) {
+		$prefix = ($gTextureEditorMenubarPrefix + $editor);
+	} 
+	else {
+		$prefix = $editor;
+	}
+
+	string $updateEditor = ( "txtWndUpdateEditor(\"" + $editor + "\", \"" +
+							 $editorCmd + "\", \"null\", 101);" );
+	
+	////////////////////////////////////////////////////////////////
+    menuItem -label (uiRes("m_texturePanelMenus.kAutoSeamUVs")) -ecr true
+        -annotation (uiRes("m_texturePanelMenus.kAutoSeamUVsAnnot")) 
+		-version "2018"
+		-image "polyAutoSeams.png"
+        -command ( "performPolyAutoSeamUV 0" )
+		( $prefix + "autoSeamUVItem" );
+
+    menuItem -optionBox 1 -ecr false
+        -annotation (uiRes("m_texturePanelMenus.kAutoSeamUVsOptionsAnnot")) 
+		-image "polyAutoSeams.png"
+        -command ( "performPolyAutoSeamUV 1" )
+		( $prefix + "autoSeamUVOptionItem" );
+		
+	menuItem -divider true;
+
+	menuItem -label (uiRes("m_texturePanelMenus.kCreateShell")) -ecr true
+		-annotation ( getRunTimeCommandAnnotation ( "CreateUVShellAlongBorder" ) )
+		-version "2015"
+		-image "polyCreateUVShell.png"
+		-command ( "CreateUVShellAlongBorder" )
+		( $prefix + "createUVShellItem" );
+		
+	menuItem -label (uiRes("m_texturePanelMenus.kCreateShellGrid")) -ecr true
+		-annotation ( getRunTimeCommandAnnotation("LayoutUVRectangle") )
+		-image "polyUVRectangle.png"
+		-dmc "polygonsMenuItemToShelf \"polyPerformAction polyUVRectangle v 0\""
+		-command ( "LayoutUVRectangle" )
+		( $prefix + "layoutUVRectangleItem" );
+		
+	menuItem -divider true;
+
+	menuItem -label (uiRes("m_texturePanelMenus.kCutUVs")) -ecr true
+		-annotation ( getRunTimeCommandAnnotation ( "CutUVs" ) )
+		-image "polyCutUV.png"
+		-command ( "CutUVs" )
+		( $prefix + "cutUVItem" );
+		
+	menuItem -label (uiRes("m_texturePanelMenus.kSewUVs")) -ecr true
+		-annotation ( getRunTimeCommandAnnotation ( "SewUVs" ) )
+		-image "polySewUV.png"
+		-command ( "SewUVs" )
+		( $prefix + "sewUVItem" );
+
+	menuItem -label (uiRes("m_texturePanelMenus.kSplitUVs")) -ecr true
+		-annotation (uiRes("m_texturePanelMenus.kSplitUVsAnnot")) 
+		-image "polySplitUVs.png"
+		-command "string $compSelType = `getComponentMask`; polySplitTextureUV; setComponentMask $compSelType;"
+		( $prefix + "splitUVItem" );
+		
+	menuItem -divider true;
+	
+    menuItem -label (uiRes("m_texturePanelMenus.kMergeUVs")) -ecr true
+        -annotation ( getRunTimeCommandAnnotation ( "MergeUV" ) )
+		-image "polyMergeUV.png" 
+        -command ( "MergeUV" )
+		( $prefix + "mergeUVItem" );
+
+    menuItem -optionBox 1 -ecr false
+        -annotation ( getRunTimeCommandAnnotation ( "MergeUVOptions" ) )
+		-image "polyMergeUV.png"
+        -command  ( "MergeUVOptions" )
+		( $prefix + "mergeUVOptionsItem" );
+
+    menuItem -label (uiRes("m_texturePanelMenus.kMoveAndSewUVs")) -ecr true
+        -annotation (uiRes("m_texturePanelMenus.kMoveAndSewUVsAnnot"))
+		-image "polyMoveSew.png"
+        -command ( "performPolyMapSewMove 0" )
+		( $prefix + "moveSewItem" );
+
+    menuItem -optionBox 1 -ecr false
+        -annotation (uiRes("m_texturePanelMenus.kMoveAndSewOptionsAnnot"))
+		-image "polyMoveSew.png"
+        -command ( "performPolyMapSewMove 1" )
+		( $prefix + "moveSewOptionsItem" );
+		
+    menuItem -label (uiRes("m_texturePanelMenus.kStitchTogether")) -ecr true
+		-version "2018"
+        -annotation ( getRunTimeCommandAnnotation ( "StitchTogether" ) )
+		-image "polyUVMultiStitch.png"
+        -command ( "StitchTogether" )
+		( $prefix + "UVStitchTogetherItem" );
+
+    menuItem -optionBox 1 -ecr false
+        -annotation ( getRunTimeCommandAnnotation ( "StitchTogetherOptions" ) )
+		-image "polyUVMultiStitch.png"
+        -command ( "StitchTogetherOptions" )
+		( $prefix + "UVStitchTogetherOptionsItem" );
+		
+    setParent -m ..;
+}
+
+global proc textureWindowBuildModifyMenu( string $parent, string $editor, 
+									      string $editorCmd, int $menuBar )
+//
+// Description:
+//		Modify menu
+// Arguments:
+//
+// Returns:
+//
+//
+{
+	global string $gTextureEditorMenubarPrefix;
+
+	setParent -m $parent;
+
+	// Add a prefix to have a different name in the menuBar from the popup menu
+	string $prefix="";
+	if ($menuBar == 1) {
+		$prefix = ($gTextureEditorMenubarPrefix + $editor);
+	} 
+	else {
+		$prefix = $editor;
+	}
+	
+	menuItem -label (uiRes("m_texturePanelMenus.kAlignUVs")) -ecr true
+		-version "2018"
+		-annotation ( getRunTimeCommandAnnotation("AlignUV") )
+		-image "polyAlignUVs.png"
+		-command ( "AlignUV" )
+		( $prefix + "AlignUVsItem" );
+
+	menuItem -optionBox 1 -ecr false
+		-annotation ( getRunTimeCommandAnnotation("AlignUVOptions") )
+		-command ( "AlignUVOptions" )
+		( $prefix + "AlignUVsOptionItem" );
+
+	menuItem -label (uiRes("m_texturePanelMenus.kCycleUVs")) -ecr true
+		-annotation (uiRes("m_texturePanelMenus.kCycleUVsAnnot"))
+		-image "cycleUVs.png"
+		-command "polyRotateUVsByVertex"
+		( $prefix + "cycleUVItem" );
+		
+	menuItem -label (uiRes("m_texturePanelMenus.kDistributeUVs")) -ecr true
+		-version "2018"
+		-annotation ( getRunTimeCommandAnnotation("DistributeUVs") )
+		-image "UVDistributeUVs.png"
+		-command ( "DistributeUVs" )
+		( $prefix + "DistributeUVsItem" );
+
+	menuItem -optionBox 1 -ecr false
+		-annotation ( getRunTimeCommandAnnotation("DistributeUVOptions") )
+		-command ( "DistributeUVsOptions" )
+		( $prefix + "DistributeUVsOptionItem" );
+
+	menuItem -label (uiRes("m_texturePanelMenus.kFlipUVs")) -ecr true
+		-version "2018"
+		-annotation ( getRunTimeCommandAnnotation("FlipUVs") )
+		-image "polyFlipUV.png"
+		-command ( "FlipUVs" )
+		( $prefix + "flipUVItem" );
+		
+	menuItem -optionBox 1 -ecr false
+		-annotation ( getRunTimeCommandAnnotation("FlipUVsOptions") )
+		-command ( "FlipUVsOptions" )
+		( $prefix + "flipUVOptionItem" );
+
+	menuItem -label (uiRes("m_texturePanelMenus.kLinearAlign")) -ecr true
+		-version "2018"
+		-annotation (uiRes("m_texturePanelMenus.kLinearAlignAnnot"))
+		-image "polyAlignUVLinear.png"
+		-command ( "texLinearAlignUVs" )
+		( $prefix + "LinearAlignUVsItem" );
+		
+	menuItem -label (uiRes("m_texturePanelMenus.kGridUVs")) -ecr true
+		-annotation ( getRunTimeCommandAnnotation("GridUV") )
+		-image "polyGridUV.png"
+		-command ( "GridUV" )
+		( $prefix + "gridUVItem" );
+
+	menuItem -optionBox 1 -ecr false
+		-annotation ( getRunTimeCommandAnnotation("GridUVOptions") )
+		-command ( "GridUVOptions" )
+		( $prefix + "gridUVOptionItem" );
+		
+	menuItem -label (uiRes("m_texturePanelMenus.kMatchUVs")) -ecr true
+		-version "2018"
+		-annotation ( getRunTimeCommandAnnotation("MatchUVs") )
+		-image "polyMatchUV.png"
+		-command ( "MatchUVs" )
+		( $prefix + "MatchUVsItem" );
+
+	menuItem -optionBox 1 -ecr false
+		-annotation ( getRunTimeCommandAnnotation("MatchUVsOptions") )
+		-command ( "MatchUVsOptions" )
+		( $prefix + "MatchUVsOptionsItem" );
+
+	menuItem -label (uiRes("m_texturePanelMenus.kNormalizeUVs")) -ecr true
+		-version "2018"
+		-annotation ( getRunTimeCommandAnnotation("NormalizeUVs") )
+		-image "polyNormalizeUVs.png"
+		-command ( "NormalizeUVs" )
+		( $prefix + "normalizeUVItem" );
+
+	menuItem -optionBox 1 -ecr false
+		-annotation ( getRunTimeCommandAnnotation("NormalizeUVsOptions") )
+		-command ( "NormalizeUVsOptions" )
+		( $prefix + "normalizeUVOptionItem" );
+		
+	// m2.1 Rotate uvs about vertex
+	menuItem -label (uiRes("m_texturePanelMenus.kRotateUVs")) -ecr true
+		-annotation ( getRunTimeCommandAnnotation("RotateUVs") )
+		-image "polyRotateUVCCW.png"
+		-command ( "RotateUVs" )
+		( $prefix + "rotateUVItem" );
+
+	menuItem -optionBox 1 -ecr false
+		-annotation ( getRunTimeCommandAnnotation("RotateUVsOptions") )
+		-image "polyRotateUVCCW.png"
+		-command ( "RotateUVsOptions" )
+		( $prefix + "rotateUVOptionItem" );
+		
+	menuItem -label (uiRes("m_texturePanelMenus.kSymmetrize")) -ecr true
+		-version "2018"
+		-annotation ( getRunTimeCommandAnnotation("SymmetrizeUV") )
+		-image "polySymmetrizeUV.png"
+		-command ( "SymmetrizeUV" )
+		( $prefix + "symmetrizeItem" );
+
+	menuItem -optionBox 1 -ecr false
+		-annotation ( getRunTimeCommandAnnotation("SymmetrizeUVOptions") )
+		-image "polySymmetrizeUV.png"
+		-command ( "SymmetrizeUVOptions" )
+		( $prefix + "symmetrizeUVOptionsItem" );
+		
+	menuItem -label (uiRes("m_texturePanelMenus.kUnitizeUVs")) -ecr true
+		-annotation ( getRunTimeCommandAnnotation("UnitizeUVs") )
+		-image "polyUnitizeUVs.png"
+		-command ( "UnitizeUVs" )
+		( $prefix + "unitizeUVItem" );
+
+	menuItem -optionBox 1 -ecr false
+		-annotation ( getRunTimeCommandAnnotation("UnitizeUVsOptions") )
+		-command "UnitizeUVsOptions"
+		( $prefix + "unitizeUVOptionItem" );
+		
+	menuItem -divider true;
+	
+	menuItem -label (uiRes("m_texturePanelMenus.kDistributeShells")) -ecr true
+		-version "2018"
+		-annotation ( getRunTimeCommandAnnotation("DistributeShells") )
+		-image "UVDistributeShells.png"
+		-command ( "DistributeShells" )
+		( $prefix + "DistributeShellsItem" );
+
+	menuItem -optionBox 1 -ecr false
+		-annotation ( getRunTimeCommandAnnotation("DistributeShellsOptions") )
+		-command ( "DistributeShellsOptions" )
+		( $prefix + "DistributeShellsOptionItem" );
+		
+	menuItem -label (uiRes("m_texturePanelMenus.kGatherShells")) -ecr true
+		-version "2018"
+		-annotation ( getRunTimeCommandAnnotation("UVGatherShells") )
+		-image "polyGatherShell.png"
+		-command ( "UVGatherShells" )
+		( $prefix + "GatherShellsItem" );
+		
+    menuItem -label (uiRes("m_texturePanelMenus.kLayoutUVs")) -ecr true
+        -annotation ( getRunTimeCommandAnnotation("LayoutUV") )
+		-version "2017"
+		-image "polyLayoutUV.png" 
+        -command ( "LayoutUV" )
+		( $prefix + "LayoutUVItem" );
+
+    menuItem -optionBox 1 -ecr false
+        -annotation ( getRunTimeCommandAnnotation("LayoutUVOptions") )
+        -command ( "LayoutUVOptions" )
+		( $prefix + "LayoutUVOptionItem" );
+		
+    menuItem -label (uiRes("m_texturePanelMenus.kLayoutAlong")) -ecr true
+		-version "2018"
+        -annotation ( getRunTimeCommandAnnotation("LayoutUVAlong") )
+		-image "polyLayoutUVDirectional.png" 
+        -command ( "LayoutUVAlong" )
+		( $prefix + "LayoutAlongItem" );
+
+    menuItem -optionBox 1 -ecr false
+        -annotation ( getRunTimeCommandAnnotation("LayoutUVAlongOptions") )
+        -command ( "LayoutUVAlongOptions" )
+		( $prefix + "LayoutAlongOptionsItem" );
+
+    menuItem -label (uiRes("m_texturePanelMenus.kOrientShells")) -ecr true
+		-version "2018"
+        -annotation ( getRunTimeCommandAnnotation("UVOrientShells") )
+		-image "polyOrientShell.png" 
+        -command ( "UVOrientShells" )
+		( $prefix + "OrientShellsItem" );
+		
+    menuItem -label (uiRes("m_texturePanelMenus.kOrientShellsToEdges")) -ecr true
+		-version "2018"
+        -annotation (uiRes("m_texturePanelMenus.kOrientShellsToEdgesAnnot"))
+		-image "polyOrientToEdge.png" 
+        -command ( "texOrientEdge" )
+		( $prefix + "OrientShellsToEdgeItem" );
+		
+    menuItem -label (uiRes("m_texturePanelMenus.kRandomizeShells")) -ecr true
+		-version "2018"
+        -annotation ( getRunTimeCommandAnnotation("RandomizeShells") )
+		-image "polyRandomizeShell.png" 
+        -command ( "RandomizeShells" )
+		( $prefix + "RandomizeShellsItem" );
+
+    menuItem -optionBox 1 -ecr false
+        -annotation ( getRunTimeCommandAnnotation("RandomizeShellsOptions") )
+        -command ( "RandomizeShellsOptions" )
+		( $prefix + "RandomizeShellsOptionsItem" );
+		
+    menuItem -label (uiRes("m_texturePanelMenus.kSnapStack")) -ecr true
+		-version "2018"
+        -annotation (uiRes("m_texturePanelMenus.kSnapStackAnnot"))
+		-image "polyUVSnapStackShells.png" 
+        -command ( "texSnapStackShells" )
+		( $prefix + "SnapStackItem" );
+		
+    menuItem -label (uiRes("m_texturePanelMenus.kSnapTogether")) -ecr true
+		-version "2018"
+        -annotation ( getRunTimeCommandAnnotation("UVSnapTogether") )
+		-image "polyUVSnapPoints.png" 
+        -command ( "UVSnapTogether" )
+		( $prefix + "SnapTogetherItem" );
+
+    menuItem -optionBox 1 -ecr false
+        -annotation ( getRunTimeCommandAnnotation("UVSnapTogetherOptions") )
+        -command ( "UVSnapTogetherOptions" )
+		( $prefix + "SnapTogetherOptionsItem" );
+		
+    menuItem -label (uiRes("m_texturePanelMenus.kStackShells")) -ecr true
+		-version "2018"
+        -annotation (uiRes("m_texturePanelMenus.kStackShellsAnnot"))
+		-image "polyStackShell.png" 
+        -command ( "texStackShells({})" )
+		( $prefix + "StackShellsItem" );
+		
+    menuItem -label (uiRes("m_texturePanelMenus.kStackOrientShells")) -ecr true
+		-version "2018"
+        -annotation (uiRes("m_texturePanelMenus.kStackOrientShellsAnnot"))
+		-image "polyStackOrient.png" 
+        -command ( "texStackShells({});UVOrientShells" )
+		( $prefix + "StackOrientShellsItem" );
+
+	menuItem -label (uiRes("m_texturePanelMenus.kStackSimilar")) -ecr true
+		-version "2018"
+        -annotation ( getRunTimeCommandAnnotation("UVStackSimilarShells") )
+		-image "polyStackSimilarShells.png"
+        -command ( "UVStackSimilarShells" )
+		( $prefix + "StackSimilarShellsItem" );
+
+	menuItem -optionBox 1 -ecr false
+        -annotation ( getRunTimeCommandAnnotation("UVStackSimilarShellsOptions") )
+        -command ( "UVStackSimilarShellsOptions" )
+		( $prefix + "StackSimilarShellsOptionsItem" );
+		
+    menuItem -label (uiRes("m_texturePanelMenus.kUnstackShells")) -ecr true
+		-version "2018"
+        -annotation ( getRunTimeCommandAnnotation("UVUnstackShells") )
+		-image "polyUnstackShell.png" 
+        -command ( "UVUnstackShells" )
+		( $prefix + "UnstackShellsItem" );
+		
+    menuItem -optionBox 1 -ecr false
+        -annotation ( getRunTimeCommandAnnotation("UVUnstackShellsOptions") )
+        -command ( "UVUnstackShellsOptions" )
+		( $prefix + "UnstackShellsOptionsItem" );
+		
+	menuItem -divider true;
+	
+	menuItem -label (uiRes("m_texturePanelMenus.kMapUVBorder")) -ecr true
+		-annotation ( getRunTimeCommandAnnotation("MapUVBorder") )
+		-image "polyMapUVBorder.png"
+		-command ( "MapUVBorder" )
+		( $prefix + "mapUVBorderItem" );
+
+	menuItem -optionBox 1 -ecr false
+		-annotation ( getRunTimeCommandAnnotation("MapUVBorderOptions") )
+		-image "polyMapUVBorder.png" 
+		-command ( "MapUVBorderOptions" )
+		( $prefix + "mapUVBorderOptionItem" );
+
+	menuItem -label (uiRes("m_texturePanelMenus.kOptimizeUVs")) -ecr true
+		-annotation ( getRunTimeCommandAnnotation("OptimzeUVs") )
+		-version "2015"
+		-image "polyOptimizeUV.png"
+		-command ( "OptimzeUVs" ) 
+		( $prefix + "optimzeUVsItem" );
+
+	menuItem -optionBox 1 -ecr false
+		-annotation ( getRunTimeCommandAnnotation("OptimzeUVsOptions") ) 
+		-image "polyOptimizeUV.png"
+		-command ( "OptimzeUVsOptions" )
+		( $prefix + "optimzeUVsOptionItem" );
+
+	menuItem -label (uiRes("m_texturePanelMenus.kStraightenUVBorder")) -ecr true
+		-annotation ( getRunTimeCommandAnnotation("StraightenUVBorder") )
+		-image "polyStraightenUVBorder.png"
+		-command ( "StraightenUVBorder" )
+		( $prefix + "straightenUVBorderItem" );
+
+	menuItem -optionBox 1 -ecr false
+		-annotation ( getRunTimeCommandAnnotation("StraightenUVBorderOptions") )
+		-command ( "StraightenUVBorderOptions" )
+		( $prefix + "straightenUVBorderOptionItem" );
+		
+	menuItem -label (uiRes("m_texturePanelMenus.kStraightenShell")) -ecr true
+		-version "2018"
+		-annotation (uiRes("m_texturePanelMenus.kStraightenShellAnnot"))
+		-image "polyStraightenUVShell.png"
+		-command ( "texStraightenShell" )
+		( $prefix + "straightenUVShellItem" );
+		
+	menuItem -label (uiRes("m_texturePanelMenus.kStraightenUVs")) -ecr true
+		-version "2018"
+		-annotation ( getRunTimeCommandAnnotation("UVStraighten") )
+		-image "polyStraightenUV.png"
+		-command ( "UVStraighten" )
+		( $prefix + "straightenUVsItem" );
+
+	menuItem -optionBox 1 -ecr false
+		-annotation ( getRunTimeCommandAnnotation("UVStraightenOptions") )
+		-command ( "UVStraightenOptions" )
+		( $prefix + "straightenUVsOptionsItem" );
+		
+	menuItem -label (uiRes("m_texturePanelMenus.kUnfoldUVs")) -ecr true
+		-version "2015"
+		-annotation ( getRunTimeCommandAnnotation("UnfoldUV") )
+		-image "polyUnfoldUV.png"
+		-dragMenuCommand "performUnfold 2"
+		-command ( "UnfoldUV" ) 
+		( $prefix + "unfoldUVItem" );
+
+	menuItem -optionBox true -ecr false
+		-annotation ( getRunTimeCommandAnnotation("UnfoldUVOptions") )
+		-image "polyUnfoldUV.png"
+		-command ( "UnfoldUVOptions" ) 
+		( $prefix + "unfoldUVOptionItem" );
+
+	menuItem -divider true;
+	
+	menuItem -label (uiRes("m_texturePanelMenus.kWarpImage")) -ecr true
+		-annotation  ( getRunTimeCommandAnnotation("WarpImage") )
+		-echoCommand true
+		-image "polyWarpImage.png"
+		-command ( "WarpImage" )
+		( $prefix + "layoutWarpImageItem" );
+
+	menuItem -optionBox true -ecr false
+		-annotation ( getRunTimeCommandAnnotation("WarpImageOptions") )
+		-command ( "WarpImageOptions" )
+		-image "polyWarpImage.png"
+		( $prefix + "layoutWarpImageOptionItem" );	
+
+    setParent -m ..;
+}
+
+global proc textureWindowBuildToolsMenu( string $parent, string $editor, 
+									     string $editorCmd, int $menuBar )
+//
+// Description:
+//		Tools menu
+// Arguments:
+//
+// Returns:
+//
+//
+{
+	global string $gTextureEditorMenubarPrefix;
+
+	setParent -m $parent;
+
+	// Clear out this menu first
+	menu -edit -deleteAllItems $parent;
+	menu -edit -scrollable 1 $parent; 
+	setParent -menu $parent; 
+	
+	
+	// Add a prefix to have a different name in the menuBar from the popup menu
+	string $prefix="";
+	if ($menuBar == 1) {
+		$prefix = ($gTextureEditorMenubarPrefix + $editor);
+	} 
+	else {
+		$prefix = $editor;
+	}
+	
+	// callback for updating the state of all editor controls
+	//
+	string $updateEditor = ( "txtWndUpdateEditor(\"" + $editor + "\", \"" +
+							 $editorCmd + "\", \"null\", 101);" );
+
+	string $Label1 = (uiRes("m_texturePanelMenus.kHideUVToolkit"));
+	string $Label2 = (uiRes("m_texturePanelMenus.kShowUVToolkit"));
+	menuItem -label (isUVToolkitReady()?$Label1:$Label2)
+			 -version "2018"
+	         -image "UVtoolKit.png"
+			 -annotation (uiRes("m_texturePanelMenus.kToggleUVToolkitAnnot"))
+			 -command ( "toggleUVToolkit" )
+			( $prefix + "ToggleUVToolkit" );				 
+	
+	////////////////////////////////////////////////////////////////
+	menuItem -divider true;
+	
+	menuItem -label (uiRes("m_texturePanelMenus.kSelectUVTool"))
+			 -annotation (getRunTimeCommandAnnotation("SelectUVTool"))
+			 -command ( "SelectUVTool" )
+			( $prefix + "SelectUVTool" );
+
+	menuItem -label (uiRes("m_texturePanelMenus.kSelectUVToolOption"))
+			 -optionBox true
+			 -command ( "SelectTool; " +
+                        "toolPropertyWindow; " +
+						$updateEditor )
+			( $prefix + "SelectUVToolOption" );
+
+	menuItem -label (uiRes("m_texturePanelMenus.kMoveUVTool"))
+			 -annotation (getRunTimeCommandAnnotation("MoveUVTool"))
+			 -command ( "MoveUVTool" )
+			( $prefix + "MoveUVTool" );
+
+	menuItem -label (uiRes("m_texturePanelMenus.kMoveUVToolOption"))
+			 -optionBox true
+			 -command ( "MoveTool; " +
+                        "toolPropertyWindow; " +
+						$updateEditor )
+			( $prefix + "MoveUVToolOption" );
+
+	menuItem -label (uiRes("m_texturePanelMenus.kRotateTool"))
+			 -annotation (getRunTimeCommandAnnotation("RotateUVTool"))
+			 -command ( "RotateUVTool" )
+			( $prefix + "RotateUVTool" );
+
+	menuItem -label (uiRes("m_texturePanelMenus.kRotateToolOption"))
+			 -optionBox true
+			 -command ( "RotateTool; " +
+                        "toolPropertyWindow; " +
+						$updateEditor )
+			( $prefix + "RotateUVToolOption" );
+
+	menuItem -label (uiRes("m_texturePanelMenus.kScaleTool"))
+			 -annotation (getRunTimeCommandAnnotation("ScaleUVTool"))
+			 -command ( "ScaleUVTool")
+			( $prefix + "ScaleUVTool" );
+
+	menuItem -label (uiRes("m_texturePanelMenus.kScaleToolOption"))
+			 -optionBox true
+			 -command ( "ScaleTool; " +
+                        "toolPropertyWindow;" +
+						$updateEditor )
+			( $prefix + "ScaleUVToolOption" );
+
+	////////////////////////////////////////////////////////////////
+	menuItem -divider true;
+
+	menuItem -label (uiRes("m_texturePanelMenus.kUVLatticeTool"))
+			 -annotation (getRunTimeCommandAnnotation("LatticeUVTool"))
+			 -image "UVLatticeTool.png"
+			 -command ( "LatticeUVTool;" +
+						$updateEditor )
+			 ( $prefix + "LatticeTool" );
+
+	menuItem -label (uiRes("m_texturePanelMenus.kUVLatticeToolOption"))
+	         -optionBox true
+			 -command ( "LatticeUVToolOptions;" +
+						$updateEditor )
+			 ( $prefix + "LatticeToolOption" );
+
+	menuItem -label (uiRes("m_texturePanelMenus.kMoveUVShellTool"))
+			 -annotation (uiRes("m_texturePanelMenus.kMoveUVShellToolAnnot"))
+			 -image "moveUVShell.png"
+			 -command ( "setToolTo texMoveUVShellSuperContext; " +
+						$updateEditor )
+			 ( $prefix + "ShellTool" );
+
+	menuItem -label (uiRes("m_texturePanelMenus.kMoveUVShellToolOption"))
+			 -optionBox true
+			 -command ( "setToolTo texMoveUVShellSuperContext; " +
+			            "toolPropertyWindow;" +
+						$updateEditor )
+			 ( $prefix + "ShellToolOption" );
+
+	menuItem -label (uiRes("m_texturePanelMenus.kSmoothUVTool"))
+			 -annotation (uiRes("m_texturePanelMenus.kSmoothUVToolAnnot")) 
+			 -image "texSmooth.png"
+			 -command ( "setToolTo texSmoothSuperContext; " +
+						$updateEditor )
+			 ( $prefix + "SmoothTool" );
+
+	menuItem -label (uiRes("m_texturePanelMenus.kSmoothUVToolOption"))
+			 -optionBox true
+			 -command ( "setToolTo texSmoothSuperContext; " +
+			            "toolPropertyWindow;" +
+						$updateEditor )
+			 ( $prefix + "SmoothToolOption" );
+
+	menuItem -label (uiRes("m_texturePanelMenus.kUVSmudgeTool")) 
+			 -annotation (uiRes("m_texturePanelMenus.kUVSmudgeToolAnnot")) 
+			 -image "textureEditorSmudgeUV.png"
+			 -command ( "setToolTo texSmudgeUVSuperContext; " +
+						$updateEditor )
+			 ( $prefix + "SmudgeTool" );
+
+	menuItem -label (uiRes("m_texturePanelMenus.kUVSmudgeToolOption"))
+	         -optionBox true
+			 -command ( "setToolTo texSmudgeUVSuperContext; " +
+			            "toolPropertyWindow;" +
+						$updateEditor )
+			 ( $prefix + "SmudgeToolOption" );
+
+	menuItem -label (uiRes("m_texturePanelMenus.kTweakUVTool")) 
+			 -annotation (uiRes("m_texturePanelMenus.kTweakUVToolAnnot"))
+			 -image "tweakUV.png"
+			 -version "2015"
+			 -command ( "setToolTo texTweakSuperContext; " +
+						$updateEditor )
+			 ( $prefix + "TweakUVTool" );
+
+	menuItem -label (uiRes("m_texturePanelMenus.kTweakUVToolOption"))
+			 -optionBox true
+			 -command ( "setToolTo texTweakSuperContext; " +
+			            "toolPropertyWindow;" +
+						$updateEditor )
+			 ( $prefix + "TweakUVToolOption" );
+
+	////////////////////////////////////////////////////////////////
+	menuItem -divider true -dividerLabel (uiRes("m_texturePanelMenus.kBrushes"));
+
+	if ( `pluginInfo -q -loaded Unfold3D` )
+	{
+		menuItem -label (uiRes("m_texturePanelMenus.kOptimizeUVTool"))
+				 -annotation (uiRes("m_texturePanelMenus.kOptimizeUVToolAnnot")) 
+				 -image "optimizeUVTool.png"
+				 -version "2016"
+				 -command ( "Unfold3DContext -e -optimize -i1 \"UV_Optimize_BrushLarge.png\" texUnfoldUVContext; " +
+							"setToolTo texUnfoldUVContext; " +
+							 $updateEditor )
+				( $prefix + "OptimizeUVTool" );
+
+		menuItem -label (uiRes("m_texturePanelMenus.kOptimizeUVToolOption"))
+				 -optionBox true
+				 -command ( "Unfold3DContext -e -optimize -i1 \"UV_Optimize_BrushLarge.png\" texUnfoldUVContext;" +
+							"setToolTo texUnfoldUVContext;" +
+							"toolPropertyWindow;" +
+							 $updateEditor )
+				( $prefix + "OptimizeUVToolOption" );
+
+		menuItem -label (uiRes("m_texturePanelMenus.kUnfoldUVTool"))
+				 -annotation (uiRes("m_texturePanelMenus.kUnfoldUVToolAnnot")) 
+				 -image "unfoldUVTool.png"
+				 -version "2016"
+				 -command ( "Unfold3DContext -e -unfold -i1 \"UV_Unfold_BrushLarge.png\" texUnfoldUVContext; " +
+							"setToolTo texUnfoldUVContext; " +
+							$updateEditor )
+				( $prefix + "UnfoldUVTool" );
+
+		menuItem -label (uiRes("m_texturePanelMenus.kUnfoldUVToolOption"))
+				 -optionBox true
+				 -command ( "Unfold3DContext -e -unfold -i1 \"UV_Unfold_BrushLarge.png\" texUnfoldUVContext;" +
+							"setToolTo texUnfoldUVContext;" +
+							"toolPropertyWindow;" +
+							$updateEditor)
+				( $prefix + "UnfoldUVToolOption" );
+	}
+
+	////////////////////////////////////////////////////////////////
+	menuItem -divider true;
+
+	menuItem -label (uiRes("m_texturePanelMenus.kCutUVTool"))
+			 -annotation (uiRes("m_texturePanelMenus.kCutUVToolAnnot")) 
+			 -image "cutUVTool.png"
+			 -version "2016"
+			 -command ( "setToolTo texCutUVContext; " +
+						"texCutContext -edit -mode Cut -i1 \"UV_Cut_ToolLarge.png\" texCutUVContext; " + 
+                        $updateEditor )
+			( $prefix + "CutUVTool" );
+
+	menuItem -label (uiRes("m_texturePanelMenus.kCutUVToolOption"))
+			 -optionBox true
+			 -command ( "setToolTo texCutUVContext;" +
+						"texCutContext -edit -mode Cut -i1 \"UV_Cut_ToolLarge.png\" texCutUVContext; " + 
+                        "toolPropertyWindow;" +
+						$updateEditor)
+			( $prefix + "CutUVToolOption" );
+    
+	menuItem -label (uiRes("m_texturePanelMenus.kGrabUVTool"))
+			 -annotation (uiRes("m_texturePanelMenus.kGrabUVToolAnnot")) 
+			 -image "grabUVTool.png"
+			 -version "2016"
+			 -command ( "texSculptCacheContext -e -m Grab -i1 \"UV_Grab_BrushLarge.png\" texSculptCacheContextObj; " + 
+                        "setToolTo texSculptCacheContextObj; " +
+						$updateEditor )
+			( $prefix + "GrabUVTool" );
+
+	menuItem -label (uiRes("m_texturePanelMenus.kGrabUVToolOption"))
+			 -optionBox true
+			 -command ( "texSculptCacheContext -e -m Grab -i1 \"UV_Grab_BrushLarge.png\" texSculptCacheContextObj; " + 
+                        "setToolTo texSculptCacheContextObj; " +
+						"toolPropertyWindow; " +
+						$updateEditor )
+			( $prefix + "GrabUVToolOption" );
+
+	menuItem -label (uiRes("m_texturePanelMenus.kPinUVTool"))
+			 -annotation (uiRes("m_texturePanelMenus.kPinUVToolAnnot")) 
+			 -image "pinUVTool.png"
+			 -version "2016"
+			 -command ( "texSculptCacheContext -e -m Freeze -i1 \"UV_Freeze_ToolLarge.png\" texSculptCacheContextObj; " + 
+                        "setToolTo texSculptCacheContextObj; " +
+						$updateEditor )
+			( $prefix + "PinUVTool" );
+
+	menuItem -label (uiRes("m_texturePanelMenus.kPinUVToolOption"))
+			 -optionBox true
+			 -command ( "texSculptCacheContext -e -m Freeze -i1 \"UV_Freeze_ToolLarge.png\" texSculptCacheContextObj; " + 
+                        "setToolTo texSculptCacheContextObj; " +
+						"toolPropertyWindow; " +
+						$updateEditor )
+			( $prefix + "PinUVToolOption" );
+
+	menuItem -label (uiRes("m_texturePanelMenus.kPinchUVTool"))
+			 -annotation (uiRes("m_texturePanelMenus.kPinchUVToolAnnot")) 
+			 -image "pinchUVTool.png"
+			 -version "2016"
+			 -command ( "texSculptCacheContext -e -m Pinch -i1 \"UV_Pinch_ToolLarge.png\" texSculptCacheContextObj; " + 
+                        "setToolTo texSculptCacheContextObj; " +
+						$updateEditor )
+			( $prefix + "PinchUVTool" );
+
+	menuItem -label (uiRes("m_texturePanelMenus.kPinchUVToolOption"))
+			 -optionBox true
+			 -command ( "texSculptCacheContext -e -m Pinch -i1 \"UV_Pinch_ToolLarge.png\" texSculptCacheContextObj; " + 
+                        "setToolTo texSculptCacheContextObj; " +
+						"toolPropertyWindow; " +
+						$updateEditor )
+			( $prefix + "PinchUVToolOption" );
+
+    menuItem -label (uiRes("m_texturePanelMenus.kSewUVTool"))
+			 -annotation (uiRes("m_texturePanelMenus.kSewUVToolAnnot")) 
+			 -image "sewUVTool.png"
+			 -version "2016"
+			 -command ( "setToolTo texCutUVContext; " +
+						"texCutContext -edit -mode Sew -i1 \"UV_Sew_ToolLarge.png\" texCutUVContext; " + 
+                        $updateEditor )
+			( $prefix + "SewUVTool" );
+            
+	menuItem -label (uiRes("m_texturePanelMenus.kSewUVToolOption"))
+			 -optionBox true
+			 -command ( "setToolTo texCutUVContext; " +
+						"texCutContext -edit -mode Sew -i1 \"UV_Sew_ToolLarge.png\" texCutUVContext; " + 
+                        "toolPropertyWindow; " +
+						$updateEditor )
+			( $prefix + "SewUVToolOption" );
+            
+	menuItem -label (uiRes("m_texturePanelMenus.kSmearUVTool"))
+			 -annotation (uiRes("m_texturePanelMenus.kSmearUVToolAnnot")) 
+			 -image "smearUVTool.png"
+			 -version "2016"
+			 -command ( "texSculptCacheContext -e -m Smear -i1 \"UV_Smear_ToolLarge.png\" texSculptCacheContextObj; " + 
+                        "setToolTo texSculptCacheContextObj; " +
+						$updateEditor )
+			( $prefix + "SmearUVTool" );
+
+	menuItem -label (uiRes("m_texturePanelMenus.kSmearUVToolOption"))
+			 -optionBox true
+			 -command ( "texSculptCacheContext -e -m Smear -i1 \"UV_Smear_ToolLarge.png\" texSculptCacheContextObj; " + 
+                        "setToolTo texSculptCacheContextObj; " +
+						"toolPropertyWindow; " +
+						$updateEditor )
+			( $prefix + "SmearUVToolOption" ); 
+
+	menuItem -label (uiRes("m_texturePanelMenus.kSymmetrizeUVTool"))
+			 -version "2017"
+			 -annotation (uiRes("m_texturePanelMenus.kSymmetrizeUVToolAnnot"))
+			 -image "symmetrizeUVTool.png"
+			 -command ( "SymmetrizeUVContext -e -i1 \"UVSymmetrizeTool.png\" texSymmetrizeUVContext; " +
+					    "setToolTo texSymmetrizeUVContext; " + $updateEditor)
+			( $prefix + "SymmetrizeUVTool" );
+
+	menuItem -label (uiRes("m_texturePanelMenus.kSymmetrizeUVToolOption"))
+			 -optionBox true
+			 -command ( "SymmetrizeUVContext -e -i1 \"UVSymmetrizeTool.png\" texSymmetrizeUVContext; " +
+					    "setToolTo texSymmetrizeUVContext;" + "toolPropertyWindow; " +
+					    $updateEditor )
+			( $prefix + "SymmetrizeUVToolOption" );
+
+    setParent -m ..;
+}
+
+global proc textureWindowBuildViewMenu( string $parent, string $editor, 
+									    string $editorCmd, int $menuBar )
+//
+// Description:
+//		View menu
+// Arguments:
+//
+// Returns:
+//
+//
+{
+	global string $gTextureEditorMenubarPrefix;
+
+	setParent -m $parent;
+
+	// Add a prefix to have a different name in the menuBar from the popup menu
+	string $prefix="";
+	if ($menuBar == 1) {
+		$prefix = ($gTextureEditorMenubarPrefix + $editor);
+	} 
+	else {
+		$prefix = $editor;
+	} 
+
+	string $updateEditor = ( "txtWndUpdateEditor(\"" + $editor + "\", \"" +
+							 $editorCmd + "\", \"null\", 101);" );
+
+	////////////////////////////////////////////////////////////////
+	menuItem -divider true -dividerLabel (uiRes("m_texturePanelMenus.kDisplayMode"));
+
+	radioMenuItemCollection;
+	menuItem -label (uiRes("m_texturePanelMenus.kWireFrame"))
+			 -annotation (getRunTimeCommandAnnotation("DisplayUVWireframe"))
+			 -radioButton 1
+			 -command ( "DisplayUVWireframe" )
+			( $prefix + "Wireframe" );
+
+	menuItem 
+			-optionBox true
+			-command ( "performUVWireframeOptions true" )
+			( $prefix + "WireframeOptions" );
+
+	menuItem -label (uiRes("m_texturePanelMenus.kShadeUVs"))
+			 -annotation (getRunTimeCommandAnnotation("DisplayUVShaded"))
+			 -radioButton 0
+			 -command ( "DisplayUVShaded" )
+			( $prefix + "ShadedUV" );
+		
+	menuItem 
+			-optionBox true
+			-command ( "performOverlayUVOptions true" )
+			( $prefix + "ShadedUVOptions" );
+
+	scriptJob -parent $editor
+		-event "texWindowEditorDisplaySolidMapChanged" ( $updateEditor );
+	
+	menuItem -divider true;
+
+	menuItem -label (uiRes("m_texturePanelMenus.kUVDistortion"))
+			 -annotation (getRunTimeCommandAnnotation("ToggleUVDistortion"))
+			 -checkBox 1
+			 -command ( "ToggleUVDistortion" )
+			( $prefix + "UVDistortion" );
+		
+	menuItem 
+			 -optionBox true
+			 -command "performUVDistortionOptions true"
+			( $prefix + "UVDistortionOptions" );
+
+	menuItem -divider true;
+
+	menuItem -label (uiRes("m_texturePanelMenus.kToggleTextureShellBorders"))
+			 -annotation (getRunTimeCommandAnnotation("ToggleUVShellBorder"))
+			 -version "2015"
+			 -command ( "ToggleUVShellBorder" )
+			 ( $prefix + "toggleShellBorder" );
+
+	menuItem -label (uiRes("m_texturePanelMenus.kToggleTextureBorders"))
+			 -annotation (getRunTimeCommandAnnotation("UVEditorToggleTextureBorderDisplay"))
+			 -checkBox `textureWindowIsTextureBorderDisplay $editor`
+			 -command ( "UVEditorToggleTextureBorderDisplay" )
+			 ( $prefix + "toggleTextureBorder" );
+			  
+	menuItem 
+			 -optionBox true
+			 -command ( "performTextureViewTextureBordersOptions 1" )
+			 ( $prefix + "TextureBordersOption" ); 
+		
+	menuItem -divider true ;
+
+	// Grid display menu item + option box
+	//
+	// textureWindow -e -tgl 1/0 $panelname;
+    
+	string $gridPath;
+	menuItem -label (uiRes("m_texturePanelMenus.kGrid"))
+			 -annotation (uiRes("m_texturePanelMenus.kShowGridAnnot")) 
+			 -checkBox 0 
+			 -command ( "textureWindowToggleGrid (\"" + 
+						$editor+ "\",\""  +
+						$editorCmd + "\" ); " +
+						$updateEditor )
+			 ( $prefix + "toggleGrid" );
+
+	menuItem -ecr false
+			 -optionBox 1
+			 -annotation (uiRes("m_texturePanelMenus.kGridOptionsAnnot")) 
+			 -command "performTextureViewGridOptions true"
+			 ( $prefix + "toggleGridOptions" );
+
+	menuItem -label (uiRes("m_texturePanelMenus.kToolbar"))  
+			 -ecr false
+			 -checkBox (!`optionVar -q textureEditorToolbarState`)
+			 -annotation (uiRes("m_texturePanelMenus.kToolbarAnnot")) 
+			 //note that the optionVar stores the collapse state of the 
+			 //frameLayout which is opposite to most controls - false 
+			 //means the frameLayout is not collapsed so the ! operator
+			 //is used
+			 -command ( "textureWindowToggleToolbar; " + $updateEditor )
+			 ( $prefix + "toggleToolbar" );
+			 
+	menuItem -label (uiRes("m_texturePanelMenus.kCustomShelf"))
+             -version "2018"	
+			 -ecr false
+			 -checkBox (!`optionVar -q textureEditorCustomShelfState`)
+			 -annotation (uiRes("m_texturePanelMenus.kCustomShelfAnnot")) 
+			 -command ( "textureWindowToggleCustomShelf; " + $updateEditor )
+			 ( $prefix + "toggleCustomShelf" );
+
+	int $currentStateStatisticsHUD = textureWindowUVEditorDisplayUVStatisticsHUD(0,0);
+	int $currentStateIsolateSelectionHUD = textureWindowUVEditorIsolateSelectHUD(0,0);
+	int $currentStateUVPositionHUD = textureWindowUVEditorUVPositionHUD(0,0);
+
+	menuItem -label (uiRes("m_texturePanelMenus.kHeadsUpDisplay"))
+	         -version "2018"
+			 -subMenu true
+			 -tearOff true
+			 ( $prefix + "HeadsUpDisplayItem" );
+		menuItem -label (uiRes("m_texturePanelMenus.kIsolateSelectHUD"))
+				 -annotation ( getRunTimeCommandAnnotation("ToggleUVEditorIsolateSelectHUD") )
+				 -checkBox $currentStateIsolateSelectionHUD
+				 -command "ToggleUVEditorIsolateSelectHUD"
+				 ( $prefix + "isolateSelectHUDItem" );
+
+		menuItem -label (uiRes("m_texturePanelMenus.kUVPositionHUD"))
+				 -annotation ( getRunTimeCommandAnnotation("ToggleUVEditorUVPositionHUD") )
+				 -version "2022"
+				 -checkBox $currentStateUVPositionHUD
+				 -command "ToggleUVEditorUVPositionHUD"
+				 ( $prefix + "UVPositionHUDItem" );
+
+		menuItem -label (uiRes("m_texturePanelMenus.kUVStatisticsHUD"))
+				 -annotation ( getRunTimeCommandAnnotation("ToggleUVEditorUVStatisticsHUD") )
+				 -checkBox $currentStateStatisticsHUD
+				 -command "ToggleUVEditorUVStatisticsHUD"
+				 ( $prefix + "UVStatisticsHUDItem" );
+		menuItem -label (uiRes("m_texturePanelMenus.kUVStatisticsHUDOption"))
+				 -optionBox true
+				 -command "ToggleUVEditorUVStatisticsHUDOptions" 
+				( $prefix + "UVStatisticsHUDOption" );
+				 
+		setParent -m $parent;
+
+	menuItem -divider true ;
+
+	optionVar -init false -category "UV Editor" -iv textureWindowShaderFacesMode 0;
+		//0 off
+		//1 view shaders
+		//2 view isolate
+
+	menuItem -label (uiRes("m_texturePanelMenus.kIsolateSelect"))  
+			 -subMenu true
+			 -tearOff true
+			 ( $prefix + "isolateFacesItem" );
+
+		menuItem -label (uiRes("m_texturePanelMenus.kViewSelected"))
+				-annotation(getRunTimeCommandAnnotation("ToggleViewSelected"))
+				-checkBox 0
+				-command("ToggleUVIsolateViewSelected")
+				($prefix + "isolateViewSelected");
+
+		menuItem -label (uiRes("m_texturePanelMenus.kLoadSet"))
+				 -annotation ( getRunTimeCommandAnnotation("UVIsolateLoadSet") )
+				 -command ( "UVIsolateLoadSet" )
+				 ( $prefix + "isolateViewItem" );
+
+		menuItem -label (uiRes("m_texturePanelMenus.kAddSelected")) 
+				 -command ( "textureEditorIsolateSelect 1; ")
+				 -annotation (uiRes("m_texturePanelMenus.kAddSelectedAnnot")) 
+				 ( $prefix + "isolateAddItem" );
+
+		menuItem -label (uiRes("m_texturePanelMenus.kRemoveSelected")) 
+				 -command ( "textureEditorIsolateSelect 2; ")
+				 -annotation (uiRes("m_texturePanelMenus.kRemoveSelectedAnnot")) 
+				 ( $prefix + "isolateRemoveItem" );
+
+		menuItem -label (uiRes("m_texturePanelMenus.kRemoveAll")) 
+				 -command ( "textureEditorIsolateSelect 0;" )
+				 -annotation (uiRes("m_texturePanelMenus.kRemoveAllannot"))
+				 ( $prefix + "isolateResetItem" );
+
+		setParent -m $parent;
+
+	menuItem -divider true ;
+
+	// Frame options
+	menuItem -label (uiRes("m_texturePanelMenus.kFrameAll"))
+			 -annotation ( getRunTimeCommandAnnotation("UVEditorFrameAll") )
+			 -command ( "UVEditorFrameAll" )
+			 ( $prefix + "frameAllItem" );
+
+	menuItem -label (uiRes("m_texturePanelMenus.kFrameSelection"))
+			 -annotation ( getRunTimeCommandAnnotation("UVFrameSelected") )
+			 -command ( "UVEditorFrameSelected" )
+			 ( $prefix + "frameSelectedItem" );
+
+	menuItem -divider true ;
+	menuItem -label (uiRes("m_texturePanelMenus.kUndoViewChange"))
+			 -version "2018"
+			 -annotation ( getRunTimeCommandAnnotation("UndoViewChange") )
+			 -command ( "UndoViewChange" )
+			 ( $prefix + "undoViewChange" );
+	menuItem -label (uiRes("m_texturePanelMenus.kRedoViewChange"))
+			 -version "2018"
+			 -annotation ( getRunTimeCommandAnnotation("RedoViewChange") )
+			 -command ( "RedoViewChange" )
+			 ( $prefix + "redoViewChange" );
+	
+	//menuItem -l "Real Size"
+	//		 -c ($editorCmd+" -e -realSize "+$editor)
+	//		 ($prefix+"realSizeItem");
+
+    setParent -m ..;
+}
+
+global proc textureWindowBuildImageMenu( string $parent, string $editor, 
+										 string $editorCmd, int $menuBar )
+//
+// Description:
+//		Image menu
+// Arguments:
+//
+// Returns:
+//
+//
+{
+	global string $gTextureEditorMenubarPrefix;
+
+	setParent -m $parent;
+
+	// Add a prefix to have a different name in the menuBar from the popup menu
+	string $prefix="";
+	if ($menuBar == 1) {
+		$prefix = ($gTextureEditorMenubarPrefix + $editor);
+	} 
+	else {
+		$prefix = $editor;
+	}
+
+	// callback for updating the state of all editor controls
+	//
+	string $updateEditor = ( "txtWndUpdateEditor(\"" + $editor + "\", \"" +
+							 $editorCmd + "\", \"null\", 101);" );
+
+	int $imageTextureDisplayCurrentState = textureWindowTextureImage(0,0);
+	////////////////////////////////////////////////////////////////
+	menuItem -label (uiRes("m_texturePanelMenus.kDisplayImage"))
+			 -annotation (getRunTimeCommandAnnotation("ToggleUVTextureImage"))
+			 -checkBox $imageTextureDisplayCurrentState
+			 -command ( "ToggleUVTextureImage" )
+			 ( $prefix + "ImageDisplay" );
+
+	////////////////////////////////////////////////////////////////
+	menuItem -divider true;
+
+	menuItem -label (uiRes("m_texturePanelMenus.kDimImage"))
+			 -annotation (uiRes("m_texturePanelMenus.kDimImageAnnot"))
+			 -checkBox 1
+			 -command ( "textureWindowToggleImageDimming (\"" + 
+						$editor+ "\",\"" + 
+						$editorCmd+ "\"); performTextureViewDimImageOptions 0; " +
+						$updateEditor )
+			 ( $prefix + "DimImage" );
+	
+	menuItem 
+			 -optionBox true
+			 -command ( "performTextureViewDimImageOptions 1" )
+			 ( $prefix + "DimImageOption" );
+
+	menuItem -label (uiRes("m_texturePanelMenus.kDisplayUnfiltered"))
+			 -annotation (uiRes("m_texturePanelMenus.kDisplayUnfilteredAnnot"))
+			 -checkBox 0
+			 -command ( "textureWindowToggleUnfiltered (\"" + 
+						$editor + "\",\"" + 
+						$editorCmd + "\" ); " +
+						$updateEditor )
+			 ( $prefix + "ImageUnfiltered" );
+
+	menuItem -divider true -dividerLabel (uiRes("m_texturePanelMenus.kChannels"));
+
+	radioMenuItemCollection;
+	menuItem -label (uiRes("m_texturePanelMenus.kDisplayRGBChannels"))
+			 -annotation (uiRes("m_texturePanelMenus.kDisplayRGBChannelsAnnot"))
+			 -radioButton 0
+			 -command ( "textureWindowColorChannel(1,\"color\"); setChannelButtonImage(\"\");")
+			 ( $prefix + "ImageRGB" );
+
+	menuItem -label (uiRes("m_texturePanelMenus.kDisplayRGBAChannels"))
+			 -annotation (uiRes("m_texturePanelMenus.kDisplayRGBAChannelsAnnot"))
+			 -radioButton 1
+			 -command ( "textureWindowColorChannel(1,\"colorWithMask\"); setChannelButtonImage(\"\");")
+			 ( $prefix + "ImageRGBA" );
+
+	menuItem -label (uiRes("m_texturePanelMenus.kDisplayAlphaChannel"))
+			 -annotation (uiRes("m_texturePanelMenus.kDisplayAlphaChannelAnnot"))
+			 -radioButton 0
+			 -command ( "textureWindowColorChannel(1,\"mask\"); setChannelButtonImage(\"\");")
+			 ( $prefix + "ImageAlpha" );
+
+	////////////////////////////////////////////////////////////////
+	menuItem -divider true;
+		
+	menuItem -label (uiRes("m_texturePanelMenus.kImageRange"))
+			 -annotation (uiRes("m_texturePanelMenus.kImageRangeAnnot"))
+			 -command ( "performTextureViewImageRangeOptions 0" )
+			 ( $prefix + "ImageRange" );
+
+	menuItem 
+			 -optionBox true
+			 -command ( "performTextureViewImageRangeOptions 1" )
+			 ( $prefix + "ImageRangeOption" );
+
+	menuItem -divider true;
+
+	menuItem -label (uiRes("m_texturePanelMenus.kUseImageRatio"))
+			 -annotation (uiRes("m_texturePanelMenus.kUseImageRatioAnnot"))
+			 -checkBox 0
+			 -command ("textureWindowToggleRatio (\"" + 
+						$editor + "\",\"" +
+						$editorCmd + "\"); " +
+						$updateEditor )
+			( $prefix + "ImageRatio" );
+
+	menuItem -label (uiRes("m_texturePanelMenus.kPixelSnap"))
+			 -annotation (uiRes("m_texturePanelMenus.kPixelSnapAnnot"))
+			 -checkBox 0
+			 -command ( "SnapToPixel; " + $updateEditor )
+			( $prefix + "ImageSnap" );
+		
+	menuItem 
+			-optionBox true
+			-command ( "performPixelSnapOptions true" )
+			( $prefix + "PixelSnapOptions" );
+
+	menuItem -label (uiRes("m_texturePanelMenus.kUVEditorBaking"))
+			 -annotation (uiRes("m_texturePanelMenus.kUVTextureEditorBakingAnnot")) 
+			 -checkBox 1
+			 -command ( "textureWindowToggleEditorImage (\"" + 
+						$editor+ "\");" +
+						$updateEditor)
+			 ( $prefix + "BakeTexture" );
+
+	menuItem 
+			 -optionBox true
+			 -command "performTextureViewBakeTextureOptions true"
+			 ( $prefix + "BakeTextureOptions" );
+
+	////////////////////////////////////////////////////////////////
+	menuItem -divider true;
+	
+	menuItem -label (uiRes("m_texturePanelMenus.kMeasurePixelDistance"))
+			 -image "polyMeasureUV.png"
+			 -version "2018"
+			 -annotation (uiRes("m_texturePanelMenus.kMeasurePixelDistanceAnnot")) 
+			 -command ( "texCalculatePixelDistance" )
+			 ( $prefix + "MeasurePixelDistance" );
+
+	////////////////////////////////////////////////////////////////
+	menuItem -divider true;
+
+
+	menuItem -label (uiRes("m_texturePanelMenus.kCreatePSDNetwork"))
+			 -annotation (uiRes("m_texturePanelMenus.kCreatePSDNetworkAnnot"))
+			 -command ( "photoShopPaintTex" )
+			 ( $prefix + "textureViewCreatePSDTextures" );
+		
+	menuItem -label (uiRes("m_texturePanelMenus.kUpdatePSDNetworks"))
+			 -annotation (uiRes("m_texturePanelMenus.kUpdatePSDNetworkAnnot"))
+			 -command ( "psdUpdateTextures" )
+			 ( $prefix + "textureViewUpdatePSDTextures" ) ;
+
+		
+	menuItem -label (uiRes("m_texturePanelMenus.kUVSnapshot")) 
+			 -annotation (getRunTimeCommandAnnotation("UVCreateSnapshot"))
+			 -image "UVEditorSnapshot.png"
+			 -command ( "UVCreateSnapshot" )
+			 ( $prefix + "uvSnapShot" ) ;
+
+	setParent -menu ..;
+}
+
+global string $gTexturesMenuItems[];
+
+global proc textureWindowUpdateTextures(string $parent, string $editor, string $editorCmd, int $menuBar)
+{
+	global string $gTextureEditorMenubarPrefix;
+	
+	// Add a prefix to have a different name in the menuBar from the popup menu
+	string $prefix="";
+	if($menuBar == 1) {
+		$prefix = ($gTextureEditorMenubarPrefix + $editor);
+	} 
+	else {
+		$prefix = $editor;
+	}
+	
+	if( !`menu -q -exists $parent` )
+		return;
+
+	setParent -menu $parent;
+	
+	// callback for updating the state of all editor controls
+	//
+	string $updateEditor = ( "txtWndUpdateEditor(\"" + $editor + "\", \"" +
+							 $editorCmd + "\", \"null\", 101);" );
+							 
+	global string $gTexturesMenuItems[];
+	int $i;
+	if ($menuBar == 1)
+	{
+		for($i = 0; $i < size($gTexturesMenuItems); $i++)
+		{
+			if( `menuItem -q -exists $gTexturesMenuItems[$i]` )
+				deleteUI -menuItem $gTexturesMenuItems[$i];
+		}
+		clear $gTexturesMenuItems;
+	}
+	
+	// Build 1 menu item for each image
+	// currently cached.
+	int $numImages 		= `textureWindow -query -numberOfTextures $editor`;
+	int $selectedImg 	= `textureWindow -query -textureNumber $editor`;
+	string $menuNames[] = `textureWindow -query -textureNames $editor`;
+	
+	int $markIndex = 0;
+	if (`textureWindow -query -useFaceGroup $editor`) {
+		$markIndex = textureWindowFindActiveShaderTexture($editor); 
+	} else {
+		$markIndex = $selectedImg;
+	}
+	
+	// If there are no UV sets to display, then put an empty menu item
+	if( $numImages == 0 ) {
+		menuItem -ecr false 
+			-enable false 
+			-label (uiRes("m_texturePanelMenus.kImageNoObjectSelected"))
+			( $prefix + "NoTexture" );
+
+		if( $menuBar == 1 )
+			$gTexturesMenuItems[0] = ( $prefix + "NoTexture" );
+
+	} else {
+		radioMenuItemCollection;
+	}
+ 
+	for ($i=0; $i<$numImages; $i++)
+	{
+		// Mark the proper image on the list as selected.
+		int $checkBox = 0;
+		if ( $i == $markIndex ) {
+			$checkBox = 1;
+		} 
+		
+		// Command will set the current image number
+		menuItem -ecr false 
+			-label $menuNames[$i]
+			-radioButton $checkBox 
+			-command ( "textureWindowSelectTexture " + $i + " " + $editor + "; " 
+					   + $updateEditor )
+			( $prefix + "Texture" + $i );
+			
+		if( $menuBar == 1)
+		{
+			$gTexturesMenuItems[$i] = ( $prefix + "Texture" + $i );
+		}
+	}
+}
+
+global proc textureWindowBuildTexturesMenu( string $parent, string $editor, 
+										    string $editorCmd, int $menuBar )
+//
+// Description:
+//		Textures menu
+// Arguments:
+//
+// Returns:
+//
+//
+{
+	global string $gTextureEditorMenubarPrefix;
+	
+	// Add a prefix to have a different name in the menuBar from the popup menu
+	string $prefix="";
+	if ($menuBar == 1) {
+		$prefix = ($gTextureEditorMenubarPrefix + $editor);
+	} 
+	else {
+		$prefix = $editor;
+	}
+	
+	// Clear out this menu first
+	menu -edit -deleteAllItems $parent;
+	menu -edit -scrollable 1 $parent; 
+	setParent -menu $parent; 
+
+	// callback for updating the state of all editor controls
+	//
+	string $updateEditor = ( "txtWndUpdateEditor(\"" + $editor + "\", \"" +
+							 $editorCmd + "\", \"null\", 101);" );
+
+	int $checkMapEnabled = textureWindowDisplayCheckered(0,0);
+
+	menuItem -ecr false
+			 -label (uiRes("m_texturePanelMenus.kCheckerMap"))
+			 -annotation (uiRes("m_texturePanelMenus.kCheckerMapAnnot"))
+			 -checkBox $checkMapEnabled 
+			 -command ( "textureWindowToggleCheckerMap (\"" + 
+						$editor + 
+						"\",\"" + 
+						$editorCmd+ "\");  performTextureViewCheckerMapOptions 0; " +
+						$updateEditor)
+			 ( $prefix + "CheckerMap" );
+	
+	menuItem 
+			 -optionBox true
+			 -command ( "performTextureViewCheckerMapOptions 1" )
+			 ( $prefix + "CheckerMapOption" );
+			 
+	menuItem -divider true;
+
+	textureWindowUpdateTextures($parent, $editor, $editorCmd, $menuBar);
+
+	setParent -menu ..;
+}
+
+global string $gUVSetsMenuItems[];
+
+global proc textureWindowUpdateUVSets(string $parent, string $editor, int $menuBar)
+{
+	global string $gTextureEditorMenubarPrefix;
+	
+	// Add a prefix to have a different name in the menuBar from the popup menu
+	string $prefix="";
+	if ($menuBar == 1) {
+		$prefix = ($gTextureEditorMenubarPrefix + $editor);
+	} 
+	else {
+		$prefix = $editor;
+	}
+	
+	if( !`menu -q -exists $parent` )
+		return;
+
+	setParent -menu $parent;
+	
+	global string $gUVSetsMenuItems[];
+	int $i;
+	if ($menuBar == 1)
+	{
+		for($i = 0; $i < size($gUVSetsMenuItems); $i++)
+		{
+			if( `menuItem -q -exists $gUVSetsMenuItems[$i]` )
+				deleteUI -menuItem $gUVSetsMenuItems[$i];
+		}
+		clear $gUVSetsMenuItems;
+	}
+
+	string $selectObj[] = `ls -dag -ni -o -g -sl`;
+	string $hiliteList[] = `ls -dag -ni -o -g -hl`;
+	$selectObj = stringArrayCatenate( $selectObj, $hiliteList );
+	$selectObj = stringArrayRemoveDuplicates( $selectObj );
+	int $numObjects = size($selectObj);
+
+	// only add a maximum number of 100 menu items.  Anything more is unreasonable.
+	int $maxObjects = 100;
+
+	// If there are no UV sets to display, then put an empty menu item
+	if( $numObjects == 0 ) {
+		menuItem 
+			-enableCommandRepeat false 
+			-enable false 
+			-label (uiRes("m_texturePanelMenus.kUVSetNoObjectSelected"))
+			( $prefix + "UVSetNoObject" );
+		setParent -menu ..;
+		
+		if($menuBar == 1)
+			$gUVSetsMenuItems[0] = ( $prefix + "UVSetNoObject" );
+
+		return;
+	}
+	else if($numObjects > $maxObjects)
+	{
+		$numObjects = $maxObjects;
+	} 
+
+	for ($i = 0; $i < $numObjects; $i++)
+	{
+	    $allSets = `polyUVSet -pi 1 -query -allUVSets $selectObj[$i]`;
+		string $uvSetsPerObject[];
+        for( $set in $allSets )
+        {
+            string $perInstUVSet[] = `polyUVSet -uvSet $set -q -pi $selectObj[$i]`;
+            if (size($perInstUVSet[0]) > 0) {
+                $uvSetsPerObject[size($uvSetsPerObject)] = $perInstUVSet[0];
+            } else {
+                continue;
+            }
+        }
+		int $numUVSets = size($uvSetsPerObject);
+		string $currUVSet[] = `polyUVSet -pi 1 -query -currentUVSet $selectObj[$i]`;
+
+		// when multiple objects are selected, group UV sets together by object.
+		if($numObjects > 1)
+		{
+			menuItem
+				-label $selectObj[$i]
+				-subMenu 1
+				( $prefix + "UVSetObject" + $i );
+		}
+		if ($numUVSets > 0)
+			radioMenuItemCollection;
+		for ($j = 0; $j < $numUVSets; $j++)
+		{
+			string $uvSet = $uvSetsPerObject[$j];
+			int $isCurrent = ($currUVSet[0] == $uvSet);
+
+			// if it is a per-instance set, display the set related to the select object
+			string $perInstanceUVSet[] = `polyUVSet -uvSet $uvSet -q -pi $selectObj[$i]`;
+			if(size($perInstanceUVSet) > 0)
+			{
+				$uvSet = $perInstanceUVSet[0];
+			}
+
+			string $cmd = ("polyUVSet -currentUVSet -uvSet \"" + $uvSet + "\" " + $selectObj[$i] + ";");		
+
+			int $autoLoadTexturesState = textureWindowToggleAutoLoadTextures(0);
+			if ($autoLoadTexturesState)
+			{
+				$cmd += "textureWindowAutoLoadTextures \"" + $uvSet + "\" \"" + $selectObj[$i] + "\";";
+			}
+
+			// MAYA-81085 Re-select for hack fixing active components issue 
+			// since we don't have a proper way to fix select-> meshShape_evaluate->active_wrong_issue essentially now.
+			$cmd += "string $selection[] = `ls -sl`;select -r $selection;";
+			
+			menuItem
+				-enableCommandRepeat false
+				-label $uvSet
+				-radioButton $isCurrent
+				-command $cmd
+				( $prefix + "UVSetObjectUVSet" + $j );
+			
+			if ($isCurrent && $autoLoadTexturesState)
+			{
+				textureWindowAutoLoadTextures $uvSet $selectObj[$i];
+			}
+		}
+		if($numUVSets > 0)
+			setParent -menu ..;
+		
+		if($menuBar == 1)
+		{
+			if($numObjects == 1)
+			{
+				for ($j = 0; $j < $numUVSets; $j++)
+				{
+					$gUVSetsMenuItems[$j] = ( $prefix + "UVSetObjectUVSet" + $j );
+				}
+			}
+			else
+			{
+				$gUVSetsMenuItems[$i] = ( $prefix + "UVSetObject" + $i );
+			}
+		}
+
+		if ($numObjects > 1)
+			setParent -menu ..;
+	}
+
+	if (size($selectObj) > $maxObjects)
+	{
+		//if we were not able to add all items add one more menu item to
+		//indicate this to the user. 
+		menuItem 
+			-enableCommandRepeat false 
+			-enable false 
+			-label (uiRes("m_texturePanelMenus.kUVSetTooManySelected"))
+			( $prefix + "UVSetTooManyObjects" );
+
+		$gUVSetsMenuItems[size($gUVSetsMenuItems)] = ( $prefix + "UVSetTooManyObjects" );
+	}
+}
+
+global proc textureWindowBuildUVSetsMenu( string $parent, string $editor, 
+										  string $editorCmd, int $menuBar )
+//
+// Description:
+//		UV Sets menu
+// Arguments:
+//
+// Returns:
+//
+//
+{
+	global string $gTextureEditorMenubarPrefix;
+	
+	// Add a prefix to have a different name in the menuBar from the popup menu
+	string $prefix="";
+	if ($menuBar == 1) {
+		$prefix = ($gTextureEditorMenubarPrefix + $editor);
+	} 
+	else {
+		$prefix = $editor;
+	}
+	
+	// Clear out this menu first
+	menu -edit -deleteAllItems $parent;
+	setParent -menu $parent;
+
+	string $cmd = "UVSetEditor";
+	menuItem -label (uiRes("m_texturePanelMenus.kPolyUVSetEditor")) -ecr true
+			-annotation (getRunTimeCommandAnnotation($cmd))
+			 -image "polyUVSetEditor.png"
+			 -command ( $cmd )
+			 ( $prefix + "uvSetEditor" ) ;
+
+	menuItem -divider true;
+
+	// Menu item to Copy UVs to another uvset.  This has a submenu to display 
+	// all available uv sets to copy to.
+	//
+    string $selectUVSetMenuForCopy = 
+		`menuItem -label (uiRes("m_texturePanelMenus.kCopyUVsToUVSet")) -ecr true
+				  -command "SetCurrentUVSet" 
+				  -subMenu true`;
+
+	// This causes submenu to rebuild everytime it shows 
+	string $pmc = "buildCopyUVsToUVSetMenu " + $selectUVSetMenuForCopy + " \"" + $prefix + "\" 1 \"\";" ;
+
+	menuItem -e -postMenuCommand $pmc $selectUVSetMenuForCopy;
+
+	string $selectCmd = "ls -sl";
+    $cmd = "performCopyCurrentUVSet";
+    string $version = "\"1\"";
+    string $args0 = ("{\"0\", \"" + $selectCmd + "\", \"0\"}");
+    string $args1 = ("{\"1\", \"" + $selectCmd + "\", \"0\"}");
+    string $args2 = ("{\"2\", \"" + $selectCmd + "\", \"0\"}");
+	string $suffix = " \"\"";
+    string $c = ($cmd + " " + $version + " " + $args0 + $suffix);
+
+	menuItem -divider true;
+
+    menuItem -label (uiRes("m_texturePanelMenus.kCopyIntoNewUVSet")) -ecr true
+	         -annotation (uiRes("m_texturePanelMenus.kCopyIntoNewUVSetAnnot")) 
+			 -image "polyCreateUVSetLarge.png"
+			 -command $c 
+			 ( $prefix + "copyCurrentUVSetTexturePanel" ) ;
+
+	$c = ($cmd + " " + $version + " " + $args1 + $suffix);
+
+    menuItem -optionBox 1 -ecr false
+			 -annotation (uiRes("m_texturePanelMenus.kCopyIntoNewUVSetOptionsAnnot")) 
+			 -image "polyCreateUVSetLarge.png"
+			 -command $c
+			 ( $prefix + "copyCurrentUVSetOBTexturePanel" ) ;
+
+    setParent -m ..;
+	
+	$selectCmd = "uvSetMakeSelectCmd";
+    $cmd = "performCreateUVSet";
+    $version = "\"1\"";
+    $args0 = ("{\"0\", \"" + $selectCmd + "\", \"0\"}");
+    $args1 = ("{\"1\", \"" + $selectCmd + "\", \"0\"}");
+    $suffix = " \"\"";
+    $c = ($cmd + " " + $version + " " + $args0 + $suffix);
+
+    menuItem -label (uiRes("m_texturePanelMenus.kCreateEmptyUVSet")) -ecr true
+			 -annotation (uiRes("m_texturePanelMenus.kCreateUVSetAnnot")) 
+			 -image "polyCreateUVSetLarge.png"
+			 -command $c 
+			 ( $prefix + "createUVSetItemTexturePanel" );
+
+    $c = ($cmd + " " + $version + " " + $args1 + $suffix);
+
+    menuItem -optionBox 1 -ecr false
+        	 -annotation (uiRes("m_texturePanelMenus.kCreateUVSetOptionsAnnot")) 
+        	 -image "polyCreateUVSetLarge.png"
+        	 -command $c
+			 ( $prefix + "createUVSetOptionItemTexturePanel" );
+
+	$c = "DeleteCurrentUVSet";
+    menuItem -label (uiRes("m_texturePanelMenus.kDeleteCurrentUVSet")) -ecr true
+			 -annotation (getRunTimeCommandAnnotation($c))
+			 -image "polyDeleteUVSet.png"
+			 -command ( $c )
+			 ( $prefix + "deleteCurrentUVSetTexturePanel" );
+
+	$c = "RenameCurrentUVSet";
+    menuItem -label (uiRes("m_texturePanelMenus.kRenameCurrentUVSet")) -ecr true
+			-annotation (getRunTimeCommandAnnotation($c))
+			 -image "polyRenameUVSet.png"
+			 -command ( $c )
+			 ( $prefix + "renameCurrentUVSetTexturePanel" );
+
+	menuItem 
+		-label (uiRes("m_texturePanelMenus.kPolyUVsPerInstance"))
+		-subMenu true
+		-tearOff true;
+
+		$c = "SelectSharedUVInstances";
+		menuItem
+			-label (uiRes("m_texturePanelMenus.kPolyUVSelectShared"))
+			-annotation (getRunTimeCommandAnnotation($c))
+			-image "polyShareInstancesSelectLarge.png"
+			-command ( $c )
+			( $prefix + "selectSharedUVInstancesItem" );
+
+		$c = "ShareUVInstances";
+		menuItem
+			-label (uiRes("m_texturePanelMenus.kPolyUVShareInstances"))
+			-annotation (getRunTimeCommandAnnotation($c))
+			-image "polyShareInstancesLarge.png"
+			-command ( $c )
+			( $prefix + "shareUVInstancesItem" );
+
+		$c = "MakeUVInstanceCurrent";
+		menuItem
+			-label (uiRes("m_texturePanelMenus.kPolyUVMakeInstanceCurrent"))
+			-annotation (getRunTimeCommandAnnotation($c))
+			-image "polyShareInstancesCurrent.png"
+			-command ( $c )
+			( $prefix + "makeUVInstanceCurrentItem" );
+			
+	setParent -menu ..;		
+
+	menuItem -divider true ;
+	menuItem -label (uiRes("m_texturePanelMenus.kPolyUVAutoLoadTexture"))
+		-version "2018"
+		-checkBox `textureWindowToggleAutoLoadTextures 0`
+		-command ("textureWindowToggleAutoLoadTextures 1") 
+		($prefix + "autoLoadTexturesItem" ); 
+	
+	////////////////////////////////////////////////////////////////
+	menuItem -divider true -dividerLabel (uiRes("m_texturePanelMenus.kCurrentUVSet"));
+
+	textureWindowUpdateUVSets($parent, $editor, $menuBar);
+
+	setParent -menu ..;
+}
+
+global proc textureWindowBuildEditSubdivMenu(string $parent, string $editor, 
+										 string $editorCmd, int $menuBar)
+//
+// Description:
+//		Edit Subdiv menu
+// Arguments:
+//
+// Returns:
+//
+//
+{
+	global string $gTextureEditorMenubarPrefix;
+
+	setParent -m $parent;
+
+	// Add a prefix to have a different name in the menuBar from the popup menu
+	string $prefix="";
+	if ($menuBar == 1) {
+		$prefix = ($gTextureEditorMenubarPrefix + $editor);
+	} 
+	else {
+		$prefix = $editor;
+	}
+
+		string $cmd = "SubdCutUVs";
+        menuItem -label (uiRes("m_texturePanelMenus.kSubdivCutUVEdges"))   -ecr true -i "polyMapCut.png"
+			-annotation (getRunTimeCommandAnnotation($cmd))
+            -c $cmd
+            subdivCutTextureItem;
+
+        menuItem -label (uiRes("m_texturePanelMenus.kSubdivLayout")) 
+            -annotation (uiRes("m_texturePanelMenus.kSubdivLayoutAnnot")) 
+            -c "performSubdLayoutUV 0" -i "polyLayoutUV.png";
+        menuItem -optionBox 1
+            -annotation (uiRes("m_texturePanelMenus.kSubdivLayoutOptionsAnnot")) 
+            -c "performSubdLayoutUV 1" -ecr false -i "polyLayoutUV.png";
+
+        menuItem -label (uiRes("m_texturePanelMenus.kSubdivMoveandSewUVEdges")) 
+            -annotation (uiRes("m_texturePanelMenus.kSubdivMoveandSewUVEdgesAnnot")) 
+            -c "performSubdMapSewMove 0" -i "polyMoveSew.png";
+        menuItem -optionBox 1
+            -annotation (uiRes("m_texturePanelMenus.kSubdivMoveandSewUVEdgesOptionsAnnot")) 
+            -c "performSubdMapSewMove 1" -ecr false -i "polyMoveSew.png";
+ 
+	////////////////////////////////////////////////////////////////
+	menuItem -divider true;
+
+	menuItem -label (uiRes("m_texturePanelMenus.kSubdivUVSnapshot")) 
+		-annotation (uiRes("m_texturePanelMenus.kSubdivUVSnapshotAnnot")) 
+		-c "performUVSnapshot" -i "UVEditorSnapshot.png";
+
+    setParent -m ..;
+}
+
+/*
+global proc textureWindowBuildEditNurbsMenu(string $parent, string $editor, 
+										 string $editorCmd, int $menuBar)
+//
+// Description:
+//		Edit Nurbs menu
+// Arguments:
+//
+// Returns:
+//
+//
+{
+	global string $gTextureEditorMenubarPrefix;
+
+	setParent -m $parent;
+
+	// Add a prefix to have a different name in the menuBar from the popup menu
+	string $prefix="";
+	if ($menuBar == 1) {
+		$prefix = ($gTextureEditorMenubarPrefix + $editor);
+	} 
+	else {
+		$prefix = $editor;
+	}
+
+        menuItem -l "Edit UV Mode"  -ecr true 
+			-checkBox (`queryNurbsEditUVMode`)
+            -ann (uiRes("m_texturePanelMenus.kEditNurbsUVModeAnn"))
+            -c "nurbsToggleEditUVMode"
+            ($prefix+"NurbsEditUVModeItem");
+
+    setParent -m ..;
+}
+*/
+
+// Global procedure to get a command string for later execution. Changing select type to $toType.
+// The valid value for $toType is:
+// 1 : Face
+// 2 : Edge
+// 3 : Vertex
+// 4 : UV
+// 5 : Shell
+// This mapping matches that used by textureWindowSelectConvert().
+global proc string textureWindowChangeSelectTypeString(int $toType)
+{
+    string $cmd;
+	if (!`isTrue "SubdivUIExists"`)
+	{
+		if (`selectMode -q -object`)
+		{
+			if ($toType == 1)
+			{
+				$cmd = ("changeSelectMode -component; setComponentPickMask \"Facet\" true; " +
+							"selectType -ocm -alc false; " +
+							"selectType -ocm -facet true; " +
+							"selectType -sf false -se false -suv false -cv false; ");
+			}
+			else if ($toType == 2)
+			{
+				$cmd = "changeSelectMode -component; " +
+							"selectType -isoparm 0 -surfaceEdge 1 -polymeshEdge 1 -subdivMeshEdge 1 -springComponent 1; " +
+							"selectType -ocm -alc false; " +
+							"selectType -ocm -edge true; " +
+							"selectType -sf false -se false -suv false -cv false; ";
+			}
+			else if ($toType == 4)
+			{
+				$cmd = ("changeSelectMode -component; " +
+							"selectType -ocm -alc false; selectType -alc false; " +
+							"selectType -puv true; " +
+							"selectType -suv true; ");
+			}
+			else if ($toType == 3)
+			{
+				$cmd = ("changeSelectMode -component; setComponentPickMask \"Point\" true; " +
+							"selectType -ocm -alc false; " +
+							"selectType -ocm -vertex true; " +
+							"selectType -sf false -se false -suv false -cv false; ");
+			}
+			else if ($toType == 5)
+			{
+				$cmd = ("changeSelectMode -component; setComponentPickMask \"Facet\" true; " +
+							"selectType -ocm -alc false; " +
+							"selectType -msh true; " +
+							"selectType -sf false -se false -suv false -cv false; ");
+            }
+		} 
+		else
+		{
+			if ($toType == 1)
+			{
+				$cmd = ("changeSelectMode -component; setComponentPickMask \"Facet\" true; " +
+							"selectType -ocm -alc false; " +
+							"selectType -facet true; " +
+							"selectType -sf false -se false -suv false -cv false; ");
+			}
+			else if ($toType == 2)
+			{
+				$cmd = ("changeSelectMode -component; " + 
+							"selectType -isoparm 0 -surfaceEdge 1 -polymeshEdge 1 -subdivMeshEdge 1 -springComponent 1; " +
+							"selectType -ocm -alc false; " +
+							"selectType -edge true; " +
+							"selectType -sf false -se false -suv false -cv false; ");
+			}
+			else if ($toType ==4)
+			{
+				$cmd = ("changeSelectMode -component; " +
+							"selectType -alc false; " +
+							"selectType -puv true; " +
+							"selectType -suv true; ");
+			}
+			else if ($toType == 3)
+			{
+				$cmd = ("changeSelectMode -component; setComponentPickMask \"Point\" true; " +
+							"selectType -ocm -alc false; " +
+							"selectType -vertex true; " +
+							"selectType -sf false -se false -suv false -cv false; ");
+			}
+			else if ($toType == 5)
+			{
+				$cmd = ("changeSelectMode -component; setComponentPickMask \"Facet\" true; " +
+							"selectType -ocm -alc false; " +
+							"selectType -msh true; " +
+							"selectType -sf false -se false -suv false -cv false; ");
+			}
+		}
+	}
+	else
+	{
+		if (`selectMode -q -object`)
+		{
+			if ($toType == 1)
+			{
+				$cmd = ("changeSelectMode -component; setComponentPickMask \"Facet\" true; " +
+							"selectType -ocm -alc false; " +
+							"selectType -ocm -facet true; " +
+							"selectType -sme false -smu false -smp false; " +
+							"selectType -sf false -se false -suv false -cv false; ");
+			}
+			else if ($toType == 2)
+			{
+				$cmd = ("changeSelectMode -component; setComponentPickMask \"Line\" true; " +
+							"selectType -ocm -alc false; " +
+							"selectType -ocm -edge true; " + 
+							"selectType -smf false -smu false -smp false; " +
+							"selectType -sf false -se false -suv false -cv false; ");
+			}
+			else if ($toType == 4)
+			{
+				$cmd = ("changeSelectMode -component; " +
+							"selectType -ocm -alc false; selectType -alc false; " +
+							"selectType -puv true; " +
+							"selectType -smu true; " + 
+							"selectType -suv true; ");
+			}
+			else if ($toType == 3)
+			{
+				$cmd = ("changeSelectMode -component; setComponentPickMask \"Point\" true; " +
+							"selectType -ocm -alc false; " +
+							"selectType -ocm -vertex true; " +
+							"selectType -sf false -se false -suv false -cv false; ");
+			}
+			else if ($toType == 5)
+			{
+				$cmd = ("changeSelectMode -component; setComponentPickMask \"Facet\" true; " +
+							"selectType -ocm -alc false; " +
+							"selectType -msh true; " +
+							"selectType -sme false -smu false -smp false; " +
+							"selectType -sf false -se false -suv false -cv false; ");
+			}			
+		} 
+		else
+		{
+			if ($toType == 1)
+			{
+				$cmd = ("changeSelectMode -component; setComponentPickMask \"Facet\" true; " +
+							"selectType -ocm -alc false; " +
+							"selectType -facet true; " +
+							"selectType -sme false -smu false -smp false; " +
+							"selectType -sf false -se false -suv false -cv false; ");
+			}
+			else if ($toType == 2)
+			{
+				$cmd = ("changeSelectMode -component; setComponentPickMask \"Line\" true; " + 
+							"selectType -ocm -alc false; " +
+							"selectType -edge true; " +
+							"selectType -smf false -smu false -smp false; " +
+							"selectType -sf false -se false -suv false -cv false; ");
+			}
+			else if ($toType == 4)
+			{
+				$cmd = ("changeSelectMode -component; " +
+							"selectType -alc false; " +
+							"selectType -puv true; " +
+							"selectType -smu true; " +
+							"selectType -suv true; ");
+			}
+			else if ($toType == 3)
+			{
+				$cmd = ("changeSelectMode -component; setComponentPickMask \"Point\" true; " +
+							"selectType -ocm -alc false; " +
+							"selectType -vertex true; " +
+							"selectType -sf false -se false -suv false -cv false; ");
+			}
+			else if ($toType == 5)
+			{
+				$cmd = ("changeSelectMode -component; setComponentPickMask \"Facet\" true; " +
+							"selectType -ocm -alc false; " +
+							"selectType -msh true; " +
+							"selectType -sme false -smu false -smp false; " +
+							"selectType -sf false -se false -suv false -cv false; ");
+			}
+		}
+	}
+	return $cmd;
+}
+
+/////////////////////////////////////////////////////////////////////////////
+//    Marking menu code
+/////////////////////////////////////////////////////////////////////////////
+
+
+global proc textureWindowCreatePopupRadialMenu( string $editor, string $editorCmd, int $popupType )
+//
+// Description:
+//		Texture window popup marking menu creation. This part is solely the radial
+//	component of the marking menu.
+//
+// Arguments:
+//		$popupType - defines whether to create the Poly/SubD marking menu, the
+//					NURBS marking menu, or the combined marking menu.
+//
+//					case 0: Poly / SubD marking menu
+//					case 1: NURBS marking menu
+//					case 2: Both
+//
+// Returns:
+//
+//
+{
+	// Record the popup type
+	//
+	global int $gTextureEditorPopupType;
+	$gTextureEditorPopupType = $popupType;
+
+	// Marking menu selection commands
+	//
+	string $selectCmd[8];
+	$selectCmd[0] = textureWindowChangeSelectTypeString(1);
+	$selectCmd[1] = textureWindowChangeSelectTypeString(2);
+	$selectCmd[2] = textureWindowChangeSelectTypeString(4);
+	$selectCmd[3] = textureWindowChangeSelectTypeString(3);
+	$selectCmd[5] = textureWindowChangeSelectTypeString(5);
+
+	// Marking menu directions
+	//
+	string $directions[8];
+	$directions[0] = "S";
+	$directions[1] = "N";
+	$directions[2] = "E";
+	$directions[3] = "W";
+	$directions[4] = "NE";
+	$directions[5] = "NW";
+	$directions[6] = "SE";
+	$directions[7] = "SW";
+
+	// If we want to create Poly/SubD marking menu, or the combined Poly/SubD/NURBS
+	// marking menu, then execute this code.
+	//
+	
+	string $uv = (uiRes("m_texturePanelMenus.kUV"));
+	string $editNURBSUVMode = (uiRes("m_texturePanelMenus.kEditNURBSUVMode"));
+	if( $popupType == 0 || $popupType == 2 )
+	{
+		menuItem -label (uiRes("m_texturePanelMenus.kFace"))
+			-rp ($directions[0])
+			-c ($selectCmd[0])
+			($editor+"Face");
+		
+		menuItem -label (uiRes("m_texturePanelMenus.kEdge"))
+			-rp ($directions[1])
+			-c ($selectCmd[1])
+			($editor+"Edge");
+		
+		menuItem -label $uv 
+			-rp ($directions[2])
+			-c ($selectCmd[2])
+			($editor+"UV");
+		
+		menuItem -label (uiRes("m_texturePanelMenus.kVertex"))
+			-rp ($directions[3])
+			-c ($selectCmd[3])
+			($editor+"Vertex");
+
+		menuItem -label (uiRes("m_texturePanelMenus.kUVShell"))
+				-version "2015"
+				-rp ($directions[5])
+				-c ($selectCmd[5])
+			($editor+"Shell");
+
+		if( $popupType == 2 )
+		{
+			menuItem -label $editNURBSUVMode
+				-checkBox (`queryNurbsEditUVMode`)
+				-rp ($directions[4])
+				-c "nurbsToggleEditUVMode"
+				($editor+"EditNURBSUV");
+		}
+	}
+	else if( $popupType == 1 )
+	{
+		// We want *only* the NURBS marking menu
+		//
+		menuItem -label $uv
+			-rp ($directions[2])
+			-c ($selectCmd[2])
+			($editor+"UV");
+
+		menuItem -label $editNURBSUVMode
+			-checkBox (`queryNurbsEditUVMode`)
+			-rp ($directions[4])
+			-c "nurbsToggleEditUVMode"
+			($editor+"EditNURBSUV");
+	}
+	else if( $popupType == 3)
+	{
+		string $currentContext = `currentCtx`;
+		string $ctx = `contextInfo -c $currentContext`;
+		texSculptCacheContextMM($editor, $editorCmd);
+	}
+}
+
+global proc textureWindowDeletePopupRadialMenu( string $editor )
+{
+	if( `menuItem -q -ex ($editor+"Face")` ) deleteUI ($editor+"Face");
+	if( `menuItem -q -ex ($editor+"Edge")` ) deleteUI ($editor+"Edge");
+	if( `menuItem -q -ex ($editor+"UV")` ) deleteUI ($editor+"UV");
+	if( `menuItem -q -ex ($editor+"Vertex")` ) deleteUI ($editor+"Vertex");
+	if( `menuItem -q -ex ($editor+"Shell")` ) deleteUI ($editor+"Shell");
+	if( `menuItem -q -ex ($editor+"EditNURBSUV")` ) deleteUI ($editor+"EditNURBSUV");
+	if( `menuItem -q -ex ($editor+"Invert")` ) deleteUI ($editor+"Invert");
+	if( `menuItem -q -ex ($editor+"UVCutTool")` ) deleteUI ($editor+"UVCutTool");
+	if( `menuItem -q -ex ($editor+"LastTool")` ) deleteUI ($editor+"LastTool");
+	if( `menuItem -q -ex ($editor+"UVGrabTool")` ) deleteUI ($editor+"UVGrabTool");
+	if( `menuItem -q -ex ($editor+"UVPinTool")` ) deleteUI ($editor+"UVPinTool");
+	if( `menuItem -q -ex ($editor+"FalloffType")` ) deleteUI ($editor+"FalloffType");
+	if( `menuItem -q -ex ($editor+"FalloffHybrid")` ) deleteUI ($editor+"FalloffHybrid");
+	if( `menuItem -q -ex ($editor+"FalloffSurface")` ) deleteUI ($editor+"FalloffSurface");
+	if( `menuItem -q -ex ($editor+"FalloffVolume")` ) deleteUI ($editor+"FalloffVolume");
+}
+
+global proc textureWindowCreatePopupMenubar( string $editor, string $editorCmd )
+//
+//	Description:
+//		Create the popup version of the menubar. This is the popup menu that
+//		appears below the marking menu that is a replica of the UV texture editor
+//		menubar, except as a popup menu instead.
+//
+//		When adding a new menuitem to an existing menu, modify the
+//		appropriate textureWindowBuildNAMEMenu. If adding a new menu
+//		create a new textureWindowBuildNAMEMenu proc.
+//
+//		In either case, if the new menuItem is a checkbox, it should
+//		call txtWndUpdateEditor when selected. See
+//		textureWindowBuildViewMenu for examples.
+//		In addition, code should be added to txtWndUpdateEditor to update
+//		the state of all controls which provide an interface to the new
+//		functionality. This is to ensure that all the controls are in
+//		sync.
+//
+//		Keep in mind that there is also a textureWindowCreateMenubar proc. If
+//		you wish your new menuItem to be in the popup, you must modify that
+//		proc as well.
+//
+{
+	string	$subName = `menuItem -label (uiRes("m_texturePanelMenus.kEdit")) -sm 1 -to 1 ($editor+"EditMenu")`;
+	textureWindowBuildEditMenu( $subName, $editor, $editorCmd, 0 );
+	
+	if (`isTrue "SubdivUIExists"`) {
+		string	$subName = `menuItem -label (uiRes("m_texturePanelMenus.kSubdivs")) -aob true -sm 1 -to 1
+		($editor+"EditSubdivMenu")`;
+		textureWindowBuildEditSubdivMenu( $subName, $editor, $editorCmd, 0 );
+	}
+
+	// Disabling NURBS UV Menu - NURBS UVs are only partially implemented.
+	// Here we are limiting their exposure. When the remaining features of
+	// NURBS UVs are implemented, the following lines can be uncommented.
+	// [lli]
+	//
+	/*
+	// Nurbs "Edit UV Mode" update.
+	//
+	// Note: we must issue a -pmc to update this item since it is based on
+	// the object selection rather than the txtWndUpdateEditor method - which
+	// only responds to editor changes.
+	//
+	string $nurbsPostMenuCommand = "updateNurbsEditUVModeMenuItem(\"" +
+									$editor +
+									"NurbsEditUVModeItem\")";
+
+	$subName = `menuItem -l "NURBS"
+								-aob true
+								-sm 1
+								-pmc $nurbsPostMenuCommand
+								-to 1
+								($editor+"EditNurbsMenu")`;
+	textureWindowBuildEditNurbsMenu( $subName, $editor, $editorCmd, 0 );
+	*/
+	
+	$subName = `menuItem -label (uiRes("m_texturePanelMenus.kCreate")) -sm 1 -to 1 ($editor+"CreateMenu")`;
+	textureWindowBuildCreateMenu( $subName, $editor, $editorCmd, 0 );
+	
+	$subName = `menuItem -label (uiRes("m_texturePanelMenus.kSelect")) -sm 1 -to 1 ($editor+"SelectMenu")`;
+	textureWindowBuildSelectMenu( $subName, $editor, $editorCmd, 0 );
+
+	$subName = `menuItem -label (uiRes("m_texturePanelMenus.kCutSew")) -sm 1 -to 1 ($editor+"CutSewMenu")`;
+	textureWindowBuildCutSewMenu( $subName, $editor, $editorCmd, 0 );
+
+	$subName = `menuItem -label (uiRes("m_texturePanelMenus.kModify")) -sm 1 -to 1 ($editor+"ModifyMenu")`;
+	textureWindowBuildModifyMenu( $subName, $editor, $editorCmd, 0 );
+
+	$subName = `menuItem -label (uiRes("m_texturePanelMenus.kTools")) -sm 1 -to 1 ($editor+"ToolsMenu")`;
+	textureWindowBuildToolsMenu( $subName, $editor, $editorCmd, 0 );
+
+	$subName = `menuItem -label (uiRes("m_texturePanelMenus.kView")) -sm 1 -to 1 ($editor+"ViewMenu")`;
+	textureWindowBuildViewMenu( $subName, $editor, $editorCmd, 0 );
+
+	$subName = `menuItem -label (uiRes("m_texturePanelMenus.kImage")) -sm 1 -to 1 ($editor+"ImageMenu")`;
+	textureWindowBuildImageMenu( $subName, $editor, $editorCmd, 0 );
+	
+	$subName = `menuItem 
+					-label (uiRes("m_texturePanelMenus.kTextures")) 
+					-subMenu true 
+					-tearOff false 
+					($editor+"TexturesMenu")`;
+	menu -edit -postMenuCommand ( "textureWindowBuildTexturesMenu " + 
+									$subName + " " +
+									$editor + " " +
+									$editorCmd + " 0" )
+					$subName;
+	setParent -menu ..;
+	
+	$subName = `menuItem 
+					-label (uiRes("m_texturePanelMenus.kUVSets")) 
+					-subMenu true 
+					-allowOptionBoxes false 
+					-tearOff false 
+					($editor+"UVSetsMenu")`;
+	menu -edit -postMenuCommand ( "textureWindowBuildUVSetsMenu " + 
+									$subName + " " +
+									$editor + " " +
+									$editorCmd + " 0" )
+					$subName;
+	setParent -menu ..;
+}
+
+global proc textureWindowCreatePopupConvertMenu( string $parent, string $editor, string $editorCmd)
+//
+//	Description:
+//		Create popup marking menu for selection conversion. Currently this is
+//	the control key modifier popup menu for the UV texture editor.
+//
+{
+	// Marking menu selection commands
+	//
+	string $selectCmd[10];
+
+	$selectCmd[0] = "textureWindowSelectConvert 1"; // F
+	$selectCmd[1] = "textureWindowSelectConvert 2"; // E
+	$selectCmd[2] = "textureWindowSelectConvert 4"; // UV 
+	$selectCmd[3] = "textureWindowSelectConvert 3"; // V 
+	$selectCmd[4] = "GrowPolygonSelectionRegion";   // Grow Selection
+	$selectCmd[5] = "ShrinkPolygonSelectionRegion"; // Shrink Selection
+	$selectCmd[6] = "polySelectBorderShell 0";        // UV shell
+	$selectCmd[7] = "polySelectBorderShell 1";		  // UV shell border
+	$selectCmd[8] = "GrowLoopPolygonSelectionRegion";     // Grow Along Loop
+	$selectCmd[9] = "ShrinkLoopPolygonSelectionRegion";	  // Shrink Along Loop
+
+	string $directions[8];
+	$directions[0] = "S";
+	$directions[1] = "N";
+	$directions[2] = "E";
+	$directions[3] = "W";
+	$directions[4] = "NE";
+	$directions[5] = "NW";
+	$directions[6] = "SE";
+	$directions[7] = "SW";
+
+	popupMenu -edit -deleteAllItems $parent;
+	setParent -menu $parent;
+	
+	menuItem -subMenu true
+		-label (uiRes("m_texturePanelMenus.kToFaces")) 
+		-rp ($directions[0]);
+
+			menuItem -label (uiRes("m_texturePanelMenus.kToFaces"))
+				-rp ($directions[0])
+				-c ($selectCmd[0])
+				($editor+"ToFaces");
+
+			menuItem -label (uiRes("m_texturePanelMenus.kToConnectedFaces")) 
+				-rp ("E")
+				-c  ($editorCmd+" -e -selectRelatedFaces "+$editor);
+
+			menuItem -label (uiRes("m_texturePanelMenus.kToContainedFaces")) 
+				-rp ("W")
+				-c  ($editorCmd+" -e -selectInternalFaces "+$editor);
+				
+			menuItem -label (uiRes("m_texturePanelMenus.kToFacePerimeter")) 
+				-rp ("SE")
+				-c  "ConvertSelectionToFacePerimeter";
+				
+			menuItem -label (uiRes("m_texturePanelMenus.kToFacePath"))
+			    -rp ("N")
+			    -c "SelectFacePath";
+
+			setParent -menu ..;
+
+	menuItem -subMenu true
+		-label (uiRes("m_texturePanelMenus.kToEdges")) 
+		-rp ($directions[1]);
+
+			menuItem -label (uiRes("m_texturePanelMenus.kToEdges"))
+				-rp ($directions[1])
+				-c ($selectCmd[1])
+				($editor+"ToEdges");
+
+			menuItem -label (uiRes("m_texturePanelMenus.kToEdgePerim")) 
+				-rp "NE"
+				-version "2015"
+				-c "ConvertSelectionToEdgePerimeter";
+
+			menuItem -label (uiRes("m_texturePanelMenus.kToEdgeLoop")) 
+				-rp "NW"
+				-c "SelectEdgeLoop";
+				
+			menuItem -label (uiRes("m_texturePanelMenus.kToEdgeRing"))
+			    -rp "W"
+				-c "SelectEdgeRing";
+
+			menuItem -label (uiRes("m_texturePanelMenus.kToContainedEdges"))
+			    -rp "E"
+			    -c "ConvertSelectionToContainedEdges";
+				
+			setParent -menu ..;
+
+
+	menuItem -subMenu true
+		-label (uiRes("m_texturePanelMenus.kToUVs")) 
+		-rp ($directions[2]);
+
+			menuItem -label (uiRes("m_texturePanelMenus.kToUVs"))
+				-rp ($directions[2])
+				-c ($selectCmd[2])
+				($editor+"ToUVs");
+
+			menuItem -label (uiRes("m_texturePanelMenus.kToUVPerim")) 
+				-rp "NE"
+				-version "2015"
+				-c "ConvertSelectionToUVPerimeter";
+
+			menuItem -label (uiRes("m_texturePanelMenus.kToShellBorder")) 
+				-rp "SE"
+				-c  "polySelectEdges edgeUVLoopOrBorder";
+
+			setParent -menu ..;
+
+
+	menuItem -subMenu true
+		-label (uiRes("m_texturePanelMenus.kToVertices")) 
+		-rp ($directions[3]);
+
+			menuItem -label (uiRes("m_texturePanelMenus.kToVertices"))
+				-rp ($directions[3])
+				-c ($selectCmd[3])
+				($editor+"ToVertices");
+
+			menuItem -label (uiRes("m_texturePanelMenus.kToVertexPerim")) 
+				-rp "NW"
+				-version "2015"
+				-c "ConvertSelectionToVertexPerimeter";
+
+			setParent -menu ..;
+
+	menuItem -subMenu true
+		-label (uiRes("m_texturePanelMenus.kGrowSelection")) 
+		-rp ($directions[4]);
+
+			menuItem -label (uiRes("m_texturePanelMenus.kGrow"))
+				-image "growUVSelection.png"
+				-rp ($directions[4])
+				-c ($selectCmd[4])
+				($editor+"Grow");
+
+			menuItem -label (uiRes("m_texturePanelMenus.kGrowLoop"))
+				-image "growUVSelectionAlongLoop.png"
+				-version "2018"
+				-rp ($directions[1])
+				-c ($selectCmd[8])
+				($editor+"GrowLoop");
+			setParent -menu ..;
+
+	menuItem  -subMenu true
+		-label (uiRes("m_texturePanelMenus.kShrinkSelection")) 
+		-rp ($directions[5]);
+
+			menuItem -label (uiRes("m_texturePanelMenus.kShrink"))
+				-image "shrinkUVSelection.png"
+				-rp ($directions[5])
+				-c ($selectCmd[5])
+				($editor+"Shrink");
+
+			menuItem -label (uiRes("m_texturePanelMenus.kShrinkLoop"))
+				-image "shrinkUVSelectionAlongLoop.png"
+				-version "2018"
+				-rp ($directions[1])
+				-c ($selectCmd[9])
+				($editor+"ShrinkLoop");
+			setParent -menu ..;
+
+	menuItem -label (uiRes("m_texturePanelMenus.kToShell")) 
+		-rp ($directions[6])
+		-c ($selectCmd[6])
+		($editor+"ToShell");
+
+	menuItem -label (uiRes("m_texturePanelMenus.kToBorder")) 
+		-rp ($directions[7])
+		-c ($selectCmd[7])
+		($editor+"ToBorder");
+
+
+	menuItem -label (uiRes("m_texturePanelMenus.kSelectAllItems"))  -ecr true
+		-annotation ( getRunTimeCommandAnnotation("SelectAll") )
+		-command ( "SelectAll" )
+		( $editor + "SelectAllItem" );
+
+	menuItem -label (uiRes("m_texturePanelMenus.kClearSelectionItems"))  -ecr true
+		-annotation (uiRes("m_texturePanelMenus.kClearSelectionAnnot"))
+		-command ( "string $hiliteList[] = `ls -hilite`;" +
+					"if(`size($hiliteList)`!=0)" + 
+					"	select -cl;")
+		( $editor + "ClearAllItem" );
+
+	menuItem -label (uiRes("m_texturePanelMenus.kInvertSelectionItems")) -ecr true
+		-annotation ( getRunTimeCommandAnnotation("InvertSelection") )
+		-command ( "InvertSelection" )
+		( $editor + "InverseSelectionItem" );
+
+	menuItem -divider true;
+
+	commonTexSelectionConstraintsOptionsPopup();
+	commonTexTransformConstraintsOptionsPopup();
+
+	menuItem -divider true;
+	
+	menuItem -label (uiRes("m_texturePanelMenus.kSelectBackFacing"))
+		-image "selectBackFacingUV.png"
+		-version "2018"
+		-annotation (getRunTimeCommandAnnotation("SelectUVBackFacingComponents"))
+		-command ( "SelectUVBackFacingComponents" )
+		( $editor + "SelectUVBackFacingItem" );
+		
+	menuItem -label (uiRes("m_texturePanelMenus.kSelectFrontFacing"))
+		-image "selectFrontFacingUV.png"
+		-version "2018"
+		-annotation (getRunTimeCommandAnnotation("SelectUVFrontFacingComponents"))
+		-command ( "SelectUVFrontFacingComponents" )
+		( $editor + "SelectUVFrontFacingItem" );
+		
+	menuItem -label (uiRes("m_texturePanelMenus.kSelectOverlapping"))
+	    -image "selectOverlappingUV.png"
+		-version "2018"
+		-annotation (getRunTimeCommandAnnotation("SelectUVOverlappingComponents"))
+		-command ( "SelectUVOverlappingComponents" )
+		( $editor + "SelectOverlappingItem" );
+		
+	menuItem -label (uiRes("m_texturePanelMenus.kSelectNonOverlapping"))
+	    -image "selectNonOverlappingUV.png"
+		-version "2018"
+		-annotation (getRunTimeCommandAnnotation("SelectUVNonOverlappingComponents"))
+		-command ( "SelectUVNonOverlappingComponents" )
+		( $editor + "SelectNonOverlappingItem" );
+
+	menuItem -label (uiRes("m_texturePanelMenus.kSelectTextureBorders"))
+		-image "selectTextureBorders.png"
+		-version "2018"
+		-annotation (getRunTimeCommandAnnotation("SelectUVBorderComponents"))
+		-command ( "SelectUVBorderComponents" )
+		( $editor + "SelectTextureBorder" );
+
+	string $cmd = "SelectUnmappedFaces";
+	menuItem -label (uiRes("m_texturePanelMenus.kSelectUnmapped"))
+		-image "selectUnmapedFace.png"
+		-version "2018"
+		-annotation (getRunTimeCommandAnnotation($cmd))
+		-command ( $cmd )
+		( $editor + "SelectUnmappedFaces" );
+
+	menuItem -divider true;
+
+	menuItem -label (uiRes("m_texturePanelMenus.kSelectShortestEdgePathTool"))
+		-annotation (getRunTimeCommandAnnotation("SelectShortestEdgePathTool"))
+		-command ( "SelectShortestEdgePathTool" )
+		( $editor + "ShortestEdgePathToolItem" );
+}
+
+global proc textureWindowUpdatePopup( string $popupMenu, string $editor, string $editorCmd )
+//
+//	Description:
+//		This procedure will update the popup menu on the fly based on the current
+//	selection. ie. If polys are selected, this will make sure that the marking menu
+//	is the poly/subd menu set. If NURBS are selected, the NURBS menu set will be
+//	created. If both are present, the combined menu set will be created. This is executed
+//	each time the popup menu is requested.
+//
+//		Use this method if you would like the ability to update the popup menu prior
+//	to being shown. This includes: rebuilding the menu, updating checkboxes, etc.
+//
+{
+	global int $gTextureEditorPopupType;
+
+	// Determine type based on the selection/hilite list.
+	//
+	int $selectedTypes[];
+	txtWndSelectedTypes( $selectedTypes );
+	int $polySelected = $selectedTypes[0];
+	int $nurbsSelected = $selectedTypes[1];
+	int $subdivSelected = $selectedTypes[2];
+
+	// Popup types:
+	//
+	// 0 == "Poly/SubD marking menu"
+	// 1 == "NURBS marking menu"
+	// 2 == "Combined Poly/SubD/NURBS marking menu"
+	//
+	int $popupType = 0;
+	if( $polySelected || $subdivSelected )
+	{
+		if( $nurbsSelected )
+		{
+			$popupType = 2;
+		}
+		else
+		{
+			$popupType = 0;
+			string $currentContext = `currentCtx`;
+			string $ctx = `contextInfo -c $currentContext`;
+			if($ctx == "texSculptCacheContext" || $ctx == "texCutContext" || $ctx == "Unfold3DBrush" || $ctx == "SymmetrizeUVBrush")
+				$popupType = 3;
+		}
+	}
+	else if( $nurbsSelected )
+	{
+		$popupType = 1;
+	}
+
+	// If the popupTypes do not match, then switch the menuset.
+	//
+	if( $popupType != $gTextureEditorPopupType || $popupType == 3 )
+	{
+		string $oldParent = `setParent -q -m`;
+
+		// Clear the existing radial menu and rebuild it
+		//
+		textureWindowDeletePopupRadialMenu( $editor );
+		setParent -m $popupMenu;
+		textureWindowCreatePopupRadialMenu( $editor, $editorCmd, $popupType );
+		setParent -m $oldParent;
+	}
+
+	// Now perform any updating necessary specific to the marking menus
+	//
+	if( $gTextureEditorPopupType == 1	||
+		$gTextureEditorPopupType == 2	)
+	{
+		updateNurbsEditUVModeMenuItem( $editor+"EditNURBSUV" );
+	}
+}
+
+global proc toggleUVToolkit()
+{
+    string $texPanelName[] = `getPanel -sty polyTexturePlacementPanel`;
+    if(size($texPanelName) != 1)
+    return;
+    string $texWindow =($texPanelName[0] + "Window");
+    if(isUVToolkitReady())
+    {
+        workspaceControl -e -collapse true UVToolkitDockControl;
+        if(!`workspaceControl -q -collapse UVToolkitDockControl`)
+            workspaceControl -e -close UVToolkitDockControl;
+    }
+    else
+    {
+    	if(!`workspaceControl -q -exists UVToolkitDockControl`) {
+    		UVToolkitPanel();
+    		workspaceControl -e -dockToControl $texWindow right UVToolkitDockControl;
+    	}
+    	if (!`workspaceControl -q -visible UVToolkitDockControl`)
+    		workspaceControl -e -visible true UVToolkitDockControl;
+    	if (`workspaceControl -q -collapse UVToolkitDockControl`)
+    	    workspaceControl -e -collapse false UVToolkitDockControl;
+	}
+}
+
+
+global proc int isUVToolkitReady()
+{
+    if(!`workspaceControl -q -exists UVToolkitDockControl`)
+        return 0;
+    if(!`workspaceControl -q -visible UVToolkitDockControl`)
+        return 0;
+    if(`workspaceControl -q -collapse UVToolkitDockControl`)
+        return 0;
+    return 1;
+}

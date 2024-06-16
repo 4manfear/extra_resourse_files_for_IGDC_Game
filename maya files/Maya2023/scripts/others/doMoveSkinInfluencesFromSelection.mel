@@ -1,0 +1,46 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+// 
+//  Procedure Name:
+//      doMoveSkinInfluencesFromSelection()
+//
+//  Description:
+//    This procedure is used to move weights to the selected transforms
+//
+//  Arguments:
+//    None
+//
+global proc doMoveSkinInfluencesFromSelection()
+{
+	// From the current selection identify the cluster deformers and potential influence transforms
+	// It is assumed that the curent selection includes the individual vertices in which we want to apply the
+	// weight redistribution
+
+	string $potentialInfluences[] = `ls -selection -transforms`;
+	if (size($potentialInfluences) == 0)
+		error((uiRes("m_doMoveSkinInfluencesFromSelection.kInsufficientTransformsSelected")));
+
+	string $influences[];
+	string $clusters[];
+
+	for( $transform in $potentialInfluences )
+	{
+		string $potentialClusters[] = `listConnections -s false -d true -type skinCluster $transform`;
+		if( size( $potentialClusters ) == 0 )
+			continue;
+
+		$influences[size($influences)] = $transform;
+
+		// Walk the list of potential clusters and append it to the $clusters set
+		for( $newCluster in $potentialClusters )
+			if ( stringArrayFind($newCluster, 0, $clusters) == -1 )
+				$clusters[size($clusters)] = $newCluster;
+	}
+
+	doMoveSkinInfluences( $clusters, $influences );
+}

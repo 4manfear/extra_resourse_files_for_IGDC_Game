@@ -1,0 +1,25 @@
+
+<?xml version='1.0' encoding='UTF-8'?>
+<templates>
+	<using package='maya'/>
+	<template name='NEblendMatrix'>
+		<attribute name='outputMatrix' type='maya.matrix'>
+			<label>Output Matrix</label>
+		</attribute>
+		<attribute name='inputMatrix' type='maya.matrix'>
+			<label>Input Matrix</label>
+		</attribute>
+		<attribute name='target' type='maya.compound'>
+			<label>Target</label>
+		</attribute>
+		<attribute name='envelope' type='maya.double'>
+			<label>Envelope</label>
+		</attribute>
+	</template>
+	<view name='NEDefault' template='NEblendMatrix'>
+		<property name='outputMatrix'/>
+		<property name='inputMatrix'/>
+		<property name='target'/>
+		<property name='envelope'/>
+	</view>
+</templates>

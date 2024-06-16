@@ -1,0 +1,19 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<templates>
+	<using package='maya'/>
+	<template name='NEcolorConstant'>
+		<attribute name='outColor' type='maya.float3'>
+			<label>Out Color</label>
+		</attribute>
+		<attribute name='outAlpha' type='maya.float'>
+			<label>Out Alpha</label>
+		</attribute>
+	</template>
+	<view name='NEDefault' template='NEcolorConstant'>
+		<property name='outColor'/>
+		<property name='outAlpha'/>
+	</view>
+	<view name='NEDefaultSoloOutput' template='NEcolorConstant'>
+		<property name='outColor'/>
+	</view>
+</templates>

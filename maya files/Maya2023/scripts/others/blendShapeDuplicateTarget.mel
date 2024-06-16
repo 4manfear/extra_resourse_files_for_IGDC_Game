@@ -1,0 +1,97 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+
+global proc int blendShapeDuplicateTarget(string $bs, int $targetIndex)
+{
+	$tempAttr = $bs + ".inputTarget[" + 0 + "].inputTargetGroup[" + $targetIndex + "].postDeformersMode";
+	int $targetPDM = `getAttr $tempAttr`;
+
+	int $checkTopology = 1;
+	int $targetType = $targetPDM + 2; // object/tangent/transform space.
+	string	$transformName = "";
+	if ($targetPDM == 2)
+	{
+		// transform space 
+		$tempAttr = $bs + ".inputTarget[" + 0 + "].inputTargetGroup[" + $targetIndex + "].tmx";
+		$connections = `listConnections $tempAttr`;
+		$transformName = $connections[0];  
+	}
+	int $editOn = 0;
+	int $resetWeight = 0;
+	string $duplicateTargets[];
+	// this procedure will add targets for every base.
+	int $newTargetIndexes[] = doBlendShapeAddTarget(
+		$bs, 
+		$checkTopology,
+		$targetType,
+		$transformName,
+		$editOn,
+		$resetWeight,
+		$duplicateTargets
+	);  
+	
+	if (size($newTargetIndexes) != 0)
+	{
+		$attrInTarget = $bs + ".inputTarget";
+		$baseIndices = getAttr("-mi", $attrInTarget);
+		for ($baseIndex in $baseIndices) {
+			blendShape -edit
+				-copyDelta $baseIndex $targetIndex $newTargetIndexes[0]
+				-copyWeights $baseIndex $targetIndex $newTargetIndexes[0]
+				$bs;
+		}
+        return $newTargetIndexes[0];			
+	}	
+	
+	return -1;
+}
+
+global proc int blendShapeDuplicateIBTarget(string $bs, int $targetIndex, int $inbetweenIndex,
+	int $newTargetIndex)
+// 
+// Description:
+//    Copy the in between target item from the source target to the destination target.
+//
+// Return: 0 fail, 1 success. 
+{ 
+	float $inBetweenWeight = (float)($inbetweenIndex - 5000)/(float)1000;
+	$inBetweenWeight = blendShapeWeightRoundoff($inBetweenWeight, 3);
+
+	$tempAttr = $bs + ".inbetweenInfoGroup[" + $targetIndex + "].inbetweenInfo[" + $inbetweenIndex + "].inbetweenTargetType";
+	int $oldInBetweenTargetType = `getAttr $tempAttr`; // return 0 absolute or 1 relative 
+	int $checkTopo = 1;
+	string $targetShapes[];
+	$cmd = "doBlendShapeAddInBetweenTarget(\"" + $bs + "\", " + $checkTopo + ", " 
+		+ $newTargetIndex + ", " + $inBetweenWeight + ", " + $oldInBetweenTargetType + ", {}" + ")";
+	evalEcho($cmd); 
+	
+	$tempAttr = $bs + ".inputTarget";
+	$baseIndices = getAttr("-mi", $tempAttr);
+	for ($baseIndex in $baseIndices)				
+	{			
+		blendShape -edit -rtd $baseIndex $newTargetIndex -ibi $inbetweenIndex $bs;
+		blendShape -edit -copyDelta $baseIndex $targetIndex $newTargetIndex -ibi $inbetweenIndex $bs;	 
+	}		 
+
+	$tempAttr = $bs + ".inbetweenInfoGroup[" + $targetIndex + "].inbetweenInfo[" + $inbetweenIndex + "].interpolation";
+	int $oldInterpolation = `getAttr $tempAttr`;
+	$tempAttr = $bs + ".inbetweenInfoGroup[" + $newTargetIndex + "].inbetweenInfo[" + $inbetweenIndex + "].interpolation";
+	setAttr $tempAttr $oldInterpolation;
+	
+	$tempAttr = $bs + ".inbetweenInfoGroup[" + $targetIndex + "].inbetweenInfo[" + $inbetweenIndex + "].interpolationCurve";
+	int $cIdx[] = `getAttr -mi $tempAttr`; 
+	for ($c in $cIdx)
+	{
+		$tempAttr = $bs + ".inbetweenInfoGroup[" + $targetIndex + "].inbetweenInfo[" + $inbetweenIndex + "].interpolationCurve[" + $c + "]";
+		float $pos[] = `getAttr $tempAttr`;
+		$tempAttr = $bs + ".inbetweenInfoGroup[" + $newTargetIndex + "].inbetweenInfo[" + $inbetweenIndex + "].interpolationCurve[" + $c + "]"; 
+		setAttr $tempAttr -type float2 $pos[0] $pos[1];
+	} 
+	
+	return 1;
+}

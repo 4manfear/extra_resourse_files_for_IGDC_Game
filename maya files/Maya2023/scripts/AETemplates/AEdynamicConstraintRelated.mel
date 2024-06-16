@@ -1,0 +1,27 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+// FILE: AEdynamicConstraintRelated.mel
+// INPUT: string (node name)
+// RETURN:	string[] (list of related nodes, with the node whose
+//			tab you want to be opened duplicated at the
+//			end of the array)
+//	The array should have the types of nodes in the following order:
+//		dynamicConstraint
+//		nCloth/nRigid
+//		nucleus
+//		nComponents
+//		other
+//
+
+global proc string[] AEdynamicConstraintRelated( string $dcNode )
+{
+	string $nTypes[] = { "dynamicConstraint", "nCloth", "nRigid", "nucleus" };
+	string $retval[] = getNucleusRelated( $dcNode, $nTypes, $dcNode, 1 );
+	return $retval;
+}
+

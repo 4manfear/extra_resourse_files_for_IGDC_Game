@@ -1,0 +1,59 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  30.April.2003
+//
+//<doc>
+//<name stringArrayToString>
+//
+//<synopsis>
+//	string stringArrayToString(string $array[], string $separationString)
+//
+//<description>
+//	Return a string that combines all the argument array string elements,
+//	each separated by the separation string.
+//
+//<flags>
+//	string $array[] The string array.
+//
+//	string $separationString Defines the characters to place between 
+//		each string element.
+//
+//<returns>
+//	string : A string combining all the individual string elements.
+//
+//<related stringToStringArray>
+//
+//<examples>
+//
+//	stringArrayToString({ "red", "blue", "green" }, "");
+//	// Result: redbluegreen //
+//
+//	stringArrayToString({ "red", "blue", "green" }, ", ");
+//	// Result: red, blue, green //
+//
+//	stringArrayToString({ "user", "directory", "documents", "file" }, "/");
+//	// Result: user/directory/documents/file //
+//
+//</doc>
+//
+global proc string stringArrayToString(string $array[], string $separationString)
+{
+	string $string = "";
+	int $index, $count = size($array);
+	
+	if ($count) {
+		$string = $array[0];
+		for ($index = 1; $index < $count; $index++) {
+			$string += ($separationString + $array[$index]);
+		}
+	}
+
+	return $string;
+}

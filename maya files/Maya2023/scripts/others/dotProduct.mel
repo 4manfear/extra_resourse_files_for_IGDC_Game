@@ -1,0 +1,59 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+// Creation Date: July 21, 1998
+//
+//<doc>
+//<name dotProduct>
+//
+//<synopsis>
+//	float dotProduct( float $v1[], float $v2[], int $normalizeInputs )
+//
+//<description>
+//		Returns the dot product of two 3D float arrays.  If $normalizeInputs
+//		is set then the vectors are normalized before the dot product is
+//		calculated.
+//
+//<flags>
+//		float[]	$v1	First vector
+//		float[]	$v2	Second vector
+//		int	$normalizeInputs	1 means normalize $v1, $v2 before calculation
+//
+//<returns>
+//		float : Dot product of the two vectors
+//
+//<examples>
+//
+//	float $v1[3] = {1,2,3};
+//	float $v2[3] = {4,5,6};
+//	dotProduct($v1, $v2, 0);
+//	// Results: 32 //
+//
+//</doc>
+//
+global proc float dotProduct( float $v1[], float $v2[], int $normalizeInputs )
+{
+	if ( size($v1) != 3 ) 
+		warning (uiRes("m_dotProduct.kFirstArgument"));
+	if ( size($v2) != 3 ) 
+		warning (uiRes("m_dotProduct.kSecondArgument"));
+
+	if ( $normalizeInputs == 1 )
+	{
+		// normalize the input vectors
+		//
+		normalize( $v1 );
+		normalize( $v2 );
+	}
+
+	// the dot product
+	//
+	float $result = $v1[0]*$v2[0] + $v1[1]*$v2[1] + $v1[2]*$v2[2];
+
+	return $result;
+}

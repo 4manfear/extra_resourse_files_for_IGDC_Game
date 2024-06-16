@@ -1,0 +1,266 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//  Description:
+//		Creation and manipulation of the Content Browser panel.
+//
+
+global proc contentBrowserPanel (string $panelName)
+//
+//  Description:
+//		Create a new scripted contentBrowserPanel.  If the scripted
+//		panel hasn't yet been defined then define it.
+//
+{
+	global string $gMainPane;
+
+	//  instantiate a new contentBrowserPanel
+	//
+	setParent $gMainPane;
+	scriptedPanel 
+		-unParent 
+		-type contentBrowserPanel 
+		$panelName;
+}
+
+global proc contentBrowserInitCallback(string $controlName)
+{
+	if (`workspaceControl -exists $controlName`) {
+		string $state[] = `workspaceControl -query -stateString $controlName`;
+
+		string $stateString = "";
+		if (`size($state[0])` > 0) {
+			$stateString = $state[0];
+			eval($stateString);
+		}
+	}
+}
+
+global proc contentBrowserInitCallbackSave(string $controlName)
+{
+	string $contentBrowserPanelName;
+	if (`workspaceControl -exists $controlName`) {
+		// workpsaceControl name -> panel name
+		// i.e.: contentBrowserPanel1Window -> contentBrowserPanel1ContentBrowser
+		int $end = `size($controlName)` - `size("Window")`;
+		$contentBrowserPanelName = `substring $controlName 1 $end`;
+		$contentBrowserPanelName = $contentBrowserPanelName + "ContentBrowser";
+	}
+
+	if (`size($contentBrowserPanelName)` > `size("ContentBrowser")` 
+		&& `contentBrowser -exists $contentBrowserPanelName`){
+
+		// Be sure the context is saved
+		contentBrowser -edit -saveCurrentContext $contentBrowserPanelName;
+		// Get the context name, the category and the location 
+		string $contextName[] = `contentBrowser -query -context $contentBrowserPanelName`;
+
+		if (`size($contextName[0])` == 0){
+			return;
+		}
+
+		string $formattedState = "contentBrowserSetContext(\"^1s\", \"^2s\", \"^3s\");";
+		$formattedState = `format -stringArg $contextName[0] -stringArg $contextName[1] -stringArg $contextName[2] $formattedState`;
+
+		workspaceControl -edit -stateString $formattedState $controlName;
+	}
+}
+
+global proc saveContentBrowserSettings()
+//
+//  Description:
+//		Saves the current Content Browser panel state.
+//
+{
+	string $panelNames[] = `getPanel -scriptType "contentBrowserPanel"`;
+	string $panelName = $panelNames[0];
+	
+	if(size($panelName)>0)
+	{
+		string $panelCompleteName = ($panelName + "ContentBrowser");
+
+		// Save the current context
+		contentBrowser
+			-e
+			-saveCurrentContext
+			$panelCompleteName;
+	}
+}
+
+global proc contentBrowserRaisePanel()
+{
+	string $panelNames[] = `getPanel -scriptType "contentBrowserPanel"`;
+	string $panelName = $panelNames[0];
+	
+	if(size($panelName) > 0)
+	{
+		string $controlName = $panelName+ "Window";
+
+		if (`workspaceControl -exists $controlName` ){
+			// If the control exists, don't wipe it's context, just put it on top.
+			workspaceControl -edit -restore  $controlName;
+		} else{
+			// Create the CB and clear the last context it had
+			string $contentBrowserTitle = `localizedPanelLabel("Content Browser")`;
+			tearOffRestorePanel($contentBrowserTitle, "contentBrowserPanel", true); 
+			contentBrowserClearContext("");
+		}
+	}
+}
+
+global proc contentBrowserSetLocation(string $location)
+{
+//
+//  Description:
+//		Sets the given library location on the Examples tab.
+//
+	string $panelNames[] = `getPanel -scriptType "contentBrowserPanel"`;
+	string $panelName = $panelNames[0];
+	
+	if(size($panelName) > 0)
+	{
+		string $panelCompleteName = ($panelName + "ContentBrowser");
+		string $contextName[];
+
+		if (`contentBrowser -exists $panelCompleteName`){
+			$contextName = `contentBrowser -query -context $panelCompleteName`;
+		}
+
+		if(`size($contextName[0])` == 0){
+			// If the CB doesn't have a current context, assign a 
+			// dummy context so the location and CB settings are 
+			// saved in the workspace file.
+
+			// Clear the old NoContext settings
+			contentBrowserClearContext("NoContext"); 
+			// Set the new context with the location
+			contentBrowserSetContext("NoContext", "Examples", $location);
+		} else {
+			// Keep the current context and just change location
+			contentBrowser
+				-e
+				-loc $location
+				$panelCompleteName;
+		}
+	}
+}
+
+global proc contentBrowserSetContext(string $contextName, string $defaultCategory, string $defaultLocation)
+{
+//
+//  Description:
+//		Sets the default category (tab) and location for the given context.
+//		If the default category and location strings are empty, the current
+//		settings for the given context will cleared. If all argument strings
+//		are empty, the current context will be turned off.
+//
+	string $panelNames[] = `getPanel -scriptType "contentBrowserPanel"`;
+	string $panelName = $panelNames[0];
+	
+	if(size($panelName)>0)
+	{
+		string $panelCompleteName = ($panelName + "ContentBrowser");
+
+		contentBrowser
+			-e
+			-context $contextName $defaultCategory $defaultLocation
+			$panelCompleteName;
+	}
+}
+
+global proc contentBrowserClearContext(string $contextName)
+{
+	contentBrowserSetContext($contextName, "", "");
+}
+
+global proc contentBrowserCreateCallback(string $panelName)
+{
+//
+//  Description:
+//		Create any editors unparented here and do
+//		any other initialization required.
+//
+	string $panelCompleteName = ($panelName + "ContentBrowser");
+	contentBrowser
+		-unParent
+		$panelCompleteName;
+}
+
+global proc contentBrowserAddCallback(string $panelName)
+{
+//
+//  Description:
+//		Create UI and parent any editors.
+//	
+	string $panelCompleteName 	= ($panelName+ "ContentBrowser");
+
+	// Make sure that there is no template active
+	setUITemplate -pushTemplate NONE;
+
+	string 	$baseForm = `formLayout`;
+	string $annot =  (uiRes("m_contentBrowserPanel.kCbAnnotation"));
+	string $basePane = `paneLayout -annotation $annot -configuration "single" $panelCompleteName`;
+
+	// Parent the editors to the editor layout
+	//
+	contentBrowser -edit 
+		-parent 
+		$basePane $panelCompleteName;
+		
+	formLayout -edit
+		-attachForm $basePane "left" 0
+		-attachForm $basePane "right" 0
+		-attachForm $basePane "bottom" 0
+		-attachForm $basePane "top" 0 
+		$baseForm;
+
+	setUITemplate -popTemplate;
+	string $controlName = $panelName + "Window";
+	if(`workspaceControl -exists $controlName`)
+	{
+		// Be sure the content browser has its init callback
+		workspaceControl -edit 
+			-initCallback "contentBrowserInitCallback" 
+			$controlName;
+	}
+}
+
+global proc contentBrowserRemoveCallback(string $panelName)
+{
+//
+//  Description:
+//		Unparent any editors and save state if required.
+//
+	string $panelCompleteName = ($panelName+ "ContentBrowser");
+
+	contentBrowser -edit
+		-unParent
+		$panelCompleteName;
+}
+
+global proc contentBrowserDeleteCallback(string $panelName)
+{
+//
+//  Description:
+//		Delete any editors and do any other cleanup required.
+
+	string $panelCompleteName = ($panelName+ "ContentBrowser");
+	deleteUI -editor $panelCompleteName;
+}
+
+global proc string contentBrowserSaveStateCallback(string $panelName)
+{
+//
+//  Description:
+//		Return a string that will restore the current state
+//		when it is executed.
+//
+	// create the normal state string
+
+	return "";
+}

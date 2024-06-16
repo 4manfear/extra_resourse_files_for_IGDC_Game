@@ -1,0 +1,103 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+// Creation Date:  14 January 1999
+//
+//
+//  Procedure Name:
+//      reverseCurveToolScript
+//
+//  Description:
+//	create wrapper around the reverseCurve command
+//
+//  Input Arguments:
+//		0 ==> do the command.
+//		1 ==> show the tool/action option box
+//		2 ==> return the command
+//		3 ==> show tool/action option box
+//		4 ==> enter the tool
+//
+//  Return Value:
+//      None.
+//
+
+global proc reverseCurveToolSetup( int $forceFactorySettings, string $goToTool )
+{
+	optionVar -init $forceFactorySettings -category "Modeling.Curves.Reverse Direction"
+		-iv reverseCurveEuc 0
+		-iv reverseCurveLac 1
+		;
+
+	if( "" != $goToTool ) {
+		scriptCtx -e -euc `optionVar -q reverseCurveEuc` $goToTool;
+		scriptCtx -e -lac `optionVar -q reverseCurveLac` $goToTool;
+	}
+}
+
+global proc reverseCurveValues ( string $toolName ) 
+{
+	performReverse 3 $toolName;
+	scriptCtxCommonValues( $toolName );
+}
+
+global proc reverseCurveProperties()
+{
+	scriptCtxCommonProperties;
+}
+
+proc createReverseCurveContext( string $tool )
+{
+	if( ! `scriptCtx -exists $tool` ) {
+		reverseCurveToolSetup( 0, "" );
+		scriptCtx -i1 "reverse.png"
+		  -title (uiRes("m_reverseCurveToolScript.kReverseCurveDirectionTool"))
+		  -bcn "reverseCurve"
+
+		  -exitUponCompletion `optionVar -q reverseCurveEuc`
+		  -totalSelectionSets 1
+		  -expandSelectionList true
+		  -fcs ("reverseCurveToolScript 0")
+
+		  -setNoSelectionPrompt (uiRes("m_reverseCurveToolScript.kSelectCurve"))
+		  -setSelectionPrompt (uiRes("m_reverseCurveToolScript.kSelectAdditionalCurve"))
+		  -setDoneSelectionPrompt (uiRes("m_reverseCurveToolScript.kReverseCurve"))
+
+		  -setAutoToggleSelection true
+		  -setAutoComplete `optionVar -q reverseCurveLac`
+		  -setAllowExcessCount true
+		  -showManipulators true
+
+		  -setSelectionCount 0
+		  -nurbsCurve true
+		  -curveOnSurface true
+		$tool;
+	}
+}
+
+global proc string reverseCurveToolScript( int $setToTool )
+//
+//	Description :
+//		0 ==> do the command.
+//		1 ==> show the action option box
+//		2 ==> return the command
+//		3 ==> show tool/action option box
+//		4 ==> enter the tool/do the command
+{
+	string $tool = "";
+	if( $setToTool > 2 ) {
+		if( !`optionVar -q modelWithToolReverseCurve` ) {
+			$setToTool = 4 - $setToTool;
+		}
+		else {
+			$tool = "reverseCurveContext";
+			createReverseCurveContext $tool;
+		}
+	}
+	return scriptToolScript( "performReverse", $setToTool, $tool );
+}

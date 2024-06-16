@@ -1,0 +1,1460 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// Functions defined in this file (gameFbxExporter.mel):
+//
+// global proc gameFbxExporter()
+// global proc string[] gameExp_GetGameFbxExporterNodeList()
+// global proc gameExp_CreateTabsComponents()
+// global proc gameExp_UpdatePrefix()
+// global proc gameExp_CreateUIComponents()
+// global proc gameExp_CurrentTabChanged()
+// global proc string gameExp_GetFBXFileVersion(int $userFileVersion)
+// global proc string gameExp_SetDefaultFileVersion()
+// global proc gameExp_CreateAdvanceSettingsUIComponents()
+// global proc gameExp_SetFbxPropertiesWithAttributes()
+// global proc gameExp_SetAttributesWithFbxProperties()
+// global proc gameExp_BrowseFolder()
+// global proc gameExp_DoExport()
+// global proc gameExp_GetRoots(string $roots[])
+// global proc string[] gameExp_GenerateFilenameList(string $roots[], string $fileNameOrPrefix)
+// global proc gameExp_ViewInFBXReview(string $exportFilePath)
+// global proc gameExp_FBXExport(string $exportSelectionFlag, string $exportFilePath)
+// global proc int gameExp_SetBakeAnimStartEnd()
+// 
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+
+
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// Global variables
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// Initialize collapse for Settings section
+global int $gGameExporterSettingsCollapse = 1;
+
+// Initialize scene modified state to the unset value 
+// (more details inside gameExp_RememberSceneState & RestoreSceneState)
+global int $gSceneModifiedState = -1;
+
+// For "MatchMode" clip editing, remember which clip is "active"
+global int $gMatchModeClip = -1; // match mode off
+
+// For "MatchMode" clip editing. This global variable is used for
+// asyncronous testing of the playback range changes (see 
+// 'gameExp_synchronizePlaybackRange' for details on its value)
+global int $gTimelineRef = 0;
+
+// For keeping track of the ClipRange buttons
+global string $rangeClipButtonWidgets[];
+
+// For keeping track of the StartTime field
+global string $rangeClipStartFieldWidgets[];
+
+// For keeping track of the EndTime field
+global string $rangeClipEndFieldWidgets[];
+
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// Include the other sections
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+source "gameFbxExporterUtilities.mel";
+source "gameFbxExporterPreset.mel";
+source "gameFbxExporterQuickSelectSet.mel";
+source "gameFbxExporterAnim.mel";
+source "gameFbxExporterModel.mel";
+
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// This procedure creates and initializes the "Game Exporter" window.
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+global proc gameFbxExporter()
+{          
+    global int $gGameExporterWindowHeight[];
+    // initialize window sizes depending on tab 1- Model 2- Anim 3- CTE
+    $gGameExporterWindowHeight[1] = 337;
+    $gGameExporterWindowHeight[2] = 397;
+    $gGameExporterWindowHeight[3] = 397;
+
+    $isLoaded = `pluginInfo -q -loaded gameFbxExporter`;
+    if (!$isLoaded) {
+        error ((uiRes("m_gameFbxExporter.kGameExporterNotLoaded"))); //plug-in resource is not available if plug-in is not loaded.
+    }
+
+    // Create Window frame
+    if (!`window -q -exists gameExporterWindow`)
+    {           
+        window -widthHeight 100 $gGameExporterWindowHeight[1]
+               -title (getPluginResource( "gameFbxExporter", "kGameExporterWindowTitle" ))
+               -sizeable 1 -resizeToFitChildren 1
+               gameExporterWindow; 
+        
+        gameExp_CreateDefaultPresets();                    
+    }
+     
+    if (!`window -q -visible gameExporterWindow`)
+    {        
+        // scriptJob to create and update UI component on file new or after a file opened,
+        // if the window is still visible.
+        scriptJob -parent gameExporterWindow -event "NewSceneOpened" "gameExp_CreateDefaultPresets";
+        scriptJob -parent gameExporterWindow -event "SceneOpened" "gameExp_CreateDefaultPresets";
+        
+        // Callback when "playingBack" goes off
+        scriptJob -parent gameExporterWindow -conditionFalse "playingBack" "gameExp_playbackOffCallback";
+
+        // scriptJob to update the file name preview if selection changes
+        scriptJob -parent gameExporterWindow -event "SelectionChanged" "gameExp_CreateFilenamePreview";
+
+        // scriptJob to exit MatchMode if timeline changes from Maya UI
+        scriptJob -parent gameExporterWindow -event "playbackRangeChanged" "gameExp_playbackRangeChangedCallback";
+
+        scriptJob -parent gameExporterWindow -e "teClipModified" "cte_ClipModifiedCallback";
+        scriptJob -parent gameExporterWindow -e "teClipRemoved" "cte_ClipRemovedCallback";
+
+        showWindow gameExporterWindow;              
+    }
+}
+
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// Get the list of gameFbxExporter nodes (not in a namespace)
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+global proc string[] gameExp_GetGameFbxExporterNodeList()
+{
+    string $list[] = `ls -type "gameFbxExporter"`;
+    string $finalList[];   
+    // Remove nodes inside a namespace
+    for($i = 0; $i < size($list); $i++)
+    {
+        string $buf[];
+        int $n = tokenize( $list[$i], ":", $buf );
+        
+        if ( $n == 1 )
+        {
+           $finalList[size($finalList)] = $list[$i];
+        }
+    }
+    return $finalList;   
+}
+
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// Create the tabs components
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+global proc gameExp_CreateTabsComponents()
+{
+    //
+    //                                                      gameExporterWindow
+    // ______________________________________________________________________________________________________________________________
+    // |                                                 gameExporterTabFormLayout                                                  |
+    // |  .----------------------------------------------------------------------------------------------------------------------.  |
+    // |  |                                                gameExporterTabLayout                                                 |  |
+    // |  |  .----------------------------------------------------------------------------------------------------------------.  |  |
+    // |  |  |                 gameExporterModelTab                   |               gameExporterAnimationTab                |  |  |
+    // |  |  |  .--------------------------------------------------.  |  .-------------------------------------------------.  |  |  |
+    // |  |  |  |       <model_>gameExporterMainFormLayout         |  |  |       <anim_>gameExporterMainFormLayout         |  |  |  |
+    // |  |  |  |  .--------------------------------------------.  |  |  |  .-------------------------------------------.  |  |  |  |
+    // |  |  |  |  |  <model_>gameExporterMainCommonFormLayout  |  |  |  |  |  <anim_>gameExporterMainCommonFormLayout  |  |  |  |  |
+    // |  |  |  |  |--------------------------------------------.  |  |  |  |-------------------------------------------|  |  |  |  |
+    // |  |  |  |  |  <model_>gameExporterSubCommonFormLayout   |  |  |  |  |  <anim_>gameExporterSubCommonFormLayout   |  |  |  |  |
+    // |  |  |  |  |--------------------------------------------.  |  |  |  |-------------------------------------------|  |  |  |  |
+    // |  |  |  |  |  <model_>gameExporterExportTypeFormLayout  |  |  |  |  |  <anim_>gameExporterExportTypeFormLayout  |  |  |  |  |
+    // |  |  |  |  |--------------------------------------------|  |  |  |  |-------------------------------------------|  |  |  |  |
+    // |  |  |  |--------------------------------------------------|  |  |-------------------------------------------------|  |  |  |
+    // |  |  |----------------------------------------------------------------------------------------------------------------|  |  |
+    // |  |----------------------------------------------------------------------------------------------------------------------|  |
+    // |----------------------------------------------------------------------------------------------------------------------------|
+    //
+
+    if (`window -q -exists gameExporterWindow`)
+    {       
+        global string $gameExporterPrefix;
+        
+        setParent gameExporterWindow;   
+            
+        if (`layout -exists gameExporterTabFormLayout`)
+        {
+            deleteUI -layout gameExporterTabFormLayout;
+        }
+            
+        formLayout gameExporterTabFormLayout;
+            
+        tabLayout gameExporterTabLayout;
+        
+        formLayout -edit
+           -attachForm      gameExporterTabLayout   "top"     0
+           -attachForm      gameExporterTabLayout   "left"    0
+           -attachForm      gameExporterTabLayout   "right"   0
+           -attachForm      gameExporterTabLayout   "bottom"  0
+        gameExporterTabFormLayout;
+        
+        formLayout gameExporterModelTab; 
+        
+        $gameExporterPrefix = "model_";       
+        gameExp_CreateUIComponents(); 
+        
+        string $tabMainFormLayout = gameExp_GetPrefixedName("gameExporterMainFormLayout");
+        
+        formLayout -edit
+           -attachForm      $tabMainFormLayout   "top"     0
+           -attachForm      $tabMainFormLayout   "left"    0
+           -attachForm      $tabMainFormLayout   "right"   0
+           -attachForm      $tabMainFormLayout   "bottom"  0
+        gameExporterModelTab;
+        
+        setParent gameExporterTabLayout;
+        
+        formLayout gameExporterAnimationTab;
+        
+        $gameExporterPrefix = "anim_";        
+        gameExp_CreateUIComponents(); 
+        
+        $tabMainFormLayout = gameExp_GetPrefixedName("gameExporterMainFormLayout");
+            
+        formLayout -edit
+           -attachForm      $tabMainFormLayout   "top"     0
+           -attachForm      $tabMainFormLayout   "left"    0
+           -attachForm      $tabMainFormLayout   "right"   0
+           -attachForm      $tabMainFormLayout   "bottom"  0
+        gameExporterAnimationTab;
+        
+        setParent gameExporterTabLayout;
+
+        formLayout gameExporterTimeEditorTab;
+    
+        $gameExporterPrefix = "timeEditor_";
+        gameExp_CreateUIComponents(); 
+    
+        $tabMainFormLayout = gameExp_GetPrefixedName("gameExporterMainFormLayout");
+        
+        formLayout -edit
+           -attachForm      $tabMainFormLayout   "top"     0
+           -attachForm      $tabMainFormLayout   "left"    0
+           -attachForm      $tabMainFormLayout   "right"   0
+           -attachForm      $tabMainFormLayout   "bottom"  0
+        gameExporterTimeEditorTab;
+    
+        setParent gameExporterTabLayout;
+
+        tabLayout -edit -tabLabel gameExporterModelTab (getPluginResource( "gameFbxExporter", "kGameExporterModelOption" ))
+                        -tabLabel gameExporterAnimationTab (getPluginResource( "gameFbxExporter", "kGameExporterAnimationOption" )) 
+                        -tabLabel gameExporterTimeEditorTab (getPluginResource( "gameFbxExporter", "kGameExporterTimeEditorOption" )) 
+                        -preSelectCommand ("gameExp_UpdatePrefix") 
+                        -selectCommand ("gameExp_PopulatePresetList();gameExp_CreateExportTypeUIComponents();") gameExporterTabLayout;
+
+        // Update prefix upon tab selection.
+        gameExp_UpdatePrefix();
+
+        tabLayout -e -changeCommand "gameExp_CurrentTabChanged();" gameExporterTabLayout;
+    }
+}
+
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// Update prefix upon tab selection.
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+global proc gameExp_UpdatePrefix()
+{
+    global string $gameExporterPrefix;
+    int $selectedTab = `tabLayout -q -selectTabIndex gameExporterTabLayout`;
+    if ($selectedTab == 1)
+        $gameExporterPrefix = "model_";
+    else if ($selectedTab == 2)
+        $gameExporterPrefix = "anim_";
+    else if ($selectedTab == 3)
+        $gameExporterPrefix = "timeEditor_";
+}
+
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// Create all the main UI components
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+global proc gameExp_CreateUIComponents()
+{                 
+    string $gameExporterMainFormLayout = gameExp_GetPrefixedName("gameExporterMainFormLayout");   
+    
+    formLayout $gameExporterMainFormLayout;
+                                   
+    // ---------- Create Common UI Components ----------
+    
+    // Create the top section with the drop down list of settings (nodes) and buttons
+    // That form is always enabled and available.
+    string $gameExporterMainCommonFormLayout = gameExp_GetPrefixedName("gameExporterMainCommonFormLayout");
+    formLayout $gameExporterMainCommonFormLayout;
+    
+    string $gameExporterPresetList = gameExp_GetPrefixedName("gameExporterPresetList"); 
+    optionMenu -width 100            
+               -annotation  (getPluginResource( "gameFbxExporter","kGameExporterAnnPresetList"))                  
+               -changeCommand ("gameExp_CurrentPresetChanged()") 
+               $gameExporterPresetList;      
+              
+    // Populate the preset list
+    gameExp_PopulatePresetList();          
+    
+    string $newPreset = gameExp_GetPrefixedName("newPreset");
+    symbolButton -image "newPreset.png"
+                 -annotation (getPluginResource( "gameFbxExporter","kGameExporterAnnNewPreset"))
+                 -command "gameExp_CreatePreset" $newPreset;                   
+    
+    string $renamePreset = gameExp_GetPrefixedName("renamePreset");
+    symbolButton -image "renamePreset.png"
+                 -annotation (getPluginResource( "gameFbxExporter","kGameExporterAnnRenamePreset"))                     
+                 -command "gameExp_RenamePreset" $renamePreset;
+    
+    string $loadPreset = gameExp_GetPrefixedName("loadPreset");
+    symbolButton -image "loadPreset.png"
+                 -annotation (getPluginResource( "gameFbxExporter","kGameExporterAnnLoadPreset"))
+                 -command "gameExp_LoadAttrPreset" $loadPreset;
+    
+    string $savePreset = gameExp_GetPrefixedName("savePreset");
+    symbolButton -image "savePreset.png"
+                 -annotation (getPluginResource( "gameFbxExporter","kGameExporterAnnSavePreset"))                     
+                 -command "gameExp_SaveAttrPreset" $savePreset;
+    
+    string $deletePreset = gameExp_GetPrefixedName("deletePreset");
+    symbolButton -image "deletePreset.png"
+                 -annotation (getPluginResource( "gameFbxExporter","kGameExporterAnnDeletePreset"))                     
+                 -command "gameExp_DeletePreset" $deletePreset;
+    
+    string $gameExporterHelp = gameExp_GetPrefixedName("gameExporterHelp");
+    symbolButton -image "gameFbxExporterHelp.png"   
+                 -annotation (getPluginResource( "gameFbxExporter","kGameExporterAnnHelp"))
+                 -command "showHelp GameExporter"
+                 $gameExporterHelp;                   
+
+     formLayout -edit                            
+        -attachForm      $gameExporterPresetList   "top"     10
+        -attachForm      $gameExporterPresetList   "left"    5
+        -attachControl   $gameExporterPresetList   "right"   2  $newPreset
+                    
+        -attachForm      $newPreset      "top"     8
+        -attachControl   $newPreset      "right"  -2  $renamePreset
+        
+        -attachForm      $renamePreset   "top"     8
+        -attachControl   $renamePreset   "right"  -1  $loadPreset
+        
+        -attachForm      $loadPreset     "top"     8
+        -attachControl   $loadPreset     "right"  -1  $savePreset
+        
+        -attachForm      $savePreset     "top"     8
+        -attachControl   $savePreset     "right"  -3  $deletePreset
+                   
+        -attachForm      $deletePreset   "top"     8
+        -attachControl   $deletePreset   "right"  -4  $gameExporterHelp
+
+        -attachForm      $gameExporterHelp   "top"     10
+        -attachForm      $gameExporterHelp   "right"   2                  
+        
+    $gameExporterMainCommonFormLayout;
+    
+    setParent ..;
+      
+
+    // Create a Sub Common Form
+    string $gameExporterSubCommonFormLayout = gameExp_GetPrefixedName("gameExporterSubCommonFormLayout");
+    formLayout $gameExporterSubCommonFormLayout;        
+           
+    separator -height 10 sep_1;    
+                  
+    // Export Set: Export All, Export Selection, Export Selection Set
+    string $gameExporterExportSet = gameExp_GetPrefixedName("gameExporterExportSet");
+    optionMenu -annotation (getPluginResource( "gameFbxExporter","kGameExporterAnnExportType")) $gameExporterExportSet;   
+        menuItem -label (getPluginResource( "gameFbxExporter", "kGameExporterExportAll" ));
+        menuItem -label (getPluginResource( "gameFbxExporter", "kGameExporterExportSelection" ));  
+        menuItem -label (getPluginResource( "gameFbxExporter", "kGameExporterExportSelectionSet" ));  
+    
+    string $gameExporterExportSelectionSet = gameExp_GetPrefixedName("gameExporterExportSelectionSet");
+    optionMenu -width 100 
+               -annotation (getPluginResource( "gameFbxExporter","kGameExporterAnnObjectSetsList"))
+               -beforeShowPopup ("gameExp_CreateSelectionSetList")
+               $gameExporterExportSelectionSet;
+    gameExp_QuickSelectSetPopupMenu($gameExporterExportSelectionSet);
+
+    string $gameExporterQuickSelectSet = gameExp_GetPrefixedName("gameExporterQuickSelectSet");
+    symbolButton -image "createSelectionSet.png"
+                 -annotation (getPluginResource( "gameFbxExporter","kGameExporterAnnQuickSelSet"))
+                 -command "gameExp_QuickSelectSet 0" // 0=no modifier, auto-detect
+                 $gameExporterQuickSelectSet;
+    gameExp_QuickSelectSetPopupMenu($gameExporterQuickSelectSet);
+
+    formLayout -edit               
+       
+        -attachForm   sep_1   "top"     0
+        -attachForm   sep_1   "left"    0  
+        -attachForm   sep_1   "right"   0             
+       
+        -attachControl   $gameExporterExportSet   "top"    0    sep_1
+        -attachForm      $gameExporterExportSet   "left"   5   
+        
+        -attachControl   $gameExporterExportSelectionSet   "top"     0   sep_1
+        -attachControl   $gameExporterExportSelectionSet   "left"    5   $gameExporterExportSet   
+        -attachControl   $gameExporterExportSelectionSet   "right"   2   $gameExporterQuickSelectSet
+        -attachForm      $gameExporterExportSelectionSet   "bottom"  5    
+        
+        -attachControl   $gameExporterQuickSelectSet   "top"    0    sep_1
+        -attachForm      $gameExporterQuickSelectSet   "right"  7  
+        
+    $gameExporterSubCommonFormLayout;
+     
+    setParent ..; 
+    
+    // Attach the main and sub common section on the main form layout
+    formLayout -edit
+       -attachForm      $gameExporterMainCommonFormLayout   "top"    0
+       -attachForm      $gameExporterMainCommonFormLayout   "left"   0
+       -attachForm      $gameExporterMainCommonFormLayout   "right"  0
+       
+       -attachControl   $gameExporterSubCommonFormLayout   "top"     0    $gameExporterMainCommonFormLayout
+       -attachForm      $gameExporterSubCommonFormLayout   "left"    0
+       -attachForm      $gameExporterSubCommonFormLayout   "right"   0
+       
+    $gameExporterMainFormLayout;
+                    
+    // ---------- Create Export Type UI Components ---------- 
+        
+    gameExp_CreateExportTypeUIComponents(); 
+    
+    setParent ..;   
+                    
+    
+}
+
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// On Tab change:
+// - Save window height on last used gameExporterNode
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+global proc gameExp_CurrentTabChanged()
+{
+    global int $gGameExporterWindowHeight[];
+    string $gameExporterNodes[] = gameExp_GetGameFbxExporterNodeList();
+    int $nbPresets = size($gameExporterNodes);
+    int $lastTabUsed = 1;
+    int $windowHeight = `window -q -height gameExporterWindow`;
+       
+    for($i=0; $i<$nbPresets; $i++)
+    {        
+        if(`getAttr($gameExporterNodes[$i] + ".isTheLastOneUsed")`)
+        {
+            $lastTabUsed = `getAttr($gameExporterNodes[$i] + ".exportTypeIndex")`;
+            $gGameExporterWindowHeight[$lastTabUsed] = $windowHeight;
+            break;
+        }
+    }
+}
+
+// ----------------------------------------------------------------------------
+// Helper proc to retrieve the FBX file string from the plug-in based on the
+// received index (this value must be 0 based). Typically, the value passed
+// to this function is obtained with:
+//    `optionMenu -q -select $gameExporterFBXVersion` - 1
+// ----------------------------------------------------------------------------
+global proc string gameExp_GetFBXFileVersion(int $userFileVersion)
+{
+    string $list[] = `FBXExportFileVersion -vl`;  
+    if ($userFileVersion < 0 || $userFileVersion >= size($list))
+    {
+        // the index is out of bounds. We return the first version
+        // available (which is also the most recent)
+        $userFileVersion = 0;
+    }
+    string $fileVersion = $list[$userFileVersion];
+    return $fileVersion;
+}
+
+// ----------------------------------------------------------------------------
+// Set the default FBX Version
+// ----------------------------------------------------------------------------
+global proc string gameExp_SetDefaultFileVersion()
+{
+    global string $gGameFbxExporterCurrentNode;
+
+    string $defaultFileVersion = `FBXExportFileVersion -q`;
+    setAttr($gGameFbxExporterCurrentNode + ".fileVersion") -type "string" $defaultFileVersion;
+    return $defaultFileVersion;
+}
+
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// Create the Advance Settings UI Components
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+global proc gameExp_CreateAdvanceSettingsUIComponents()
+{
+    global string $gGameFbxExporterCurrentNode;
+   
+    // Get the dialog's formLayout.
+    string $form = `setParent -q`;
+           
+    formLayout -e -width 450 $form;   
+    
+    separator -height 5 sep_1;
+    separator -height 5 sep_2;    
+    
+    // Get the Fbx preset for the export type selected (custom one only used by the game fbx exporter)
+    string $fbxPreset = gameExp_GetFbxPresetForExportType();
+    
+    string $presetPath = (gameExp_GetFbxExportPresetDirectory() + "/" + $fbxPreset);
+    
+    // $exportType = 1- Model 2- Animation 3- Time Editor
+    int $exportType = `getAttr($gGameFbxExporterCurrentNode + ".exportTypeIndex")`;  
+    string $overridePresetType = ($exportType == 1 ? (getPluginResource( "gameFbxExporter", "kGameExporterUseModelPreset" )) : 
+                                 ($exportType == 2 ? (getPluginResource( "gameFbxExporter", "kGameExporterUseAnimationClipsPreset" )) :
+                                                     (getPluginResource( "gameFbxExporter", "kGameExporterUseTimeEditorClipsPreset" ))));
+
+    checkBoxGrp -label $overridePresetType
+                -value1 `getAttr($gGameFbxExporterCurrentNode + ".overridePresetValue")`
+                -columnWidth 1 300
+                -changeCommand ("columnLayout -edit -enable #1 gameFbxExporterFbxOptionsContainer")
+                -offCommand ("FBXLoadExportPresetFile -f \"" + $presetPath + "\"; setAttr(\"" + $gGameFbxExporterCurrentNode + ".overridePresetValue\") false; gameExp_SetFbxPropertiesWithAttributes; FBXUICallBack -1 \"updateUIWithProperties\"")
+                gameFbxExporterOverridePreset;
+       
+    scrollLayout -childResizable true gameFbxExporterAdvanceSettingsFbxUISection;    
+    columnLayout -adjustableColumn true -enable `checkBoxGrp -q -value1 gameFbxExporterOverridePreset` gameFbxExporterFbxOptionsContainer;    
+    
+    // Push Current Fbx Settings
+    FBXPushSettings; 
+
+    // Before showing the presets, we need to set FBX property EXP_SELECTIONONLY. Depending on its value, some presets are hidden or not (ex. Connections).
+    string $gameExporterExportSet = gameExp_GetPrefixedName("gameExporterExportSet");
+    // $exportSetIndex = 1- Export All 2- Export Selection 3- Export Object Set
+    int $exportSetIndex = `optionMenu -q -select $gameExporterExportSet`;
+    FBXProperty "Export|IncludeGrp|SelectionOnly" -v ($exportSetIndex > 1);
+
+    // Create a UI with our own custom fbx preset file
+    FBXUIShowOptions -parent gameFbxExporterFbxOptionsContainer -action "post" -fileext fbx -import 0 -custom_PI 0 -use_special_preset $fbxPreset;
+    
+    // Set Fbx properties with the node attributes
+    gameExp_SetFbxPropertiesWithAttributes();
+
+    // Update the Fbx UI with the Fbx property values
+    FBXUICallBack -1 "updateUIWithProperties";
+       
+    // Pop old Fbx Settings on UI destruction
+    scriptJob -uiDeleted $form "FBXPopSettings;";
+    
+    setParent $form;    
+   
+    string $btnSave = `button -label (getPluginResource( "gameFbxExporter", "kGameExporterOkLabel" ))                              
+                              -command ("setAttr(\"" + $gGameFbxExporterCurrentNode + ".overridePresetValue\") `checkBoxGrp -q -value1 gameFbxExporterOverridePreset`; gameExp_SetAttributesWithFbxProperties; layoutDialog -dismiss \"\"")`;   
+    string $btnCancel = `button -label (getPluginResource( "gameFbxExporter", "kGameExporterCancelLabel" ))
+                                -command ("layoutDialog -dismiss \"\"")`;
+    
+       
+    formLayout -edit
+        -attachForm            sep_1   "top"    5
+        -attachForm            sep_1   "left"   5        
+        -attachForm            sep_1   "right"  5
+
+        -attachControl         gameFbxExporterOverridePreset  "top"    5 sep_1
+        -attachForm            gameFbxExporterOverridePreset  "left"   0
+        -attachNone            gameFbxExporterOverridePreset  "bottom" 
+        -attachForm            gameFbxExporterOverridePreset  "right"  5
+        
+        -attachControl         sep_2  "top"    5 gameFbxExporterOverridePreset
+        -attachForm            sep_2  "left"   5        
+        -attachForm            sep_2  "right"  5
+        
+        -attachControl         gameFbxExporterAdvanceSettingsFbxUISection  "top"    5 sep_2
+        -attachForm            gameFbxExporterAdvanceSettingsFbxUISection  "left"   5
+        -attachForm            gameFbxExporterAdvanceSettingsFbxUISection  "bottom" 35
+        -attachForm            gameFbxExporterAdvanceSettingsFbxUISection  "right"  5
+                
+        -attachControl         $btnSave  "top"    5 gameFbxExporterAdvanceSettingsFbxUISection
+        -attachPosition        $btnSave  "left"   5 31
+               
+        -attachControl         $btnCancel  "top"  5 gameFbxExporterAdvanceSettingsFbxUISection
+        -attachControl         $btnCancel  "left" 5 $btnSave
+               
+    $form;
+}
+
+
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// Set FBX property with the corresponding node attribute.
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+global proc gameExp_SetFbxPropertiesWithAttributes()
+{
+    global string $gGameFbxExporterCurrentNode;
+    int $exportType = `getAttr($gGameFbxExporterCurrentNode + ".exportTypeIndex")`;
+    int $isOverriding = `getAttr($gGameFbxExporterCurrentNode + ".overridePresetValue")`;
+    
+    // Set specific properties if we override the default preset values or if 
+    // they are available outside that advance context.
+    if($exportType == 1 || $isOverriding)
+    {
+        // Geometry
+        FBXExportSmoothingGroups -v `getAttr($gGameFbxExporterCurrentNode + ".smoothingGroups")`;
+        FBXExportHardEdges -v `getAttr($gGameFbxExporterCurrentNode + ".splitVertexNormals")`;         
+        FBXExportTangents -v `getAttr($gGameFbxExporterCurrentNode + ".tangentsBinormals")`;        
+        FBXExportSmoothMesh -v `getAttr($gGameFbxExporterCurrentNode + ".smoothMesh")`;       
+        FBXExportTriangulate -v `getAttr($gGameFbxExporterCurrentNode + ".triangulate")`;
+        
+        
+        // Deformed Models  
+        FBXProperty "Export|IncludeGrp|Animation|Deformation" -v (`getAttr($gGameFbxExporterCurrentNode + ".skinning")` || `getAttr($gGameFbxExporterCurrentNode + ".blendshapes")`);
+        FBXExportSkins -v `getAttr($gGameFbxExporterCurrentNode + ".skinning")`;
+        FBXExportShapes -v `getAttr($gGameFbxExporterCurrentNode + ".blendshapes")`;  
+
+        // Animation
+        FBXProperty "Export|IncludeGrp|Animation" -v `getAttr($gGameFbxExporterCurrentNode + ".exportAnimation")`;
+    }
+
+    // Set specific properties if we are in the animation clips section or
+    // if we override the default preset values
+    if($exportType == 2  || 
+       $exportType == 3 || 
+       $isOverriding)
+    {        
+         // Bake Animation
+        FBXExportBakeComplexAnimation -v( `getAttr($gGameFbxExporterCurrentNode + ".bakeAnimation")` ? "true" : "false");              
+    }  
+    
+    // We override, set all the other properties
+    if($isOverriding)
+    {
+         // Geometry     
+        FBXProperty "Export|IncludeGrp|Geometry|SelectionSet" -v `getAttr($gGameFbxExporterCurrentNode + ".selectionSets")`;
+        FBXExportAnimationOnly -v `getAttr($gGameFbxExporterCurrentNode + ".convertToNullObj")`;
+        FBXExportInstances -v `getAttr($gGameFbxExporterCurrentNode + ".preserveInstances")`;
+        FBXExportReferencedAssetsContent -v `getAttr($gGameFbxExporterCurrentNode + ".referencedAssetsContent")`;
+        FBXProperty "Export|IncludeGrp|Geometry|GeometryNurbsSurfaceAs" -v `getAttr($gGameFbxExporterCurrentNode + ".convertNurbsSurfaceTo")`; 
+        
+        // Extra Options
+        FBXExportUseSceneName -v `getAttr($gGameFbxExporterCurrentNode + ".useSceneName")`;
+        FBXProperty "Export|IncludeGrp|Animation|ExtraGrp|RemoveSingleKey" -v `getAttr($gGameFbxExporterCurrentNode + ".removeSingleKey")`;
+        FBXExportQuaternion -v `getAttr($gGameFbxExporterCurrentNode + ".quarternionInterpMode")`;
+        
+        // Bake Animation       
+        FBXExportBakeComplexStart -v `getAttr($gGameFbxExporterCurrentNode + ".bakeAnimStart")`;
+        FBXExportBakeComplexEnd -v `getAttr($gGameFbxExporterCurrentNode + ".bakeAnimEnd")`;
+        FBXExportBakeComplexStep -v `getAttr($gGameFbxExporterCurrentNode + ".bakeAnimStep")`;
+        FBXExportBakeResampleAnimation -v `getAttr($gGameFbxExporterCurrentNode + ".resampleAll")`;
+        
+        // Deformed Models        
+        FBXProperty "Export|IncludeGrp|Animation|Deformation" -v `getAttr($gGameFbxExporterCurrentNode + ".deformedModels")`;
+      
+        // Curve Filters        
+        FBXProperty "Export|IncludeGrp|Animation|CurveFilter" -v `getAttr($gGameFbxExporterCurrentNode + ".curveFilters")`;
+        
+        // Constant Key Reducer        
+        FBXExportApplyConstantKeyReducer -v `getAttr($gGameFbxExporterCurrentNode + ".constantKeyReducer")`;
+        FBXProperty "Export|IncludeGrp|Animation|CurveFilter|CurveFilterApplyCstKeyRed|CurveFilterCstKeyRedTPrec" -v `getAttr($gGameFbxExporterCurrentNode + ".ckrTranslationPrecision")`;
+        FBXProperty "Export|IncludeGrp|Animation|CurveFilter|CurveFilterApplyCstKeyRed|CurveFilterCstKeyRedRPrec" -v `getAttr($gGameFbxExporterCurrentNode + ".ckrRotationPrecision")`;
+        FBXProperty "Export|IncludeGrp|Animation|CurveFilter|CurveFilterApplyCstKeyRed|CurveFilterCstKeyRedSPrec" -v `getAttr($gGameFbxExporterCurrentNode + ".ckrScalingPrecision")`;
+        FBXProperty "Export|IncludeGrp|Animation|CurveFilter|CurveFilterApplyCstKeyRed|CurveFilterCstKeyRedOPrec" -v `getAttr($gGameFbxExporterCurrentNode + ".ckrOtherPrecision")`;
+        FBXProperty "Export|IncludeGrp|Animation|CurveFilter|CurveFilterApplyCstKeyRed|AutoTangentsOnly" -v `getAttr($gGameFbxExporterCurrentNode + ".ckrAutoTangentOnly")`;
+        
+        // Constraints
+        FBXExportConstraints -v `getAttr($gGameFbxExporterCurrentNode + ".constraints")`;
+        FBXExportSkeletonDefinitions -v `getAttr($gGameFbxExporterCurrentNode + ".skeletonDefinitions")`;
+        
+        // Cameras
+        FBXExportCameras -v `getAttr($gGameFbxExporterCurrentNode + ".includeCameras")`;   
+        
+        // Lights
+        FBXExportLights -v `getAttr($gGameFbxExporterCurrentNode + ".includeLights")`;
+                     
+        // Units
+        FBXProperty "Export|AdvOptGrp|UnitsGrp|DynamicScaleConversion" -v `getAttr($gGameFbxExporterCurrentNode + ".autoScaleFactor")`;
+        FBXProperty "Export|AdvOptGrp|UnitsGrp|UnitsSelector" -v `getAttr($gGameFbxExporterCurrentNode + ".unitConversion")`;
+        
+        // FBX UI
+        FBXProperty "Export|AdvOptGrp|UI|ShowWarningsManager" -v `getAttr($gGameFbxExporterCurrentNode + ".showWarningManager")`;
+        FBXExportGenerateLog -v `getAttr($gGameFbxExporterCurrentNode + ".generateLogData")`;
+    }
+    
+    // Always Set these common properties
+    FBXExportUpAxis (`getAttr($gGameFbxExporterCurrentNode + ".upAxis")` == 1 ? "y" : "z");
+    FBXExportEmbeddedTextures -v `getAttr($gGameFbxExporterCurrentNode + ".embedMedia")`;    
+
+    // Include Children 
+    FBXExportIncludeChildren -v  `getAttr($gGameFbxExporterCurrentNode + ".includeChildren")`;
+
+    // Input Connections
+    FBXExportInputConnections -v  `getAttr($gGameFbxExporterCurrentNode + ".inputConnections")`;
+
+    // FBX file format
+    FBXExportInAscii -v `getAttr($gGameFbxExporterCurrentNode + ".fileType")`;
+    FBXExportFileVersion -v `getAttr($gGameFbxExporterCurrentNode + ".fileVersion")`;      
+}
+
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// Set specific node attribute value with the corresponding FBX property.
+// Used to apply overriden FBX properties values.
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+global proc gameExp_SetAttributesWithFbxProperties()
+{
+    global string $gGameFbxExporterCurrentNode;
+    
+    if (`getAttr($gGameFbxExporterCurrentNode + ".overridePresetValue")`)
+    {    
+        // Geometry
+        setAttr($gGameFbxExporterCurrentNode + ".smoothingGroups") `FBXExportSmoothingGroups -q`; 
+        setAttr($gGameFbxExporterCurrentNode + ".splitVertexNormals") `FBXExportHardEdges -q`;
+        setAttr($gGameFbxExporterCurrentNode + ".tangentsBinormals") `FBXExportTangents -q`;        
+        setAttr($gGameFbxExporterCurrentNode + ".smoothMesh") `FBXExportSmoothMesh -q`;        
+        setAttr($gGameFbxExporterCurrentNode + ".selectionSets") `FBXProperty "Export|IncludeGrp|Geometry|SelectionSet" -q`;
+        setAttr($gGameFbxExporterCurrentNode + ".convertToNullObj") `FBXExportAnimationOnly -q`;
+        setAttr($gGameFbxExporterCurrentNode + ".preserveInstances") `FBXExportInstances -q`;
+        setAttr($gGameFbxExporterCurrentNode + ".referencedAssetsContent") `FBXExportReferencedAssetsContent -q`;
+        setAttr($gGameFbxExporterCurrentNode + ".convertNurbsSurfaceTo") -type "string" `FBXProperty "Export|IncludeGrp|Geometry|GeometryNurbsSurfaceAs" -q`;         
+        setAttr($gGameFbxExporterCurrentNode + ".triangulate") `FBXExportTriangulate -q`;
+        
+        // Animation
+        setAttr($gGameFbxExporterCurrentNode + ".exportAnimation") `FBXProperty "Export|IncludeGrp|Animation" -q`;
+        
+        // Extra Options
+        setAttr($gGameFbxExporterCurrentNode + ".useSceneName") `FBXExportUseSceneName -q`;
+        setAttr($gGameFbxExporterCurrentNode + ".removeSingleKey") `FBXProperty "Export|IncludeGrp|Animation|ExtraGrp|RemoveSingleKey" -q`;
+        setAttr($gGameFbxExporterCurrentNode + ".quarternionInterpMode") -type "string" `FBXExportQuaternion -q`;
+        
+        // Bake Animation
+        setAttr($gGameFbxExporterCurrentNode + ".bakeAnimation") (`FBXExportBakeComplexAnimation -q` == "false" ? 0 : 1); 
+        setAttr($gGameFbxExporterCurrentNode + ".bakeAnimStart") `FBXExportBakeComplexStart -q`;
+        setAttr($gGameFbxExporterCurrentNode + ".bakeAnimEnd") `FBXExportBakeComplexEnd -q`;
+        setAttr($gGameFbxExporterCurrentNode + ".bakeAnimStep") `FBXExportBakeComplexStep -q`;
+        setAttr($gGameFbxExporterCurrentNode + ".resampleAll") `FBXExportBakeResampleAnimation -q`;
+        
+        // Deformed Models        
+        setAttr($gGameFbxExporterCurrentNode + ".deformedModels") `FBXProperty "Export|IncludeGrp|Animation|Deformation" -q`;
+        setAttr($gGameFbxExporterCurrentNode + ".skinning") `FBXExportSkins -q`;
+        setAttr($gGameFbxExporterCurrentNode + ".blendshapes") `FBXExportShapes -q`; 
+
+        // Curve Filters        
+        setAttr($gGameFbxExporterCurrentNode + ".curveFilters") `FBXProperty "Export|IncludeGrp|Animation|CurveFilter" -q`;
+        
+        // Constant Key Reducer        
+        setAttr($gGameFbxExporterCurrentNode + ".constantKeyReducer") `FBXExportApplyConstantKeyReducer -q`;
+        setAttr($gGameFbxExporterCurrentNode + ".ckrTranslationPrecision") `FBXProperty "Export|IncludeGrp|Animation|CurveFilter|CurveFilterApplyCstKeyRed|CurveFilterCstKeyRedTPrec" -q`;
+        setAttr($gGameFbxExporterCurrentNode + ".ckrRotationPrecision") `FBXProperty "Export|IncludeGrp|Animation|CurveFilter|CurveFilterApplyCstKeyRed|CurveFilterCstKeyRedRPrec" -q`;
+        setAttr($gGameFbxExporterCurrentNode + ".ckrScalingPrecision") `FBXProperty "Export|IncludeGrp|Animation|CurveFilter|CurveFilterApplyCstKeyRed|CurveFilterCstKeyRedSPrec" -q`;
+        setAttr($gGameFbxExporterCurrentNode + ".ckrOtherPrecision") `FBXProperty "Export|IncludeGrp|Animation|CurveFilter|CurveFilterApplyCstKeyRed|CurveFilterCstKeyRedOPrec" -q`;
+        setAttr($gGameFbxExporterCurrentNode + ".ckrAutoTangentOnly") `FBXProperty "Export|IncludeGrp|Animation|CurveFilter|CurveFilterApplyCstKeyRed|AutoTangentsOnly" -q`;
+        
+        // Constraints
+        setAttr($gGameFbxExporterCurrentNode + ".constraints") `FBXExportConstraints -q`;
+        setAttr($gGameFbxExporterCurrentNode + ".skeletonDefinitions") `FBXExportSkeletonDefinitions -q`;
+        
+        // Cameras
+        setAttr($gGameFbxExporterCurrentNode + ".includeCameras") `FBXExportCameras -q`;
+        
+        // Lights
+        setAttr($gGameFbxExporterCurrentNode + ".includeLights") `FBXExportLights -q`;
+        
+        // Coordinate System and Media
+        setAttr($gGameFbxExporterCurrentNode + ".upAxis") (`FBXExportUpAxis -q` == "y" ? 1 : 2);
+        setAttr($gGameFbxExporterCurrentNode + ".embedMedia") `FBXExportEmbeddedTextures -q`;
+
+        // Include Children
+        setAttr($gGameFbxExporterCurrentNode + ".includeChildren") `FBXExportIncludeChildren -q`;
+
+        // Input Connections
+        setAttr($gGameFbxExporterCurrentNode + ".inputConnections") `FBXExportInputConnections -q`;
+
+        // Units
+        setAttr($gGameFbxExporterCurrentNode + ".autoScaleFactor") `FBXProperty "Export|AdvOptGrp|UnitsGrp|DynamicScaleConversion" -q`;
+        setAttr($gGameFbxExporterCurrentNode + ".unitConversion") -type "string" `FBXProperty "Export|AdvOptGrp|UnitsGrp|UnitsSelector" -q`;
+        
+        // FBX UI
+        setAttr($gGameFbxExporterCurrentNode + ".showWarningManager") `FBXProperty "Export|AdvOptGrp|UI|ShowWarningsManager" -q`;
+        setAttr($gGameFbxExporterCurrentNode + ".generateLogData") `FBXExportGenerateLog -q`;
+        
+         // FBX file format        
+        setAttr($gGameFbxExporterCurrentNode + ".fileType") `FBXExportInAscii -q`;
+        setAttr($gGameFbxExporterCurrentNode + ".fileVersion") -type "string" `FBXExportFileVersion -q`;
+        
+        // Create the UI with the new node attribute values
+        gameExp_CreateExportTypeUIComponents();
+    }
+}
+
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// Show a file browser to choose the export directory
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+global proc gameExp_BrowseFolder()
+{
+    global string $gGameFbxExporterCurrentNode;
+     
+    string $currentDir = `workspace -q -fullName`;
+    string $dir = `setWorkingDirectory $currentDir "" ""`;  
+    
+    string $userChoice[] = `fileDialog2 
+                            -fileMode 3 
+                            -startingDirectory $dir 
+                            -caption (getPluginResource( "gameFbxExporter", "kGameExporterBrowserTitle" )) 
+                            -okCaption (getPluginResource( "gameFbxExporter", "kGameExporterSelectPathButton" ))`;
+                               
+    if( size($userChoice) && ($userChoice[0] != "") )
+    {             
+        retainWorkingDirectory $userChoice[0];
+        setAttr($gGameFbxExporterCurrentNode + ".exportPath") -type "string" $userChoice[0];
+    }
+}
+
+
+
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// Set all the Fbx Properties required and Export the Fbx file.
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+global proc gameExp_DoExport()
+{    
+    global string $gGameFbxExporterCurrentNode;
+    
+    // In order to trigger the changeCommand callback of a textField
+    // the text field needs to be out of focus but by clicking on a button
+    // the focus it not changed so I'm forcing it here to be sure that
+    // the callback is called and my values are all set.
+    
+    string $gameExporterPresetList = gameExp_GetPrefixedName("gameExporterPresetList"); 
+    setFocus $gameExporterPresetList;      
+           
+    string $dir = `getAttr($gGameFbxExporterCurrentNode + ".exportPath")`;
+    string $file = `getAttr($gGameFbxExporterCurrentNode + ".exportFilename")`;
+       
+    int $exportType = `getAttr($gGameFbxExporterCurrentNode + ".exportTypeIndex")`; 
+    int $splitType = `getAttr ($gGameFbxExporterCurrentNode + ".fileSplitType")`;   
+    int $singleFileOut = ($splitType == 1) ? true : false;
+    int $modelFileMode = 1;
+    int $moveToOrigin = 0;
+
+    if ($exportType == 1)
+    {
+        $modelFileMode = `getAttr ($gGameFbxExporterCurrentNode + ".modelFileMode")`;
+        $singleFileOut = ($modelFileMode==1) ? true : false;    
+    }
+    $moveToOrigin = `getAttr($gGameFbxExporterCurrentNode + ".moveToOrigin")`;
+
+    if( !size($dir) )
+    {
+        gameExp_ShowMessage(getPluginResource( "gameFbxExporter", "kGameExporterFilePathEmpty" ), 2);      
+        return;
+    }
+    
+    if(!`file -q -ex $dir`)
+    { 
+        gameExp_ShowMessage((getPluginResource( "gameFbxExporter", "kGameExporterDirNotExist" ) + $dir), 3); 
+        return;
+    }
+    
+    if( !size($file) && $singleFileOut )
+    {
+        gameExp_ShowMessage(getPluginResource( "gameFbxExporter", "kGameExporterFilenameEmpty" ), 2); 
+        return;
+    }
+      
+    // add extension if not added
+    if(fileExtension(basename($file,"")) == "")
+    {
+        $file = ($file + ".fbx");
+    }
+    
+    string $exportFilePath = ($dir + "/" + $file);
+             
+    string $presetPath = (gameExp_GetFbxExportPresetDirectory() + "/" + gameExp_GetFbxPresetForExportType());
+        
+    FBXPushSettings;   
+    FBXLoadExportPresetFile -f $presetPath;
+
+    gameExp_SetFbxPropertiesWithAttributes(); 
+    
+    string $exportSelectionFlag = "";
+    string $oldSelection[];
+    
+    // 1- Export All, 2- Export Selected, 3- Export Selection Set
+    int $exportSetIndex = `getAttr($gGameFbxExporterCurrentNode + ".exportSetIndex")`;
+    if($exportSetIndex > 1)
+    {
+        $exportSelectionFlag = "-s"; 
+        
+        $oldSelection = `ls -selection`;   
+
+        // Export selection
+        if($exportSetIndex == 2 && !(size($oldSelection)))
+        {
+             // Error, nothing is selected.
+            gameExp_ShowMessage(getPluginResource( "gameFbxExporter", "kGameExporterNothingSelected" ), 2);
+            return;
+        }
+    
+        if($exportSetIndex == 3)
+        {
+            string $selectionSetName = `getAttr($gGameFbxExporterCurrentNode + ".selectionSetName")`;
+            if(size($selectionSetName))
+            {                
+                select -replace $selectionSetName;
+            }  
+            else
+            {
+                // Error, no selection set selected
+                gameExp_ShowMessage(getPluginResource( "gameFbxExporter", "kGameExporterNoSetSelected" ), 2);
+                return;
+            }
+        }
+    }
+    
+    $exportType = `getAttr($gGameFbxExporterCurrentNode + ".exportTypeIndex")`;    
+    if ($exportType == 2 || $exportType == 3)
+    {
+        // Export animations or clips.
+        FBXExportSplitAnimationIntoTakes -clear;         
+        int $nbAnimClips = `getAttr -size ($gGameFbxExporterCurrentNode + ".animClips")`;
+        
+        // Early out if the user choose to not overwrite an existing file
+        if((($splitType == 2) && !(`gameExp_ClipOverwriteExistingFiles($exportFilePath)`)) || 
+           (($splitType == 1) && !(`gameExp_OverwriteExistingFile($exportFilePath)`)))
+        {
+            return;
+        }
+        
+        if(!gameExp_SetBakeAnimStartEnd())
+        {
+            return;
+        }       
+        
+        float $originalT[];
+        float $originalR[];
+        string $roots[];
+        if ($moveToOrigin)
+        {
+            gameExp_GetRoots($roots);
+            gameExp_MoveToOrigin($originalT, $originalR, $roots);
+        }
+        
+        string $name[];
+        float  $start[], $end[];
+        string $fileNameTmp =  `substitute "\.fbx$" $exportFilePath ""`;
+        string $fileNameList[] = gameExp_GenerateClipFilenameList($nbAnimClips, $fileNameTmp, $name, $start, $end);
+        
+        for($i=0; $i < size($fileNameList); $i++ )
+        {
+            FBXExportSplitAnimationIntoTakes -v $name[$i] $start[$i] $end[$i];  
+            
+            if($splitType == 2)
+            {     
+                // Animation Clips Export, Multiple Clip Files               
+				if(catch(`gameExp_FBXExport $exportSelectionFlag $fileNameList[$i]`))       
+				{
+					// An error occured, move back from origin is required then return.
+					if ($moveToOrigin)
+                    {
+                        gameExp_MoveBackFromOrigin($originalT, $originalR, $roots);
+                    }
+					return;
+				}                
+                // Keep the last one exported to view in the FBX Review
+                $exportFilePath = $fileNameList[$i];
+            }
+        }
+        
+        if($splitType == 1)
+        {              
+            // Animation Clips Export, Multiple Clips to Single File            
+			if(catch(`gameExp_FBXExport $exportSelectionFlag $exportFilePath`))
+			{
+				// An error occured, move back from origin is required then return.
+				if ($moveToOrigin)
+                {
+                    gameExp_MoveBackFromOrigin($originalT, $originalR, $roots);
+                }
+				return;
+			}                                       
+        }    
+
+	    if ($moveToOrigin)
+        {
+            gameExp_MoveBackFromOrigin($originalT, $originalR, $roots);
+        }
+
+	}
+    else
+    {
+        if ($modelFileMode==2)
+        {
+            // Export in Model mode. User asked to export a file per each root.
+            // Roots are always top most transforms (i.e: their parent is the scene).
+            // When export mode is selection/set then roots are found by walking up 
+            // the ancestors of the elements in the selection.
+            //
+            string $roots[];
+            
+            // We only need to work with the roots since we can take advantage of the fact that
+            // the FBX plug-in will automatically select all the children of a selected object
+            // when exporting selection.
+            gameExp_GetRoots($roots);
+
+            // no valid objects were found in the current scene (this should never happen)
+            int $nbRoots = size($roots);
+            if ($nbRoots == 0)
+            {
+                gameExp_ShowMessage(getPluginResource( "gameFbxExporter", "kGameExporterMultifileExportFailed" ), 2); 
+                return;
+            }
+
+            string $fileNameTmp =  `substitute "\.fbx$" $exportFilePath ""`;
+            string $fileNameList[] = gameExp_GenerateFilenameList($roots, $fileNameTmp);
+
+            if(!gameExp_OverwriteExistingFiles($fileNameList, 4))
+                return;
+
+            for ($i=0; $i < size($fileNameList); $i++)
+            {
+                select -replace $roots[$i];
+
+                float $originalT[];
+                float $originalR[];
+                if ($moveToOrigin)
+                {
+                    gameExp_MoveToOriginOneRoot($originalT, $originalR, $roots[$i]); 
+                }
+
+                // Keep the last one exported to view in the FBX Review
+                $exportFilePath = $fileNameList[$i];
+
+                // Model Export
+                // Catch error so we can move back from origin even if there is an export error.
+                int $errorThrown = catch(`gameExp_FBXExport "-s" $exportFilePath`);
+                string $lastError;
+                if ($errorThrown)
+                {
+                    $lastError = getLastError();
+                }
+                if ($moveToOrigin)
+                {
+                    gameExp_MoveBackFromOriginOneRoot($originalT, $originalR, $roots[$i]);
+                }
+                if ($errorThrown)
+                {
+                    error -noContext $lastError;
+                }
+            }
+        }
+        else
+        {
+            if(!`gameExp_OverwriteExistingFile($exportFilePath)`)
+            {
+                return;
+            }
+                
+            float $originalT[];
+            float $originalR[];
+            string $roots[];
+            if ($moveToOrigin)
+            {
+                gameExp_GetRoots($roots);
+                gameExp_MoveToOrigin($originalT, $originalR, $roots);
+            }
+
+            // Model Export        
+            // Catch error so we can move back from origin even if there is an export error.
+            int $errorThrown = catch(`gameExp_FBXExport $exportSelectionFlag $exportFilePath`);
+            string $lastError;
+            if ($errorThrown)
+            {
+                $lastError = getLastError();
+            }
+            if ($moveToOrigin)
+            {
+                gameExp_MoveBackFromOrigin($originalT, $originalR, $roots);
+            }
+            if ($errorThrown)
+            {
+                error -noContext $lastError;
+            }  
+        }
+    }
+    
+       
+    if(size($oldSelection))
+    {
+        select -replace $oldSelection;
+    }
+    else
+    {
+        select -clear;
+    }
+    
+    FBXPopSettings;     
+    
+    // Open the FBX Review or show the export successful message 
+    int $viewInFBXReview = `getAttr ($gGameFbxExporterCurrentNode + ".viewInFBXReview")`;
+    if($viewInFBXReview && !`about -linux64`)
+    {
+        gameExp_ViewInFBXReview($exportFilePath);                     
+    }
+    else
+    {
+        gameExp_ShowMessage(getPluginResource( "gameFbxExporter", "kGameExporterExportSuccessful" ), 1); 
+    }
+}
+
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// Get top most transforms object from selected objects
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+global proc gameExp_GetRoots(string $roots[])
+{
+    // We only need to work with the roots since we can take advantage of the fact that
+    // the FBX plug-in will automatically select all the children of a selected object
+    // when exporting selection.
+
+    global string $gGameFbxExporterCurrentNode;
+    string $excludedSysObjs[] = {"persp", "top", "front", "side"};
+    int $exportSetIndex = `getAttr($gGameFbxExporterCurrentNode + ".exportSetIndex")`;
+    string $inputList[];
+            
+    if ($exportSetIndex == 1) // Export All
+    {
+        // user asked to export all (we need to collect all the root
+        // objects (transforms) excluding the default cameras)
+        $inputList = `ls -tr`;
+        for ($i = 0; $i < size($inputList); $i++)
+        {
+            string $obj = $inputList[$i];
+            int $res = stringArrayContains($obj, $excludedSysObjs);
+            if ($res == 1) 
+                continue; 
+
+            string $parent[] = `listRelatives -f -parent $obj`;
+            if ($parent[0] == "")
+			{
+                gameExp_isTranslationRotationLocked($obj);
+            
+                // Add the node if it's not in the list
+                if(!stringArrayContains($obj, $roots))
+                {
+                    stringArrayInsertAtIndex(size($roots), $roots, $obj);
+                }
+			}
+        }
+    }
+    else
+    {
+        $inputList = `ls -selection -l`; 
+        int $nbItems = size($inputList);
+
+        // Get the top most node of the hierarchies of the selected objects
+        for ($i = 0; $i < $nbItems; $i++)
+        {
+            string $obj = $inputList[$i];
+            string $ancestors[];
+            int $nbTokens = `tokenize $obj "|" $ancestors`;
+            int $rootsIndex = stringArrayFind($ancestors[0], 0, $roots);
+            if ($rootsIndex == -1)
+            {
+                // make sure we put back the first | if it is in $obj
+                string $r = startsWith($obj, "|") ? "|"+$ancestors[0] : $ancestors[0];
+                
+                gameExp_isTranslationRotationLocked($r);
+                
+                // Add the node if it's not in the list
+                if(!stringArrayContains($r, $roots))
+                {
+                    stringArrayInsertAtIndex(size($roots), $roots, $r);
+                }
+            }
+        }
+    }
+}
+
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// Helper function to create a list of FBX filenames from the provided
+// roots nodes and/or fileNameOrPrefix.
+//
+// Remark: can return an empty list
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+global proc string[] gameExp_GenerateFilenameList(string $roots[], string $fileNameOrPrefix)
+{
+    string $fileNameList[];
+    for ($i=0; $i < size($roots); $i++)
+    {                
+        // make sure we replace characters that may cause trouble if used as filenames
+        string $name = `substitute ":" $roots[$i] "_"`;
+
+        // remove leading "|" so we will not generate a file name that starts with _
+        int $len = size($name);
+        if (startsWith($name,"|") && $len > 1)
+            $name = `substring $name 2 $len`;
+
+        // and now we can replace the remaining "|" with _
+        $name = `substitute "|" $name "_"`;
+        string $fileName = ($fileNameOrPrefix + $name);
+        
+        // add extension if not added
+        if(fileExtension(basename($fileName,"")) == "")
+        {
+            $fileName = ($fileName + ".fbx");
+        }
+                  
+        stringArrayInsertAtIndex(size($fileNameList), $fileNameList, $fileName);
+    }
+
+    if (size($roots) == 0)
+    {
+        if ($fileNameOrPrefix != "")
+        {
+            string $fileName = $fileNameOrPrefix + ".fbx";
+            stringArrayInsertAtIndex(0, $fileNameList, $fileName);
+        }
+    }
+        
+    return $fileNameList;
+}
+
+
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// Call the FBX Review and popup a window to set the path if not found.
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+global proc gameExp_ViewInFBXReview(string $exportFilePath)
+{   
+    string $fbxReviewPath = `gameExporter -q -FBXReviewPath`;
+    if(size($fbxReviewPath) && `file -q -exists $fbxReviewPath`)
+    {
+        // Path already set or found on the computer.
+        gameExporter -viewInFBXReview $exportFilePath;     
+        return;
+    }
+       
+    string $msg = getPluginResource( "gameFbxExporter", "kGameExporterFBXReviewNotFound" ); 
+    string $setPath = getPluginResource( "gameFbxExporter", "kGameExporterSetLocation" );
+    string $openLink = getPluginResource( "gameFbxExporter", "kGameExporterDownload" );
+    string $cancel = getPluginResource( "gameFbxExporter", "kGameExporterCancelLabel" );
+    string $icon = "information";
+   
+    string $userChoice = `confirmDialog
+        -parent gameExporterWindow
+        -title (getPluginResource( "gameFbxExporter", "kGameExporterWindowTitle" ))
+        -message $msg
+        -button $setPath
+        -button $openLink
+        -button $cancel
+        -icon $icon
+        -defaultButton $setPath
+        -cancelButton $cancel`;
+    
+    if( $userChoice == $setPath )
+    {
+        string $fileType = "";
+        int $fileMode = 1;
+        string $title;
+
+        string $buttonSelect = (getPluginResource( "gameFbxExporter", "kGameExporterSelect" )); 
+
+        if (`about -win`) 
+        { 
+            $fileType = "fbxreview.exe (fbxreview.exe)";
+            // File mode
+            $fileMode = 1;    
+            $title = (getPluginResource( "gameFbxExporter", "kGameExporterSelectFBXReviewWin" )); 
+        } 
+        else if (`about -mac`) 
+        {
+            $fileType = "FBX Review.app (FBX*Review.app fbxreview.app)";
+            // Folder mode
+            $fileMode = 2;
+            $title = (getPluginResource( "gameFbxExporter", "kGameExporterSelectFBXReviewMac" )); 
+        }
+        
+        string $fbxreviewFilePath[]  = `fileDialog2 -fileMode $fileMode -fileFilter $fileType -okCaption $buttonSelect -caption $title -dialogStyle 2`; 
+        // Set the path
+        if (`about -win`) 
+        {
+            gameExporter -FBXReviewPath $fbxreviewFilePath[0];
+        } 
+        else if (`about -mac`) 
+        {           
+            $fbxReviewPathStr = stringArrayToString($fbxreviewFilePath,"");
+            $fbxReviewPath = $fbxReviewPathStr + "/Contents/MacOS/FBX Review";
+            if (!`file -q -exists $fbxReviewPath`)
+            {
+                $fbxReviewPath = $fbxReviewPathStr + "/Contents/MacOS/fbxreview";
+            }
+            gameExporter -FBXReviewPath $fbxReviewPath;
+        }
+        
+        // Call the FBX Review
+        gameExporter -viewInFBXReview $exportFilePath; 
+        
+    }   
+    else if( $userChoice == $openLink )
+    {
+        launch -webPage "http://area.autodesk.com/fbxreview";
+    }         
+}
+
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// Export to an Fbx file
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+global proc gameExp_FBXExport(string $exportSelectionFlag, string $exportFilePath)
+{ 
+    global string $gGameFbxExporterCurrentNode;
+            
+    int $exportType = `getAttr($gGameFbxExporterCurrentNode + ".exportTypeIndex")`;
+    if($exportType == 2 || $exportType == 3)
+    {
+        FBXExportDeleteOriginalTakeOnSplitAnimation -v true;   
+    }
+
+    if(catch(`FBXExport $exportSelectionFlag -file $exportFilePath`))
+    {
+        string $lastError = getLastError();
+        string $errorGameExporterFailed;
+
+        int $exportType = `getAttr($gGameFbxExporterCurrentNode + ".exportTypeIndex")`;
+        int $modelFileMode = 1;
+        // Query if we are exporting to multiple files.
+        $modelFileMode = `getAttr ($gGameFbxExporterCurrentNode + ".modelFileMode")`;
+
+        if ($exportType == 1 && $modelFileMode == 2)
+        {
+            // Add information about the exported file - when exporting to multiple files
+            $errorGameExporterFailed = getPluginResource( "gameFbxExporter", "kGameExporterExportFailedForFile" );
+            // Remove the path, show only the file name
+            string $file_split[] = stringToStringArray($exportFilePath,"/");
+            string $file = $file_split[size($file_split)-1];
+            $errorGameExporterFailed = `format -s $file $errorGameExporterFailed`;
+        }
+        else
+        {
+            // Show generic "Export Failed" error message.
+            $errorGameExporterFailed = getPluginResource( "gameFbxExporter", "kGameExporterExportFailed" );
+        }
+        gameExp_ShowMessage($errorGameExporterFailed, 3);
+
+        // Also show the error in scripting so the script execution will stop.
+        error -noContext $lastError; 
+    }
+    
+    if($exportType == 2 || $exportType == 3)
+    {
+        FBXExportSplitAnimationIntoTakes -clear;       
+    }        
+}
+
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// Set the bake animation start/end with the min/max time of the 
+// animation clips start/end. 
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+global proc int gameExp_SetBakeAnimStartEnd()
+{
+    global string $gGameFbxExporterCurrentNode;
+    
+    int $nbAnimClips = `getAttr -size ($gGameFbxExporterCurrentNode + ".animClips")`;
+    
+    if($nbAnimClips)
+    {
+        int $minClipTime = `maxint`;
+        int $maxClipTime = `minint`;
+                
+        int $hasExportClips = 0;
+        int $hasClipName = 1; 
+        int $isTimeRangeOk = 1;
+        
+        for($i=0; $i < $nbAnimClips; $i++ )
+        {
+            int $start = `getAttr ($gGameFbxExporterCurrentNode + ".animClips[" + $i + "].animClipStart")`;
+            int $end = `getAttr ($gGameFbxExporterCurrentNode + ".animClips[" + $i + "].animClipEnd")`;
+            
+            int $exportClips = `getAttr ($gGameFbxExporterCurrentNode + ".animClips[" + $i + "].exportAnimClip")`;
+            if($exportClips)
+            {
+                $hasExportClips++;
+            }
+            else
+            {
+                continue;
+            }
+            
+            if((!size(`getAttr ($gGameFbxExporterCurrentNode + ".animClips[" + $i + "].animClipName")`)) && $exportClips)
+            {
+                $hasClipName = 0;
+            }
+            
+            if(($start > $end) && $exportClips)
+            {
+                $isTimeRangeOk = 0;
+            }             
+            
+            if($minClipTime > $start)
+            {
+                $minClipTime = $start;
+            }
+            
+            if($maxClipTime < $end)
+            {
+                $maxClipTime = $end;
+            }
+        }   
+        
+        
+        if(!$hasExportClips)
+        {
+            gameExp_ShowMessage(getPluginResource( "gameFbxExporter", "kGameExporterNoClipSelected" ), 2);
+            return 0;     
+        }
+        else
+        {
+            if(($hasExportClips != $nbAnimClips) && (`getAttr($gGameFbxExporterCurrentNode + ".fileSplitType")` == 1))
+            {
+                if(!gameExp_ClipExportSelectedInfo())
+                {
+                    return 0;
+                }
+            }
+        }
+        
+        if(!$hasClipName)
+        {
+            gameExp_ShowMessage(getPluginResource( "gameFbxExporter", "kGameExporterClipNameMissing" ), 2);
+            return 0;  
+        }
+        
+        if(!$isTimeRangeOk)
+        {
+            gameExp_ShowMessage(getPluginResource( "gameFbxExporter", "kGameExporterTimeRangerError" ), 2);
+            return 0;  
+        }       
+        
+        playbackOptions -e -minTime $minClipTime -maxTime $maxClipTime;
+        FBXExportBakeComplexStart -v $minClipTime;
+        FBXExportBakeComplexEnd -v $maxClipTime;
+    }
+    else
+    {
+        gameExp_ShowMessage(getPluginResource( "gameFbxExporter", "kGameExporterNoClips" ), 2);    
+        return 0;
+    }
+    
+    return 1;
+}

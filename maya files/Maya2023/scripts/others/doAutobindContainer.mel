@@ -1,0 +1,61 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//	Procedure Name:
+//		doAutobindContainer
+//
+//	Description:
+//		Assign a template to a container
+//
+//	Input Arguments:
+//	$version: The version of this option box.  Used to know how to 
+//	interpret the $args array.
+//  
+//	$args:
+//	Version 1:
+//  $args[0] = $autobindAll
+//  $args[1] = $autobindForce
+//
+
+
+
+global proc
+doAutobindContainer( int $version, string $args[] )
+//
+//
+{
+	global string $gPinnedContainerForAutobind;
+
+	int $autobindAll = $args[0];
+	int $autobindForce = $args[1];
+
+	// If the user invokes the autobind operation from the 
+	// "Asset Editor", this global variable will be set. Otherwise,
+	// use the selected container.
+	//
+	string $container = $gPinnedContainerForAutobind;
+    // Reset global
+	$gPinnedContainerForAutobind = "";
+
+	if ($container == "") {
+		string $sel[] = `ls -sl -containers`;
+		if (size($sel) > 0) {
+			$container = $sel[0];
+		} else {
+			$sel = `ls -sl`;
+			$container = `container -q -findContainer $sel`;
+			if (size($container) == 0) {
+				error((uiRes("m_doAutobindContainer.kMustSelectContainer")));
+			}
+		}
+	}
+
+    // Perform the autobind using the passed arguments
+    containerAutobind($container, "", $autobindAll, $autobindForce);
+
+}

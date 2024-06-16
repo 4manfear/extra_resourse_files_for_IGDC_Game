@@ -1,0 +1,46 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date: 2003	
+//
+//  Procedure Name:
+//	AEremapValueTemplate
+//
+//  Description:
+//	Creates the attribute editor controls for the remapValueNode
+//
+//  Input Value:
+//	nodeName
+//
+//  Output Value:
+//	None
+//
+
+
+global proc AEremapValueTemplate( string $nodeName )
+{
+	AEswatchDisplay  $nodeName;
+	editorTemplate -beginScrollLayout;
+		editorTemplate -beginLayout (uiRes("m_AEremapValueTemplate.kRemapValueAttr")) -collapse 0;
+			editorTemplate -addControl "inputValue";
+			AEaddRampControl ($nodeName+".value");
+			AEaddRampControl ($nodeName+".color");
+		editorTemplate -endLayout;
+		editorTemplate -beginLayout (uiRes("m_AEremapValueTemplate.kInputandOutputRanges")) -collapse 1;
+			editorTemplate -addControl "inputMin";
+			editorTemplate -addControl "inputMax";
+			editorTemplate -addControl "outputMin";
+			editorTemplate -addControl "outputMax";
+		editorTemplate -endLayout;
+	
+		AEdependNodeTemplate $nodeName;
+
+	editorTemplate -addExtraControls;
+	editorTemplate -endScrollLayout;
+}

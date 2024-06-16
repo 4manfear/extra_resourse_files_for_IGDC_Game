@@ -1,0 +1,153 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc MASHcheckSignalType ( string $nodeName )
+{
+        if ( `objExists $nodeName` == 0 )
+            return;
+
+        string $nodeAttr = $nodeName + ".signalType";
+        int $value = `getAttr $nodeAttr`;
+
+        string $uniformScale = $nodeName + ".uniformScale";
+        int $scale = `getAttr $uniformScale`;
+
+        string $enableStepAttr = $nodeName + ".enableStep";
+        int $enableStep = `getAttr $enableStepAttr`;
+
+        // if the noise isn't triganometry
+        if ($value != 4) {
+            editorTemplate  -dimControl $nodeName "trigonometryModeX" true;
+            editorTemplate  -dimControl $nodeName "trigonometryModeY" true;
+            editorTemplate  -dimControl $nodeName "trigonometryModeZ" true;
+            editorTemplate  -dimControl $nodeName "noiseOctaves" false;
+            editorTemplate  -dimControl $nodeName "noisePersistance" false;
+        } else {
+            editorTemplate  -dimControl $nodeName "trigonometryModeX" false;
+            editorTemplate  -dimControl $nodeName "trigonometryModeY" false;
+            editorTemplate  -dimControl $nodeName "trigonometryModeZ" false;
+            editorTemplate  -dimControl $nodeName "noiseOctaves" true;
+            editorTemplate  -dimControl $nodeName "noisePersistance" true;
+        }
+
+        // Loop
+        if ($value == 2) {
+            editorTemplate  -dimControl $nodeName "loopFrames" false;
+        } else {
+            editorTemplate  -dimControl $nodeName "loopFrames" true;
+        }
+
+        if ($scale) {
+            editorTemplate  -dimControl $nodeName "scaleY" true;
+            editorTemplate  -dimControl $nodeName "scaleZ" true;
+        } else {
+            editorTemplate  -dimControl $nodeName "scaleY" false;
+            editorTemplate  -dimControl $nodeName "scaleZ" false;
+        }
+
+        // Step
+        if ($enableStep) {
+            editorTemplate  -dimControl $nodeName "signalScaleMultiplier" false;
+        } else {
+            editorTemplate  -dimControl $nodeName "signalScaleMultiplier" true;
+        }
+}
+
+global proc AEMASH_SignalTemplate( string $nodeName )
+{
+
+    editorTemplate -beginScrollLayout;
+    python("import MASH.nodeHeaders; MASH.nodeHeaders.addHeader('" + $nodeName + "', 'Signal')")
+    editorTemplate -endLayout;
+    
+    editorTemplate  -bn;
+    editorTemplate  -addControl "signalType" "MASHcheckSignalType";
+    editorTemplate  -label (getPluginResource("MASH", "kTransformationSpace")) -addControl "transformationSpace";
+
+    editorTemplate -beginLayout (getPluginResource("MASH", "kPos")) -collapse 0;
+    //editorTemplate -callCustom "MASHSignalSpinAttributesBuildQt" "MASHSignalSpinAttributesUpdateQt" "";
+    editorTemplate  -addControl -label (getPluginResource("MASH", "kPositionX")) "positionX";
+    editorTemplate  -addControl -label (getPluginResource("MASH", "kPositionY")) "positionY";
+    editorTemplate  -addControl -label (getPluginResource("MASH", "kPositionZ")) "positionZ";
+    editorTemplate -endLayout;
+    editorTemplate -beginLayout (getPluginResource("MASH", "kRot")) -collapse 1;
+    editorTemplate  -addControl -label (getPluginResource("MASH", "kRotationX")) "rotationX";
+    editorTemplate  -addControl -label (getPluginResource("MASH", "kRotationY")) "rotationY";
+    editorTemplate  -addControl -label (getPluginResource("MASH", "kRotationZ")) "rotationZ";
+    editorTemplate -endLayout;
+    editorTemplate -beginLayout (getPluginResource("MASH", "kScale")) -collapse 1;
+    editorTemplate  -addControl -label (getPluginResource("MASH", "kScaleX")) "scaleX";
+    editorTemplate  -addControl -label (getPluginResource("MASH", "kScaleY")) "scaleY";
+    editorTemplate  -addControl -label (getPluginResource("MASH", "kScaleZ")) "scaleZ";
+    editorTemplate  -addControl -label (getPluginResource("MASH", "kUniformScale")) "uniformScale" "MASHcheckSignalType";
+    editorTemplate  -addControl "positiveScale";
+    editorTemplate -endLayout;
+    editorTemplate -beginLayout (getPluginResource("MASH", "kNoiseSettings")) -collapse 1;
+    editorTemplate  -addControl -label (getPluginResource("MASH", "kOctaves")) "noiseOctaves";
+    editorTemplate  -addControl -label (getPluginResource("MASH", "kPersistence")) "noisePersistance";
+    editorTemplate  -addControl -label (getPluginResource("MASH", "kLoopFrames")) "loopFrames";
+    editorTemplate -endLayout;
+    editorTemplate -beginLayout (getPluginResource("MASH", "kTrigSettings")) -collapse 1;
+    editorTemplate  -addControl -label (getPluginResource("MASH", "kXFunction")) "trigonometryModeX";
+    editorTemplate  -addControl -label (getPluginResource("MASH", "kYFunction")) "trigonometryModeY";
+    editorTemplate  -addControl -label (getPluginResource("MASH", "kZFunction")) "trigonometryModeZ";
+    editorTemplate -endLayout;
+    editorTemplate  -addControl -label (getPluginResource("MASH", "kEnableStep")) "enableStep" "MASHcheckSignalType";
+    editorTemplate  -addControl -label (getPluginResource("MASH", "kStepAmount")) "stepAmount";
+    editorTemplate  -addControl -label (getPluginResource("MASH", "kNoiseScale")) "signalScale";
+    editorTemplate  -addControl -label (getPluginResource("MASH", "kNoiseScaleMult")) "signalScaleMultiplier";
+    editorTemplate  -addControl -label (getPluginResource("MASH", "kTimeScale")) "timeScale";
+    editorTemplate  -addControl -label (getPluginResource("MASH", "kTime")) "time";
+    editorTemplate  -en;
+
+    editorTemplate -beginLayout (getPluginResource("MASH", "kStrength")) -collapse 1;
+    editorTemplate  -label (getPluginResource("MASH", "kStrength")) -addControl "Envelope";
+    editorTemplate  -label (getPluginResource("MASH", "kRandStrength")) -addControl "randEnvelope";
+    editorTemplate  -label (getPluginResource("MASH", "kStepStrength")) -addControl "StepEnvelope";
+    editorTemplate -addSeparator;
+    editorTemplate  -label (getPluginResource("MASH", "kStrengthMap")) -addControl "mColour";
+    editorTemplate  -label (getPluginResource("MASH", "kMapProjAxis")) -addControl "mapDirection";
+    editorTemplate -callCustom "MASHmapHelperButton" "MASHmapHelperButtonEdit" "";
+    editorTemplate -endLayout;
+
+    editorTemplate -beginLayout (getPluginResource("MASH", "kFalloffObject")) -collapse 1;
+    editorTemplate -callCustom "MASHfalloffButtons" "MASHfalloffButtonsEdit" "";
+    editorTemplate -endLayout;
+    editorTemplate -endLayout;
+
+    AEdependNodeTemplate $nodeName;
+    editorTemplate -addExtraControls;
+    editorTemplate -endScrollLayout;
+}
+
+
+global proc MASHSignalSpinAttributesBuildQt(string $nodeName)
+{
+    string $buffer[];
+    tokenize($nodeName, ".", $buffer);
+    $nodeName = $buffer[0];
+
+    python("import MASHthreeFloatSpinner");
+    rowLayout -numberOfColumns 2 -columnWidth2 139 250 addTransformLayout;
+    text -w 105 -h 20 -vis 1
+    -label "Amplitude"
+    -align "right" -font "plainLabelFont" ;
+    //get python to create the widget, include the desired nodeType as an arguement
+    python("MASHthreeFloatSpinner.build_qt_widget('addTransformLayout', '" + $nodeName + "', '0', 'unused', 'positionX, positionY, positionZ', 'command')");
+    setParent..;
+
+}
+
+global proc MASHSignalSpinAttributesUpdateQt(string $nodeName )
+{
+    string $buffer[];
+    tokenize($nodeName, ".", $buffer);
+    $nodeName = $buffer[0];
+    python("import MASHthreeFloatSpinner");
+
+    python("MASHthreeFloatSpinner.update_qt_widget('addTransformLayout', '" + $nodeName + "', '0', 'unused', 'positionX, positionY, positionZ', 'command')");
+}

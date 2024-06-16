@@ -1,0 +1,38 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//  Procedure Name:
+//      texTranConstUpdate
+//
+//  Description:
+//		Update transform constraint type selection of given text field
+//
+//  Input Arguments:
+//      $textField - textField to update.
+//
+//  Return Value:
+//      None.
+//
+global proc texTranConstUpdate( string $textField )
+{
+	if (`textField -q -ex $textField`)
+	{
+		//Not using global proc. Because this MIGHT be the first user
+		float $defaultColor[] = {0.25098,0.25098,0.25098}; 
+		float $activeColor[] = {0.322,0.52,0.65};
+
+		textField -e -backgroundColor $activeColor[0] $activeColor[1] $activeColor[2] $textField;
+		string $slideType = `xformConstraint -q -type`;
+		if ($slideType == "edge") 
+			textField -edit -tx (uiRes("m_texTranConstUpdate.kSlideEdge")) $textField;
+		else
+		{
+			textField -edit -tx (uiRes("m_texTranConstUpdate.kSlideOff")) $textField;
+			textField -e -backgroundColor $defaultColor[0] $defaultColor[1] $defaultColor[2] $textField;
+		}
+	}
+}

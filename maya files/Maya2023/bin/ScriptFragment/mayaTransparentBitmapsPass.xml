@@ -1,0 +1,77 @@
+<!--
+Copyright 2016 Autodesk, Inc. All rights reserved. 
+
+Use of this software is subject to the terms of the Autodesk 
+license agreement provided at the time of installation or download, 
+or which otherwise accompanies this software in either electronic 
+or hard copy form.
+-->
+<fragment  uiName="mayaTransparentBitmapsPass" name="mayaTransparentBitmapsPass" type="sceneEffect" class="ScriptFragment" version="1.0" feature_level="0" >
+    <description>
+    <![CDATA[
+        Decal-like alpha-tested 3D UI elements such as selected face components.
+    ]]>
+    </description>
+    <properties>
+        <countedObject  name="transparentBitmapsList" />
+        <camera  name="camera" />
+        <camera  name="camera2D" />
+        <target  name="final" />
+        <target  name="finalDesc" />
+        <target  name="depth" />
+        <float4  name="viewport" />
+        <bool  name="enableLineAA" />
+        <bool  name="drawUIList" />
+    </properties>
+    <values>
+<float4 name="viewport" value="0.000000,0.000000,1.000000,1.000000"  />
+<bool name="enableLineAA" value="true"  />
+<bool name="drawUIList" value="true"  />
+    </values>
+    <outputs>
+        <target  name="output" />
+    </outputs>
+    <parametershare>
+    </parametershare>
+    <implementation render="OGS" language="ScriptInterpreter" version="0.1" >
+        <scriptCommands>
+            <Declare name="uiRenderer" type="ScriptPipeRenderer" value="::StdDrawAgents" />
+            <SetRenderer name="uiRenderer" />
+            <AssignTarget destName="localSceneTarg" srcName="@final" format="@finalDesc" />
+            <SetTarget index="0" value="localSceneTarg" />
+            <SetDepthStencil value="@depth" />
+            <SetViewport value="@viewport" />
+            <SetCamera value="@camera" />
+            <SetEffect name="" />
+            <If value="@drawUIList" />
+            <Call name="SetPassSemantic" arg0="uiGeometry" arg1="TRUE" />
+            <Call name="SetPassSemantic" arg0="postUIGeometry" arg1="TRUE" />
+            <Declare name="listEmpty" type="bool" />
+            <Call name="isListEmpty" arg0="@transparentBitmapsList" arg1="listEmpty" />
+            <IfNot value="listEmpty" />
+            <Declare name="transparentBitmapsState" type="stateSetter" />
+            <SetStateCommand commandName="SetStateParameter" name="transparentBitmapsState" parameter="DepthEnable" value="true" />
+            <SetStateCommand commandName="SetRenderState" name="transparentBitmapsState" parameter="ZLessNoW" />
+            <SetStateCommand commandName="SetStateParameter" name="transparentBitmapsState" parameter="SetBlendEnable" value="true" />
+            <SetStateCommand commandName="SetRenderState" name="transparentBitmapsState" parameter="BlendMultOver" />
+            <SetStateCommand commandName="SetStateParameter" name="transparentBitmapsState" parameter="AlphaTestEnabled" value="false" />
+            <SetStateCommand commandName="CommitNewState" name="transparentBitmapsState" />
+            <Call name="SetPassSemantic" arg0="transparentBitmapsList" arg1="TRUE" />
+            <Declare name="localState2D" type="stateSetter" />
+            <SetStateCommand commandName="SetStateParameter" name="localState2D" parameter="CullMode" value="ECullNone" />
+            <SetStateCommand commandName="SetStateParameter" name="localState2D" parameter="DepthEnable" value="true" />
+            <SetStateCommand commandName="SetStateParameter" name="localState2D" parameter="DepthWriteEnable" value="true" />
+            <SetStateCommand commandName="CommitNewState" name="localState2D" />
+            <Render name="@transparentBitmapsList" />
+            <SetStateCommand commandName="RestorePreviousState" name="localState2D" />
+            <Call name="SetPassSemantic" arg0="transparentBitmapsList" arg1="FALSE" />
+            <SetStateCommand commandName="RestorePreviousState" name="transparentBitmapsState" />
+            <EndIf />
+            <Call name="SetPassSemantic" arg0="postUIGeometry" arg1="FALSE" />
+            <Call name="SetPassSemantic" arg0="uiGeometry" arg1="FALSE" />
+            <EndIf />
+            <SetParameter name="@output" value="localSceneTarg" />
+        </scriptCommands>
+    </implementation>
+</fragment>
+

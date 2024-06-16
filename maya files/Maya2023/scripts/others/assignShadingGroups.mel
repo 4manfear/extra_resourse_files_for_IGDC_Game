@@ -1,0 +1,74 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  12 Dec 1996
+//
+//  Description:
+//      Assign the nodes in thisNode[] to the second node.
+//
+
+global proc assignShadingGroups(string $thisNode[], string $toThisNode)
+//
+//  Procedure Name:
+//      assignShadingGroups
+//
+//  Description:
+//      Implements a render assign.  The names in the array should all be 
+//		names of renderable geometry.  If $toThisNode is a shadingEngine (SE),
+//		each array element is added as a member of it.  If $toThisNode isn't
+//		an SE, the optionVar "assignPref" is checked.  If True, a new SE is
+//		created, each array element is added as a member, and $toThisNode is
+//		attached to the surfaceshader attr of the new SE.
+//		
+//  Input Arguments:
+//		string $thisNode[] - array of nodes to assign
+//		string $toThisNode - single node name to assign *to*
+//
+//  Return Value:
+//      None.
+//
+{
+	string $toType = `nodeType $toThisNode`;
+	string $SEname = $toThisNode;
+	string $cmd;
+	string $ok = (uiRes("m_assignShadingGroups.kOk"));
+	string $exitVal = $ok ;
+
+	if($toType != "shadingEngine") {
+		string $cancel =  (uiRes("m_assignShadingGroups.kCancel"));  
+		string $msg = (uiRes("m_assignShadingGroups.kShadingGroupMsg"));
+		$msg = `format -s $toThisNode -s $ok -s $toThisNode -s $cancel $msg`;
+		$exitVal = `confirmDialog -title (uiRes("m_assignShadingGroups.kWarning")) -message $msg
+						 -button $ok -button $cancel
+						 -defaultButton $ok -cancelButton $cancel
+						 -dismissString $cancel`;
+
+		if ($exitVal == $ok) {
+
+			$cmd = "sets -renderable true -noSurfaceShader true -name " + $toThisNode + "SG -empty";
+			$SEname = `evalEcho $cmd`;
+		
+			$cmd = "defaultNavigation -f true -connectToExisting -source " + $toThisNode + " -destination " + $SEname;
+			evalEcho $cmd;
+		}
+	}
+	
+	if ($exitVal == $ok) {
+		$cmd = "sets -e -forceElement " + $SEname;
+
+		int $i;
+		int $numNodes = `size $thisNode`;
+		
+		for ($i = 0; $i < $numNodes; $i++) {
+			$cmd += " " + $thisNode[$i];
+		}
+			
+		evalEcho $cmd;
+	}
+}

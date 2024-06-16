@@ -1,0 +1,308 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    The QML used to display the toolclip is found in a path relative to this file. If not set. then the system default UI
+    is used. If present, the following variables will be interpolated into the string:
+    %(language)s      - the language i.e. en, ja, etc.
+    %(country)s       - the country code i.e. us, jp, etc.
+    %(localecode)s          - the locale code i.e. en-us, ja-jp, etc
+
+    If a qml file cannot be loaded from the given path, the built-in path is used instead.
+ 
+    The ui attribute may be specified in the toolclips or toolclip elements. If specified in both, the toolclip version is used.
+-->
+<toolclips ui="ui/ToolClipUI.qml" simple="ui/SimpleTooltip.qml" locale="ja_JP">
+    <toolclip key="BluePencilBtn" title="Blue Pencil" help="TC-Blue-Pencil">
+        <text>ビューポート内の異なるフレームに描画するツール。</text>
+        <expanded>
+            <resourcelist>
+                <video location="TC-BP-AdjustTools.webm">Blue Pencil ツールを調整する</video>
+                <video location="TC-BP-Select-Frames.webm">タイム スライダ(Time Slider)上で Blue Pencil フレームを選択する</video>
+                <link location="TC-Blue-Pencil">Blue Pencil の概要</link>
+                <link location="TC-BP-Toolbar">Blue Pencil ツールバー</link>
+                <link location="TC-Draw-with-Blue-Pencil">Blue Pencil でビューポートに描画する</link>
+            </resourcelist>
+        </expanded>
+    </toolclip>
+
+    <toolclip key="BluePencilPencilButton" title="ペンシル" help="TC-Draw-with-Blue-Pencil">
+        <text>タイム スライダ(Time Slider)の現在の時間にフリーハンドを描画できます。右クリックすると、サイズと不透明度のオプションが表示されます。</text>
+        <expanded>
+            <resourcelist>
+                <video location="TC-BP-Pencil.webm">Blue Pencil で描画</video>
+                <video location="TC-BP-AdjustTools.webm">Blue Pencil ツールを調整する</video>
+                <video location="TC-BP-Select-Frames.webm">タイム スライダ(Time Slider)上で Blue Pencil フレームを選択する</video>
+                <link location="TC-Blue-Pencil">Blue Pencil の概要</link>
+                <link location="TC-Draw-with-Blue-Pencil">Blue Pencil でビューポートに描画する</link>
+            </resourcelist>
+        </expanded>
+    </toolclip>
+
+    <toolclip key="BluePencilBrushButton" title="ブラシ" help="TC-Draw-with-Blue-Pencil">
+        <text>タイム スライダ(Time Slider)の現在の時間に、より滑らかなエッジを持つフリーハンドを描画できます。右クリックすると、サイズと不透明度のオプションが表示されます。</text>
+        <expanded>
+            <resourcelist>
+                <video location="TC-BP-Brush.webm">Blue Pencil ブラシで描画</video>
+                <video location="TC-BP-AdjustTools.webm">Blue Pencil ツールを調整する</video>
+                <video location="TC-BP-Select-Frames.webm">タイム スライダ(Time Slider)上で Blue Pencil フレームを選択する</video>
+                <link location="TC-Blue-Pencil">Blue Pencil の概要</link>
+                <link location="TC-Draw-with-Blue-Pencil">Blue Pencil でビューポートに描画する</link>
+            </resourcelist>
+        </expanded>
+    </toolclip>
+
+    <toolclip key="BluePencilEraserButton" title="消去" help="TC-Draw-with-Blue-Pencil">
+        <text>現在のフレームの Blue Pencil スケッチにあるブラシ ストロークを消去します。右クリックすると、サイズ オプションを選択できます。</text>
+        <expanded>
+            <resourcelist>
+                <video location="TC-BP-Eraser.webm">Blue Pencil の図面を削除</video>
+                <video location="TC-BP-AdjustTools.webm">Blue Pencil ツールを調整する</video>
+                <link location="TC-Draw-with-Blue-Pencil">Blue Pencil でビューポートに描画する</link>
+                <link location="TC-CleanUp-Blue-Pencil">Blue Pencil のスケッチをクリーンアップする</link>
+            </resourcelist>
+        </expanded>
+    </toolclip>
+
+    <toolclip key="BluePencilTextButton" title="テキスト" help="TC-Draw-with-Blue-Pencil">
+        <text>現在のフレームで入力できるシーンにテキスト ボックスを追加します。右クリックすると、フォント、サイズ、不透明度のオプションが表示されます。</text>
+        <expanded>
+            <resourcelist>
+                <video location="TC-BP-Text.webm">シーンにテキストを書き込む</video>
+                <video location="TC-BP-AdjustTools.webm">Blue Pencil ツールを調整する</video>
+                <link location="TC-Draw-with-Blue-Pencil">Blue Pencil でビューポートに描画する</link>
+                <link location="TC-Blue-Pencil">Blue Pencil の概要</link>
+            </resourcelist>
+        </expanded>
+    </toolclip>
+
+    <toolclip key="BluePencilLineButton" title="線分" help="TC-Draw-with-Blue-Pencil">
+        <text>画面上でドラッグして、現在のフレームに直線を作成します。右クリックすると、サイズと不透明度のオプションが表示されます。</text>
+        <expanded>
+            <resourcelist>
+                <video location="TC-BP-Line.webm">線分ツールで描画</video>
+                <video location="TC-BP-AdjustTools.webm">Blue Pencil ツールを調整する</video>
+                <link location="TC-Draw-with-Blue-Pencil">Blue Pencil でビューポートに描画する</link>
+                <link location="TC-Blue-Pencil">Blue Pencil の概要</link>
+            </resourcelist>
+        </expanded>
+    </toolclip>
+
+    <toolclip key="BluePencilArrowButton" title="矢印" help="TC-Draw-with-Blue-Pencil">
+        <text>画面上でドラッグして、現在のフレームに矢印を作成します。右クリックすると、サイズと不透明度のオプションが表示されます。</text>
+        <expanded>
+            <resourcelist>
+                <video location="TC-BP-Arrow.webm">矢印ツールで描画</video>
+                <video location="TC-BP-AdjustTools.webm">Blue Pencil ツールを調整する</video>
+                <link location="TC-Draw-with-Blue-Pencil">Blue Pencil でビューポートに描画する</link>
+                <link location="TC-Blue-Pencil">Blue Pencil の概要</link>
+            </resourcelist>
+        </expanded>
+    </toolclip>
+
+    <toolclip key="BluePencilEllipseButton" title="楕円" help="TC-Draw-with-Blue-Pencil">
+        <text>画面上でドラッグして、現在のフレームに楕円形を作成します。右クリックすると、サイズと不透明度のオプションが表示されます。</text>
+        <expanded>
+            <resourcelist>
+                <video location="TC-BP-Ellipse.webm">楕円ツールを使用して楕円形状を作成する</video>
+                <video location="TC-BP-AdjustTools.webm">Blue Pencil ツールを調整する</video>
+                <link location="TC-Draw-with-Blue-Pencil">Blue Pencil でビューポートに描画する</link>
+                <link location="TC-Blue-Pencil">Blue Pencil の概要</link>
+            </resourcelist>
+        </expanded>
+    </toolclip>
+
+    <toolclip key="BluePencilRectangleButton" title="長方形" help="TC-Draw-with-Blue-Pencil">
+        <text>画面上でドラッグして、現在のフレームに正方形を作成します。右クリックすると、サイズと不透明度のオプションが表示されます。</text>
+        <expanded>
+            <resourcelist>
+                <video location="TC-BP-Rectangle.webm">長方形ツールを使用して正方形の形状を作成する</video>
+                <video location="TC-BP-AdjustTools.webm">Blue Pencil ツールを調整する</video>
+                <link location="TC-Draw-with-Blue-Pencil">Blue Pencil でビューポートに描画する</link>
+                <link location="TC-Blue-Pencil">Blue Pencil の概要</link>
+            </resourcelist>
+        </expanded>
+    </toolclip>
+
+    <toolclip key="BluePencilTransformMode" title="トランスフォーム モード" help="TC-Blue-Pencil-Transform">>
+        <text>図面を修正できます。領域を選択してから[Enter]を押し、左マウス ボタンまたは中マウス ボタンでドラッグして選択内容を修正します。[Enter]を押してトランスフォームを適用します。
+        </text>
+        <expanded>
+            <resourcelist>
+                <video location="TC-BP-Transform.webm">トランスフォーム モードで図面を修正する</video>
+                <video location="TC-BP-AdjustTools.webm">Blue Pencil ツールを調整する</video>
+                <link location="TC-Blue-Pencil-Transform">Blue Pencil のトランスフォーム モードで図面を修正する</link>
+                <link location="TC-Draw-with-Blue-Pencil">Blue Pencil でビューポートに描画する</link>
+                <link location="TC-Blue-Pencil">Blue Pencil の概要</link>
+            </resourcelist>
+        </expanded>
+    </toolclip>
+
+    <toolclip key="BluePencilDrawColor" title="描画カラー" help="ColorChooser">
+        <text>ウィンドウを開くには、ダブルクリックするか右クリックして、作図ツールの色を変更します。</text>
+    </toolclip>
+
+    <toolclip key="BluePencilGhostPreviousButton" title="前をゴースト化" help="TC-BP-Ghost">
+        <text>現在のフレームの前のフレームにゴースト スケッチを表示します。右クリックすると、ゴースト化されたフレームの数とカラーが設定されます。</text>
+        <expanded>
+            <resourcelist>
+                <video location="TC-BP-Ghost-Previous.webm">前の Blue Pencil フレームをゴースト化</video>
+                <video location="TC-BP-AdjustTools.webm">Blue Pencil ツールを調整する</video>
+                <video location="TC-BP-Select-Frames.webm">タイム スライダ(Time Slider)上で Blue Pencil フレームを選択する</video>-->
+                <link location="TC-BP-Ghost">Blue Pencil のゴーストを使用してフレームをプレビューする</link>
+                <link location="TC-Draw-with-Blue-Pencil">Blue Pencil でビューポートに描画する</link>
+                <link location="TC-BP-Frames">Blue Pencil フレームを使用する</link>
+            </resourcelist>
+        </expanded>
+    </toolclip>
+
+    <toolclip key="BluePencilGhostNextButton" title="次をゴースト化" help="TC-BP-Ghost">
+        <text>現在のフレームの後のフレームにゴースト スケッチを表示します。右クリックすると、ゴースト化されたフレームの数とカラーが設定されます。</text>
+        <expanded>
+            <resourcelist>
+                <video location="TC-BP-Ghost-Next.webm">次の Blue Pencil フレームをゴースト化</video>
+                <video location="TC-BP-AdjustTools.webm">Blue Pencil ツールを調整する</video>
+                <video location="TC-BP-Select-Frames.webm">タイム スライダ(Time Slider)上で Blue Pencil フレームを選択する</video>
+                <link location="TC-BP-Ghost">Blue Pencil のゴーストを使用してフレームをプレビューする</link>
+                <link location="TC-Draw-with-Blue-Pencil">Blue Pencil でビューポートに描画する</link>
+                <link location="TC-BP-Frames">Blue Pencil フレームを使用する</link>
+            </resourcelist>
+        </expanded>
+    </toolclip>
+
+    <toolclip key="BluePencilRetimeForwardButton" title="前方にリタイム" help="TC-BP-Frames">
+        <text>選択した Blue Pencil フレームを、フレーム範囲フィールドで設定した量だけタイム スライダ(Time Slider)上で前方に移動します。</text>
+        <expanded>
+            <resourcelist>
+                <video location="TC-BP-Retime-Forward.webm">タイム スライダ(Time Slider)上で Blue Pencil フレームを前方に移動する</video>
+                <video location="TC-BP-Select-Frames.webm">タイム スライダ(Time Slider)上で Blue Pencil フレームを選択する</video>
+                <link location="TC-BP-Frames">Blue Pencil フレームを使用する</link>
+            </resourcelist>
+        </expanded>
+    </toolclip>
+
+    <toolclip key="BluePencilRetimeBackwardButton" title="逆方向にリタイム" help="TC-BP-Frames">
+        <text>選択した Blue Pencil フレームを、フレーム範囲フィールドで設定した量だけタイム スライダ(Time Slider)上で広報に移動します。</text>
+        <expanded>
+            <resourcelist>
+                <video location="TC-BP-Retime-Backward.webm">タイム スライダ(Time Slider)上で Blue Pencil フレームを後方に移動する</video>
+                <video location="TC-BP-Select-Frames.webm">タイム スライダ(Time Slider)上で Blue Pencil フレームを選択する</video>
+                <link location="TC-BP-Frames">Blue Pencil フレームを使用する</link>
+            </resourcelist>
+        </expanded>
+    </toolclip>
+
+    <toolclip key="BluePencilAddFrameButton" title="フレームを追加" help="TC-BP-Frames">
+        <text>現在の時間に空白のフレームを挿入します。フレームは、描画を開始するときにも作成されます。</text>
+        <expanded>
+            <resourcelist>
+                <video location="TC-BP-Select-Frames.webm">タイム スライダ(Time Slider)上で Blue Pencil フレームを選択する</video>
+                <link location="TC-BP-Frames">Blue Pencil フレームを使用する</link>
+            </resourcelist>
+        </expanded>
+    </toolclip>
+
+    <toolclip key="BluePencilClearFrameButton" title="フレームをクリア" help="TC-CleanUp-Blue-Pencil">
+        <text>選択した図面のフレームを空にしますが、削除しません。</text>
+        <expanded>
+            <resourcelist>
+                <video location="TC-BP-Select-Frames.webm">タイム スライダ(Time Slider)上で Blue Pencil フレームを選択する</video>
+                <link location="TC-BP-Frames">Blue Pencil フレームを使用する</link>
+                <link location="TC-CleanUp-Blue-Pencil">Blue Pencil のスケッチをクリーンアップする</link>
+            </resourcelist>
+        </expanded>
+    </toolclip>
+
+    <toolclip key="BluePencilDeleteFrameButton" title="フレームを削除" help="TC-CleanUp-Blue-Pencil">
+        <text>現在の時間で 1 つまたは複数の選択したフレームを削除します。</text>
+        <expanded>
+            <resourcelist>
+                <link location="TC-CleanUp-Blue-Pencil">Blue Pencil のスケッチをクリーンアップする</link>
+                <link location="TC-BP-Frames">Blue Pencil フレームを使用する</link>
+            </resourcelist>
+        </expanded>
+    </toolclip>
+
+    <toolclip key="BluePencilDuplicatePreviousFrameButton" title="前のフレームを複製" help="TC-BP-Frames">
+        <text>現在の時間に前のフレームの同じバージョンを作成します。</text>
+        <expanded>
+            <resourcelist>
+                <video location="TC-BP-Select-Frames.webm">タイム スライダ(Time Slider)上で Blue Pencil フレームを選択する</video>
+                <link location="TC-CleanUp-Blue-Pencil">Blue Pencil のスケッチをクリーンアップする</link>
+                <link location="TC-BP-Frames">Blue Pencil フレームを使用する</link>
+            </resourcelist>
+        </expanded>
+    </toolclip>
+
+    <toolclip key="BluePencilCutFrameButton" title="フレームをカット" help="TC-BP-Frames">
+        <text>現在の時間で 1 つまたは複数の選択したフレームを削除し、クリップボードにコピーします。</text>
+        <expanded>
+            <resourcelist>
+                <video location="TC-BP-Select-Frames.webm">タイム スライダ(Time Slider)上で Blue Pencil フレームを選択する</video>
+                <link location="TC-CleanUp-Blue-Pencil">Blue Pencil のスケッチをクリーンアップする</link>
+                <link location="TC-BP-Frames">Blue Pencil フレームを使用する</link>
+            </resourcelist>
+        </expanded>
+    </toolclip>
+
+    <toolclip key="BluePencilCopyFrameButton" title="フレームをコピー" help="TC-BP-Frames">
+        <text>選択したフレームを、クリップボードにコピーします。</text>
+        <expanded>
+            <resourcelist>
+                <video location="TC-BP-Select-Frames.webm">タイム スライダ(Time Slider)上で Blue Pencil フレームを選択する</video>
+                <link location="TC-BP-Frames">Blue Pencil フレームを使用する</link>
+            </resourcelist>
+        </expanded>
+    </toolclip>
+
+    <toolclip key="BluePencilPasteFrameButton" title="フレームをペースト" help="TC-BP-Frames">
+        <text>クリップボードのコンテンツを現在の時刻に貼り付けます。</text>
+        <expanded>
+            <resourcelist>
+                <video location="TC-BP-Select-Frames.webm">タイム スライダ(Time Slider)上で Blue Pencil フレームを選択する</video>
+                <link location="TC-BP-Frames">Blue Pencil フレームを使用する</link>
+            </resourcelist>
+        </expanded>
+    </toolclip>
+
+    <toolclip key="BluePencilJumpToPreviousFrameButton" title="前のフレームにジャンプ" help="TC-BP-Frames">
+        <text>選択内容を前のフレームに移動します。</text>
+        <expanded>
+            <resourcelist>
+                <video location="TC-BP-Jump-To-Previous-Frame.webm">前の Blue Pencil フレームにジャンプ</video>
+                <video location="TC-BP-Select-Frames.webm">タイム スライダ(Time Slider)上で Blue Pencil フレームを選択する</video>
+                <link location="TC-BP-Frames">Blue Pencil フレームを使用する</link>
+                <link location="TC-Blue-Pencil">Blue Pencil の概要</link>
+            </resourcelist>
+        </expanded>
+    </toolclip>
+
+    <toolclip key="BluePencilJumpToNextFrameButton" title="次のフレームにジャンプ" help="TC-BP-Frames">
+        <text>選択内容を次のフレームに移動します。</text>
+        <expanded>
+            <resourcelist>
+                <video location="TC-BP-Jump-To-Next-Frame.webm">次の Blue Pencil フレームにジャンプ</video>
+                <video location="TC-BP-Select-Frames.webm">タイム スライダ(Time Slider)上で Blue Pencil フレームを選択する</video>
+                <link location="TC-BP-Frames">Blue Pencil フレームを使用する</link>
+                <link location="TC-Blue-Pencil">Blue Pencil の概要</link>
+            </resourcelist>
+        </expanded>
+    </toolclip>
+
+    <toolclip key="BluePencilImportBluePencilFramesButton" title="Blue Pencil フレームを読み込む" help="TC-BP-Import-Export-Frames">
+        <text>.zip アーカイブを開き、現在のシーンにフレームを追加します。</text>
+        <expanded>
+            <resourcelist>
+                <link location="TC-BP-Import-Export-Frames">Blue Pencil フレームを読み込む</link>
+            </resourcelist>
+        </expanded>
+    </toolclip>
+
+    <toolclip key="BluePencilExportBluePencilFramesButton" title="Blue Pencil フレームを書き出す" help="TC-BP-Import-Export-Frames">
+        <text>シーンの Blue Pencil フレームを .zip アーカイブとして保存します。</text>
+        <expanded>
+            <resourcelist>
+                <link location="TC-BP-Import-Export-Frames">Blue Pencil フレームを書き出す</link>
+            </resourcelist>
+        </expanded>
+    </toolclip>
+
+</toolclips>

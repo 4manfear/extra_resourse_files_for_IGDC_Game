@@ -1,0 +1,63 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+// Resources for Plug-in: gameVertexCount
+// 
+// ----------------------------
+// Registered string resources:
+// ----------------------------
+setPluginResource( "gameVertexCount", "kCmdInvalidEvaluator", "解算器类型无效:“^1s”。");
+setPluginResource( "gameVertexCount", "kCmdInvalidObjects", "指定的对象无效: ^1s。");
+setPluginResource( "gameVertexCount", "kCmdInvalidQueryFlag", "查询的标志无效。");
+setPluginResource( "gameVertexCount", "kEvaluatorSimple", "简单");
+setPluginResource( "gameVertexCount", "kEvaluatorSimpleName", "简单");
+setPluginResource( "gameVertexCount", "kEvaluatorUnity", "Unity");
+setPluginResource( "gameVertexCount", "kEvaluatorUnityName", "unity");
+setPluginResource( "gameVertexCount", "kEvaluatorUnreal", "Unreal");
+setPluginResource( "gameVertexCount", "kEvaluatorUnrealName", "unreal");
+setPluginResource( "gameVertexCount", "kHUDLabel", "游戏顶点:");
+setPluginResource( "gameVertexCount", "kHUDMenuItemLabel", "游戏顶点计数");
+setPluginResource( "gameVertexCount", "kHUDMenuOptionItemAnnotation", "配置游戏顶点计数 HUD 选项");
+setPluginResource( "gameVertexCount", "kHUDOptionBoxEvaluatorLabel", "解算器");
+setPluginResource( "gameVertexCount", "kHUDOptionBoxTitle", "游戏顶点计数选项");
+setPluginResource( "gameVertexCount", "kPluginFailedDeregisterCmd", "无法注销命令: gameVertexCount");
+setPluginResource( "gameVertexCount", "kPluginFailedRegisterCmd", "无法注册命令: gameVertexCount");
+setPluginResource( "gameVertexCount", "kPluginFailedRegisterUI", "无法注册 UI: gameVertexCount");
+setPluginResource( "gameVertexCount", "kRuntimeCommandAnnotation", "切换游戏引擎计算的可见多边形顶点计数的显示");
+setPluginResource( "gameVertexCount", "kUnityNormalCalcAngleW", "加权角度");
+setPluginResource( "gameVertexCount", "kUnityNormalCalcAreaAndAngleW", "加权区域和角度");
+setPluginResource( "gameVertexCount", "kUnityNormalCalcAreaW", "加权区域");
+setPluginResource( "gameVertexCount", "kUnityNormalCalcMode", "法线模式");
+setPluginResource( "gameVertexCount", "kUnityNormalCalcUnW", "未加权");
+setPluginResource( "gameVertexCount", "kUnityNormalCalcUnWLegacy", "未加权(旧版)");
+setPluginResource( "gameVertexCount", "kUnityNormalCalculate", "计算");
+setPluginResource( "gameVertexCount", "kUnityNormalImport", "导入");
+setPluginResource( "gameVertexCount", "kUnityNormalMode", "法线");
+setPluginResource( "gameVertexCount", "kUnityNormalNone", "无");
+setPluginResource( "gameVertexCount", "kUnitySmAngle", "平滑角度");
+setPluginResource( "gameVertexCount", "kUnitySmFromAngle", "起始角度");
+setPluginResource( "gameVertexCount", "kUnitySmFromSmoothing", "从平滑组");
+setPluginResource( "gameVertexCount", "kUnitySmMode", "平滑度源");
+setPluginResource( "gameVertexCount", "kUnitySmNone", "无");
+setPluginResource( "gameVertexCount", "kUnitySmPreferSmoothing", "首选平滑组");
+setPluginResource( "gameVertexCount", "kUnityTangentImport", "导入");
+setPluginResource( "gameVertexCount", "kUnityTangentLegacy", "旧版");
+setPluginResource( "gameVertexCount", "kUnityTangentMikk", "MikkT");
+setPluginResource( "gameVertexCount", "kUnityTangentMode", "切线");
+setPluginResource( "gameVertexCount", "kUnityTangentNone", "无");
+setPluginResource( "gameVertexCount", "kUnityWeldVertices", "焊接顶点");
+setPluginResource( "gameVertexCount", "kUnrealTangentMaya", "Maya");
+setPluginResource( "gameVertexCount", "kUnrealTangentMikk", "MikkT");
+setPluginResource( "gameVertexCount", "kUnrealTangentMode", "切线模式");
+setPluginResource( "gameVertexCount", "kUnrealTangentNone", "无");
+// 
+// --------------------------
+// Registered node resources:
+// --------------------------
+// 
+//  (Plugin has no registered nodes)
+// 

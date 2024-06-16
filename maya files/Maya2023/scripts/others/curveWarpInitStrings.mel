@@ -1,0 +1,39 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Description:
+//      Procedure to register and initialize localizable
+//      string resources for the curveWarp plugin.
+//
+
+global proc curveWarpInitStrings()
+{
+    // Register script resources
+	registerPluginResource("curveWarp", "kCurve", "Curve");
+	registerPluginResource("curveWarp", "kAimCurve", "Aim Curve");
+	registerPluginResource("curveWarp", "kCurveWarp", "Curve Warp");
+	registerPluginResource("curveWarp", "kAim", "Aim");
+	registerPluginResource("curveWarp", "kAimCurveMode", "Aim Curve Mode");
+	registerPluginResource("curveWarp", "kAlignment", "Alignment");
+	registerPluginResource("curveWarp", "kMeshScaling", "Mesh Scaling");
+	registerPluginResource("curveWarp", "kCurveRotation", "Curve Rotation");
+    registerPluginResource("curveWarp", "kLoopCurves", "Loop Closed Curves");
+    registerPluginResource("curveWarp", "kFlipAxis", "Flip Axis");
+    registerPluginResource("curveWarp", "kOffset", "Offset");
+    registerPluginResource("curveWarp", "kEnvelope", "Envelope");
+    registerPluginResource("curveWarp", "kKeepLength", "Keep Length");
+    registerPluginResource("curveWarp", "kLengthScale", "Length Scale");
+    registerPluginResource("curveWarp", "kMaxScale", "Max. Scale");
+    registerPluginResource("curveWarp", "kRotation", "Rotation");
+    registerPluginResource("curveWarp", "kTwistRotation", "Twist Rotation");
+    registerPluginResource("curveWarp", "kAccuracy", "Sampling Accuracy");
+    // Load any localized resources
+    loadPluginLanguageResources( "curveWarp", "curveWarp.pres.mel");
+
+}

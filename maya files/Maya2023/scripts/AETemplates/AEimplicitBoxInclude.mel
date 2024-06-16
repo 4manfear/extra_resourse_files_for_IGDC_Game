@@ -1,0 +1,30 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:	October 27, 2006
+//
+//  Procedure Name:
+//	AEimplicitBoxInclude
+//
+//  Description Name;
+//	Creates the attribute editor controls for the implicitBox Node
+//
+//  Input Value:
+//	nodeName 
+//
+//  Output Value:
+//	None
+// 
+
+
+global proc AEimplicitBoxInclude ( string $nodeName )
+{
+	// include/call base class/node attributes
+	AEimplicitShapeTemplate $nodeName;
+}

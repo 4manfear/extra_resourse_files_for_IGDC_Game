@@ -1,0 +1,28 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  1 June 05
+//
+//  Description:
+//		doToggleAutoActivateBodyPart is the proc that is executed from the
+//	Skeleton->FBIK->Toggle Auto Activate Body Part.  This either starts or 
+//  stops the script job responsible for automatically activating the character
+//  nodes representing FBIK bodyparts.
+//
+//
+
+global proc doToggleAutoActivateBodyPart()
+{
+   //As of Maya 2009 (version 10) the timeline and graph editor understands FBIK character sets
+   //natively.  There is no need to use a script job to "auto load" any character sets any longer.
+   //However, as of this writing we are past UI freeze, so this method is needed as a stub for the 
+   //UI call to do "Body Part Autoload".  Remove once mainline is open for business for 11.0
+   
+}
+

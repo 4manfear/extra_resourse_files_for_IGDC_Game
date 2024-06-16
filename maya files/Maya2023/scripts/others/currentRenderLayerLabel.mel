@@ -1,0 +1,39 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+// Description:
+//  This procedure is for making current render layer label.
+//  If the only render layer existing is the master layer, 
+//  then we do not need to have a label, so we return "".
+//  If non master render layer exists, then we return
+//  the name of the current render layer for labelling purposes.
+//
+global proc string currentRenderLayerLabel()
+{
+	// If there is no renderLayerManager, return the empty string
+	//
+	if( size(`ls -type renderLayerManager`) == 0 ){
+		return "";
+	}
+    // If there exists non master render layer,
+    // update the render setting window's title to show the
+    // current layer number.
+    //
+    string $layerArray[] = `listConnections renderLayerManager.renderLayerId`;
+
+    if (size($layerArray)==1 && `getAttr ($layerArray[0]+".identification")` == 0)
+    {
+        // The master render layer is the only render layer.
+        // Do not show render layer name in the window title.
+        //
+        return "";
+    }
+
+     
+    string $currentRenderLayer = `editRenderLayerGlobals -query -currentRenderLayer`;
+    return renderLayerDisplayName($currentRenderLayer);
+}

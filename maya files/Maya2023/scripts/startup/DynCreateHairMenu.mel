@@ -1,0 +1,392 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+// Creation Date:  2003 
+//
+//
+//  Procedure Name:
+//      DynCreateHairMenu
+//
+//  Description:
+//		Create the DYNAMICS->Hair menu
+//
+//  Input Arguments:
+//      parent to parent the menu to.
+//
+//  Return Value:
+//      None.
+//
+
+global proc assignNewHairSystem()
+{
+	assignHairSystem "";
+}
+
+global proc HairAssignHairSystemMenu( string $parent )
+//
+// Build the Submenu
+{
+	setParent -menu $parent;
+    menu -edit -deleteAllItems $parent;
+
+	menuItem -label (uiRes("m_DynCreateHairMenu.kAssignNewHair")) 
+		-image "hairAssignHairSystem.png"
+		-command "assignNewHairSystem"
+       	-annotation (uiRes("m_DynCreateHairMenu.kNewHairAnnot")) ;
+	string $hsystems[] = `ls -type hairSystem`;
+	string $fmt = (uiRes("m_DynCreateHairMenu.kHairAssignFmt"));
+
+	int $i;
+	for( $i = 0; $i < size( $hsystems ); $i++ ){
+		string $hsys = $hsystems[$i];
+		string $annot = `format -s $hsys $fmt`;
+		menuItem -label $hsys
+ 			-image "hairAssignHairSystem.png"
+			-command ("assignHairSystem "+$hsys) 
+        	-annotation $annot;
+	}
+	
+}
+
+global proc HairDisplayMenu( string $parent )
+//
+// Build the Submenu
+{
+	setParent -menu $parent;
+
+	menuItem -rtc "DisplayHairCurves";
+
+	menuItem -rtc "DisplayCurrentHairCurves";
+	
+	menuItem -rtc "DisplayHairCurvesStart";
+	
+	menuItem -rtc "DisplayHairCurvesRestPosition";
+	
+	menuItem -rtc "DisplayHairCurvesCurrentAndStart";
+		
+	menuItem -rtc "DisplayHairCurvesCurrentAndRest";
+
+	setParent -menu ..;
+}
+
+global proc HairStartPositionMenu( string $parent )
+//
+// Build the Submenu
+{
+	setParent -menu $parent;
+
+	menuItem -rtc "SetHairStartPositionFromCurrent";
+
+	menuItem -rtc "SetHairStartPositionFromRest";
+
+	setParent -menu ..;
+}
+
+global proc HairRestPositionMenu( string $parent )
+//
+// Build the Submenu
+{
+	setParent -menu $parent;
+
+	menuItem -rtc "SetHairRestPositionFromStart";
+
+	menuItem -rtc"SetHairRestPositionFromCurrent";
+
+	setParent -menu ..;
+}
+
+global proc HairCreateConstraintMenu( string $parent )
+//
+// Build the Submenu
+{
+	setParent -menu $parent;
+
+	menuItem -label (uiRes("m_DynCreateHairMenu.kRubberBand")) 
+       	-annotation (uiRes("m_DynCreateHairMenu.kRubberBandAnnot")) 
+		-image "hairRubberBand.png"
+		-command "createHairConstraint 0";
+		
+	menuItem -label (uiRes("m_DynCreateHairMenu.kTransform")) 
+       	-annotation (uiRes("m_DynCreateHairMenu.kTransformAnnot")) 
+		-image "hairTransform.png"
+		-command "createHairConstraint 1";
+		
+	menuItem -label (uiRes("m_DynCreateHairMenu.kStick")) 
+       	-annotation (uiRes("m_DynCreateHairMenu.kStickAnnot")) 
+		-image "hairStick.png"
+		-command "createHairConstraint 2";
+		
+	menuItem -label (uiRes("m_DynCreateHairMenu.kHair")) 
+       	-annotation (uiRes("m_DynCreateHairMenu.kHairAnnot")) 
+		-image "hairToHair.png"
+		-command "createHairConstraint 3";
+		
+	menuItem -label (uiRes("m_DynCreateHairMenu.kBunch")) 
+       	-annotation (uiRes("m_DynCreateHairMenu.kBunchAnnot")) 
+		-image "hairBunch.png"
+		-command "createHairConstraint 4";
+
+	menuItem -divider true;
+	
+	menuItem -label (uiRes("m_DynCreateHairMenu.kCollide")) 
+       	-annotation (uiRes("m_DynCreateHairMenu.kCollideAnnot")) 
+		-image "hairCollideSphere.png"
+		-command "createHairConstraint 5";
+
+	menuItem -label (uiRes("m_DynCreateHairMenu.kCube")) 
+       	-annotation (uiRes("m_DynCreateHairMenu.kCubeAnnot")) 
+		-image "hairCollideCube.png"
+		-command "createHairConstraint 6";
+
+	setParent -menu ..;
+}
+
+global proc HairConvertSelectionMenu( string $parent )
+//
+// Build the Submenu
+{
+	setParent -menu $parent;
+
+	menuItem -rtc "ConvertHairSelectionToFollicles";
+		
+	menuItem -divider true;
+	
+	menuItem -rtc "ConvertHairSelectionToStartCurves";
+
+	menuItem -rtc "ConvertHairSelectionToRestCurves";
+
+	menuItem -rtc "ConvertHairSelectionToCurrentPositions";
+	
+	menuItem -divider true;
+	
+	menuItem -rtc "ConvertHairSelectionToHairSystems";
+
+	menuItem -rtc "ConvertHairSelectionToConstraints";
+		
+	menuItem -divider true;
+	
+	menuItem -rtc "ConvertHairSelectionToStartCurveEndCVs";
+
+	menuItem -rtc "ConvertHairSelectionToRestCurveEndCVs";
+
+	menuItem -rtc "ConvertHairSelectionToStartAndRestCurveEndCVs";
+
+	setParent -menu ..;
+}
+
+global proc HairClassicMenu( string $parent )
+//
+// Build the Submenu
+{
+	setParent -menu $parent;
+
+	string $cmd = "MakeCollideHair";
+	menuItem -label (uiRes("m_DynCreateHairMenu.kMakeCollide")) 
+		-annotation (getRunTimeCommandAnnotation($cmd))
+		-image "hairCollide.png"
+		-command $cmd;
+
+	menuItem -divider true;
+
+	$cmd = "AssignHairConstraint";
+	menuItem -label (uiRes("m_DynCreateHairMenu.kAssignConstraint")) 
+        -annotation (getRunTimeCommandAnnotation($cmd))
+		// -image "hairAssignHairConstraint.xpm"
+		-command $cmd
+		-dragMenuCommand "performAssignHairConstraint 2"
+		-dragDoubleClickCommand "AssignHairConstraintOptions";
+		menuItem -optionBox true
+			-annotation (getRunTimeCommandAnnotation("AssignHairConstraintOptions"))
+			-command "AssignHairConstraintOptions";
+
+	// Create Constraint sub menu
+	//
+	string $createConstraintItem = `menuItem -label (uiRes("m_DynCreateHairMenu.kCreateConstraint"))  
+        -annotation (uiRes("m_DynCreateHairMenu.kCreateConstraintAnnot")) 
+		-subMenu true -tearOff true -allowOptionBoxes true hairCreateConstraintItem`;
+	HairCreateConstraintMenu $createConstraintItem;
+
+	menuItem -divider true;
+	
+	menuItem -label (uiRes("m_DynCreateHairMenu.kCreateCache")) 
+		-annotation (getRunTimeCommandAnnotation("CreateHairCache"))
+		-image "hairCacheCreate.png"
+		-command "CreateHairCache"
+		-dragMenuCommand "performHairDiskCache 2"
+		-dragDoubleClickCommand "CreateHairCacheOptions";
+		menuItem -optionBox true
+			-annotation (getRunTimeCommandAnnotation("CreateHairCacheOptions"))
+			-image "hairCacheCreate.png"
+			-command "CreateHairCacheOptions";	
+
+	menuItem -label (uiRes("m_DynCreateHairMenu.kAppendCache")) 
+		-annotation (getRunTimeCommandAnnotation("AppendToHairCache"))
+		-image "hairCacheAppend.png"
+		-command "AppendToHairCache"
+		-dragMenuCommand "performAppendHairCache 2"
+		-dragDoubleClickCommand "AppendToHairCacheOptions";
+		menuItem -optionBox true
+			-annotation (getRunTimeCommandAnnotation("AppendToHairCacheOptions"))
+			-image "hairCacheAppend.png"
+			-command "AppendToHairCacheOptions";	
+
+	menuItem -label (uiRes("m_DynCreateHairMenu.kTruncateCache")) 
+		-annotation (getRunTimeCommandAnnotation("TruncateHairCache"))
+		-image "hairCacheTruncate.png"
+		-command "TruncateHairCache";
+
+	menuItem -label (uiRes("m_DynCreateHairMenu.kDeleteCache")) 
+		-annotation (getRunTimeCommandAnnotation("DeleteHairCache"))
+		-image "hairCacheDelete.png"
+		-command "DeleteHairCache";
+
+	setParent -menu ..;
+}
+
+global proc DynCreateHairMenu( string $parent )
+{
+	setParent -menu $parent;
+	if( `menu -query -numberOfItems $parent` != 0 ) {
+		//
+		//	Menu is built already - just return
+		//
+		return;
+	}
+	
+	menuItem -d true -dividerLabel (uiRes("m_DynCreateHairMenu.kHairCreate"));
+	
+	menuItem -rtc "CreateHair"
+		-dragMenuCommand "performCreateHair 2"
+		-dragDoubleClickCommand "CreateHairOptions";
+		menuItem -optionBox true -rtc "CreateHairOptions";
+
+	menuItem -rtc "GetHairExample";		
+			
+    // create a user paint context for painting hair attributes
+    //
+    menuItem -rtc "PaintHairFollicles" paintHairCurveItem;
+        menuItem -optionBox true
+            -rtc "PaintHairFolliclesOptions"
+            paintHairCurveDialogItem;
+
+    menuItem -label (uiRes("m_DynCreateHairMenu.kPaintTextures")) -subMenu true -tearOff true
+        paintHairTexturesItem;
+
+		// specify the attribute name to be displayed in 3dPaint as second parameter to 
+		// paintHairTexture
+		menuItem -rtc "PaintHairBaldness";
+		// specify the attribute name to be displayed in 3dPaint as second parameter to 
+		// paintHairTexture
+		menuItem -rtc "PaintHairColor";
+		// specify the attribute name to be displayed in 3dPaint as second parameter to 
+		// paintHairTexture
+		menuItem -rtc "PaintHairSpecularColor";
+
+		setParent -menu ..;
+
+	menuItem -divider true -dividerLabel (uiRes("m_DynCreateHairMenu.kHairEdit"));
+
+	// Assign Hair System sub menu
+	//
+	string $assignHairSystemItem = `menuItem -label (uiRes("m_DynCreateHairMenu.kAssignHair"))  
+        -annotation (uiRes("m_DynCreateHairMenu.kAssignHairAnnot")) 
+		-subMenu true -tearOff false -allowOptionBoxes true hairAssignHairSystemItem`;
+
+	menuItem -edit -postMenuCommand ("HairAssignHairSystemMenu " + $assignHairSystemItem )
+		hairAssignHairSystemItem;
+	setParent -menu ..;
+
+	// Convert Selection sub menu
+	//
+	string $convertSelectionItem = `menuItem -label (uiRes("m_DynCreateHairMenu.kConvertSelection"))  
+        -annotation (uiRes("m_DynCreateHairMenu.kConvertSelectionAnnot")) 
+		-subMenu true -tearOff true -allowOptionBoxes true hairConvertSelectionItem`;
+	HairConvertSelectionMenu $convertSelectionItem;
+	setParent -menu ..;
+	
+	// Display sub menu
+	//
+	string $displayItem = `menuItem -label (uiRes("m_DynCreateHairMenu.kDisplayHair"))  
+        -annotation (uiRes("m_DynCreateHairMenu.kDisplayHairAnnot")) 
+		-subMenu true -tearOff true -allowOptionBoxes true hairDisplayItem`;
+	HairDisplayMenu $displayItem;
+	setParent -menu ..;
+
+	$cmd = "MakeCurvesDynamic";
+	menuItem -rtc $cmd
+		-dragMenuCommand "performMakeCurvesDynamic 2"
+		-dragDoubleClickCommand "MakeCurvesDynamicOptions";
+		menuItem -optionBox true
+			-rtc "MakeCurvesDynamicOptions";
+	
+	// Modify Curves sub menu
+	//
+	string $curveModsItem = `menuItem -label (uiRes("m_DynCreateHairMenu.kModifyCurves"))  -subMenu true
+        -annotation (uiRes("m_DynCreateHairMenu.kModifyCurvesAnnot")) 
+		-tearOff true -allowOptionBoxes true modifyCurvesItem`;
+	ModifyCurvesSubMenu $curveModsItem;
+	setParent -menu ..;
+	
+	// Set Rest Position sub menu
+	//
+	string $setRestPositionItem = `menuItem -label (uiRes("m_DynCreateHairMenu.kSetRest"))  -subMenu true
+        -annotation (uiRes("m_DynCreateHairMenu.kSetRestAnnot")) 
+		-tearOff true -allowOptionBoxes true setRestPositionItem`;
+	HairRestPositionMenu $setRestPositionItem;
+	
+	// Set Start Position sub menu
+	//
+	string $setStartPositionItem = `menuItem -label (uiRes("m_DynCreateHairMenu.kSetStart"))  -subMenu true
+        -annotation (uiRes("m_DynCreateHairMenu.kSetStartAnnot")) 
+		-tearOff true -allowOptionBoxes true setStartPositionItem`;
+	HairStartPositionMenu $setStartPositionItem;
+
+	// Tools
+	//
+	menuItem -divider true -dividerLabel (uiRes("m_DynCreateHairMenu.kHairTools"));
+
+	menuItem -rtc "AddCurvesToHairSystem";
+
+	menuItem -rtc "AssignBrushToHairSystem";
+
+	menuItem -rtc "AddPfxToHairSystem";
+
+	menuItem -rtc "RandomizeFollicles"
+		-dragMenuCommand "performRandomizeFollicles"
+		-dragDoubleClickCommand "RandomizeFolliclesOptions";
+		menuItem -optionBox true
+			-rtc "RandomizeFolliclesOptions";
+
+	menuItem -rtc "HairScaleTool";
+
+	menuItem -rtc "TransplantHair"
+		-dragMenuCommand "performTransplantHair 2"
+		-dragDoubleClickCommand "TransplantHairOptions";
+		menuItem -optionBox true
+			-rtc "TransplantHairOptions";
+
+	if(`getenv "MAYA_ENABLE_CLASSIC_HAIR"` != "" ) {
+		// Classic Hair sub menu
+		//
+		string $classicHairItem = `menuItem -label (uiRes("m_DynCreateHairMenu.kClassicHair"))  
+			-annotation (uiRes("m_DynCreateHairMenu.kClassicHairAnnot")) 
+			-subMenu true -tearOff true -allowOptionBoxes true hairClassicItem`;
+		HairClassicMenu $classicHairItem;
+		setParent -menu ..;
+	}
+
+	menuItem -divider true -dividerLabel (uiRes("m_DynCreateHairMenu.kHairDelete"));
+
+	menuItem 
+		-version "2014"
+		-rtc "DeleteHair";
+
+	menuItem -rtc "DeleteEntireHairSystem";
+}
+

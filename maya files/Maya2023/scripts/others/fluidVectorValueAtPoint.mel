@@ -1,0 +1,38 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+
+//
+//
+//  Creation Date:  Oct 21, 2002
+//
+//  Description:
+//      Get fluid properties at point
+//		returns 0 if point is outside
+//      
+//		
+//  Input Arguments:
+//      fluid, world space position, attribute to get
+//		fluidVectorAtPoint fluid1 -2.4 -2.4 0 velocity;
+//
+//  Return Value:
+//      float array 
+//
+
+global proc float[] fluidVectorValueAtPoint( string $fluid, float $xp, float $yp, float $zp, string $fluidAttr )
+{
+	// use this for color, velocity
+	int $vox[] = `fluidVoxelInfo -objectSpace false -cb -voxel $xp $yp $zp $fluid`;
+	if( size($vox) == 0) {
+		float $zero[];
+		$zero[0] = 0.0;
+		$zero[1] = 0.0;
+		$zero[2] = 0.0;
+		return $zero;
+	}
+	return `getFluidAttr -at $fluidAttr -xi $vox[0] -yi $vox[1] -zi $vox[2] $fluid`;
+}

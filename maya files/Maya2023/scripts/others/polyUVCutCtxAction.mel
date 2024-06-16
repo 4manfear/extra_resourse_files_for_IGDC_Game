@@ -1,0 +1,62 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc polyUVCutCtxAction(int $actionType)
+//
+//  Procedure Name:
+//      polyUVCutCtxAction
+//
+//  Description:
+//      Perform hotkey actions for polyUVCut context on highlighted 
+//      components. If there isn't any highlighted components, work
+//      on selected components.
+//
+//  Input Arguments:
+//      $actionType - 1. Cut highlighted or selected edges
+//                    2. Sew highlighted or selected edges
+//                    3. Unfold and pack UV shell in current UV tile
+//                    4. Unfold and pack UV shell in an empty, neighboring UV tile
+//
+//  Return Value:
+//      None.
+//
+{
+    $sel=`ls -preSelectHilite`;
+    if(size($sel) == 0)
+		$sel = `ls -sl`;
+	if(size($sel) == 0)
+	    return; //No highlighted or selected component at all
+	if($actionType == 1) 
+	{
+		//Cut
+	}
+    else if($actionType == 2)
+	{
+		//Sew
+		//if(`selectType -q -facet`)
+		//	return; //Do nothing as requirement
+		//else if(`selectType -q -meshUVShell` || `selectType -q -edge`)
+        //    polyMapSew -ch 1 $sel;
+	}
+    else if(($actionType == 3 || $actionType == 4) && 0)
+	{
+		//Unfold and pack UV
+		
+		//Get all UVs in current UV shell
+		$uvs = `polyListComponentConversion -ff -fv -fe -fuv -fvf -tuv -uvs $sel`;
+		
+		//Unfold current shell
+		string $unfoldCmd = `performUnfold 2`;
+		$unfoldCmd += " ";
+		$unfoldCmd += stringArrayToString($uvs, " ");
+		eval($unfoldCmd);
+		
+		//Layout 
+		if($actionType == 3)
+		    performPolyLayoutUV 0;
+	}
+}

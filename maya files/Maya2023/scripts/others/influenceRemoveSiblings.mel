@@ -1,0 +1,37 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  12 Mar 1999
+//
+
+global proc influenceRemoveSiblings(string $under, string $except)
+// 
+// Description:
+//     Goes through all the children under node $under
+//     and removes the ones that don't match the type of 
+//     node $except
+//
+{
+	string $exceptType = nodeType($except);
+	string $rels[] = `listRelatives -path $under`;
+	
+	string $rel;
+	for($rel in $rels)
+	{
+		int $io = `getAttr ($rel+".intermediateObject")`;
+		if ($io == 0) {
+			if (nodeType($rel) == $exceptType) {
+				continue;
+			}
+		}
+		delete $rel;
+	}
+}
+
+

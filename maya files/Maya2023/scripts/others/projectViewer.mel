@@ -1,0 +1,569 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  December 9, 1996
+//
+//  Description:
+//      Project Viewer.
+//		Performs standard file operations such as Open, Save, Import, etc.
+//
+//  Input Arguments:
+//      String      The action requested.
+//					Open, Import, Reference, ExportAll, ExportActive, Save, SaveAs,
+//					Proxy, ExportOfflineFile, ApplyOfflineFile, AssignTemplate,
+//                  ExportOfflineFileFromRefEd, ApplyOfflineFileFromRefEd,
+//                  ExportSelectionAsReference
+// 
+//  Return Value:
+//		None.
+//
+
+//
+//	Globals used by the browser.
+//
+global string $gOperationMode;
+global string $gFileOptionsString;
+
+global proc string currentOperationMode()
+{
+	global string $gOperationMode;
+	return $gOperationMode;
+}
+
+global proc int IsOpenOperationMode()
+{
+	global string $gOperationMode;
+	return ($gOperationMode == "Open");
+}
+
+global proc int IsReferenceOperationMode()
+{
+	global string $gOperationMode;
+	return ($gOperationMode == "Reference");
+}
+
+global proc int IsImportOperationMode()
+{
+	global string $gOperationMode;
+	return ($gOperationMode == "Import");
+}
+
+global proc int IsReplaceReferenceOperationMode()
+{
+	global string $gOperationMode;
+	return ($gOperationMode == "ReplaceReference");
+}
+
+global proc int IsProxyOperationMode()
+{
+	global string $gOperationMode;
+	return ($gOperationMode == "Proxy");
+}
+
+global proc int IsSaveOperationMode()
+{
+	global string $gOperationMode;
+	return ($gOperationMode == "Save");
+}
+
+global proc int IsSaveAsOperationMode()
+{
+	global string $gOperationMode;
+	return ($gOperationMode == "SaveAs");
+}
+
+global proc int IsExportAllOperationMode()
+{
+	global string $gOperationMode;
+	return ($gOperationMode == "ExportAll");
+}
+
+global proc int IsExportActiveOperationMode()
+{
+	global string $gOperationMode;
+	return ($gOperationMode == "ExportActive");
+}
+
+global proc int IsExportSelectionAsReferenceOperationMode()
+{
+	global string $gOperationMode;
+	return ($gOperationMode == "ExportSelectionAsReference");
+}
+
+global proc int IsExportOfflineFileFromRefEdOperationMode()
+{
+	global string $gOperationMode;
+	return ($gOperationMode == "ExportOfflineFileFromRefEd");
+}
+
+global proc int IsExportOfflineFileOperationMode()
+{
+	global string $gOperationMode;
+	return ($gOperationMode == "ExportOfflineFile");
+}
+
+global proc int IsApplyOfflineFileFromRefEdOperationMode()
+{
+	global string $gOperationMode;
+	return ($gOperationMode == "ApplyOfflineFileFromRefEd");
+}
+
+global proc int IsApplyOfflineFileOperationMode()
+{
+	global string $gOperationMode;
+	return ($gOperationMode == "ApplyOfflineFile");
+}
+
+global proc int IsCreateReferenceOperationMode()
+{
+	global string $gOperationMode;
+	return ($gOperationMode == "CreateReference");
+}
+
+global proc int IsAssignTemplateOperationMode()
+{
+	global string $gOperationMode;
+	return ($gOperationMode == "AssignTemplate");
+}
+
+// Callback procs.
+//
+
+// pv_performAction moved to its own mel file.
+
+proc string[] pv_ActionSetup ( string $newAction )
+//
+//	Description:
+//		This proc sets up the viewer to perform the action specified when the
+//      action button is pressed by the user.
+//
+{
+	global string $gOperationMode;
+	$gOperationMode = $newAction;
+
+	string $saveType;
+	string $readType;
+	string $workspace = `workspace -fn`;
+
+	string $actionOptions[11];
+	//$actionOptions[0] == Localized label for the action. eg. "Save As"
+	//$actionOptions[1] == File type for the action.  eg. "mayaBinary", "Best Guess" 
+	//$actionOptions[2] == File mode for the dialog.
+	//					Value:    Returns
+	//					  0          Any file.  The name of a file, whether it exists or not.
+	//					  1          Existing file.  The name of a single existing file.
+	//					  2          Directory.  The name of a directory. Both files and directories are displayed in the dialog.
+	//					  3          Directory only.  The name of a directory. The file dialog will only display directories.
+	//					  4          Existing files.  The names of zero or more existing files.
+	//
+	//$actionOptions[3] == Callback for options UI creation.  The Maya dialog will call this procedure to allow the UI for
+	//					   the actions options to be inserted into the dialog.
+	//$actionOptions[4] == Callback to intialize the values of the options UI.
+	//$actionOptions[5] == Callback for when a new file has been chosen in the dialog.
+	//$actionOptions[6] == Callback for options UI after a selection has been made but before the dialog goes away.  In our case this is
+	//					   used to make sure that the optionVar's match what is in the UI.
+	//$actionOptions[7] == Callback for when the file filter changes
+	//$actionOptions[8] == File filters list.  Each entry is separated by double semi-colons  eg. "All Files (*.*);;Maya Scenes (*.mb *.mb)"
+	//$actionOptions[9] == Directory to open the dialog in.
+
+	$saveType = "mayaBinary";
+	$readType = (uiRes("m_fileOptions.kBestGuess"));
+	string $reference = (uiRes("m_projectViewer.kReference"));
+	string $sceneName = `file -q -sceneName -shortName`;
+	switch ($newAction) {
+      case "Open": {
+		if (`optionVar -exists defaultFileOpenType`) {
+			$readType = `optionVar -q defaultFileOpenType`;
+		}
+        $actionOptions[0] = (uiRes("m_projectViewer.kOpen"));
+        $actionOptions[1] = $readType;
+        $actionOptions[2] = "1";
+		$actionOptions[3] = "fileOperationsOptionsUISetup Open";
+        $actionOptions[4] = "fileOperationsOptionsUIInitValues Open";
+		$actionOptions[5] = "fileOperationsSelectionChangedCallback Open";
+		$actionOptions[6] = "fileOperationsOptionsUICallback Open";
+		$actionOptions[7] = "setCurrentFileTypeOption Open";
+		$actionOptions[8] = buildDefaultMayaOpenFilterList();
+		$actionOptions[9] = `setWorkingDirectory $workspace $readType "scene"`;
+        break;
+      }
+      case "Reference": {
+		if (`optionVar -exists defaultFileReferenceType`) {
+			$readType = `optionVar -q defaultFileReferenceType`;
+		}
+        $actionOptions[0] = $reference;
+        $actionOptions[1] = $readType;
+        $actionOptions[2] = "1";
+		$actionOptions[3] = "fileOperationsOptionsUISetup Reference";
+        $actionOptions[4] = "fileOperationsOptionsUIInitValues Reference";
+		$actionOptions[5] = "fileOperationsSelectionChangedCallback Reference";
+		$actionOptions[6] = "fileOperationsOptionsUICallback Reference";
+		$actionOptions[7] = "setCurrentFileTypeOption Reference";
+		$actionOptions[8] = buildReadableFileFilterList();
+		$actionOptions[9] = `setWorkingDirectory $workspace $readType "reference"`;
+        break;
+      }
+      case "AlembicReference": {
+		// prepare filter and starting dir for file dialog
+		string $filter = (uiRes("m_projectViewer.kAlembic")) + " (*.abc);;"
+						  + (uiRes("m_projectViewer.kAllFiles")) + " (*.*)";
+		if (size(`workspace -fileRuleEntry alembicCache`) == 0) {
+			workspace -fileRule "alembicCache" "cache/alembic";
+			workspace -saveWorkspace;
+		}
+		string $workspace = `workspace -fileRuleEntry alembicCache`;
+		$workspace = `workspace -expandName $workspace`;
+		
+		// Behave like in regular "Reference" Operation Mode
+		$gOperationMode = "Reference";
+
+		if (`optionVar -exists defaultFileReferenceType`) {
+			$readType = `optionVar -q defaultFileReferenceType`;
+		}
+        $actionOptions[0] = $reference;
+        $actionOptions[1] = $readType;
+        $actionOptions[2] = "1";
+		$actionOptions[3] = "fileOperationsOptionsUISetup Reference";
+        $actionOptions[4] = "fileOperationsOptionsUIInitValues Reference";
+		$actionOptions[5] = "fileOperationsSelectionChangedCallback Reference";
+		$actionOptions[6] = "fileOperationsOptionsUICallback Reference";
+		$actionOptions[7] = "setCurrentFileTypeOption Reference";
+		$actionOptions[8] = $filter;
+		$actionOptions[9] = $workspace;
+        break;
+      }
+      case "Import":
+      case "SilentImport":  {
+		if (`optionVar -exists defaultFileImportType`) {
+			$readType = `optionVar -q defaultFileImportType`;
+		}
+        $actionOptions[0] = (uiRes("m_projectViewer.kImport"));
+        $actionOptions[1] = $readType;
+        $actionOptions[2] = "1";
+		$actionOptions[3] = "fileOperationsOptionsUISetup Import";
+        $actionOptions[4] = "fileOperationsOptionsUIInitValues Import";
+		$actionOptions[5] = "fileOperationsSelectionChangedCallback Import";
+		$actionOptions[6] = "fileOperationsOptionsUICallback Import";
+		$actionOptions[7] = "setCurrentFileTypeOption Import";
+		$actionOptions[8] = buildReadableFileFilterList();
+		$actionOptions[9] = `setWorkingDirectory $workspace $readType "import"`;
+        break;
+      }
+	  case "ReplaceReference": {
+		if (`optionVar -exists defaultFileReferenceType`) {
+			$readType = `optionVar -q defaultFileReferenceType`;
+		}
+        $actionOptions[0] = $reference;
+        $actionOptions[1] = $readType;
+        $actionOptions[2] = "1";
+		$actionOptions[8] = buildReadableFileFilterList();
+		$actionOptions[9] = `setWorkingDirectory $workspace $readType "reference"`;
+
+        break;
+	  }
+	  case "Proxy": {
+		if (`optionVar -exists defaultFileReferenceType`) {
+			$readType = `optionVar -q defaultFileReferenceType`;
+		}
+        $actionOptions[0] = (uiRes("m_projectViewer.kProxy"));
+        $actionOptions[1] = $readType;
+        $actionOptions[2] = "1";
+		$actionOptions[3] = "fileOperationsOptionsUISetup Proxy";
+        $actionOptions[4] = "fileOperationsOptionsUIInitValues Proxy";
+		$actionOptions[5] = "fileOperationsSelectionChangedCallback Proxy";
+		$actionOptions[6] = "fileOperationsOptionsUICallback Proxy";
+		$actionOptions[7] = "setCurrentFileTypeOption Proxy";
+		$actionOptions[8] = buildReadableFileFilterList();
+		$actionOptions[9] = `setWorkingDirectory $workspace $readType "proxy"`;
+        break;
+	  }
+      case "Save": 
+	  {
+		$gOperationMode = "SaveAs";
+		if (`optionVar -exists defaultFileSaveType`) 
+		{
+			$saveType = `optionVar -q defaultFileSaveType`;
+		}
+		$actionOptions[0] = (uiRes("m_projectViewer.kSave"));
+		$actionOptions[1] = $saveType;
+		$actionOptions[2] = 0;
+		$actionOptions[8] = buildDefaultMayaSaveFilterList();
+		$actionOptions[9] = `setWorkingDirectory $workspace $readType "scene"`;
+		break;
+      }
+      case "SaveAs": 
+	  {
+		if (`optionVar -exists defaultFileSaveType`) 
+		{
+			$saveType = `optionVar -q defaultFileSaveType`;
+		}
+		$actionOptions[0] = (uiRes("m_projectViewer.kSaveAs"));
+		$actionOptions[1] = $saveType;
+		$actionOptions[2] = 0;
+		$actionOptions[3] = "fileOperationsOptionsUISetup SaveAs";
+        $actionOptions[4] = "fileOperationsOptionsUIInitValues SaveAs";
+		$actionOptions[5] = "fileOperationsSelectionChangedCallback SaveAs";
+		$actionOptions[6] = "fileOperationsOptionsUICallback SaveAs";
+		$actionOptions[7] = "setCurrentFileTypeOption SaveAs";
+		$actionOptions[8] = buildDefaultMayaSaveFilterList();
+		$actionOptions[9] = `setWorkingDirectory $workspace $readType "scene"`;
+		if ("" != $sceneName)
+		{
+			$actionOptions[9] = $actionOptions[9]+$sceneName;
+		}
+		break;
+      }
+      case "ExportAll": {
+		if (`optionVar -exists defaultFileExportAllType`) {
+			$saveType = `optionVar -q defaultFileExportAllType`;
+		}
+        $actionOptions[0] = (uiRes("m_projectViewer.kExportAll"));
+        $actionOptions[1] = $saveType;
+        $actionOptions[2] = "0";
+		$actionOptions[3] = "fileOperationsOptionsUISetup ExportAll";
+        $actionOptions[4] = "fileOperationsOptionsUIInitValues ExportAll";
+		$actionOptions[5] = "fileOperationsSelectionChangedCallback ExportAll";
+		$actionOptions[6] = "fileOperationsOptionsUICallback ExportAll";
+		$actionOptions[7] = "setCurrentFileTypeOption ExportAll";
+		$actionOptions[8] = buildWritableFileFilterList();
+		$actionOptions[9] = `setWorkingDirectory $workspace $readType "export"`;
+        break;
+      }
+      case "ExportActive": {
+		if (`optionVar -exists defaultFileExportActiveType`) {
+			$saveType = `optionVar -q defaultFileExportActiveType`;
+		}
+        $actionOptions[0] = (uiRes("m_projectViewer.kExportSelection"));
+        $actionOptions[1] = $saveType;
+        $actionOptions[2] = "0";
+		$actionOptions[3] = "fileOperationsOptionsUISetup ExportActive";
+        $actionOptions[4] = "fileOperationsOptionsUIInitValues ExportActive";
+		$actionOptions[5] = "fileOperationsSelectionChangedCallback ExportActive";
+		$actionOptions[6] = "fileOperationsOptionsUICallback ExportActive";
+		$actionOptions[7] = "setCurrentFileTypeOption ExportActive";
+		$actionOptions[8] = buildWritableFileFilterList();
+		$actionOptions[9] = `setWorkingDirectory $workspace $readType "export"`;
+        break;
+      }	  
+      case "ExportSelectionAsReference": {
+		if (`optionVar -exists defaultFileExportSelectionAsReferenceType`) {
+			$saveType = `optionVar -q defaultFileExportSelectionAsReferenceType`;
+		}
+		string $MayaAscii     = (uiRes("m_projectViewer.kMayaAscii"));
+		string $MayaBinary    = (uiRes("m_projectViewer.kMayaBinary"));
+		$MayaAscii += " (*.ma)";
+		$MayaBinary += " (*.mb)";
+
+
+        $actionOptions[0] = (uiRes("m_projectViewer.kExportSelectionAsReference"));
+        $actionOptions[1] = $saveType;
+        $actionOptions[2] = "0";
+		$actionOptions[3] = "fileOperationsOptionsUISetup ExportSelectionAsReference";
+        $actionOptions[4] = "fileOperationsOptionsUIInitValues ExportSelectionAsReference";
+		$actionOptions[5] = "fileOperationsSelectionChangedCallback ExportSelectionAsReference";
+		$actionOptions[6] = "fileOperationsOptionsUICallback ExportSelectionAsReference";
+		$actionOptions[7] = "setCurrentFileTypeOption ExportSelectionAsReference";
+		$actionOptions[8] = $MayaAscii + ";;" + $MayaBinary;
+		$actionOptions[9] = `setWorkingDirectory $workspace $readType "export"`;
+        break;
+      }
+	case "ExportOfflineFileFromRefEd":		  
+      case "ExportOfflineFile": {
+		if (`optionVar -exists defaultFileExportEditsType`) {
+			$saveType = `optionVar -q defaultFileExportEditsType`;
+		}
+        $actionOptions[0] = (uiRes("m_projectViewer.kExportOfflineFile"));
+        $actionOptions[1] = $saveType;
+        $actionOptions[2] = "0";
+		$actionOptions[3] = "fileOperationsOptionsUISetup " + $newAction;
+        $actionOptions[4] = "fileOperationsOptionsUIInitValues " + $newAction;
+		$actionOptions[5] = "fileOperationsSelectionChangedCallback " + $newAction;
+		$actionOptions[6] = "fileOperationsOptionsUICallback " + $newAction;
+		$actionOptions[7] = "setCurrentFileTypeOption " + $newAction;
+		$actionOptions[8] = buildDefaultReadWriteOfflineEditFilterList();
+		$actionOptions[9] = `setWorkingDirectory $workspace $readType "offlineEdit"`;
+        break;
+      }
+	  case "ApplyOfflineFileFromRefEd":
+	  case "ApplyOfflineFile":
+	  {
+		if (`optionVar -exists defaultFileApplyEditsType`) {
+			$readType = `optionVar -q defaultFileApplyEditsType`;
+		}
+        $actionOptions[0] = (uiRes("m_projectViewer.kAssignOfflineFile"));
+        $actionOptions[1] = $readType;
+        $actionOptions[2] = "1";
+		$actionOptions[3] = "fileOperationsOptionsUISetup " + $newAction;
+        $actionOptions[4] = "fileOperationsOptionsUIInitValues " + $newAction;
+		$actionOptions[5] = "fileOperationsSelectionChangedCallback " + $newAction;
+		$actionOptions[6] = "fileOperationsOptionsUICallback " + $newAction;
+		$actionOptions[7] = "setCurrentFileTypeOption " + $newAction;
+		$actionOptions[8] = buildDefaultReadWriteOfflineEditFilterList();		
+		$actionOptions[9] = `setWorkingDirectory $workspace $readType "offlineEdit"`;
+        break;
+      }
+      case "CreateReference":
+	  {
+		if (`optionVar -exists defaultFileCreateReferenceType`) {
+			$saveType = `optionVar -q defaultFileCreateReferenceType`;
+		}
+        $actionOptions[0] = $reference;
+        $actionOptions[1] = $saveType;
+        $actionOptions[2] = "1";
+		$actionOptions[9] = `setWorkingDirectory $workspace $readType "reference"`;
+        break;
+      }
+      case "AssignTemplate":
+	  {
+		$actionOptions[0] = (uiRes("m_projectViewer.kAssignTemplate"));
+		$actionOptions[1] = "";
+		$actionOptions[2] = "1";
+		$actionOptions[3] = "fileOperationsOptionsUISetup AssignTemplate";
+        $actionOptions[4] = "fileOperationsOptionsUIInitValues AssignTemplate";
+		$actionOptions[5] = "fileOperationsSelectionChangedCallback AssignTemplate";
+		$actionOptions[6] = "fileOperationsOptionsUICallback AssignTemplate";
+		$actionOptions[7] = "setCurrentFileTypeOption AssignTemplate";
+		$actionOptions[8] = buildContainerTemplateFilterList();		
+		$actionOptions[9] = `setWorkingDirectory $workspace "templates" "template"`;
+		break;
+      }
+	}
+
+    return $actionOptions;
+}
+
+global proc fileOperationsOptionsUISetup(string $action, string $parent)
+{
+	setParent $parent;
+	$parent = `scrollLayout -childResizable true`;
+
+	fileOptionsTabPage($action, $parent, false);
+}
+
+global proc fileOperationsOptionsUIInitValues(string $action, string $parent, string $filterType)
+{
+	setParent $parent;
+	fileOptionsSetup($parent, $action, false, $filterType);
+}
+
+global proc fileOperationsOptionsUICallback(string $action, string $parent, string $selectedFile)
+{
+	setParent $parent;
+	fileOptionsCallback2($parent, $action, "", $selectedFile);
+}
+
+global proc fileOperationsSelectionChangedCallback(string $action, string $parent, string $selection)
+{
+	setParent $parent;
+	fileOptionsSelectionChanged($parent, $action, $selection);
+}
+
+proc string[] initProjectViewer( string $startUpAction)
+{
+	// Make sure fileOptions is loaded
+	//
+	fileOptions ("Test", "None");
+    string $actionOptions[];
+	$actionOptions = `pv_ActionSetup $startUpAction`;
+	return $actionOptions;
+}
+
+
+proc int doProjectViewer( string $actionOptions[], string $selectedFileName, int $calledFromCaptureTool )
+{
+	// we cannot open a new file dialog if the capture thumbnail component is active.
+	if(!$calledFromCaptureTool && `thumbnailCaptureComponent -q -isSessionOpened`) {
+		confirmDialog 	-message (uiRes("m_projectViewer.kMustCloseCaptureComponent"))
+						-button (uiRes("m_projectViewer.kOk"))
+						-icon "warning";
+		return 0;
+	}
+	
+	$actionOptions[1] = fileTypeToFilterDescription($actionOptions[1]);
+
+	string $cmd = ("fileDialog2 -returnFilter 1 -caption \"" + $actionOptions[0] + "\" -fileMode " + $actionOptions[2]);
+	$cmd += (" -okCaption \"" + $actionOptions[0] + "\"");
+	if ("" != $actionOptions[3])
+		$cmd += (" -optionsUICreate \"" + $actionOptions[3] + "\"");
+	if ("" != $actionOptions[4])
+		$cmd += (" -optionsUIInit \"" + $actionOptions[4] + "\"");
+	if ("" != $actionOptions[5])
+		$cmd += (" -selectionChanged \"" + $actionOptions[5] + "\"");
+	if ("" != $actionOptions[6])
+		$cmd += (" -optionsUICommit2 \"" + $actionOptions[6] + "\"");
+	if ("" != $actionOptions[7])
+		$cmd += (" -fileTypeChanged \"" + $actionOptions[7] + "\"");
+	if ("" != $actionOptions[8])
+		$cmd += (" -fileFilter \"" + $actionOptions[8] + "\"");
+	if ("" != $actionOptions[1])
+	{
+		$cmd += (" -selectFileFilter \"" + $actionOptions[1] + "\"");
+	}
+	if ("" != $selectedFileName)
+		$cmd += (" -startingDirectory \"" + $selectedFileName + "\"");
+		
+	$cmd += (" -optionsUICancel \"fileOptionsCancel\"");
+		
+    global string $gOptBoxForm;
+    if ("" != $gOptBoxForm && `layout -exists $gOptBoxForm`)
+    {
+        hideOptionBoxNow();
+    }
+
+	string $file[] = `eval $cmd`;
+	int $len = size($file);
+    if( $len > 0 && $file[0] != "" )
+    {
+		string $path = fromNativePath($file[0]);
+		string $type = filterDescriptionToFileType($file[$len-1]);
+
+		eval ("performFileAction \"" + $path + "\" " + $actionOptions[2] + " \"" + $type + "\"");
+    } else {
+		// Empty return means file operation was not performed
+		return 0;
+	}
+	return 1;
+}
+
+global proc int projectViewer ( string $startUpAction )
+//
+//	Description:
+//		This is the main procedure for the projectViewer.
+//
+{
+	string $actionOptions[];
+	$actionOptions = initProjectViewer($startUpAction);
+	return doProjectViewer( $actionOptions, $actionOptions[9], false );
+}
+
+global proc int projectViewerInitSelectedFileName( string $startUpAction, string $selectedFileName, int $calledFromCaptureTool )
+//
+//	Description:
+//		This is the main procedure for the projectViewer.
+//
+{
+	// When calling 'Save Scene' for a new file
+	// then dialog should point to default scene folder
+	// or to latest folder used by 'Open Scene/Save Scene As'
+	if ("" == $selectedFileName) {
+		string $workspace = `workspace -fn`;
+		string $readType = (uiRes("m_fileOptions.kBestGuess"));
+		if (`optionVar -exists defaultFileOpenType`) {
+			$readType = `optionVar -q defaultFileOpenType`;
+		}
+		$selectedFileName = `setWorkingDirectory $workspace $readType "scene"`;
+	}
+
+	thumbnailCaptureComponent -fileDialogProcessing true;
+	string $actionOptions[];
+	$actionOptions = initProjectViewer($startUpAction);
+	int $ret = doProjectViewer( $actionOptions, $selectedFileName, $calledFromCaptureTool );
+	thumbnailCaptureComponent -fileDialogProcessing false;
+	return $ret;
+}

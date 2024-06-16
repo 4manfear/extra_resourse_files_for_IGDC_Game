@@ -1,0 +1,342 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+// Resources for Plug-in: lookdevKit
+// 
+// ----------------------------
+// Registered string resources:
+// ----------------------------
+// 
+//  (Plugin has no registered string resources)
+// 
+// 
+// --------------------------
+// Registered node resources:
+// --------------------------
+// 
+// Node: channels
+// 
+setNodeNiceNameResource( "channels", "チャネル" );
+setAttrNiceNameResource( "channels", "fzn", "フリーズ" );
+setAttrNiceNameResource( "channels", "_ic", "入力カラー" );
+setAttrNiceNameResource( "channels", "_icr", "入力カラー R" );
+setAttrNiceNameResource( "channels", "_icg", "入力カラー G" );
+setAttrNiceNameResource( "channels", "_icb", "入力カラー B" );
+setAttrNiceNameResource( "channels", "_ia", "入力アルファ" );
+setAttrNiceNameResource( "channels", "_cr", "チャネル R" );
+setAttrNiceNameResource( "channels", "_cg", "チャネル G" );
+setAttrNiceNameResource( "channels", "_cb", "チャネル B" );
+setAttrNiceNameResource( "channels", "_ca", "チャネル A" );
+setAttrNiceNameResource( "channels", "oc", "出力カラー" );
+setAttrNiceNameResource( "channels", "ocr", "出力カラー R" );
+setAttrNiceNameResource( "channels", "ocg", "出力カラー G" );
+setAttrNiceNameResource( "channels", "ocb", "出力カラー B" );
+setAttrNiceNameResource( "channels", "oa", "出力アルファ値" );
+setAttrNiceNameResource( "channels", "fza", "フリーズの影響を受ける" );
+// 
+// Node: floatComposite
+// 
+setNodeNiceNameResource( "floatComposite", "float 合成" );
+setAttrNiceNameResource( "floatComposite", "fzn", "フリーズ" );
+setAttrNiceNameResource( "floatComposite", "_fa", "float A" );
+setAttrNiceNameResource( "floatComposite", "_fb", "float B" );
+setAttrNiceNameResource( "floatComposite", "_op", "操作" );
+setAttrNiceNameResource( "floatComposite", "_fx", "係数" );
+setAttrNiceNameResource( "floatComposite", "of", "出力 float" );
+setAttrNiceNameResource( "floatComposite", "fza", "フリーズの影響を受ける" );
+// 
+// Node: colorComposite
+// 
+setNodeNiceNameResource( "colorComposite", "カラー合成" );
+setAttrNiceNameResource( "colorComposite", "fzn", "フリーズ" );
+setAttrNiceNameResource( "colorComposite", "_ca", "カラー A" );
+setAttrNiceNameResource( "colorComposite", "_car", "カラー AR" );
+setAttrNiceNameResource( "colorComposite", "_cag", "カラー AG" );
+setAttrNiceNameResource( "colorComposite", "_cab", "カラー AB" );
+setAttrNiceNameResource( "colorComposite", "_aa", "アルファ A" );
+setAttrNiceNameResource( "colorComposite", "_cb", "カラー B" );
+setAttrNiceNameResource( "colorComposite", "_cbr", "カラー BR" );
+setAttrNiceNameResource( "colorComposite", "_cbg", "カラー BG" );
+setAttrNiceNameResource( "colorComposite", "_cbb", "カラー BB" );
+setAttrNiceNameResource( "colorComposite", "_ab", "アルファ B" );
+setAttrNiceNameResource( "colorComposite", "_op", "操作" );
+setAttrNiceNameResource( "colorComposite", "_fx", "係数" );
+setAttrNiceNameResource( "colorComposite", "oc", "出力カラー" );
+setAttrNiceNameResource( "colorComposite", "ocr", "出力カラー R" );
+setAttrNiceNameResource( "colorComposite", "ocg", "出力カラー G" );
+setAttrNiceNameResource( "colorComposite", "ocb", "出力カラー B" );
+setAttrNiceNameResource( "colorComposite", "oa", "出力アルファ値" );
+setAttrNiceNameResource( "colorComposite", "fza", "フリーズの影響を受ける" );
+// 
+// Node: floatCondition
+// 
+setNodeNiceNameResource( "floatCondition", "float 条件" );
+setAttrNiceNameResource( "floatCondition", "fzn", "フリーズ" );
+setAttrNiceNameResource( "floatCondition", "_fa", "float A" );
+setAttrNiceNameResource( "floatCondition", "_fb", "float B" );
+setAttrNiceNameResource( "floatCondition", "_cnd", "条件" );
+setAttrNiceNameResource( "floatCondition", "of", "出力 float" );
+setAttrNiceNameResource( "floatCondition", "fza", "フリーズの影響を受ける" );
+// 
+// Node: colorCondition
+// 
+setNodeNiceNameResource( "colorCondition", "カラー条件" );
+setAttrNiceNameResource( "colorCondition", "fzn", "フリーズ" );
+setAttrNiceNameResource( "colorCondition", "_ca", "カラー A" );
+setAttrNiceNameResource( "colorCondition", "_car", "カラー AR" );
+setAttrNiceNameResource( "colorCondition", "_cag", "カラー AG" );
+setAttrNiceNameResource( "colorCondition", "_cab", "カラー AB" );
+setAttrNiceNameResource( "colorCondition", "_aa", "アルファ A" );
+setAttrNiceNameResource( "colorCondition", "_cb", "カラー B" );
+setAttrNiceNameResource( "colorCondition", "_cbr", "カラー BR" );
+setAttrNiceNameResource( "colorCondition", "_cbg", "カラー BG" );
+setAttrNiceNameResource( "colorCondition", "_cbb", "カラー BB" );
+setAttrNiceNameResource( "colorCondition", "_ab", "アルファ B" );
+setAttrNiceNameResource( "colorCondition", "_cnd", "条件" );
+setAttrNiceNameResource( "colorCondition", "oc", "出力カラー" );
+setAttrNiceNameResource( "colorCondition", "ocr", "出力カラー R" );
+setAttrNiceNameResource( "colorCondition", "ocg", "出力カラー G" );
+setAttrNiceNameResource( "colorCondition", "ocb", "出力カラー B" );
+setAttrNiceNameResource( "colorCondition", "oa", "出力アルファ値" );
+setAttrNiceNameResource( "colorCondition", "fza", "フリーズの影響を受ける" );
+// 
+// Node: floatConstant
+// 
+setNodeNiceNameResource( "floatConstant", "float 定数" );
+setAttrNiceNameResource( "floatConstant", "fzn", "フリーズ" );
+setAttrNiceNameResource( "floatConstant", "_f", "入力 float" );
+setAttrNiceNameResource( "floatConstant", "of", "出力 float" );
+setAttrNiceNameResource( "floatConstant", "fza", "フリーズの影響を受ける" );
+// 
+// Node: colorConstant
+// 
+setNodeNiceNameResource( "colorConstant", "カラー定数" );
+setAttrNiceNameResource( "colorConstant", "fzn", "フリーズ" );
+setAttrNiceNameResource( "colorConstant", "_c", "入力カラー" );
+setAttrNiceNameResource( "colorConstant", "_cr", "入力カラー R" );
+setAttrNiceNameResource( "colorConstant", "_cg", "入力カラー G" );
+setAttrNiceNameResource( "colorConstant", "_cb", "入力カラー B" );
+setAttrNiceNameResource( "colorConstant", "_a", "入力アルファ" );
+setAttrNiceNameResource( "colorConstant", "oc", "出力カラー" );
+setAttrNiceNameResource( "colorConstant", "ocr", "出力カラー R" );
+setAttrNiceNameResource( "colorConstant", "ocg", "出力カラー G" );
+setAttrNiceNameResource( "colorConstant", "ocb", "出力カラー B" );
+setAttrNiceNameResource( "colorConstant", "oa", "出力アルファ値" );
+setAttrNiceNameResource( "colorConstant", "fza", "フリーズの影響を受ける" );
+// 
+// Node: floatCorrect
+// 
+setNodeNiceNameResource( "floatCorrect", "float 補正" );
+setAttrNiceNameResource( "floatCorrect", "fzn", "フリーズ" );
+setAttrNiceNameResource( "floatCorrect", "_f", "入力 float" );
+setAttrNiceNameResource( "floatCorrect", "_g", "ゲイン" );
+setAttrNiceNameResource( "floatCorrect", "_o", "オフセット" );
+setAttrNiceNameResource( "floatCorrect", "_gg", "ガンマ スケール" );
+setAttrNiceNameResource( "floatCorrect", "_cmp", "クランプ出力" );
+setAttrNiceNameResource( "floatCorrect", "_cmn", "クランプの最小値" );
+setAttrNiceNameResource( "floatCorrect", "_cmx", "クランプの最大値" );
+setAttrNiceNameResource( "floatCorrect", "of", "出力 float" );
+setAttrNiceNameResource( "floatCorrect", "fza", "フリーズの影響を受ける" );
+// 
+// Node: colorCorrect
+// 
+setNodeNiceNameResource( "colorCorrect", "カラー補正" );
+setAttrNiceNameResource( "colorCorrect", "fzn", "フリーズ" );
+setAttrNiceNameResource( "colorCorrect", "_c", "入力カラー" );
+setAttrNiceNameResource( "colorCorrect", "_cr", "入力カラー R" );
+setAttrNiceNameResource( "colorCorrect", "_cg", "入力カラー G" );
+setAttrNiceNameResource( "colorCorrect", "_cb", "入力カラー B" );
+setAttrNiceNameResource( "colorCorrect", "_a", "入力アルファ" );
+setAttrNiceNameResource( "colorCorrect", "_up", "アンプリマルチプライ入力" );
+setAttrNiceNameResource( "colorCorrect", "_pr", "プリマルチプライ結果" );
+setAttrNiceNameResource( "colorCorrect", "_hs", "色相シフト" );
+setAttrNiceNameResource( "colorCorrect", "_sg", "彩度ゲイン" );
+setAttrNiceNameResource( "colorCorrect", "_vg", "明度ゲイン" );
+setAttrNiceNameResource( "colorCorrect", "_ccg", "カラー ゲイン" );
+setAttrNiceNameResource( "colorCorrect", "_ccgr", "カラー ゲイン R" );
+setAttrNiceNameResource( "colorCorrect", "_ccgg", "カラー ゲイン G" );
+setAttrNiceNameResource( "colorCorrect", "_ccgb", "カラー ゲイン B" );
+setAttrNiceNameResource( "colorCorrect", "_co", "カラー オフセット" );
+setAttrNiceNameResource( "colorCorrect", "_cor", "カラー オフセット R" );
+setAttrNiceNameResource( "colorCorrect", "_cog", "カラー オフセット G" );
+setAttrNiceNameResource( "colorCorrect", "_cob", "カラー オフセット B" );
+setAttrNiceNameResource( "colorCorrect", "_cga", "カラー ガンマ" );
+setAttrNiceNameResource( "colorCorrect", "_cgax", "カラー ガンマ X" );
+setAttrNiceNameResource( "colorCorrect", "_cgay", "カラー ガンマ Y" );
+setAttrNiceNameResource( "colorCorrect", "_cgaz", "カラー ガンマ Z" );
+setAttrNiceNameResource( "colorCorrect", "_ccmp", "カラー クランプ" );
+setAttrNiceNameResource( "colorCorrect", "_ccmn", "カラー クランプ最小" );
+setAttrNiceNameResource( "colorCorrect", "_ccmnr", "カラー クランプ最小 R" );
+setAttrNiceNameResource( "colorCorrect", "_ccmng", "カラー クランプ最小 G" );
+setAttrNiceNameResource( "colorCorrect", "_ccmnb", "カラー クランプ最小 B" );
+setAttrNiceNameResource( "colorCorrect", "_ccmx", "カラー クランプ最大" );
+setAttrNiceNameResource( "colorCorrect", "_ccmxr", "カラー クランプ最大 R" );
+setAttrNiceNameResource( "colorCorrect", "_ccmxg", "カラー クランプ最大 G" );
+setAttrNiceNameResource( "colorCorrect", "_ccmxb", "カラー クランプ最大 B" );
+setAttrNiceNameResource( "colorCorrect", "_aag", "アルファのゲイン" );
+setAttrNiceNameResource( "colorCorrect", "_ao", "アルファのオフセット" );
+setAttrNiceNameResource( "colorCorrect", "_agg", "アルファ ガンマ" );
+setAttrNiceNameResource( "colorCorrect", "_acmp", "アルファ クランプ" );
+setAttrNiceNameResource( "colorCorrect", "_acmn", "アルファ クランプ最小" );
+setAttrNiceNameResource( "colorCorrect", "_acmx", "アルファ クランプ最大" );
+setAttrNiceNameResource( "colorCorrect", "oc", "出力カラー" );
+setAttrNiceNameResource( "colorCorrect", "ocr", "出力カラー R" );
+setAttrNiceNameResource( "colorCorrect", "ocg", "出力カラー G" );
+setAttrNiceNameResource( "colorCorrect", "ocb", "出力カラー B" );
+setAttrNiceNameResource( "colorCorrect", "oa", "出力アルファ値" );
+setAttrNiceNameResource( "colorCorrect", "fza", "フリーズの影響を受ける" );
+// 
+// Node: floatLogic
+// 
+setNodeNiceNameResource( "floatLogic", "float 論理" );
+setAttrNiceNameResource( "floatLogic", "fzn", "フリーズ" );
+setAttrNiceNameResource( "floatLogic", "_aa", "float A" );
+setAttrNiceNameResource( "floatLogic", "_ab", "float B" );
+setAttrNiceNameResource( "floatLogic", "_op", "操作" );
+setAttrNiceNameResource( "floatLogic", "ob", "出力ブーリアン" );
+setAttrNiceNameResource( "floatLogic", "fza", "フリーズの影響を受ける" );
+// 
+// Node: colorLogic
+// 
+setNodeNiceNameResource( "colorLogic", "カラー論理" );
+setAttrNiceNameResource( "colorLogic", "fzn", "フリーズ" );
+setAttrNiceNameResource( "colorLogic", "_ca", "カラー A" );
+setAttrNiceNameResource( "colorLogic", "_car", "カラー AR" );
+setAttrNiceNameResource( "colorLogic", "_cag", "カラー AG" );
+setAttrNiceNameResource( "colorLogic", "_cab", "カラー AB" );
+setAttrNiceNameResource( "colorLogic", "_cb", "カラー B" );
+setAttrNiceNameResource( "colorLogic", "_cbr", "カラー BR" );
+setAttrNiceNameResource( "colorLogic", "_cbg", "カラー BG" );
+setAttrNiceNameResource( "colorLogic", "_cbb", "カラー BB" );
+setAttrNiceNameResource( "colorLogic", "_op", "操作" );
+setAttrNiceNameResource( "colorLogic", "ob", "出力ブーリアン" );
+setAttrNiceNameResource( "colorLogic", "fza", "フリーズの影響を受ける" );
+// 
+// Node: floatMask
+// 
+setNodeNiceNameResource( "floatMask", "float マスク" );
+setAttrNiceNameResource( "floatMask", "fzn", "フリーズ" );
+setAttrNiceNameResource( "floatMask", "_f", "入力 float" );
+setAttrNiceNameResource( "floatMask", "_m", "マスク" );
+setAttrNiceNameResource( "floatMask", "of", "出力 float" );
+setAttrNiceNameResource( "floatMask", "fza", "フリーズの影響を受ける" );
+// 
+// Node: colorMask
+// 
+setNodeNiceNameResource( "colorMask", "カラー マスク" );
+setAttrNiceNameResource( "colorMask", "fzn", "フリーズ" );
+setAttrNiceNameResource( "colorMask", "_ic", "入力カラー" );
+setAttrNiceNameResource( "colorMask", "_icr", "入力カラー R" );
+setAttrNiceNameResource( "colorMask", "_icg", "入力カラー G" );
+setAttrNiceNameResource( "colorMask", "_icb", "入力カラー B" );
+setAttrNiceNameResource( "colorMask", "_ia", "入力アルファ" );
+setAttrNiceNameResource( "colorMask", "_pvc", "カラーの保持" );
+setAttrNiceNameResource( "colorMask", "_m", "マスク" );
+setAttrNiceNameResource( "colorMask", "_mr", "マスク R" );
+setAttrNiceNameResource( "colorMask", "_mg", "マスク G" );
+setAttrNiceNameResource( "colorMask", "_mb", "マスク B" );
+setAttrNiceNameResource( "colorMask", "_ma", "マスク アルファ" );
+setAttrNiceNameResource( "colorMask", "_mal", "マスク アルファは輝度" );
+setAttrNiceNameResource( "colorMask", "oc", "出力カラー" );
+setAttrNiceNameResource( "colorMask", "ocr", "出力カラー R" );
+setAttrNiceNameResource( "colorMask", "ocg", "出力カラー G" );
+setAttrNiceNameResource( "colorMask", "ocb", "出力カラー B" );
+setAttrNiceNameResource( "colorMask", "oa", "出力アルファ値" );
+setAttrNiceNameResource( "colorMask", "fza", "フリーズの影響を受ける" );
+// 
+// Node: floatMath
+// 
+setNodeNiceNameResource( "floatMath", "float 数学" );
+setAttrNiceNameResource( "floatMath", "fzn", "フリーズ" );
+setAttrNiceNameResource( "floatMath", "_fa", "float A" );
+setAttrNiceNameResource( "floatMath", "_fb", "float B" );
+setAttrNiceNameResource( "floatMath", "_cnd", "操作" );
+setAttrNiceNameResource( "floatMath", "of", "出力 float" );
+setAttrNiceNameResource( "floatMath", "fza", "フリーズの影響を受ける" );
+// 
+// Node: colorMath
+// 
+setNodeNiceNameResource( "colorMath", "カラー数学" );
+setAttrNiceNameResource( "colorMath", "fzn", "フリーズ" );
+setAttrNiceNameResource( "colorMath", "_ca", "カラー A" );
+setAttrNiceNameResource( "colorMath", "_car", "カラー AR" );
+setAttrNiceNameResource( "colorMath", "_cag", "カラー AG" );
+setAttrNiceNameResource( "colorMath", "_cab", "カラー AB" );
+setAttrNiceNameResource( "colorMath", "_aa", "アルファ A" );
+setAttrNiceNameResource( "colorMath", "_cb", "カラー B" );
+setAttrNiceNameResource( "colorMath", "_cbr", "カラー BR" );
+setAttrNiceNameResource( "colorMath", "_cbg", "カラー BG" );
+setAttrNiceNameResource( "colorMath", "_cbb", "カラー BB" );
+setAttrNiceNameResource( "colorMath", "_ab", "アルファ B" );
+setAttrNiceNameResource( "colorMath", "_cnd", "操作" );
+setAttrNiceNameResource( "colorMath", "oc", "出力カラー" );
+setAttrNiceNameResource( "colorMath", "ocr", "出力カラー R" );
+setAttrNiceNameResource( "colorMath", "ocg", "出力カラー G" );
+setAttrNiceNameResource( "colorMath", "ocb", "出力カラー B" );
+setAttrNiceNameResource( "colorMath", "oa", "出力アルファ値" );
+setAttrNiceNameResource( "colorMath", "fza", "フリーズの影響を受ける" );
+// 
+// Node: unpremultiply
+// 
+setNodeNiceNameResource( "unpremultiply", "アンプリマルチプライ" );
+setAttrNiceNameResource( "unpremultiply", "fzn", "フリーズ" );
+setAttrNiceNameResource( "unpremultiply", "_c", "入力カラー" );
+setAttrNiceNameResource( "unpremultiply", "_cr", "入力カラー R" );
+setAttrNiceNameResource( "unpremultiply", "_cg", "入力カラー G" );
+setAttrNiceNameResource( "unpremultiply", "_cb", "入力カラー B" );
+setAttrNiceNameResource( "unpremultiply", "_a", "入力アルファ" );
+setAttrNiceNameResource( "unpremultiply", "oc", "出力カラー" );
+setAttrNiceNameResource( "unpremultiply", "ocr", "出力カラー R" );
+setAttrNiceNameResource( "unpremultiply", "ocg", "出力カラー G" );
+setAttrNiceNameResource( "unpremultiply", "ocb", "出力カラー B" );
+setAttrNiceNameResource( "unpremultiply", "oa", "出力アルファ値" );
+setAttrNiceNameResource( "unpremultiply", "fza", "フリーズの影響を受ける" );
+// 
+// Node: premultiply
+// 
+setNodeNiceNameResource( "premultiply", "プリマルチプライ" );
+setAttrNiceNameResource( "premultiply", "fzn", "フリーズ" );
+setAttrNiceNameResource( "premultiply", "_c", "入力カラー" );
+setAttrNiceNameResource( "premultiply", "_cr", "入力カラー R" );
+setAttrNiceNameResource( "premultiply", "_cg", "入力カラー G" );
+setAttrNiceNameResource( "premultiply", "_cb", "入力カラー B" );
+setAttrNiceNameResource( "premultiply", "_a", "入力アルファ" );
+setAttrNiceNameResource( "premultiply", "oc", "出力カラー" );
+setAttrNiceNameResource( "premultiply", "ocr", "出力カラー R" );
+setAttrNiceNameResource( "premultiply", "ocg", "出力カラー G" );
+setAttrNiceNameResource( "premultiply", "ocb", "出力カラー B" );
+setAttrNiceNameResource( "premultiply", "oa", "出力アルファ値" );
+setAttrNiceNameResource( "premultiply", "fza", "フリーズの影響を受ける" );
+// 
+// Node: simplexNoise
+// 
+setNodeNiceNameResource( "simplexNoise", "シンプレックス ノイズ" );
+setAttrNiceNameResource( "simplexNoise", "fzn", "フリーズ" );
+setAttrNiceNameResource( "simplexNoise", "uv", "UV 座標" );
+setAttrNiceNameResource( "simplexNoise", "u", "U 座標" );
+setAttrNiceNameResource( "simplexNoise", "v", "V 座標" );
+setAttrNiceNameResource( "simplexNoise", "fs", "UV フィルタ サイズ" );
+setAttrNiceNameResource( "simplexNoise", "fsx", "UV フィルタ サイズ X" );
+setAttrNiceNameResource( "simplexNoise", "fsy", "UV フィルタ サイズ Y" );
+setAttrNiceNameResource( "simplexNoise", "_s", "スケール" );
+setAttrNiceNameResource( "simplexNoise", "a", "振幅" );
+setAttrNiceNameResource( "simplexNoise", "tr", "しきい値" );
+setAttrNiceNameResource( "simplexNoise", "ra", "比率" );
+setAttrNiceNameResource( "simplexNoise", "ov", "オクターブ" );
+setAttrNiceNameResource( "simplexNoise", "fq", "周波数" );
+setAttrNiceNameResource( "simplexNoise", "fr", "周波数の比率" );
+setAttrNiceNameResource( "simplexNoise", "ud", "歪み U" );
+setAttrNiceNameResource( "simplexNoise", "vd", "歪み V" );
+setAttrNiceNameResource( "simplexNoise", "dr", "歪み比" );
+setAttrNiceNameResource( "simplexNoise", "_ga", "ガンマ" );
+setAttrNiceNameResource( "simplexNoise", "nt", "ノイズ タイプ" );
+setAttrNiceNameResource( "simplexNoise", "oc", "出力カラー" );
+setAttrNiceNameResource( "simplexNoise", "ocr", "出力カラー R" );
+setAttrNiceNameResource( "simplexNoise", "ocg", "出力カラー G" );
+setAttrNiceNameResource( "simplexNoise", "ocb", "出力カラー B" );
+setAttrNiceNameResource( "simplexNoise", "oa", "出力アルファ値" );
+setAttrNiceNameResource( "simplexNoise", "fza", "フリーズの影響を受ける" );

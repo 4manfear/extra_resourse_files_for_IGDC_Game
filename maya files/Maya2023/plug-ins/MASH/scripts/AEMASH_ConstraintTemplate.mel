@@ -1,0 +1,373 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+
+global proc MASHcheckConstraintType ( string $nodeName )
+{
+        if ( `objExists $nodeName` == 0 )
+            return;
+
+        $nodeAttr = $nodeName + ".constraintBreakable";
+        int $breakable = `getAttr $nodeAttr`;
+
+        $nodeAttr = $nodeName + ".linearMotorEnabled";
+        int $linearMotorEnabled = `getAttr $nodeAttr`;
+
+        $nodeAttr = $nodeName + ".angularMotorEnabled";
+        int $angularMotorEnabled = `getAttr $nodeAttr`;
+
+        $nodeAttr = $nodeName + ".constraintMode";
+        int $constraintMode = `getAttr $nodeAttr`;
+
+        $nodeAttr = $nodeName + ".constraintType";
+        int $constraintType = `getAttr $nodeAttr`;
+        
+
+        if ($breakable) {
+            editorTemplate  -dimControl $nodeName "constraintThreshold" false;
+        } else {
+            editorTemplate  -dimControl $nodeName "constraintThreshold" true;
+        }
+
+        if ($linearMotorEnabled) {
+            editorTemplate  -dimControl $nodeName "linearMotorTargetSpeed" false;
+            editorTemplate  -dimControl $nodeName "linearMotorMaxForce" false;
+        } else {
+            editorTemplate  -dimControl $nodeName "linearMotorTargetSpeed" true;
+            editorTemplate  -dimControl $nodeName "linearMotorMaxForce" true;
+        }
+
+        if ($angularMotorEnabled) {
+            editorTemplate  -dimControl $nodeName "angularMotorTargetSpeed" false;
+            editorTemplate  -dimControl $nodeName "angularMotorMaxForce" false;
+        } else {
+            editorTemplate  -dimControl $nodeName "angularMotorTargetSpeed" true;
+            editorTemplate  -dimControl $nodeName "angularMotorMaxForce" true;
+        }
+
+        if ($constraintMode == 2) {
+            editorTemplate  -dimControl $nodeName "constraintDistance" false;
+        } else {
+            editorTemplate  -dimControl $nodeName "constraintDistance" true;
+        }
+        if ($constraintMode == 4) {
+            editorTemplate  -dimControl $nodeName "pointOffset" false;
+        } else {
+            editorTemplate  -dimControl $nodeName "pointOffset" true;
+        }
+
+        if ($constraintMode == 4 || $constraintMode == 4) {
+            editorTemplate  -dimControl $nodeName "constraintMaxCount" true;
+        } else {
+            editorTemplate  -dimControl $nodeName "constraintMaxCount" false;
+        }
+
+        // spring
+        if ($constraintType == 2) {
+            editorTemplate  -dimControl $nodeName "springRestLength" false;
+            editorTemplate  -dimControl $nodeName "springRange" false;
+            editorTemplate  -dimControl $nodeName "linearSpringEnabledX" false;
+            editorTemplate  -dimControl $nodeName "linearSpringEnabledY" false;
+            editorTemplate  -dimControl $nodeName "linearSpringEnabledZ" false;
+            editorTemplate  -dimControl $nodeName "constrainSpringPositiontStiffness" false;
+            editorTemplate  -dimControl $nodeName "constraintSpringPositionDamping" false;
+
+            editorTemplate  -dimControl $nodeName "angularSpringEnabledX" false;
+            editorTemplate  -dimControl $nodeName "angularSpringEnabledY" false;
+            editorTemplate  -dimControl $nodeName "angularSpringEnabledZ" false;
+            editorTemplate  -dimControl $nodeName "constrainSpringAngularStiffness" false;
+            editorTemplate  -dimControl $nodeName "constraintSpringAngularDamping" false;
+        } else {
+            editorTemplate  -dimControl $nodeName "springRestLength" true;
+            editorTemplate  -dimControl $nodeName "springRange" true;
+            editorTemplate  -dimControl $nodeName "linearSpringEnabledX" true;
+            editorTemplate  -dimControl $nodeName "linearSpringEnabledY" true;
+            editorTemplate  -dimControl $nodeName "linearSpringEnabledZ" true;
+            editorTemplate  -dimControl $nodeName "constrainSpringPositiontStiffness" true;
+            editorTemplate  -dimControl $nodeName "constraintSpringPositionDamping" true;
+
+            editorTemplate  -dimControl $nodeName "angularSpringEnabledX" true;
+            editorTemplate  -dimControl $nodeName "angularSpringEnabledY" true;
+            editorTemplate  -dimControl $nodeName "angularSpringEnabledZ" true;
+            editorTemplate  -dimControl $nodeName "constrainSpringAngularStiffness" true;
+            editorTemplate  -dimControl $nodeName "constraintSpringAngularDamping" true;
+        }
+
+        $nodeAttr = $nodeName + ".linearSpringEnabledX";
+        int $springEnabled = `getAttr $nodeAttr`;
+
+        if (($constraintType == 2 && $springEnabled) || $constraintType == 1) {
+            editorTemplate  -dimControl $nodeName "constraintLimitPositionX" true;
+        } else {
+            editorTemplate  -dimControl $nodeName "constraintLimitPositionX" false;
+        }
+
+        $nodeAttr = $nodeName + ".linearSpringEnabledY";
+        $springEnabled = `getAttr $nodeAttr`;
+
+        if (($constraintType == 2 && $springEnabled) || $constraintType == 1) {
+            editorTemplate  -dimControl $nodeName "constraintLimitPositionY" true;
+        } else {
+            editorTemplate  -dimControl $nodeName "constraintLimitPositionY" false;
+        }
+
+        $nodeAttr = $nodeName + ".linearSpringEnabledZ";
+        $springEnabled = `getAttr $nodeAttr`;
+
+        if (($constraintType == 2 && $springEnabled) || $constraintType == 1) {
+            editorTemplate  -dimControl $nodeName "constraintLimitPositionZ" true;
+        } else {
+            editorTemplate  -dimControl $nodeName "constraintLimitPositionZ" false;
+        }
+
+        $nodeAttr = $nodeName + ".angularSpringEnabledX";
+        $springEnabled = `getAttr $nodeAttr`;
+
+        if (($constraintType == 2 && $springEnabled) || $constraintType == 1) {
+            editorTemplate  -dimControl $nodeName "constraintLimitRotationX" true;
+        } else {
+            editorTemplate  -dimControl $nodeName "constraintLimitRotationX" false;
+        }
+
+        $nodeAttr = $nodeName + ".angularSpringEnabledY";
+        $springEnabled = `getAttr $nodeAttr`;
+
+        if (($constraintType == 2 && $springEnabled) || $constraintType == 1) {
+            editorTemplate  -dimControl $nodeName "constraintLimitRotationY" true;
+        } else {
+            editorTemplate  -dimControl $nodeName "constraintLimitRotationY" false;
+        }
+
+        $nodeAttr = $nodeName + ".angularSpringEnabledZ";
+        $springEnabled = `getAttr $nodeAttr`;
+
+        if (($constraintType == 2 && $springEnabled) || $constraintType == 1) {
+            editorTemplate  -dimControl $nodeName "constraintLimitRotationZ" true;
+        } else {
+            editorTemplate  -dimControl $nodeName "constraintLimitRotationZ" false;
+        }
+
+        if ($constraintType == 1) {
+            editorTemplate  -dimControl $nodeName "constraintMinimumPositionLimit" true;
+            editorTemplate  -dimControl $nodeName "constraintMaximumPositionLimit" true;
+            editorTemplate  -dimControl $nodeName "constraintMinimumRotationLimit" true;
+            editorTemplate  -dimControl $nodeName "constraintMaximumRotationLimit" true;
+        } else {
+            editorTemplate  -dimControl $nodeName "constraintMinimumPositionLimit" false;
+            editorTemplate  -dimControl $nodeName "constraintMaximumPositionLimit" false;
+            editorTemplate  -dimControl $nodeName "constraintMinimumRotationLimit" false;
+            editorTemplate  -dimControl $nodeName "constraintMaximumRotationLimit" false;
+        }
+}
+
+global proc AEMASH_ConstraintTemplate( string $nodeName )
+    {
+
+    editorTemplate -beginScrollLayout;
+    python("import MASH.nodeHeaders; MASH.nodeHeaders.addHeader('" + $nodeName + "', 'kConstraint', False)")
+    editorTemplate -endLayout;
+    
+    editorTemplate -bn;
+
+    editorTemplate -label (getPluginResource("MASH", "kType")) -addControl "constraintType" "MASHcheckConstraintType";
+    editorTemplate -addSeparator;
+    editorTemplate -label (getPluginResource("MASH", "kBreakable")) -addControl "constraintBreakable" "MASHcheckConstraintType";
+    editorTemplate -label (getPluginResource("MASH", "kBreakingThreshold")) -addControl "constraintThreshold";
+    editorTemplate -addSeparator;
+    editorTemplate -label (getPluginResource("MASH", "kContinuousCreation")) -addControl "continuousCreation";
+    editorTemplate -addSeparator;
+    editorTemplate -label (getPluginResource("MASH", "kConnectionMode")) -addControl "constraintMode" "MASHcheckConstraintType";
+    editorTemplate -label (getPluginResource("MASH", "kMaximumConstraints")) -addControl "constraintMaxCount";
+    editorTemplate -label (getPluginResource("MASH", "kSearchDist")) -addControl "constraintDistance";
+    editorTemplate -label (getPluginResource("MASH", "kOffsets")) -addControl "pointOffset";
+    editorTemplate -callCustom "MASHConstraintPointSingleInputBuildQt" "MASHConstraintPointSingleInputUpdateQt" "";
+    editorTemplate -callCustom "MASHConstraintPointNetworkInputBuildQt" "MASHConstraintPointSingleNetworkUpdateQt" "";
+    editorTemplate -beginLayout (getPluginResource("MASH", "kConnectionMasking")) -collapse 1;
+    editorTemplate -label (getPluginResource("MASH", "kMaskMap")) -addControl "connectionColour";
+    editorTemplate -label (getPluginResource("MASH", "kColorThreshold")) -addControl "connectionColorThreshold";
+    editorTemplate -label (getPluginResource("MASH", "kMapProjAxis")) -addControl "connectionMapDirection";
+    editorTemplate -callCustom "MASHConstraintConnectionMapHelperBuildQt" "MASHConstraintConnectionMapHelperUpdateQt" "";
+    editorTemplate -endLayout;
+    editorTemplate -addSeparator;
+
+    editorTemplate -beginLayout (getPluginResource("MASH", "kSpring")) -collapse 1;
+    editorTemplate -beginLayout (getPluginResource("MASH", "kPositionalSpring")) -collapse 0;
+    editorTemplate -label (getPluginResource("MASH", "kRestLength")) -addControl "springRestLength";
+    editorTemplate -label (getPluginResource("MASH", "kMovementRange")) -addControl "springRange";
+    editorTemplate -addSeparator;
+    editorTemplate -label (getPluginResource("MASH", "kEnableX")) -addControl "linearSpringEnabledX" "MASHcheckConstraintType";
+    editorTemplate -label (getPluginResource("MASH", "kEnableY")) -addControl "linearSpringEnabledY" "MASHcheckConstraintType";
+    editorTemplate -label (getPluginResource("MASH", "kEnableZ")) -addControl "linearSpringEnabledZ" "MASHcheckConstraintType";
+    editorTemplate -label (getPluginResource("MASH", "kStiffness")) -addControl "constrainSpringPositiontStiffness";
+    editorTemplate -label (getPluginResource("MASH", "kDamping")) -addControl "constraintSpringPositionDamping";
+    editorTemplate -endLayout;
+    editorTemplate -beginLayout (getPluginResource("MASH", "kRotationalSpring")) -collapse 0;
+    editorTemplate -label (getPluginResource("MASH", "kRestLength")) -addControl "springAngularRestLength";
+    editorTemplate -label (getPluginResource("MASH", "kMovementRange")) -addControl "springAngularRange";
+    editorTemplate -addSeparator;
+    editorTemplate -label (getPluginResource("MASH", "kEnableX")) -addControl "angularSpringEnabledX" "MASHcheckConstraintType";
+    editorTemplate -label (getPluginResource("MASH", "kEnableY")) -addControl "angularSpringEnabledY" "MASHcheckConstraintType";
+    editorTemplate -label (getPluginResource("MASH", "kEnableZ")) -addControl "angularSpringEnabledZ" "MASHcheckConstraintType";
+    editorTemplate -addSeparator;
+    editorTemplate -label (getPluginResource("MASH", "kStiffness")) -addControl "constrainSpringAngularStiffness";
+    editorTemplate -label (getPluginResource("MASH", "kDamping")) -addControl "constraintSpringAngularDamping";
+    editorTemplate -endLayout;
+    editorTemplate -endLayout;
+
+    editorTemplate -beginLayout (getPluginResource("MASH", "kMotor")) -collapse 1;
+    editorTemplate -beginLayout (getPluginResource("MASH", "kPositionalMotor")) -collapse 0;
+    editorTemplate -label (getPluginResource("MASH", "kEnable")) -addControl "linearMotorEnabled" "MASHcheckConstraintType";
+    editorTemplate -label (getPluginResource("MASH", "kTargetSpeed")) -addControl "linearMotorTargetSpeed";
+    editorTemplate -label (getPluginResource("MASH", "kMaxForce")) -addControl "linearMotorMaxForce";
+    editorTemplate -endLayout;
+    editorTemplate -beginLayout (getPluginResource("MASH", "kRotationalMotor")) -collapse 0;
+    editorTemplate -label (getPluginResource("MASH", "kEnable")) -addControl "angularMotorEnabled" "MASHcheckConstraintType";
+    editorTemplate -label (getPluginResource("MASH", "kTargetSpeed")) -addControl "angularMotorTargetSpeed";
+    editorTemplate -label (getPluginResource("MASH", "kMaxForce")) -addControl "angularMotorMaxForce";
+    editorTemplate -endLayout;
+    editorTemplate -endLayout;
+
+    editorTemplate -beginLayout (getPluginResource("MASH", "kLimits")) -collapse 1;
+    editorTemplate -beginLayout (getPluginResource("MASH", "kPositionalLimits")) -collapse 0;
+    editorTemplate -label (getPluginResource("MASH", "kLimitTypeX")) -addControl "constraintLimitPositionX";
+    editorTemplate -label (getPluginResource("MASH", "kLimitTypeY")) -addControl "constraintLimitPositionY";
+    editorTemplate -label (getPluginResource("MASH", "kLimitTypeZ")) -addControl "constraintLimitPositionZ";
+    editorTemplate -label (getPluginResource("MASH", "kMinimumLimit")) -addControl "constraintMinimumPositionLimit";
+    editorTemplate -label (getPluginResource("MASH", "kMaximumLimit")) -addControl "constraintMaximumPositionLimit";
+    editorTemplate -endLayout;
+    editorTemplate -beginLayout (getPluginResource("MASH", "kRotationalLimits")) -collapse 0;
+    editorTemplate -label (getPluginResource("MASH", "kLimitTypeX")) -addControl "constraintLimitRotationX";
+    editorTemplate -label (getPluginResource("MASH", "kLimitTypeY")) -addControl "constraintLimitRotationY";
+    editorTemplate -label (getPluginResource("MASH", "kLimitTypeZ")) -addControl "constraintLimitRotationZ";
+    editorTemplate -label (getPluginResource("MASH", "kMinimumLimit")) -addControl "constraintMinimumRotationLimit";
+    editorTemplate -label (getPluginResource("MASH", "kMaximumLimit")) -addControl "constraintMaximumRotationLimit";
+    editorTemplate -endLayout;
+    editorTemplate -endLayout;
+
+    editorTemplate -beginLayout (getPluginResource("MASH", "kPerPointAdjust")) -collapse 0;
+    editorTemplate -callCustom "MASHConstraintsChannelListWidgetBuildQt" "MASHConstraintsChannelWidgetUpdateQt" "";
+
+    editorTemplate -endLayout;
+
+    //TODO: This node should not reconnect on delete so the delete proc needs modifying
+    //editorTemplate -beginLayout (getPluginResource("MASH", "kDelete")) -collapse 1;
+    //editorTemplate -callCustom "MASHdeleteNodeButton" "MASHdeleteNodeButtonEdit" "";
+    //editorTemplate -endLayout;
+
+    AEdependNodeTemplate $nodeName;
+    editorTemplate -addExtraControls;
+    editorTemplate -endScrollLayout;
+
+}
+
+global proc MASHConstraintsChannelListWidgetBuildQt(string $nodeName)
+{
+    string $buffer[];
+    tokenize($nodeName, ".", $buffer);
+    $nodeName = $buffer[0];
+
+    python("import MASHlistQtWidget");
+    string $parent = `setParent -q`;
+    //get python to create the widget, include the desired nodeType as an arguement
+    python("MASHlistQtWidget.build_qt_widget('" + $parent + "','" + $nodeName + "', 'MASH_ChannelRandom', 'dynamicsPP', 'outputPoints', 'ConstraintChannelRandom', 'kPerPointAttributes')");
+    setParent..;
+
+}
+
+global proc MASHConstraintsChannelWidgetUpdateQt(string $nodeName )
+{
+    string $buffer[];
+    tokenize($nodeName, ".", $buffer);
+    $nodeName = $buffer[0];
+    string $parent = `setParent -q`;
+    python("import MASHlistQtWidget");
+    python("MASHlistQtWidget.update_qt_widget('" + $parent + "', '" + $nodeName + "', 'MASH_ChannelRandom', 'dynamicsPP', 'outputPoints', 'ConstraintChannelRandom', 'kPerPointAttributes')");
+}
+
+global proc MASHConstraintPointSingleInputBuildQt(string $nodeName)
+{
+    string $buffer[];
+    tokenize($nodeName, ".", $buffer);
+    $nodeName = $buffer[0];
+
+    python("import MASHsingleInputQtWidget");
+    rowLayout -numberOfColumns 2 -columnWidth2 139 250 addConnectionPointLayout;
+    text -w 105 -h 20 -vis 1
+    -label (getPluginResource("MASH", "kCreateContNull"))
+    -align "right" -font "plainLabelFont" ;
+    //get python to create the widget, include the desired nodeType as an arguement
+    python("MASHsingleInputQtWidget.build_qt_widget('addConnectionPointLayout', '" + $nodeName + "', 'transform', 'constraintConnectionPoint', 'worldMatrix[0]', 'SwitchConstraintToConnectToPoint')");
+    setParent..;
+
+}
+
+global proc MASHConstraintPointSingleInputUpdateQt(string $nodeName )
+{
+    string $buffer[];
+    tokenize($nodeName, ".", $buffer);
+    $nodeName = $buffer[0];
+    python("import MASHsingleInputQtWidget");
+
+    python("MASHsingleInputQtWidget.update_qt_widget('addConnectionPointLayout', '" + $nodeName + "', 'transform', 'constraintConnectionPoint', 'worldMatrix[0]', 'SwitchConstraintToConnectToPoint')");
+}
+
+global proc MASHConstraintPointNetworkInputBuildQt(string $nodeName)
+{
+    string $buffer[];
+    tokenize($nodeName, ".", $buffer);
+    $nodeName = $buffer[0];
+
+    python("import MASHsingleInputQtWidget");
+    rowLayout -numberOfColumns 2 -columnWidth2 139 250 addConnectionNetworkLayout;
+    text -w 105 -h 20 -vis 1
+    -label (getPluginResource("MASH", "kOffsetPointsNetwork"))
+    -align "right" -font "plainLabelFont" ;
+    //get python to create the widget, include the desired nodeType as an arguement
+    python("MASHsingleInputQtWidget.build_qt_widget('addConnectionNetworkLayout', '" + $nodeName + "', 'MASH_Waiter', 'offsetPointsNetwork', 'outputPoints', 'SwitchConstraintToConnectToNetwork')");
+    setParent..;
+
+}
+
+global proc MASHConstraintPointSingleNetworkUpdateQt(string $nodeName )
+{
+    string $buffer[];
+    tokenize($nodeName, ".", $buffer);
+    $nodeName = $buffer[0];
+    python("import MASHsingleInputQtWidget");
+
+    python("MASHsingleInputQtWidget.update_qt_widget('addConnectionNetworkLayout', '" + $nodeName + "', 'MASH_Waiter', 'offsetPointsNetwork', 'outputPoints', 'SwitchConstraintToConnectToNetwork')");
+}
+
+global proc MASHConstraintConnectionMapHelperBuildQt(string $nodeName)
+{
+    string $buffer[];
+    tokenize($nodeName, ".", $buffer);
+    $nodeName = $buffer[0];
+    string $nodeType = `nodeType($nodeName)`;
+    string $layout = ($nodeType+"ScaleMapHelperLayout");
+
+    python("import MASHsingleInputQtWidget");
+    rowLayout -numberOfColumns 2 -columnWidth2 139 250 $layout;
+    text -w 105 -h 20 -vis 1
+    -label (getPluginResource("MASH", "kMapHelper"))
+    -align "right" -font "plainLabelFont" ;
+    //get python to create the widget, include the desired nodeType as an arguement
+    python("MASHsingleInputQtWidget.build_qt_widget('" + $layout + "', '" + $nodeName + "', 'transform', 'connectionMapMatrix', 'worldMatrix[0]', 'ConstraintMapSwitchToUVMode')");
+    setParent..;
+}
+
+global proc MASHConstraintConnectionMapHelperUpdateQt(string $nodeName )
+{
+    string $buffer[];
+    tokenize($nodeName, ".", $buffer);
+    $nodeName = $buffer[0];
+    string $nodeType = `nodeType($nodeName)`;
+    string $layout = ($nodeType+"ScaleMapHelperLayout");
+
+    python("import MASHsingleInputQtWidget");
+    python("MASHsingleInputQtWidget.update_qt_widget('" + $layout + "', '" + $nodeName + "', 'transform', 'connectionMapMatrix', 'worldMatrix[0]', 'ConstraintMapSwitchToUVMode')");
+}

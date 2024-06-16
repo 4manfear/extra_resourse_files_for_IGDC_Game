@@ -1,0 +1,44 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//
+//
+//
+//
+//  Creation Date:  December 11/2000
+//
+
+global proc string[] currentCharacterClips()
+{
+	//
+	// Description:
+	//	This procedure determines a list of clips which are 
+	//	attached to the currently selected character(s).
+	//
+	// Returns: 
+	//	A list of clips attached to the currently selected character(s).
+	//	If no characters are currently selected, the result will instead be a
+	//	list of clips attached to any character.
+	//
+
+	string $allClips[];
+	string $characters[] = `currentCharacters`;
+	int $n=0;
+	int $nchars = size($characters);
+
+	if ($nchars == 0) return (allCharacterClips());
+
+	for ($i=0; $i < $nchars; $i++)
+	{
+		string $clips[] = `clip -q -n $characters[$i]`;
+		for ($j=0; $j < size($clips); $j++)
+			$allClips[$n++] = $clips[$j];
+	}
+	return $allClips;
+}

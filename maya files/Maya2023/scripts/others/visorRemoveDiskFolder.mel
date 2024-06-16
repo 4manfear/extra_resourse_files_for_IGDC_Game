@@ -1,0 +1,59 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//
+//
+//
+//
+//  Creation Date:  Date
+//
+// Description:
+//
+//		description
+//												
+
+global proc visorRemoveDiskFolder(
+	string $visor,
+	string $folder)
+//
+// Description:
+//	This method is called when the user chooses "Remove this disk folder" from
+//	the Visor RMB menu.
+//	This method removes the folder and also removes it from the list of
+//	directories for which folders should be opened every session.
+//
+{
+	// Delete the folder and refresh the visor
+	//
+	int $errorOcurred;
+	$errorOcurred = catch(`visor -deleteFolder $folder $visor`);
+	visor -rebuild $visor;
+
+	// Update the optionVar which lists the set of folders in Visor
+	//
+	if (!$errorOcurred)
+	{
+		// The folder was successfully deleted.
+		//
+		int 	$i;
+		int 	$done = false;
+		string 	$customFolderNameArray[];
+
+		$customFolderNameArray = `optionVar -query visorCustomDiskFolders`;
+
+		for ($i = 0; $i < size($customFolderNameArray) && !$done; $i++)
+		{
+			if ($customFolderNameArray[$i] == $folder)
+			{
+				optionVar -removeFromArray visorCustomDiskFolders $i;
+				$done = true;
+			}
+		}
+	}
+}

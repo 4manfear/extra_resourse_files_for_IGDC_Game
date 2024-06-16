@@ -1,0 +1,25 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+// provided at the time of installation or download, or which otherwise accompanies 
+
+global proc ilrCreateAEShadingEngineOptions(string $parent, string $node)
+{
+	string $oldParent = `setParent -q`;
+
+	setParent $parent;
+
+	if (`attributeQuery -exists -node $node "ilrPhotonShader"`) {
+		attrNavigationControlGrp -label "Photon Shader"
+		-attribute ($node + ".ilrPhotonShader");
+		attrNavigationControlGrp -label "Surface Shader Override"
+		-attribute ($node + ".ilrSurfaceShaderOverride");
+	}
+
+	setParent $oldParent;
+}

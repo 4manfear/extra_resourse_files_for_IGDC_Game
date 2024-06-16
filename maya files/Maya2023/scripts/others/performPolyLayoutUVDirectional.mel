@@ -1,0 +1,260 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  18 December 2016
+//
+//  Description:
+//		Pack UV shells along the U or V axis
+//
+//
+//  Procedure Name:
+//		setOptionVars
+//
+//  Description:
+//		Initialize the option values.
+//
+//  Input Arguments:
+//		forceFactorySettings - Whether to set the options to default values.
+//
+//  Return Value:
+//		None.
+//
+proc setOptionVars(int $forceFactorySettings)
+{		
+	optionVar -init $forceFactorySettings -category "UV Editor.Layout Along"
+		-iv layoutAlongDirection 1
+		;
+}
+
+proc polyLayoutUVDirectionalOptions()
+{
+	// Global template variables for form spacing
+	global int $gOptionBoxTemplateFrameSpacing;
+	
+	//	Name of the command for this option box.
+	//
+	string $commandName;
+
+	$commandName = "LayoutUVDirectional";
+	
+	//	Build the option box actions.
+	//
+	string $callback = $commandName + "Callback";
+	string $setup	= $commandName + "Setup";
+	
+	//	STEP 1:  Get the option box.
+	//	============================
+	//
+	//	The value returned is the name of the layout to be used as
+	//	the parent for the option box UI.
+	//
+	string $layout = getOptionBox();
+	
+	//	STEP 2:  Pass the command name to the option box.
+	//	=================================================
+	//
+	//	Any default option box behaviour based on the command name is set
+	//	up with this call. For example, updating the 'Help' menu item with
+	//	the name of the command.
+	//
+	setOptionBoxCommandName($commandName);
+	
+	//	STEP 3:  Create option box contents.
+	//	====================================
+	//
+	setParent $layout;
+	setUITemplate -pushTemplate OptionBoxTemplate;
+	waitCursor -state 1;
+	
+	// Form layout
+	string $parent = `formLayout polyLayoutUVDirectionalOptions`;
+
+		// Settings frame
+		string $settingsFrame = 
+		`frameLayout -label (uiRes("m_performPolyLayoutUVDirectional.kSettingsFrame"))`;
+	
+			columnLayout -adjustableColumn true;
+					
+				// Direction
+				radioButtonGrp -numberOfRadioButtons 2
+					-vertical
+					-label (uiRes("m_performPolyLayoutUVDirectional.kLayoutAlong"))
+					-label1 (uiRes("m_performPolyLayoutUVDirectional.kU"))
+					-label2 (uiRes("m_performPolyLayoutUVDirectional.kV"))
+					polyLayoutUVDirectionalDirectionRadio;
+	
+			setParent..; // columnLayout;
+			
+		setParent $parent; // frameLayout
+
+	setParent ..; // formLayout
+	
+	// Attach Settings frame to form layout
+	formLayout -e
+		-af $settingsFrame "top" $gOptionBoxTemplateFrameSpacing
+		-af $settingsFrame "left" $gOptionBoxTemplateFrameSpacing
+		-af $settingsFrame "right" $gOptionBoxTemplateFrameSpacing
+		-an $settingsFrame "bottom"
+	$parent;
+
+	waitCursor -state 0;
+	setUITemplate -popTemplate;
+	
+	//	STEP 4:  Customize the buttons.
+	//	===============================
+	//
+	//	Provide more descriptive labels for the buttons.
+	//	Disable those buttons that are not applicable to the option box.
+	//	Attach actions to those buttons that are applicable to the option box.
+  
+	string $applyAndCloseBtn = getOptionBoxApplyAndCloseBtn();
+	button -e -command ($callback + " " + $parent + " 1; hideOptionBox;") $applyAndCloseBtn;
+	
+	string $applyBtn = getOptionBoxApplyBtn();
+	button -e -command ($callback + " " + $parent + " 1;") $applyBtn;
+
+	string $resetBtn = getOptionBoxResetBtn();
+	button -e -command($setup + " " + $parent + " 1") $resetBtn;
+
+	string $saveBtn = getOptionBoxSaveBtn();
+	button -e -command($callback + " " + $parent + " 0; hideOptionBox;") $saveBtn;
+		   
+	//	STEP 5:  Set the option box title.
+	//	==================================
+	//
+	setOptionBoxTitle((uiRes("m_performPolyLayoutUVDirectional.kLayoutAlongOptions")));
+
+	//	STEP 6:  Customize the 'Help' menu item text.
+	//	=============================================
+	//
+	setOptionBoxHelpTag($commandName);
+
+	//	Set the current values of the option box.
+	//	=========================================
+	//
+	eval ($setup + " " + $parent + " 0");
+
+	//	Show the option box.
+	//	====================
+	//
+	showOptionBox();
+}
+//
+//  Procedure Name:
+//		LayoutUVDirectionalCallback
+//
+//  Description:
+//		Update the option values and execute command
+//
+//  Input Arguments:
+//		parent - Top level parent layout of the option box UI.  Required so
+//				 that UI object names can be successfully resolved.
+//
+//		doIt   - Whether the command should execute.
+//
+//  Return Value:
+//		None.
+//
+global proc LayoutUVDirectionalCallback(string $parent, int $doIt)
+{
+	setOptionVars(false);
+	setParent $parent;
+	if(`radioButtonGrp -q -ex polyLayoutUVDirectionalDirectionRadio`)
+		optionVar -iv layoutAlongDirection (`radioButtonGrp -q -select polyLayoutUVDirectionalDirectionRadio`);
+
+	if($doIt)
+		performPolyLayoutUVDirectional 0;
+}
+
+//
+//  Procedure Name:
+//		LayoutUVDirectionalSetup
+//
+//  Description:
+//		Update the state of the option box UI to reflect the option values.
+//
+//  Input Arguments:
+//		parent				- Top level parent layout of the option box UI.
+//							  Required so that UI object names can be 
+//							  successfully resolved.
+//
+//		forceFactorySettings - Whether the option values should be set to
+//							   default values.
+//
+//  Return Value:
+//		None.
+//
+global proc LayoutUVDirectionalSetup(string $parent, int $forceFactorySettings)
+{
+	// Retrieve the option settings
+	//
+	setOptionVars($forceFactorySettings);
+	setParent $parent;
+	if(`radioButtonGrp -q -ex polyLayoutUVDirectionalDirectionRadio`)
+	{
+		int $direction = `optionVar -q layoutAlongDirection`;
+		radioButtonGrp -e -select $direction polyLayoutUVDirectionalDirectionRadio;	
+	}
+}
+
+proc string assembleCmd()
+{
+	setOptionVars(false);
+	string $cmd = "texLayoutAlong ";
+	int $dir = `optionVar -q layoutAlongDirection`;
+	if($dir == 1)
+		$cmd += 0;
+	else if($dir == 2)
+		$cmd += 1;
+	return $cmd;
+}
+
+//
+//  Procedure Name:
+//		performPolyLayoutUVDirectional
+//
+//  Description:
+//		Prepare parameters and run texLayoutAlong
+//
+//  Input Arguments:
+//		0 - Execute the command.
+//		1 - Show the option box dialog.
+//		2 - Return the command.
+//
+global proc string performPolyLayoutUVDirectional(int $action)
+{
+	string $cmd = "";
+	
+	switch ($action) {
+
+		//	Execute the command.
+		//
+		case 0:
+			$cmd = assembleCmd();
+			//	Execute the command with the option settings.
+			//
+			eval($cmd);
+			break;
+
+		//	Show the option box.
+		//
+		case 1:
+			polyLayoutUVDirectionalOptions();
+			break;
+
+		//	Return the command string.
+		//
+		case 2:
+			//	Get the command.
+			//
+			$cmd = assembleCmd();
+			break;
+	}
+	return $cmd;
+}

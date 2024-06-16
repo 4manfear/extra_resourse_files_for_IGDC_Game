@@ -1,0 +1,93 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+
+//<doc>
+//<name findRelatedDeformer>
+//
+//<synopsis>
+//		findRelatedDeformer (string $obj)
+//
+//<returns>
+//		None
+//
+//<description>
+//      Script for finding the deformers that deform the specified shape.
+//
+//<examples>
+// // To find the deformers for a shape called "johnBoy", type:
+//
+// findRelatedDeformer("johnBoy");
+//
+//</doc>
+/////////////////////////////////////////////////////////////////////////
+//
+global proc string[] findRelatedDeformer(string $obj)
+{
+    //
+    // This function has been replaced with a C++ command. To get back to the
+    // old behavior uncomment the following line
+    //
+    return eval("findDeformers " + $obj);
+
+    //
+    // What follows is the original implementation of findRelatedDeformer
+    //
+	string $deformers[];
+	string $shape = "";
+	string $shapeWithPath;
+	string $hiddenShape = "";
+	string $hiddenShapeWithPath;
+	string $cpTest[] = `ls -type controlPoint $obj`;
+	if (size($cpTest)) {
+		$shape = $obj;
+	} else {
+		string $rels[] = `listRelatives $obj`;
+		for ($r in $rels) {
+			$cpTest = `ls -type controlPoint ($obj+"|"+$r)`;
+			if (0 == size($cpTest)) {
+				continue;
+			}
+			int $io = `getAttr ($obj+"|"+$r+".io")`;
+			if ($io) {
+				continue;
+			}
+
+			int $visible = `getAttr ($obj+"|"+$r+".v")`;
+			if (! $visible) {
+				$hiddenShape = $r;
+				$hiddenShapeWithPath = ($obj+"|"+$r);
+				continue;
+			}
+
+			$shape = $r;
+			$shapeWithPath = ($obj+"|"+$r);
+			break;
+		}
+	}
+
+	if ($shape == "") {
+		if ($hiddenShape == "") {
+			return $deformers;
+		} else {
+			$shape = $hiddenShape;
+			$shapeWithPath = $hiddenShapeWithPath;
+		}
+	}
+
+	string $wtGeoms[] = `ls -type geometryFilter`;
+	for ($d in $wtGeoms) {
+		string $geom[] = `deformer -q -g $d`;
+		for ($g in $geom) {
+			if ($g == $shape || $g == $shapeWithPath) {
+				$deformers[size($deformers)] = $d;
+			}
+		}
+	}
+
+	return $deformers;
+}

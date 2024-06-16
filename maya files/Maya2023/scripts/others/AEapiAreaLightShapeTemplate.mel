@@ -1,0 +1,38 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc AEapiAreaLightShapeTemplate( string $nodeName )
+{
+	AEswatchDisplay $nodeName;
+	editorTemplate -beginScrollLayout;
+
+	editorTemplate -beginLayout (uiRes("m_AEapiAreaLightShapeTemplate.kGeneralLightingAttr")) -collapse 0;
+		editorTemplate -addControl "color";
+		editorTemplate -addControl "intensity";
+		editorTemplate -addControl "exposure";
+		editorTemplate -addControl "emitDiffuse";
+		editorTemplate -addControl "emitSpecular";
+		editorTemplate -addControl "decayRate";
+	editorTemplate -endLayout;
+
+	editorTemplate -beginLayout (uiRes("m_AEapiAreaLightShapeTemplate.kShadowAttr")) -collapse 0;
+		editorTemplate -addControl "useDepthMapShadows";
+		editorTemplate -addControl "useRayTraceShadows";
+		editorTemplate -addControl "shadowColor";
+		editorTemplate -addControl "dmapResolution";
+	editorTemplate -endLayout;
+
+	editorTemplate -beginLayout (uiRes("m_AEapiAreaLightShapeTemplate.kAreaAttr")) -collapse 0;
+		editorTemplate -addControl "locatorScale";
+	editorTemplate -endLayout;
+
+	// include/call base class/node attributes
+	AEshapeTemplate $nodeName;
+
+	editorTemplate -addExtraControls;
+	editorTemplate -endScrollLayout;
+}

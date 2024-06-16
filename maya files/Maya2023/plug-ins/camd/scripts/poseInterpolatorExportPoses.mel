@@ -1,0 +1,127 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+
+
+// export a list of poses to the given filePath.
+// Parameters:
+// 		filePath: the exported file.
+// 		tpls:  a list of poseInterpolator nodes.
+// 		poses: these poses and their poseInterpolators. 
+// 		shape: to export the pose shape or not.
+//  
+global proc int poseInterpolatorExportPoses(
+					string $filePath, 
+					string $tpls[], string $poses[],  
+					int $shape)
+{
+	if (size($tpls) == 0)
+	{
+		string $warningMsg = getPluginResource("poseInterpolator", "kNoPoseInterpolators"); 
+		warning ($warningMsg);
+		return 0;
+	}
+	for ($tpl in $tpls)
+	{
+		if (isPoseInterpolator($tpl) == 0)
+		{
+			string $warningMessage = getPluginResource("poseInterpolator", "kNotPoseInterpolator");
+			$warningMessage = `format -stringArg $tpl $warningMessage`;
+			warning ($warningMessage);
+		}
+	}
+	
+	string $cmdStr = "poseInterpolator -edit -ex \"" + $filePath + "\" ";
+	if (size($poses) == 0)
+	{
+		// to export all the poses of the given poseInterpolator nodes.
+		
+		// support mulit poseInterpolator nodes.
+		string $tempTpls[] = stringArrayRemoveDuplicates($tpls);
+		for ($tpl in $tempTpls)
+			$cmdStr = $cmdStr + $tpl + " ";		
+	}
+	else
+	{
+		// to export only the given poses (could be poses from diff poseInterpolator nodes). 
+		if (size($tpls) != size($poses))
+		{
+			return 0; 
+		}
+		
+		int $idx = 0;
+		for ($idx = 0; $idx < size($poses); ++$idx)
+		{
+			$cmdStr = $cmdStr + "-pose " + $tpls[$idx] + " " + $poses[$idx] + " "; 
+		}
+		
+		// support mulit poseInterpolator nodes.
+		string $tempTpls[] = stringArrayRemoveDuplicates($tpls);
+		for ($tpl in $tempTpls)
+			$cmdStr = $cmdStr + $tpl + " ";	
+	}
+	eval($cmdStr); // evalEcho() in debug and eval() in release. 
+	
+	if ($shape)
+	{
+		string $bsds[];
+		for ($tpl in $tpls)
+		{
+			string $temp[] = poseInterpolatorConnectedShapeDeformers($tpl);
+			appendStringArray($bsds, $temp, size($temp));
+		}
+		$bsds = stringArrayRemoveDuplicates($bsds);
+			
+		// to export the pose shapes. 
+		
+		for ($bs in $bsds)
+		{
+			string $bsFileTail = "." + $bs + ".shp"; 
+			string $bsFilePath = `substitute ".pose" $filePath $bsFileTail`;
+			string $tgtsToExport[];
+			
+			// when the $poses array is empty, $tgtsToExport will be empty too,
+			// in that way, all targets will be exported.
+			
+			for ($i = 0; $i < size($poses); ++$i)
+			{
+				string $tpl = $tpls[$i];
+				string $pose = $poses[$i];
+				int $poseIndex = poseInterpolatorPoseIndex($tpl, $pose);
+				if ($poseIndex == -1)
+					continue;
+					
+				string $temp[] = poseInterpolatorConnectedShapeDeformers($tpl);
+				int $connected = stringArrayContains($bs, $temp);
+				if ($connected)
+				{
+					// this $bs and $tpl is connected, to find the connected target weight.
+					string $sourcePlug = poseInterpolatorShape($tpl) + ".output[" + $poseIndex + "]";
+					string $destPlugs[] = `connectionInfo -destinationFromSource $sourcePlug`;
+					
+					for ($destPlug in $destPlugs)
+					{
+						string $buffer[];
+						tokenize( $destPlug, ".", $buffer );
+						if (size($buffer) != 2)
+							continue;
+						string $connectedBS = $buffer[0];
+						if ($connectedBS != $bs)
+							continue;
+						string $connectedTgt = $buffer[1];
+						
+						$tgtsToExport[size($tgtsToExport)] = $connectedTgt;
+					}
+				}
+			}
+
+			blendShapeExportTargets($bsFilePath, $bs, $tgtsToExport);				
+		}			
+	}
+	
+	return 1; 
+} 

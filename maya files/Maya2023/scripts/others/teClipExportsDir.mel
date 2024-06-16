@@ -1,0 +1,93 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+
+//
+// Description:
+//		Intialize the default directory for import/export if it does not exist yet
+//
+// Input Argument:
+//		None.
+//
+//  Return Value:
+//      The directory path.
+//
+global proc string teInitClipExportsDir()
+{
+	string $rules[] = {"timeEditor", "teClipExports"};
+    string $rulePaths[] = {"Time Editor", "Time Editor/Clip Exports"};
+	for($i = 0; $i < size($rules); $i++)
+	{
+        string $rule = $rules[$i];
+        string $path = `workspace -q -fre $rule`;
+        if(!size($path))
+        {
+            // clip exports rule does not exist, create it
+            $path = $rulePaths[$i];
+            workspace -fr $rule $path;		
+        } 
+	}
+	
+	string $exportDir = (`workspace -q -rd` + $rulePaths[1] + "\/");
+	if (!`file -q -ex $exportDir`) 
+	{
+		// Make sure clip exports directory exists
+		//
+		string $currDir = `workspace -q -dir`; 
+		string $workRoot = `workspace -q -rd`;
+		workspace -dir $workRoot;
+        workspace -cr $exportDir;
+
+		// Restore previous worksapce
+		workspace -dir $currDir;
+	}
+
+	return $exportDir;
+}
+
+//
+// Description:
+//		Query the working directory for import/export
+//
+// Input Argument:
+//		None.
+//
+//  Return Value:
+//      The directory path.
+//
+global proc string teGetClipExportsDir()
+{
+	// Check the stored optionVar for the path
+    // If it does not exist, use default directory.
+    string $exportDir;
+	if (!`optionVar -exists "teClipExportsPath"`) {
+ 		$exportDir = teInitClipExportsDir();
+ 		optionVar -category "Time Editor" -sv teClipExportsPath $exportDir;
+	} else {
+		$exportDir = `optionVar -q teClipExportsPath`;
+		// Note: Reflect when the current workspace is changed
+		if(size($exportDir) == 0 || `optionVar -q teClipExportsLastWorkspace` != `workspace -q -rd`) {
+			$exportDir = teInitClipExportsDir();
+		}
+	}
+	return $exportDir;
+}
+
+global proc teSaveClipExportsDir(string $fileDir)
+//
+//	Description:
+//		Saves the file path to an env var so that it can be re-used later.
+//
+//	Input:
+//		$fileDir : Path to save
+//
+{
+	$fileDir = dirname($fileDir); // In case of the file full name specified.
+	optionVar -stringValue "teClipExportsPath" $fileDir;
+	string $rootDir = `workspace -q -rd`;
+	optionVar -stringValue "teClipExportsLastWorkspace" $rootDir;
+}

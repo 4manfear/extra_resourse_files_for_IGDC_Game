@@ -1,0 +1,1193 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+source teClipEditFunctions.mel;
+source teCreateClipLayer.mel;
+source teCreateContainer.mel;
+source teGhostFunctions.mel;
+source teImportOptions.mel;
+source teRemapToNamespace.mel;
+source teRootOffsetOptions.mel;
+source teRosterMappingWindow.mel;
+source teTrackFunctions.mel;
+
+
+global proc teBuildClipEditModeSubMenu()
+{
+	int $mode = `timeEditorPanel -q -activeClipEditMode timeEditorPanel1TimeEd`;
+	
+	// Default mode is always trim.
+	if ($mode == 0)
+		$mode = 1;
+	
+	if(`radioMenuItemCollection -exists teClipEdgeEditModeSubMenuCollection`)
+	{
+		deleteUI -menuItem teClipEditModeTrimSubMenuItem
+							teClipEditModeScaleSubMenuItem
+							teClipEditModeLoopSubMenuItem 
+							teClipEditModeHoldSubMenuItem;
+							
+		deleteUI -radioMenuItemCollection teClipEdgeEditModeSubMenuCollection;
+	}
+	radioMenuItemCollection teClipEdgeEditModeSubMenuCollection;
+		string $cmd = "TimeEditorClipTrimToggle";
+		menuItem -label (uiRes("m_teContextMenus.kClipEditModeTrim"))
+				 -annotation (getRunTimeCommandAnnotation($cmd))
+				 -radioButton ($mode == 1)
+				 -command($cmd)
+				teClipEditModeTrimSubMenuItem;
+		
+		$cmd = "TimeEditorClipScaleToggle";
+		menuItem -label (uiRes("m_teContextMenus.kClipEditModeScale"))
+				 -annotation (getRunTimeCommandAnnotation($cmd))
+				 -radioButton ($mode == 2)
+				 -command($cmd)
+				teClipEditModeScaleSubMenuItem;
+	
+		$cmd = "TimeEditorClipLoopToggle";
+		menuItem -label (uiRes("m_teContextMenus.kClipEditModeLoop"))
+				 -annotation (getRunTimeCommandAnnotation($cmd))
+				 -radioButton ($mode == 3)
+				 -command($cmd)
+				teClipEditModeLoopSubMenuItem;
+				
+		$cmd = "TimeEditorClipHoldToggle";
+		menuItem -label (uiRes("m_teContextMenus.kClipEditModeHold"))
+				 -annotation (getRunTimeCommandAnnotation($cmd))
+				 -radioButton ($mode == 4)
+				 -command($cmd)
+				teClipEditModeHoldSubMenuItem;
+	
+	setParent -m ..;
+	
+}
+
+
+global proc teBuildClipEditMenuItems(int $clipId, int $clipType)
+// 
+//	Description:
+//		Builds the menu items for clip editing
+//
+//	Input Argument:
+//		clip id
+//
+{
+	menuItem -label (uiRes("m_teContextMenus.kCTEClipEditSplit"))
+			 -ann (uiRes("m_teContextMenus.kCTEClipEditSplitAnnot"))
+			 -image "teSplit.png"
+			 -command( "tePerformClipEditOnSelectedClips(" + $clipId + ", 0);" )
+			 teClipEditSplitMenuItem;
+	
+	menuItem -label (uiRes("m_teContextMenus.kCTEClipEditTrimStart"))
+			 -ann (uiRes("m_teContextMenus.kCTEClipEditTrimStartAnnot"))
+			 -image "teTrimBefore.png"
+			 -command( "tePerformClipEditOnSelectedClips(" + $clipId + ", 1);" )
+			 teClipEditTrimStartMenuItem;
+
+	menuItem -label (uiRes("m_teContextMenus.kCTEClipEditTrimEnd"))
+			 -ann (uiRes("m_teContextMenus.kCTEClipEditTrimEndAnnot"))
+			 -image "teTrimAfter.png"
+			 -command( "tePerformClipEditOnSelectedClips(" + $clipId + ", 2);" )
+			 teClipEditTrimEndMenuItem;
+	
+	// Scale operation only applies to container clips
+	if($clipType != 1)
+	{
+		menuItem -label (uiRes("m_teContextMenus.kCTEClipEditScaleStart"))
+				 -ann (uiRes("m_teContextMenus.kCTEClipEditScaleStartAnnot"))
+				 -command( "tePerformClipEditOnSelectedClips(" + $clipId + ", 3);" )
+				 teClipEditScaleStartMenuItem;
+
+		menuItem -label (uiRes("m_teContextMenus.kCTEClipEditScaleEnd"))
+				 -ann (uiRes("m_teContextMenus.kCTEClipEditScaleEndAnnot"))
+				 -command( "tePerformClipEditOnSelectedClips(" + $clipId + ", 4);" )
+				 teClipEditScaleEndMenuItem;
+	}
+	
+	menuItem -label (uiRes("m_teContextMenus.kCTEClipEdgeEditModeSubMenu")) -sm true;
+			teBuildClipEditModeSubMenu();
+}
+
+global proc teBuildRemapClipToNSSubMenu( int $id )
+{
+	// get the first clip id in current selected
+	int $clipId = teGetFirstClipInSelection($id, 0);
+	
+	if($clipId == -1)
+	{
+		menuItem -label (uiRes("m_teContextMenus.kCTENoClipSelected")) -enable false;
+	}
+	else 
+	{
+		int $hasNS = 0;
+		string $allNamespaces[] = `namespaceInfo -recurse -listOnlyNamespaces -absoluteName ":"`;
+		if (`size $allNamespaces`) {
+			for( $ns in $allNamespaces )
+			{
+				if($ns == ":shared" || $ns == ":UI") {
+					continue; //skip if it's internal namepsace
+				}
+					
+				menuItem -label $ns 
+				   -command ("teRemapClipToNamespace " + $clipId + " " + $ns + ";");
+				$hasNS = 1;
+			}
+		}
+			
+		if(!$hasNS) {
+			menuItem
+				-label (uiRes("m_teContextMenus.kCTENoNamespace"))
+				-enable false;
+		}
+	}
+	setParent -m ..;
+}
+
+global proc teBuildGhostSubMenu(int $id)
+{
+	// get the first clip id in current selected
+	int $selectedClips[] = teGetClipSelection($id, 0);
+	
+	if(size($selectedClips) == 0)
+	{
+		menuItem -label (uiRes( "m_teContextMenus.kCTENoClipSelected" )) -enable false;
+	}
+	else 
+	{
+		int $ghostState = teQueryGhostFlagOnSelectedClips($id, "-ghost");
+		int $newGhostState = !$ghostState;
+		
+		menuItem -label (uiRes("m_teContextMenus.kCTEGhostEnable"))
+				 -ann (uiRes("m_teContextMenus.kCTEGhostEnableAnnot"))
+				 -command("teEditGhostFlagOnSelectedClips(" + $id + ", \"-ghost\", " + $newGhostState + ");")
+				 -checkBox $ghostState;
+		
+		menuItem -d true;
+		
+		int $userGhostState = teQueryGhostFlagOnSelectedClips($id, "-userGhostRoot");
+		int $newUserGhostState = !$userGhostState;
+		
+		menuItem -label (uiRes("m_teContextMenus.kCTEEnableUserDefinedGhost"))
+				-ann (uiRes("m_teContextMenus.kCTEEnableUserDefinedGhostAnnot"))
+				-command("teEditGhostFlagOnSelectedClips(" + $id + ", \"-userGhostRoot\", " + $newUserGhostState + ");")
+				-enable ($ghostState)
+				-checkBox $userGhostState;
+		
+		menuItem -label (uiRes("m_teContextMenus.kCTEGhostRootEdit"))
+			-ann (uiRes("m_teContextMenus.kCTEGhostRootEditAnnot"))
+			-command("teBuildUserDefinedGhostWindow " + $id);
+	}
+	setParent -m ..;
+}
+
+global proc teBuildRetimeSubMenu(int $clipId)
+{
+	// ---- Time Warp Section ----
+	int $hasSpeedCurve = `timeEditorClip -q -speedRamping -clipId $clipId`;
+	int $isWarped	   = `timeEditorClip -q -timeWarp -clipId $clipId`;
+	int $timeWarpType  = `timeEditorClip -q -timeWarpType -clipId $clipId`;
+	int $speedRampValue = $hasSpeedCurve ? ($isWarped ? 4 : 3) : 1;
+		
+	menuItem -label (uiRes("m_teContextMenus.kCTEContainerTimeWarpCreate"))
+			 -ann (uiRes("m_teContextMenus.kCTEContainerTimeWarpCreateAnnot"))
+			 -command("teCreateAndEditTimeWarp(" + $clipId + ", 0)")
+			 -enable (!$hasSpeedCurve)
+			 teClipTimeWarpCreateMenuItem;
+			 
+	menuItem -label (uiRes("m_teContextMenus.kCTEContainerSpeedCurveCreate"))
+			 -ann (uiRes("m_teContextMenus.kCTEContainerSpeedCurveCreateAnnot"))
+			 -command("teCreateAndEditTimeWarp(" + $clipId + ", 1)")
+			 -enable (!$hasSpeedCurve)
+			 teClipSpeedCurveCreateMenuItem;
+
+	menuItem -d true;
+	
+	menuItem -label (uiRes("m_teContextMenus.kCTEContainerSpeedCurveEnable"))
+			 -ann (uiRes("m_teContextMenus.kCTEContainerSpeedCurveEnableAnnot"))
+			 -command("teEnableDisableSpeedCurve(" + $clipId + ")")
+			 -enable $hasSpeedCurve
+			 -checkBox $isWarped
+			 teClipSpeedCurveEnabledMenuItem;
+
+	menuItem -label (uiRes("m_teContextMenus.kCTEContainerEditSpeedCurve"))
+			 -ann (uiRes("m_teContextMenus.kCTEContainerEditSpeedCurveAnnot"))
+			 -command("teChangeSpeedCurveAndEdit(" + $clipId + ", -1)")
+			 -enable $hasSpeedCurve
+			 teClipSpeedCurveEditMenuItem;
+	
+	menuItem -label (uiRes("m_teContextMenus.kCTEContainerResetCurve"))
+			 -ann (uiRes("m_teContextMenus.kCTEContainerResetCurveAnnot"))
+			 -command("teChangeSpeedCurveAndEdit(" + $clipId + ", 6)")
+			 -enable $hasSpeedCurve
+			 teClipSpeedCurveResetMenuItem;
+	
+	menuItem -label (uiRes("m_teContextMenus.kCTEContainerDeleteCurve"))
+			 -ann (uiRes("m_teContextMenus.kCTEContainerDeleteCurveAnnot"))
+			 -command("teDeleteSpeedCurve(" + $clipId + " )")
+			 -enable $hasSpeedCurve
+			 teClipSpeedCurveDeleteMenuItem;
+	
+	// speed curve
+	if ($timeWarpType == 1) 
+ 	{		
+		menuItem -label (uiRes("m_teContextMenus.kCTEContainerConvertSpeedCurve"))
+				 -ann (uiRes("m_teContextMenus.kCTEContainerConvertSpeedCurveAnnot"))
+				 -command("teChangeSpeedCurveAndEdit(" + $clipId + ", 8);")
+				 -enable $hasSpeedCurve
+				 teClipSpeedCurveConvertMenuItem;
+	}
+	//time warp
+	else if ($timeWarpType == 0) 
+	{
+	 	menuItem -label (uiRes("m_teContextMenus.kCTEContainerConvertTimeWarp"))
+	 	          -ann (uiRes("m_teContextMenus.kCTEContainerConvertTimeWarpAnnot"))
+	 	          -command("teChangeSpeedCurveAndEdit(" + $clipId + ", 7)")
+	 	          -enable $hasSpeedCurve
+	 	          teClipSpeedCurveConvertMenuItem;
+	 }
+	
+	setParent -m ..;
+}
+
+global proc teUpdateRelocatorRootsListStatus()
+{
+	int $enable = `radioButton -q -select cteCustomRoot`;
+	textScrollList -e -enable $enable cteRelocatorRootsList;
+	if (!$enable)
+		textScrollList -e -deselectAll cteRelocatorRootsList;
+	teUpdateRelocatorRootsCount();
+}
+
+global proc teUpdateRelocatorRootsCount()
+{
+	int $useDefault = `radioButton -q -select cteDefaultRoot`;
+	int $count = $useDefault ? 0 : `textScrollList -q -numberOfSelectedItems cteRelocatorRootsList`;
+	textField -e -text $count cteRelocatorRootsCount;
+}
+
+global proc teApplyRelocatorRoots(int $clipId)
+{
+	int $hasOffset = `timeEditorClipOffset -q -offsetTransform $clipId` != "";
+	int $useDefault = `radioButton -q -select cteDefaultRoot`;
+	string $roots[];
+	if ($useDefault)
+	{
+		$roots = `timeEditorClip -q -drivenRootObjects $clipId`;
+		if (size($roots) == 0)		
+			error((uiRes("m_teContextMenus.kCTENoRootsFound")));			
+	}
+	else
+	{
+		$roots = `textScrollList -q -selectItem cteRelocatorRootsList`;
+		if (size($roots) == 0)		
+			error((uiRes("m_teContextMenus.kCTENoRootsSelected")));			
+	}
+
+	if (size($roots) == 0)
+		return;
+
+	if ($hasOffset)
+	{
+		string $cmd = "timeEditorClipOffset -e ";
+		for ($root in $roots)
+		{
+			$cmd += "-rootObj " + $root + " ";
+		}
+		$cmd += $clipId;
+		eval($cmd);
+	}
+	else
+	{
+		teCreateRelocatorWithRoots($clipId, $roots);
+	}
+}
+
+global proc TimeEditorEditRelocatorRootsOptions(int $clipId)
+{
+	// there should be exactly 1 clip selected (or none if using context menu)
+	int $selectedClips[] = `timeEditor -selectedClips ""`;
+	int $numSelectedClips = size($selectedClips);
+	if (($clipId == -1 && $numSelectedClips != 1) || $numSelectedClips > 1)
+	{
+		error (uiRes("m_teRosterMappingWindow.kRosterSelectionError"));
+		return;
+	}
+	if ($clipId == -1)
+		$clipId = $selectedClips[0];
+	
+
+	global string $gOptionBoxOptions;
+    $gOptionBoxOptions = "noApplyBtn";
+
+	string $layout = getOptionBox();
+	setParent $layout;
+
+	setUITemplate -pushTemplate DefaultTemplate;
+
+	tabLayout -tabsVisible 0 -scrollable 1 -innerMarginWidth 4;
+
+	frameLayout -label (uiRes("m_teContextMenus.kCTERelocatorSelection")) -collapsable false -collapse false;
+		int $labelWidth = 120;
+		int $fieldWidth = 340;
+		rowLayout -numberOfColumns 2 -columnWidth2 $labelWidth $fieldWidth;
+			text -label "";
+			columnLayout;
+				radioCollection;
+				radioButton 
+					-label (uiRes("m_teContextMenus.kCTEDefaultRelocatorRoot")) 
+					-changeCommand "teUpdateRelocatorRootsListStatus"
+					cteDefaultRoot;
+				radioButton 
+					-label (uiRes("m_teContextMenus.kCTECustomRelocatorRoots")) 
+					-changeCommand "teUpdateRelocatorRootsListStatus"
+					cteCustomRoot;
+			setParent ..;
+		setParent ..;
+
+		rowLayout -numberOfColumns 2 -columnWidth2 $labelWidth $fieldWidth;
+			text -label (uiRes("m_teContextMenus.kCTEClipRoots"));
+			columnLayout;
+				textScrollList 
+					-numberOfRows 10
+					-width 320 
+					-allowMultiSelection true 
+					-selectCommand "teUpdateRelocatorRootsCount"
+					cteRelocatorRootsList;
+			setParent ..;
+		setParent ..;
+
+		rowLayout -numberOfColumns 2 -columnWidth2 $labelWidth $fieldWidth;
+			text -label "";
+			flowLayout -height 30;
+				int $height = 20;
+				textField -editable false -width 40 -text "0" -height $height cteRelocatorRootsCount;
+				text -label "" -width 5;				
+				text -label (uiRes("m_teContextMenus.kCTESelectedRoots")) -height $height;
+			setParent ..;
+		setParent ..;
+	setParent ..;
+
+	string $applyBtn = getOptionBoxApplyAndCloseBtn();
+	button -edit -command("teApplyRelocatorRoots("+$clipId+"); hideOptionBox;") $applyBtn;
+	
+	setUITemplate -popTemplate;
+
+	setOptionBoxTitle("Relocator Options");
+    setOptionBoxHelpTag("TimeEditorRelocatorOptions");
+    
+    showOptionBox();
+
+    // populate the list
+    string $roots[] = `timeEditorClipOffset -q -rootObj $clipId`;
+	string $allRoots[] = `timeEditorClip -q -drivenRootObjects $clipId`;
+
+	for ($root in $allRoots)
+	{
+		textScrollList -e -append $root cteRelocatorRootsList;
+		if (stringArrayContains($root, $roots))		
+			textScrollList -e -selectItem $root cteRelocatorRootsList;		
+	}
+
+	// if all items on the list are selected, it's the default setting
+	int $allSelected = `textScrollList -q -numberOfSelectedItems cteRelocatorRootsList` == `textScrollList -q -numberOfItems cteRelocatorRootsList`;
+	int $noRoots = `textScrollList -q -numberOfSelectedItems cteRelocatorRootsList` == 0;
+	if ($noRoots || $allSelected)
+	{
+		radioButton -e -select cteDefaultRoot;		
+	}
+	else
+	{
+		radioButton -e -select cteCustomRoot;
+	}
+
+	teUpdateRelocatorRootsListStatus();
+}
+
+global proc teBuildRelocatorSubMenu(int $clipId)
+{
+	menuItem -label (uiRes("m_teContextMenus.kCTEContainerCreateRelocator"))
+			 -ann (uiRes("m_teContextMenus.kCTEContainerCreateRelocatorAnnot"))
+			 -image "tePoseOffset.png"
+			 -command("teCreateRelocator(" + $clipId + ")");
+
+	menuItem -optionBox true
+			 -annotation("")
+			 -command("TimeEditorEditRelocatorRootsOptions(" + $clipId + ")");
+
+	menuItem -label (uiRes("m_teContextMenus.kCTEContainerEditRelocatorRoots"))
+			 -ann (uiRes("m_teContextMenus.kCTEContainerEditRelocatorRootsAnnot"))
+			 -enable (`timeEditorClipOffset -q -offsetTransform $clipId` != "")									// enable if has offset
+			 -command("TimeEditorEditRelocatorRootsOptions(" + $clipId + ")");
+			
+	menuItem -label (uiRes("m_teContextMenus.kCTEContainerSelectRelocator"))
+			 -ann (uiRes("m_teContextMenus.kCTEContainerSelectRelocatorAnnot"))
+			 -command("teSelectRelocator(" + $clipId + ");");
+
+	menuItem -label (uiRes("m_teContextMenus.kCTEContainerResetRelocator"))
+			 -ann (uiRes("m_teContextMenus.kCTEContainerResetRelocatorAnnot"))
+			 -command("teResetRelocator(" + $clipId + ");");
+			 
+
+	menuItem -label (uiRes("m_teContextMenus.kCTEContainerRemoveRelocator"))
+			 -ann (uiRes("m_teContextMenus.kCTEContainerRemoveRelocatorAnnot"))
+			 -command("teDeleteRelocator( " + $clipId + ");");
+	
+	menuItem -d true;
+	
+	menuItem -label (uiRes("m_teContextMenus.kCTEContainerMatchRelocator"))
+			 -ann (uiRes("m_teContextMenus.kCTEContainerMatchRelocatorAnnot"))
+			 -image "teMatchPoses.png"
+			 -command("teRootOffsetOptions(2," + $clipId + ")");
+
+	setParent -m ..;
+}
+
+global proc teBuildSmartBakingSubMenu(int $clipId)
+{
+	menuItem -label (uiRes("m_teContextMenus.kCTEContainerBake"))
+			-ann (uiRes("m_teContextMenus.kCTEContainerBakeAnnot"))
+			-command("tePerformSmartingBakingOnSelectedClips("+$clipId+", 0)")
+			teMergeContainersMenuItem;
+
+	menuItem -label (uiRes("m_teContextMenus.kCTEContainerBakeAndDelete"))
+			-ann (uiRes("m_teContextMenus.kCTEContainerBakeAndDeleteAnnot"))
+			-command("tePerformSmartingBakingOnSelectedClips("+$clipId+", 1)")
+			teMergeContainersAndDeleteMenuItem;
+
+	menuItem -label (uiRes("m_teContextMenus.kCTEContainerBakeToScene"))
+			-ann (uiRes("m_teContextMenus.kCTEContainerBakeToSceneAnnot"))
+			-command("tePerformSmartingBakingOnSelectedClips("+$clipId+", 2)")
+			teBakeToSceneMenuItem;
+		
+	menuItem -label (uiRes("m_teContextMenus.kCTEContainerBakeToSceneAndDelete"))
+			-ann (uiRes("m_teContextMenus.kCTEContainerBakeToSceneAndDeleteAnnot"))
+			-command("tePerformSmartingBakingOnSelectedClips("+$clipId+", 3)")
+			teBakeToSceneAndDeleteMenuItem;
+	
+	menuItem -label (uiRes("m_teContextMenus.kCTEContainerMergeLayers"))
+			-ann (uiRes("m_teContextMenus.kCTEContainerMergeLayersAnnot"))
+			-command("tePerformSmartingBakingOnSelectedClips("+$clipId+", 4)")
+			teMergeLayersMenuItem;
+	
+	setParent -m ..;
+}
+
+
+global proc teBuildCrossfadingSubMenu(string $args[])
+{
+	// ---- Crossfade Section ----
+	if (size($args) >= 3)
+	{
+		// get the current crossfade mode, if specified
+		int $mode = -1;
+		if (catchQuiet($mode = `timeEditorClip -q -crossfadeMode ($args[1]) ($args[2])`) == 1)
+			$mode = -1;
+	
+		int $crossfadeClipId = $args[2];
+				
+		radioMenuItemCollection;
+		menuItem -label (uiRes("m_teContextMenus.kCTECrossfadeModeDefault")) -radioButton ($mode ==-1) -command("timeEditorClip -e -removeCrossfade -clipId "+$args[1]+" -clipId "+$args[2]);			
+		menuItem -label (uiRes("m_teContextMenus.kCTECrossfadeModeHoldLeft")) 			-radioButton ($mode == 2) -command("timeEditorClip -e -crossfadeMode 2 -clipId "+$args[1]+" -clipId "+$args[2]);
+		menuItem -label (uiRes("m_teContextMenus.kCTECrossfadeModeStep")) 	-radioButton ($mode == 1) -command("timeEditorClip -e -crossfadeMode 1 -clipId "+$args[1]+" -clipId "+$args[2]);
+		menuItem -label (uiRes("m_teContextMenus.kCTECrossfadeModeHoldRight")) 	-radioButton ($mode == 3) -command("timeEditorClip -e -crossfadeMode 3 -clipId "+$args[1]+" -clipId "+$args[2]);			
+		menuItem -label (uiRes("m_teContextMenus.kCTECrossfadeModeCustom")) 			-radioButton ($mode == 4) -command("timeEditorClip -e -crossfadeMode 4 -clipId "+$args[1]+" -clipId "+$args[2]);
+
+		menuItem -divider true;
+
+		menuItem -label (uiRes("m_teContextMenus.kCTECreateCustomCrossfadeLinear"))
+			-ann (uiRes("m_teContextMenus.kCTECreateCustomCrossfadeLinearAnnot"))
+			-command("timeEditorClip -e -crossfadeMode 4 -clipId "+$args[1]+" -clipId "+$args[2]);
+
+		menuItem -label (uiRes("m_teContextMenus.kCTECreateCustomCrossfadeSpline"))
+			-ann (uiRes("m_teContextMenus.kCTECreateCustomCrossfadeSplineAnnot"))
+			-command("timeEditorClip -e -crossfadeMode 5 -clipId "+$args[1]+" -clipId "+$args[2]);
+
+		menuItem -divider true;
+		menuItem -label (uiRes("m_teContextMenus.kCTEEditCrossfadeCurve"))
+			-ann (uiRes("m_teContextMenus.kCTEEditCrossfadeCurveAnnot"))
+			-command("teEditCrossfadeCurve("+$args[1]+","+$args[2]+")");		
+	}
+	
+	setParent -m ..;
+}
+
+global proc teBuildDelCutCopyPasteMenu(int $clipId){
+//
+//	Description:
+//   		Builds menuItems for Delete Cut Copy Paste functions
+//
+//
+	menuItem -label (uiRes("m_teContextMenus.kCTEDelete"))
+			 -ann (uiRes("m_teContextMenus.kCTEDeleteAnnot"))
+			 -command("teDeleteClip("+$clipId+");");
+			
+	menuItem -label (uiRes("m_teContextMenus.kCTECut"))
+			 -ann (uiRes("m_teContextMenus.kCTECutAnnot"))
+			 -command("teCutClip("+$clipId+");");
+	
+	string $cmd = "TimeEditorCopyClips";
+	menuItem -label (uiRes("m_teContextMenus.kCTECopyClip"))
+		 -annotation (getRunTimeCommandAnnotation($cmd))
+		 -command($cmd);
+	
+	$cmd = "TimeEditorPasteClips";
+	menuItem -label (uiRes("m_teContextMenus.kCTEPaste"))
+			 -annotation (getRunTimeCommandAnnotation($cmd))
+			 -command($cmd);
+}
+
+global proc teBuildClipBlendModeSubMenu(int $clipId)
+{
+	if (`radioMenuItemCollection -exists teClipBlendModeItems`) {
+		deleteUI -menuItem teClipBlendModeNormal teClipBlendModeAdditive;
+		deleteUI -radioMenuItemCollection teClipBlendModeItems;
+	}
+
+	int $mode = `timeEditorClip -q -blendMode -clipId $clipId`;	
+	radioMenuItemCollection teClipBlendModeItems;
+
+	menuItem -label (uiRes("m_teContextMenus.kClipBlendModeNormal"))
+			 -annotation (uiRes("m_teContextMenus.kClipBlendModeNormalAnn"))
+			 -radioButton ($mode == 0)
+			 -command ("timeEditorClip -e -blendMode 0 -clipId " + $clipId + ";")
+			teClipBlendModeNormal;
+
+	menuItem -label (uiRes("m_teContextMenus.kClipBlendModeAdditive"))
+			 -annotation (uiRes("m_teContextMenus.kClipBlendModeAdditiveAnn"))
+			 -radioButton ($mode == 1)
+			 -command ("timeEditorClip -e -blendMode 1 -clipId " + $clipId + ";")
+			teClipBlendModeAdditive;
+
+	setParent -m ..;
+}
+
+global proc teBuildContainerContextMenu(string $args[], string $clipType)
+//
+//	Description:
+//		Builds the context menu when right-clicking on container clips
+//
+//	Arg values:
+//		[1] - clip id
+//		[2] - [optional] crossfade with clip id
+//
+{
+	int    $clipId          = $args[1];
+	
+	// ----
+	int $clipDataType = `timeEditorClip -q -clipDataType $clipId`;
+	int $notAudio = $clipDataType != 1;
+	// Layers only allowed on container and groups
+	int $enableLayers = ($clipDataType == 0 || $clipDataType == 3);
+	
+	teBuildClipEditMenuItems( $clipId, $clipDataType );
+	
+	menuItem -divider true;
+	teBuildDelCutCopyPasteMenu($clipId);
+		
+	menuItem -divider true;
+	
+	// create group
+	menuItem -label (uiRes("m_teContextMenus.kCTECreateGroup"))
+			 -ann (uiRes("m_teContextMenus.kCTECreateGroupAnnot"))
+			 -image "teCreateCompound.png"
+			 -command("teCreateGroupBySelection " + $clipId)
+			 teClipCreateGroupMenuItem;
+			 
+	menuItem -label (uiRes("m_teContextMenus.kCTEUngroup"))
+	 	     -ann (uiRes("m_teContextMenus.kCTEUngroupAnnot"))
+	 	     -image "teExplodeCompound.png"
+	 	     -command ("teExplodeSelectedGroup " + $clipId)
+	 	     -enable ($clipDataType == 3)
+	 	     teClipExplodeGroupMenuItem;
+			 
+	// Only for containers and groups
+	if($clipDataType == 0 || $clipDataType == 3)
+	{
+		// Select objects driven by clip
+		menuItem -label (uiRes("m_teContextMenus.kCTESelectDrivenObjects"))
+				 -ann (uiRes("m_teContextMenus.kCTESelectDrivenObjectsAnnot"))
+				 -command( "teSelectDrivenObjects(" + $clipId + ")")
+				 teClipSelectDrivenObjectsMenuItem;
+	}
+	
+	// Only show when it is a container, group or more than 1 clip selected
+	if($clipDataType == 0 || $clipDataType == 3)
+	{
+		string $animSource = `timeEditorClip -q -animSource -clipId $clipId`;
+		//Disable menuItem if more than 1 clip selected or clip is group
+		int $isUnique = (size(teGetClipSelection(-1,0))>1||$clipDataType==3)? 1 :`timeEditorAnimSource -q -isUnique $animSource`;	
+		
+		menuItem -label (uiRes("m_teContextMenus.kCTEMakeAnimSourceUnique"))
+				 -ann (uiRes("m_teContextMenus.kCTEMakeAnimSourceUniqueAnnot"))
+				 -command ("teMakeAnimSourceUnique("+$clipId+")")
+				 -enable (!$isUnique)
+				 teMakeAnimSourceUniqueMenuItem;
+	}
+	
+	// Extend Parent
+	menuItem -label (uiRes("m_teContextMenus.kCTEClipExtendParent"))
+		 -ann (uiRes("m_teContextMenus.kCTEClipExtendParentAnnot"))
+		 -command("teClipExtendParent(" + $clipId + ");")
+		 teClipExtendParentMenuItem;
+	
+	// ---- Graph Weight Curve ----
+	if($notAudio == 1)
+	{
+		string $weightCurve = `timeEditorClip -q -weightCurve -clipId $clipId`;
+		string $clipNode        = `timeEditorClip -q -clipNode -clipId $clipId`;	
+		int $editWeightEnabled = 0;
+		if (($weightCurve != "") && ($clipNode != "") && $notAudio)
+		{
+			$editWeightEnabled = 1;
+		}
+		menuItem -label (uiRes("m_teContextMenus.kCTEContainerEditWeightCurve"))
+				 -ann (uiRes("m_teContextMenus.kCTEContainerEditWeightCurveAnnot"))
+				 -image "teGraphWeightCurves.png"
+				 -command("teEditWeightCurve(" + $clipId + ", \"clipWeight\")")
+				 -enable $editWeightEnabled
+				 teClipWeightCurveEditMenuItem;
+	}
+	
+	// ---- Clip Muted ----
+	int $isClipMuted = `timeEditorClip -q -mute -clipId $clipId`;
+	
+	menuItem -label (uiRes("m_teContextMenus.kCTEClipMuted"))
+			 -annotation (uiRes("m_teContextMenus.kCTEClipMutedAnnot"))
+			 -command("timeEditorClip -e -mute "+!$isClipMuted+" -clipId "+$clipId+";")
+			 -checkBox $isClipMuted
+			 teClipMutedMenuItem;
+	
+	//Only show for animation clips
+	if($clipDataType == 0)
+	{
+		menuItem -label (uiRes("m_teContextMenus.kCTEGhostSubMenu")) -image "teGhostOn.png" -sm true;
+				teBuildGhostSubMenu($clipId);
+	}	
+	
+	//---Reset---
+	if($notAudio == 1)
+	{
+	  menuItem -label (uiRes("m_teContextMenus.kCTEClipResetTiming"))
+					 -annotation (uiRes("m_teContextMenus.kCTEClipResetTimingAnnot"))
+					 -command("timeEditorClip -e -resetTiming -clipId "+$clipId+";")
+					 teClipResetTimingMenuItem;
+	}
+
+	// Rename Clip...
+	menuItem -label (uiRes("m_teContextMenus.kCTEClipRenameClip"))
+			 -ann (uiRes("m_teContextMenus.kCTEClipRenameClipAnnot"))
+			 -command ("teRenameClip " + $clipId);
+
+	// add/remove attributes
+	if ($clipDataType == 0)
+	{
+		menuItem -label (uiRes("m_teContextMenus.kCTEClipBlendMode")) -version 2022 -sm true;
+		teBuildClipBlendModeSubMenu $clipId;
+
+		menuItem -divider true -dividerLabel (uiRes("m_teContextMenus.kCTEClipAttributes"));
+
+		string $selectedAttributes[] = teGetSelectedAttributes();
+		int $num = size($selectedAttributes);
+
+		menuItem -label (uiRes("m_teContextMenus.kCTEClipAddAttributes"))
+				 -annotation (uiRes("m_teContextMenus.kCTEClipAddAttributesAnnot"))
+				 -command( "teClipAddAttributes(" + $clipId + ")" )
+				 -enable ($num > 0)
+				 teClipAddAttributesMenuItem;
+
+		menuItem -label (uiRes("m_teContextMenus.kCTEClipRemoveAttributes"))
+				 -annotation (uiRes("m_teContextMenus.kCTEClipRemoveAttributesAnnot"))
+				 -command( "teClipRemoveAttributes(" + $clipId + ")" )
+				 -enable ($num > 0)
+				 teClipRemoveAttributesMenuItem;
+	}
+	
+	// ---- Layers -----
+	if($enableLayers)
+	{
+		menuItem -divider true -dividerLabel (uiRes("m_teContextMenus.kCTEClipLayers"));
+			
+		menuItem -label (uiRes("m_teContextMenus.kCTELayerCreateOverride"))
+				 -annotation (uiRes("m_teContextMenus.kCTELayerCreateOverrideAnnot"))
+				 -command( "teCreateClipLayerBySelection(" + $clipId + ", 2)" )
+				 teCreateOverrideClipLayerMenuItem;
+		
+		menuItem -label (uiRes("m_teContextMenus.kCTELayerCreateAdditive"))
+				 -annotation (uiRes("m_teContextMenus.kCTELayerCreateAdditiveAnnot"))
+				 -command( "teCreateClipLayerBySelection(" + $clipId + ", 0)" )
+				 teCreateAdditiveClipLayerMenuItem;
+	}
+	
+	// ---- Transition Section ----
+	if($notAudio == 1)
+	{
+		int $isTwoAdjClipsSelected = teIsTwoAdjClipSelected();
+		menuItem -divider true;
+		
+		menuItem -label (uiRes("m_teContextMenus.kCTEContainerCreateTransition"))
+				-ann (uiRes("m_teContextMenus.kCTEContainerCreateTransitionpAnnot"))
+				-command("timeEditorClip -e -transition")
+				-enable $isTwoAdjClipsSelected
+				teCreateTransitionMenuItem;
+
+		menuItem -label (uiRes("m_teContextMenus.kCTEContainerResetTransition"))
+				-ann (uiRes("m_teContextMenus.kCTEContainerResetTransitionpAnnot"))
+				-command("timeEditorClip -e -resetTransition")
+				-enable $isTwoAdjClipsSelected
+				teResetTransitionMenuItem;
+		
+		menuItem -divider true;
+	}
+	
+	// ---- Container & Group Only ----
+	if($clipDataType == 0 || $clipDataType == 3)
+	{
+		// Crossfade Section Only Appears When we right click over a crossfade area
+		if(size($args) >= 3)
+		{
+			menuItem -label (uiRes("m_teContextMenus.kCTECrossfading")) -sm true;
+				teBuildCrossfadingSubMenu($args);
+			
+			menuItem -divider true;
+		}
+		
+		
+		menuItem -label (uiRes("m_teContextMenus.kCTERetime")) -sm true;
+			teBuildRetimeSubMenu($clipId);
+		
+		menuItem -label (uiRes("m_teContextMenus.kCTERelocate")) -sm true;
+			teBuildRelocatorSubMenu($clipId);
+	
+		// remapping menu items only available for Container Clips
+		if ($clipDataType == 0 || $clipDataType == 3)
+		{
+			menuItem -label (uiRes("m_teContextMenus.kCTERemapClipToNS")) -sm true;
+				teBuildRemapClipToNSSubMenu($clipId);
+		}
+		menuItem -divider true;
+		
+		menuItem -label (uiRes("m_teContextMenus.kCTESmartBaking")) -sm true;
+			teBuildSmartBakingSubMenu($clipId);
+		
+		menuItem -label (uiRes("m_teContextMenus.kCTEExportSelectedClip")) 
+			 -ann (getRunTimeCommandAnnotation("TimeEditorExportSelection"))
+			 -command("TimeEditorExportSelection") 
+			 teExportSelectionItem;
+		
+		menuItem -optionBox true 
+				 -annotation (getRunTimeCommandAnnotation("TimeEditorExportSelectionOpt"))
+				 -command ("TimeEditorExportSelectionOpt") 
+				 teExportSelectionOptionsItem;
+	
+		menuItem -label (uiRes("m_teContextMenus.kCTEExportAllClipsToFBX")) 
+				 -annotation (getRunTimeCommandAnnotation("TimeEditorFbxExportAll"))
+				 -command("TimeEditorFbxExportAll") 
+				 teFbxExportAllItem;
+	}
+}
+
+global proc teBuildGroupContextMenu(string $args[])
+//
+//	Description:
+//		Builds the context menu when right-clicking on container clips
+//
+//	Arg values:
+//		[1] - clip id
+//
+{
+	int    $clipId          = $args[1];
+	
+	// at the moment, the context menu for containers and groups are mostly the same
+	teBuildContainerContextMenu($args, "group");
+	
+	menuItem -divider true -dividerLabel (uiRes("m_teContextMenus.kCTEGroupDivider"));
+	
+	menuItem -label (uiRes("m_teContextMenus.kCTEGroupInsertTrack"))
+			-ann (uiRes("m_teContextMenus.kCTEGroupInsertTrackAnnot"))
+			-command("teInsertTrackInGroup("+$clipId+", 0, 0)")
+			cteEditGroupInsertTrackItem;
+	
+	menuItem -label (uiRes("m_teContextMenus.kCTEGroupTabView"))
+			-ann (uiRes("m_teContextMenus.kCTEGroupTabViewAnnot"))
+			-command("teEditGroupTabView("+$clipId+")")
+			cteEditGroupTabViewMenuItem;
+	setParent -menu ..;
+}
+
+global proc teBuildTrackAddMenu(int $trackType,string $args[])
+//
+//	Description:
+//		Builds the for adding clips to the scene based on track type
+//
+//
+{
+	// Construct ID of the track under the mouse cursor
+	string $trackNode = $args[1] + ":" + $args[2];
+
+	//Audio track context menu
+	if($trackType == 1)
+	{
+		menuItem -divider true -dividerLabel (uiRes("m_teContextMenus.kContainerAudioImport"));
+
+		menuItem -label (uiRes("m_teContextMenus.kImportAudioClip"))
+				 -annotation (uiRes("m_teContextMenus.kImportAudioClipAnnot"))
+				 -command ("teCreateAudioContainer( \"" + $trackNode + "\");");
+	}
+	else
+	{
+		menuItem -divider true -dividerLabel (uiRes("m_teContextMenus.kContainerCreate"));
+	
+		menuItem -label (uiRes("m_teContextMenus.kTrackCreateContainerSelection")) 
+			-image "teCreateClip.png"
+			-command ("teCreateContainer(2, 0, \"" + $trackNode + "\");");
+			
+		menuItem -label (uiRes("m_teContextMenus.kTrackCreatePoseClip"))
+			-image "teCreatePose.png"
+			-command ("teCreatePoseClip(1, \"" + $trackNode + "\");");
+
+		menuItem -divider true -dividerLabel (uiRes("m_teContextMenus.kContainerImport"));
+
+		menuItem -label (uiRes("m_teContextMenus.kTrackImportAnimationClip")) 			
+			-command ("teImportAnimationClip( \"" + $trackNode + "\");");
+	}
+
+}
+
+global proc teBuildTrackContextMenu(string $args[])
+//
+//	Description:
+//		Builds the context menu when right-clicking on tracks
+//
+//	Arg Values:
+//		[1] - track node name
+//		[2] - track index
+//
+{
+	string $trackNodeName  = $args[1];
+	int    $trackIndex = $args[2];
+	
+	int $isTrackMuted = `timeEditorTracks -q -trackMuted -trackIndex $trackIndex $trackNodeName`;
+	int $trackType = `timeEditorTracks -q -trackType -trackIndex $trackIndex $trackNodeName`;
+
+	string $cmd = "TimeEditorPasteClips";
+	menuItem -label (uiRes("m_teContextMenus.kCTEPasteClip"))
+			 -annotation (getRunTimeCommandAnnotation( $cmd ))
+			 -command($cmd);
+	
+	teBuildTrackAddMenu($trackType,$args);			 
+			 
+			 
+	string $selectedTracks[] = `timeEditorTracks -q -selectedTracks`;	
+	int $selectedNum = size($selectedTracks);	
+			 
+	menuItem -divider true -dividerLabel (uiRes("m_teContextMenus.kCTETrackMove"));
+	
+	menuItem -label (uiRes("m_teContextMenus.kCTETrackMoveSelectedUp"))
+			 -ann (uiRes("m_teContextMenus.kCTETrackMoveSelectedUpAnnot"))
+			 -command ("teMoveSelectedTracks(-1);")
+			 -enable ($selectedNum > 0)
+			 teTrackMoveUpItem;
+			 
+	 menuItem -label (uiRes("m_teContextMenus.kCTETrackMoveSelectedDown"))
+			 -ann (uiRes("m_teContextMenus.kCTETrackMoveSelectedDownAnnot"))
+			 -command ("teMoveSelectedTracks(1);")
+			 -enable ($selectedNum > 0)
+			 teTrackMoveDownItem;
+	
+	
+			 
+	menuItem -divider true -dividerLabel (uiRes("m_teContextMenus.kCTETrackCreate"));
+	
+	menuItem -label (uiRes("m_teContextMenus.kCTETrackCreateAnimTrack"))
+			 -ann (uiRes("m_teContextMenus.kCTETrackCreateAnimTrackAnnot"))
+			 -command ("timeEditorTracks -e -addTrack " + ($trackIndex+1) + " -trackType 0 " + $trackNodeName + ";")
+			 teTrackCreateAnimMenuItem;
+	
+	menuItem -label (uiRes("m_teContextMenus.kCTETrackCreateAudioTrack"))
+			 -ann (uiRes("m_teContextMenus.kCTETrackCreateAudioTrackAnnot"))
+			 -command ("timeEditorTracks -e -addTrack " + ($trackIndex+1) + " -trackType 1 " + $trackNodeName + ";")
+			 teTrackCreateAudioMenuItem;
+			 
+	menuItem -divider true -dividerLabel (uiRes("m_teContextMenus.kCTETrackMuteSolo"));
+	
+	menuItem -label (uiRes("m_teContextMenus.kCTETrackMuted"))
+			 -ann (uiRes("m_teContextMenus.kCTETrackMutedAnnot"))
+			 -checkBox $isTrackMuted
+			 -command( "teMuteUnmuteSelectedTracks("+($isTrackMuted == 0 ? 1 : 0)+", \""+$trackNodeName+"\", "+$trackIndex+");")
+			 teTrackMutedMenuItem;
+	 
+	$cmd = "TimeEditorUnmuteAllTracks";
+	menuItem -label (uiRes("m_teContextMenus.kTracksMuteSoloUnmuteAll"))
+			 -annotation (getRunTimeCommandAnnotation($cmd))
+			 -command ($cmd);
+	
+	menuItem -divider true -longDivider false;
+	
+	menuItem -label (uiRes("m_teContextMenus.kTracksMuteSoloSoloSelected"))
+			 -ann	(uiRes("m_teContextMenus.kTracksMuteSoloSoloSelectedAnnot"))
+			 -command ("teSoloUnsoloSelectedTracks(0, 1, \""+$trackNodeName+"\", "+$trackIndex+");");
+	
+	menuItem -label (uiRes("m_teContextMenus.kTracksMuteSoloAddToSoloSelected"))
+			 -ann	(uiRes("m_teContextMenus.kTracksMuteSoloAddToSoloSelectedAnnot"))
+			 -command ("teSoloUnsoloSelectedTracks(1, 1, \""+$trackNodeName+"\", "+$trackIndex+");");
+	
+	$cmd = "TimeEditorUnsoloAllTracks";
+	menuItem -label (uiRes("m_teContextMenus.kTracksMuteSoloUndoSolo"))
+			 -annotation (getRunTimeCommandAnnotation($cmd))
+			 -command ($cmd);
+	
+	menuItem -d true;
+	
+	menuItem -label (uiRes("m_teContextMenus.kCTETrackDeleteTrack"))
+			 -ann (uiRes("m_teContextMenus.kCTETrackDeleteTrackAnnot"))
+			 -command (	"teDeleteSelectedTracks(\""+$trackNodeName+"\", "+$trackIndex+");" )
+			 teTrackDeleteTrackMenuItem;
+}
+
+global proc teBuildOutlinerViewContextMenu(string $args[])
+//
+//	Description:
+//		Builds the context menu when right-clicking the empty space in outliner and view
+//
+//	Arg Values:
+//		None
+//
+{
+	string $cmd = "TimeEditorCreateAnimTracksAtEnd";
+	menuItem -label (uiRes("m_teContextMenus.kOutlinerTracksCreateAnimTrack"))
+			 -annotation (getRunTimeCommandAnnotation($cmd))
+			 -command ($cmd);
+	
+	$cmd = "TimeEditorCreateAudioTracksAtEnd";
+	menuItem -label (uiRes("m_teContextMenus.kOutlinerTracksCreateAudioTrack"))
+			 -annotation (getRunTimeCommandAnnotation($cmd))
+			 -command ($cmd);
+}
+
+proc teBuildClipLayerContextMenu(string $args[])
+//
+//	Description:
+//		Builds the context menu when right-clicking on Layers
+//
+//	Arg values:
+//		[1] - clip id
+//		[2] - layer id
+//		[3] - layer mode
+//		[4] - comma-delimited list of roster level/interpolator nodes 
+//			  that owns all the layer attributes in this layer
+//
+//
+{
+	int $clipId  = $args[1];
+	int $layerId = $args[2];
+	int $layerMode = $args[3];
+	
+	string $execNodes = $args[4];
+
+	menuItem -label (uiRes("m_teContextMenus.kCTELayerSetKey"))
+			 -annotation (uiRes("m_teContextMenus.kCTELayerSetKeyAnnot"))
+			 -command ("teSetKeyingTargetWithId " + $clipId + " " + $layerId + "; teSetKeyFrameOnActiveLayerOrClip 0;");
+	
+	menuItem -label (uiRes("m_teContextMenus.kCTRenameLayer"))
+			 -annotation (uiRes("m_teContextMenus.kCTRenameLayerAnnot"))
+			 -command ("teRenameClipLayer " + $clipId + " " + $layerId);
+	
+	menuItem -label (uiRes("m_teContextMenus.kCTEKeyingTargetForLayer"))
+			 -annotation (uiRes("m_teContextMenus.kCTEKeyingTargetForLayerAnnot"))
+			 -command ("teSetKeyingTargetWithId " + $clipId + " " + $layerId);
+	
+	menuItem -label (uiRes("m_teContextMenus.kCTEAllSelectLayerAttrExecNode"))
+			 -annotation (uiRes("m_teContextMenus.kCTEAllSelectLayerAttrExecNodeAnnot"))
+			 -command("select -r " + $execNodes + ";");
+			 
+	menuItem -divider true -dividerLabel (uiRes("m_teContextMenus.kCTELayerEditDivider"));
+		
+	menuItem -label (uiRes("m_teContextMenus.kCTECreateLayerOverride"))
+			-annotation (uiRes("m_teContextMenus.kCTECreateLayerOverrideAnnot"))
+			-command ("teCreateClipLayerBySelection(" + $clipId + ", 2)");
+			
+	menuItem -label (uiRes("m_teContextMenus.kCTECreateLayerAdditive"))
+			-annotation (uiRes("m_teContextMenus.kCTECreateLayerAdditiveAnnot"))
+			-command ("teCreateClipLayerBySelection(" + $clipId + ", 0)");
+			
+	menuItem -label (uiRes("m_teContextMenus.kCTEDeleteLayer"))
+			 -annotation (uiRes("m_teContextMenus.kCTEDeleteLayerAnnot"))
+			 -command ("timeEditorClipLayer -e -removeLayer -layerId " + $layerId + " -clipId " + $clipId);
+
+ 	menuItem -label (uiRes("m_teContextMenus.kCTEMergeLayers"))
+			-ann (uiRes("m_teContextMenus.kCTEMergeLayersAnnot"))
+			-command("tePerformSmartingBakingOnSelectedClips("+$clipId+", 4)");
+			
+	
+	
+	menuItem -divider true -dividerLabel (uiRes("m_teContextMenus.kCTELayerSelectionDivider"));
+	
+	menuItem -label (uiRes("m_teContextMenus.kCTEAddSelectionToLayer"))
+			 -annotation (uiRes("m_teContextMenus.kCTEAddSelectionToLayerAnnot"))
+			 -command ("teAddSelectionToLayer " + $clipId + " " + $layerId);	
+
+	menuItem -label (uiRes("m_teContextMenus.kCTERemoveSelectionFromLayer"))
+			 -annotation (uiRes("m_teContextMenus.kCTERemoveSelectionFromLayerAnnot"))
+			 -command ("teRemoveSelectionFromLayer " + $clipId + " " + $layerId);	
+
+	menuItem -divider true -dividerLabel (uiRes("m_teContextMenus.kCTELayerModeDivider"));
+	
+	radioMenuItemCollection;
+	
+	menuItem -label (uiRes("m_teContextMenus.kCTESetLayerModeAdditive"))
+			 -annotation (uiRes("m_teContextMenus.kCTESetLayerModeAdditiveAnnot"))
+			 -radioButton ($layerMode == 0)
+			 -command ("timeEditorClipLayer -e -mode 0 -layerId " + $layerId + " -clipId " + $clipId);
+			 
+	menuItem -label (uiRes("m_teContextMenus.kCTESetLayerModeAdditiveOverride"))
+			 -annotation (uiRes("m_teContextMenus.kCTESetLayerModeAdditiveOverrideAnnot"))
+			 -radioButton ($layerMode == 1)
+			 -command ("timeEditorClipLayer -e -mode 1 -layerId " + $layerId + " -clipId " + $clipId);
+
+	menuItem -label (uiRes("m_teContextMenus.kCTESetLayerModeOverride"))
+			 -annotation (uiRes("m_teContextMenus.kCTESetLayerModeOverrideAnnot"))
+			 -radioButton ($layerMode == 2)
+			 -command ("timeEditorClipLayer -e -mode 2 -layerId " + $layerId + " -clipId " + $clipId);
+
+	menuItem -label (uiRes("m_teContextMenus.kCTESetLayerModeOverridePassthrough"))
+			 -annotation (uiRes("m_teContextMenus.kCTESetLayerModeOverridePassthroughAnnot"))
+			 -radioButton ($layerMode == 3)
+			 -command ("timeEditorClipLayer -e -mode 3 -layerId " + $layerId + " -clipId " + $clipId);			 
+	
+	menuItem -divider true -dividerLabel (uiRes("m_teContextMenus.kCTELayerMuteSolo"));
+	
+	menuItem -label (uiRes("m_teContextMenus.kCTELayerMuteLayer"))
+			 -annotation (uiRes("m_teContextMenus.kCTELayerMuteLayerAnnot"))
+			 -command ("timeEditorClipLayer -e -clipId " + $clipId + " -layerId " + $layerId + " -mute true;" );
+	
+	menuItem -label (uiRes("m_teContextMenus.kCTELayerUnMuteLayer"))
+			 -annotation (uiRes("m_teContextMenus.kCTELayerUnMuteLayerAnnot"))
+			 -command ("timeEditorClipLayer -e -clipId " + $clipId + " -layerId " + $layerId + " -mute false;" );
+	
+	menuItem -divider true -longDivider false;
+	
+	menuItem -label (uiRes("m_teContextMenus.kCTELayerSoloLayer"))
+			 -annotation (uiRes("m_teContextMenus.kCTELayerSoloLayerAnnot"))
+			 -command( "timeEditorClipLayer -e -clipId " +$clipId + " -layerId " + $layerId + " -solo true;" );
+	
+	menuItem -label (uiRes("m_teContextMenus.kCTELayerUndoSoloLayer"))
+			 -annotation (uiRes("m_teContextMenus.kCTELayerUndoSoloLayerAnnot"))
+			 -command( "timeEditorClipLayer -e -clipId " +$clipId + " -resetSolo;" );
+}
+
+proc teBuildClipLayerAttrContextMenu(string $args[])
+//
+//	Description:
+//		Builds the context menu when right-clicking on layer attributes
+//
+//	Arg values:
+//		[1] - clip id
+//		[2] - layer id
+//		[3] - attribute name
+//		[4] - path name to the attribute's layer input plug
+//
+{
+	int $clipId  = $args[1];
+	int $layerId = $args[2];
+	string $attributeName = $args[3];
+	string $attributeInputPlug = $args[4];
+	
+	menuItem -label (uiRes("m_teContextMenus.kCTESelectLayerAttrExecNode"))
+			 -annotation (uiRes("m_teContextMenus.kCTESelectLayerAttrExecNodeAnnot"))
+			 -command("select -r " + plugNode($attributeInputPlug));
+			 
+	menuItem -label (uiRes("m_teContextMenus.kCTERemoveLayerAttribute"))
+			 -annotation (uiRes("m_teContextMenus.kCTERemoveLayerAttributeAnnot"))
+			 -command ("timeEditorClipLayer -e -removeAttribute " + $attributeName + " -layerId " + $layerId + " -clipId " + $clipId);	
+	menuItem -divider true;
+
+	int $isAttrConnectedToExpr = teIsLayerAttributeConnectedToExpr($attributeInputPlug);
+	
+	menuItem -label (uiRes("m_teContextMenus.kCTEAddExprToLayerAttr"))
+			 -annotation (uiRes("m_teContextMenus.kCTEAddExprToLayerAttrAnnot"))
+			 -enable (!$isAttrConnectedToExpr)
+			 -command("teAddEditExpressionToLayerAttribute(\"" + $attributeInputPlug + "\", 1);");
+	
+	menuItem -label (uiRes("m_teContextMenus.kCTEEditExprInLayerAttr"))
+			 -annotation (uiRes("m_teContextMenus.kCTEEditExprInLayerAttrAnnot"))
+			 -enable ($isAttrConnectedToExpr)
+			 -command("teAddEditExpressionToLayerAttribute(\"" + $attributeInputPlug + "\", 0);");;
+			 
+	menuItem -label (uiRes("m_teContextMenus.kCTEDeleteExprInLayerAttr"))
+			 -annotation (uiRes("m_teContextMenus.kCTEDeleteExprInLayerAttrAnnot"))
+			 -enable ($isAttrConnectedToExpr)
+			 -command("teDeleteExprConnectedToLayerAttribute \"" + $attributeInputPlug + "\";");
+
+	// Expression Presets
+	menuItem -divider true -dividerLabel (uiRes("m_teContextMenus.kCTEExprPreset"));
+	
+	string $nodeName = `plugNode $attributeInputPlug`;
+	string $cmd = "expression -s \"" + $attributeInputPlug + " = noise(time);\" -o " + $nodeName + " -ae 1 -uc all ;";
+	menuItem -label (uiRes("m_teContextMenus.kCTENoisePresetExpre"))
+			 -annotation (uiRes("m_teContextMenus.kCTENoisePresetExpreAnnot"))
+			 -command ($cmd);
+}
+
+global proc teBuildCustomContextMenus(string $context, string $args[])
+{
+	if ($context == "track")
+	{
+		teBuildTrackContextMenu($args);
+	}	
+	else if ($context == "container")
+	{
+		teBuildContainerContextMenu($args, "container");
+	}
+	else if ($context == "group")
+	{
+		teBuildGroupContextMenu($args);
+	}
+	else if (($context == "outliner") || ($context == "view"))
+	{
+		// empty area in the outliner and view
+		teBuildOutlinerViewContextMenu($args);
+	}
+	else if($context == "clipLayer")
+	{
+		teBuildClipLayerContextMenu($args);
+	}	
+	else if($context == "clipLayerAttribute")
+	{
+		teBuildClipLayerAttrContextMenu($args);
+	}
+}
+
+global proc teContextMenus(string $editor, string $menu, string $collectionName)
+//  Procedure Name:
+//      buildCTEPopupMenuItems
+//
+//  Description:
+//		This proc constructs the respective popup menus in Time Editor
+//
+//  Input Arguments:
+//		None.
+//
+//  Return Value:
+//      None.
+//
+{
+	if (`popupMenu -edit -exists $menu`) 
+	{
+		setParent -menu $menu;
+		
+		menu -e -deleteAllItems $menu;
+		
+		// add context-based options
+		string $menuContext[] = `timeEditorPanel -query -contextMenu $editor`;
+		
+		if (size($menuContext) > 0)
+		{
+			string $context = $menuContext[0];		// first parameter is the context name
+			teBuildCustomContextMenus($context, $menuContext);
+		}
+	}
+}

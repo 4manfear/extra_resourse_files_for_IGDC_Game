@@ -1,0 +1,59 @@
+<!--
+Copyright 2018 Autodesk, Inc. All rights reserved. 
+
+Use of this software is subject to the terms of the Autodesk 
+license agreement provided at the time of installation or download, 
+or which otherwise accompanies this software in either electronic 
+or hard copy form.
+-->
+<fragment  uiName="mayaSimpleBlitForTextureDownscale" name="mayaSimpleBlitForTextureDownscale" type="sceneEffect" class="ScriptFragment" version="1.0" feature_level="0" >
+    <description>
+<![CDATA[
+Simple blit of a texture to a target using a custom-named sampler state]]>
+</description>
+    <properties>
+        <texture2  name="input" />
+        <target  name="final" />
+        <int  name="clearFlag" />
+        <float4  name="clearColor" />
+        <float  name="clearZ" />
+        <int  name="clearStencil" />
+        <float4  name="viewport" />
+        <bool  name="disableAlpha" />
+        <bool  name="verticalFlip" />
+    </properties>
+    <values>
+    <int name="clearFlag" value="7"  />
+    <float4 name="clearColor" value="0.000000,0.000000,0.000000,0.000000"  />
+    <float name="clearZ" value="1.000000"  />
+    <int name="clearStencil" value="0"  />
+    <float4 name="viewport" value="0.000000,0.000000,1.000000,1.000000"  />
+    <bool name="disableAlpha" value="false"  />
+    <bool name="verticalFlip" value="false"  />
+    </values>
+    <outputs>
+        <target  name="output" />
+    </outputs>
+    <parametershare>
+    </parametershare>
+    <implementation render="OGS" language="ScriptInterpreter" version="0.1" >
+        <scriptCommands>
+            <SetEffect name="SimpleBlitEffectForDownscale" path="Copy" />
+            <Declare name="BlitRenderState" type="stateSetter" />
+            <SetStateCommand commandName="SetStateParameter" name="BlitRenderState" parameter="MultisampleEnable" value="false" />
+            <SetStateCommand commandName="CommitNewState" name="BlitRenderState" />
+            <SetTexture effect="SimpleBlitEffectForDownscale" name="gInputTex" value="DownscaleSampler" texture="@input" />
+            <SetViewport value="@viewport" />
+            <SetEffectParameter effect="SimpleBlitEffectForDownscale" name="gDisableAlpha" value="@disableAlpha" />
+            <SetEffectParameter effect="SimpleBlitEffectForDownscale" name="gVerticalFlip" value="@verticalFlip" />
+            <SetTarget index="0" value="@final" />
+            <Clear color="@clearColor" depth="@clearZ" stencil="@clearStencil" clearFlag="@clearFlag" />
+            <Render name="Quad" />
+            <SetTexture effect="SimpleBlitEffectForDownscale" name="gInputTex" value="" texture="" />
+            <SetParameter name="@output" value="@final" />
+            <SetStateCommand commandName="RestorePreviousState" name="BlitRenderState" />
+            <SetEffect name="" />
+        </scriptCommands>
+    </implementation>
+</fragment>
+

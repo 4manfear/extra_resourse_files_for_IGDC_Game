@@ -1,0 +1,289 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  Jan 2000
+//
+//  Description:
+//
+//	All optionVars needed for the init*.mel files and are
+//	not part of the Preferences window should be set in this file.
+//
+//	optionVars for the Preferences window MUST be set in 
+//	the file createPreferencesOptVars.mel
+//
+//	You can use these values in any of the init* files
+//	without having to check to see if they are set yet.
+//
+//  Anything set in here and used not just as an optionVar
+//	should be synced up in syncGlobalOptVars.mel to make sure 
+//	there is a valid save.
+//
+global proc createGlobalOptVars()
+{
+	//
+	//	Stuff with no UI to set them
+	//
+	optionVar -default -category "Interface"
+		-iv mainWindowDisable false
+		-iv isMarkingMenuOn true
+		-iv journalIsOn true;
+
+	optionVar -default -category "Outliner"
+		-iv searchFieldDelay 1000;
+
+	optionVar -default -category "UFE"
+		-iv mayaDisableUfeSelection 0;
+
+	//
+	//	UI Stuff that is not in the Preferences window
+	//
+	optionVar -default -category "Script Editor"
+		-iv stackTraceIsOn false
+		-iv showLineNumbersIsOn true
+		-iv echoAllLines false
+		-iv batchRenderMessagesVerbosity true // by default, batch render messages is on for all command reporters
+		-iv melDuplicateVariableWarnings on
+		-iv commandExecuterShowLineNumbers true
+		-iv commandExecuterTabsForIndent false
+		-iv commandExecuterSpacesPerTab 4
+		-iv commandExecuterAutoCloseBraces true
+		-iv commandExecuterShowTabsAndSpaces false;
+
+	optionVar -default -category "Settings"
+		-iv uiPrecision 4    // default floating point precision
+		-iv forceUIPrecision 0;   // override precision of individual controls and use uiPrecision
+
+	optionVar -default -category "Interface"
+		-iv InExpertUIMode false;
+
+    //
+	// Animation Preferences
+	//
+	
+	optionVar -default -category "Time Slider"
+		-iv hideNoFPSFramerate 1  // should we hide milliseconds, seconds, minutes and hours ?
+		-iv timeSliderCustomDrawHeight 2
+		-iv timeSliderAnimLayerWeight 1
+		-iv timeSliderShowUpstreamKeys 0;
+
+	optionVar -default -category "Polygons"
+		-iv polyAutoShowColorPerVertex true
+		-iv polyKeepFacetsGrouped true
+		-iv bump2dUseTangentSpaceNormalsByDefault false;
+	
+	optionVar -default -category "Rendering"
+		-iv AEpopupWhenCreatingShaders true;
+
+	//
+	//	Hot Box
+	//
+	optionVar -default -category "Hotbox"
+		-sv hotBoxDisplayStyle "-dh"
+		-iv hotBoxTransparencyLevel 25	
+		-iv isHotBoxShowAll true
+		-iv isHotBoxRiggingRowVisible false
+		-iv isHotBoxModelingRowVisible false
+		-iv isHotBoxAnimationRowVisible true
+		-iv isHotBoxPolygonsRowVisible false
+		-iv isHotBoxSurfacesRowVisible false
+		-iv isHotBoxDynamicsRowVisible false
+		-iv isHotBoxRenderingRowVisible false
+		-iv isHotBoxClothRowVisible false
+		-iv isHotBoxLiveRowVisible false
+		-iv isHotBoxCommonRowVisible true
+		-iv isHotBoxPaneSpecificRowVisible true
+		-iv isHotBoxRmbPopupsOn false
+		-iv showCustomMenuSetsMenusInHotBox true;
+
+	//
+	//	Channel Box
+	//
+	optionVar -default -category "Channel Box"
+		-iv channelsLongName 1   // 0=short, 1=nice, 2=long
+		-iv channelsPrecision 3
+		-iv channelsFieldWidth 75;
+
+	//
+	//	Layers (Render and Display)
+	//
+	optionVar -default -category "Files/Projects"
+		-iv renderLayerMerge false;
+
+	optionVar -default -category "Layer Editor"
+		-iv currentDisplayLayerActive false
+		-iv displayLayerCurrent false;
+
+	//
+	// Shelves
+	//
+	optionVar -default -category "Shelves"
+		-sv  shelfName1      "Shelf1"
+		-sv  shelfFile1      "shelf_Shelf1" 
+		-iv  shelfLoad1      false
+		-sv  shelfName2      "Shelf2"
+		-sv  shelfFile2      "shelf_Shelf2" 
+		-iv  shelfLoad2      false
+		-sv  shelfItemSize   "Small" 
+		-sv  shelfItemStyle  "iconOnly"
+		-iv	 isShelfSave	 true 
+		-iv  isShelfLoad     true
+		-iv  numShelves      2;
+
+	//
+	// Poly Edge Split
+	//
+	optionVar -default -category "Poly Tools"
+		-iv PolySelectEditSplitRingAbsolute false;
+
+	//
+	// Primitive Creation
+	//
+	optionVar -default -category "Polygon Primitives"
+		-iv createPolyPrimitiveAsTool false
+		-iv polyPrimitiveAsToolExitOnComplete true;
+	
+	optionVar -default -category "NURBS Primitives"
+		-iv createNurbsPrimitiveAsTool false
+		-iv nurbsPrimitiveAsToolExitOnComplete true;
+	
+	//Polygon Display Settings
+	optionVar -default -category "Polygon Display"
+		-iv polyDisplayLimitedToSelectedOV true
+		-iv polyDisplayDisplayBackfaceCulling false
+		-iv polyDisplayWireBackfaceCulling false
+		-iv polyDisplayHardEdgeBackfaceCulling false;
+	
+	//Symmetric Modelling Settings
+	optionVar -default -category "Symmetry"
+		-iv symmetricModellingOption 0
+		-sv symmetricModellingAxisOption "x"
+		-fv symmetricModellingToleranceValue 0.1
+		-sv symmetricModellingSpaceOption "object"
+		-iv symmetricModellingSeamOption true
+		-sv symmetricModellingSeamFalloffCurve "0,1,2,1,0,2"
+		-fv symmetricModellingSeamTolerance 0.01
+		-iv symmetricModellingAllowPartial 1;
+
+	optionVar -default -category "Transform Tools"
+		-iv trsManipsPreserveUvs 0
+		-iv trsManipsPreserveChildPosition 0
+		-iv trsManipsBakePivotOri 0
+		-iv trsManipsPinPivot 0
+		-iv trsManipsSnapPivotOri 1
+		-iv trsManipsSnapPivotPos 1
+		-sv trsManipsXformConstraint "none"
+		-iv trsManipsXformConstraintAlongNormal 1
+		-iv trsManipsTweakMode 0;
+
+	optionVar -default -category "Manipulators"
+		-iv refreshMode 0
+		-iv ShowExtrudeAttributeViewportSliders 1;
+
+	// Default file types for file operations
+	optionVar -default -category "Files/Projects"
+		-sv defaultFileOpenType (uiRes("m_fileDialogFilterTypes.kMayaScenes"))
+		-sv defaultFileReferenceType (uiRes("m_fileDialogFilterTypes.kAllFiles"))
+		-sv defaultFileImportType (uiRes("m_fileDialogFilterTypes.kAllFiles"))
+		-sv defaultFileSaveType ("mayaBinary")
+		-sv defaultFileExportAllType ("mayaBinary")
+		-sv defaultFileExportActiveType ("mayaBinary")
+		-sv defaultFileExportSelectionAsReferenceType ("mayaBinary")
+		-sv defaultFileExportEditsType ("mayaBinary")
+		-sv defaultFileCreateReferenceType (uiRes("m_fileDialogFilterTypes.kAllFiles"))
+		;
+	
+	// Default is the pencil
+	optionVar -default -category "Grease Pencil"
+		-iv greasePencilBrushType 1
+		// Default brush size and opacity. 
+		// NOTE: these numbers are replicated in the TgreasePencilArtisanOperator.cpp 
+		// file.  Any changes here should also be mirrored in the .cpp file.
+		-fv greasePencilBrushPencilRadius 0.3
+		-fv greasePencilBrushMarkerRadius 0.7
+		-fv greasePencilBrushSoftPencilRadius 0.3
+		-fv greasePencilBrushEraserRadius 2.0
+		-fv greasePencilBrushPencilOpacity 1.0
+		-fv greasePencilBrushMarkerOpacity 0.8
+		-fv greasePencilBrushSoftPencilOpacity 0.6;
+
+	optionVar -default -category "Create.Scene Assembly"
+		-iv assemblyDefinitionAddLocator 1
+		-iv assemblyLoadRepOnCreation 1
+		-iv assemblyDefinitionShowUsageMsg 1;
+
+	// Enable/disable MAYA_REAL_WORLD_SIZE
+	optionVar -default -category "Grid"
+		-iv enableRealWorldSize (`getenv "MAYA_REAL_WORLD_SIZE"` != "");
+	
+	optionVar -default -category "Hotkey Editor"
+		-sv currentHotkeySet ("Maya_Default")
+		-iv hotkeyEdAppCmdColWidth 210
+		-iv hotkeyEdRunCmdColWidth 145; 
+		// Just need to save the first two columns' width of the treeview, the last column takes the rest space.
+
+	//
+	//	Asset Browser
+	//
+	optionVar -default -category "Content Browser"
+		-ca "contentBrowserThumbnailSizes"
+		-iva "contentBrowserThumbnailSizes" 64
+		-iva "contentBrowserThumbnailSizes" 128
+		-iva "contentBrowserThumbnailSizes" 256
+		-iva "contentBrowserThumbnailSizes" 512
+		-sv "contentBrowserFilterExtensions" "icon|pyc|pyo";
+
+	//
+	//	workspaces initial sizes for controls of Narrow & Wide width
+	//
+	optionVar -default -category "Workspaces"
+		-iv workspacesNarrowPanelInitialWidth 260
+		-iv workspacesNarrowPanelInitialHeight 800
+		-iv workspacesWidePanelInitialWidth 460
+		-iv workspacesWidePanelInitialHeight 800
+		// workspaces docking delay time (in milliseconds)
+		-iv workspacesDockingDelayTime 300
+		// workspaces full screen & zoom-in modes.
+		-iv workspacesInFullScreenUIMode false
+		-iv workspacesInZoomInUIMode false
+		// workspaces lock feature.
+		-iv workspacesLockDocking false;
+
+	optionVar -default -category "Hypershade"
+		-iv HypershadeGridSnap false
+		-iv HypershadeGridVisibility false;
+
+	//
+	//	Attribute Editor
+	//
+	optionVar -default -category "Attribute Editor"
+		-ia activeAEShowFilterStates
+		-sa activeAEShowFilterTypes
+		-sa AEshowPresets
+		-iv AEShowViewLabels 1
+		-iv AEIfNoGlobalShowDefault 1
+		-iv AEShowNotes 1
+		-iv AEmaxRelatedTabs 100
+		-sv attrEdListType "auto"
+		-iv attrEdPaneRatio 85
+		-iv attrEditorIsLongName 1;   // Display AE attribute name based on 0=short, 1=nice, 2=long
+
+	//
+	//  Node Editor
+	//
+	optionVar -default -category "Node Editor"
+		-iv nodeEditorIsLongName 1;   // Display node editor attribute name based on 0=short, 1=nice, 2=long
+
+    // 
+    // SafeMode Batch 
+    //
+    optionVar -default -category "Security"
+		-iv "SafeModeBatchReportLevel" 0;
+}
+
+createGlobalOptVars;

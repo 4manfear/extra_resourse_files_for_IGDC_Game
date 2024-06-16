@@ -1,0 +1,389 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+// Script:    UVToolkitPanel.mel
+//
+//		Creates a panel that contains the UV Toolkit
+//
+
+global proc uvTkResetAllSettings()
+{
+	uvTkResetSelectionOptions();
+
+	uvTkResetTransformToolSettings();
+	uvTkSetTransformOptionVars(1);
+	uvTkSetCutSewOptionVars(1);
+	uvTkSetUnfoldOptionVars(1);
+	uvTkSetAlignSnapOptionVars(1);
+	uvTkSetArrangeLayoutOptionVars(1);
+	
+	uvTkUpdateTransformOptions();
+	uvTkUpdateCutSewOptions();
+	uvTkUpdateUnfoldOptions();
+	uvTkUpdateAlignSnapOptions();
+	uvTkUpdateArrangeLayoutOptions();
+}
+
+global proc uvTkTurnAllFrames(int $collapse)
+{
+	global string $gUVTkFrames[];
+	for($frame in $gUVTkFrames)
+	{
+		if(`frameLayout -q -ex $frame`) 
+			frameLayout -e -cl $collapse $frame;
+	}
+}
+
+global proc uvTkResetLayout()
+{
+	global string $gUVTkFrames[], $gUVTkInitFrames[], $gUVToolkitPanes;
+	$gUVTkFrames = $gUVTkInitFrames;
+	global string $gUVToolkitUVSetForm;
+	frameLayout - e - collapse true $gUVToolkitUVSetForm;
+	paneLayout -e -ps 1 100 99 -ps 2 100 1 $gUVToolkitPanes;
+	uvTkTurnAllFrames(1);
+	//Sub frames
+	if(`frameLayout -q -ex uvTkPinFrame      `) frameLayout -e -cl true uvTkPinFrame;
+	if(`frameLayout -q -ex uvTkSelByTypeFrame`) frameLayout -e -cl true uvTkSelByTypeFrame;
+	if(`frameLayout -q -ex uvTkSoftSelFrame  `) frameLayout -e -cl true uvTkSoftSelFrame;
+	if(`frameLayout -q -ex uvTkMoveToolsFrame`) frameLayout -e -cl true uvTkMoveToolsFrame;
+
+	UVToolkitBuildPanel(0);
+}
+
+global proc string[] uvTkDragFrameCB(string $dragControl, int $x, int $y, int $mods)
+{
+	return {"uvTkRearrangeFrames"};
+}
+
+global proc uvTkDropFrameCB(string $dragControl, string $dropControl, string $msgs[], int $x, int $y, int $type)
+{
+	if($dragControl == $dropControl)
+		return;
+	if($msgs[0] != "uvTkRearrangeFrames")
+		return;
+
+	global string $gUVTkFrames[];
+	
+	int $dragI = -1;
+	int $dropI = -1;
+	
+	for($i = 0; $i < size($gUVTkFrames); $i++)
+	{
+		if($gUVTkFrames[$i] == $dragControl) $dragI = $i;
+		if($gUVTkFrames[$i] == $dropControl) $dropI = $i;
+	}
+	if($dragI == -1 || $dropI == -1)
+		return; //Something is wrong
+	
+	//Get content frame by ctrl frame index, the one next to ctrl frame
+	string $dragF = $gUVTkFrames[$dragI+1];
+
+	string $uvTkFramesNew[] = stringArrayRemove({$dragControl,$dragF}, $gUVTkFrames);
+	//Get drop ctrl frame again
+	for($i = 0; $i < size($uvTkFramesNew); $i++)
+	{
+		if($uvTkFramesNew[$i] == $dropControl)
+		{
+		    $dropI = $i;
+		    break;
+		}
+	}
+	$dropI = $dropI >= $dragI ? $dropI+2: $dropI;
+	stringArrayInsertAtIndex($dropI, $uvTkFramesNew, $dragF);
+	stringArrayInsertAtIndex($dropI, $uvTkFramesNew, $dragControl);
+	$gUVTkFrames = $uvTkFramesNew;
+	UVToolkitBuildPanel(0);
+}
+
+global proc int uvTkIsCtrlHeld() {
+	int $mdf = getModifiers();
+	if (`about - mac`)
+		return (($mdf / 16) % 2) || (($mdf / 4) % 2); // check for Apple key or CTRL
+	else
+		return ($mdf / 4) % 2;
+}
+
+global proc int uvTkIsShiftHeld() {
+	return (getModifiers() % 2);
+}
+
+global proc UVToolkitVertexModeCB()
+{
+	if (uvTkIsShiftHeld() && uvTkIsCtrlHeld())
+		ConvertSelectionToVertexPerimeter;
+	else if (`uvTkIsCtrlHeld`) 
+		ConvertSelectionToVertices; 
+	else 
+		SelectVertexMask;
+}
+
+global proc UVToolkitEdgeModeCB()
+{
+	if (uvTkIsShiftHeld() && uvTkIsCtrlHeld())
+		ConvertSelectionToEdgePerimeter;
+	else if (`uvTkIsCtrlHeld`) 
+		ConvertSelectionToEdges; 
+	else 
+		SelectEdgeMask;
+}
+
+global proc UVToolkitFaceModeCB()
+{
+	if (uvTkIsShiftHeld() && uvTkIsCtrlHeld())
+		ConvertSelectionToFacePerimeter;
+	else if (`uvTkIsCtrlHeld`) 
+		ConvertSelectionToFaces; 
+	else 
+		SelectFacetMask;
+}
+
+global proc UVToolkitUVsModeCB()
+{
+	if (uvTkIsShiftHeld() && uvTkIsCtrlHeld())
+		ConvertSelectionToUVPerimeter;
+	else if (`uvTkIsCtrlHeld`) 
+		ConvertSelectionToUVs; 
+	else 
+		SelectUVMask;
+}
+
+global proc UVToolkitUVShellModeCB()
+{
+	if (`uvTkIsCtrlHeld`)
+	{
+	    $selectComps = `ls -sl`;
+	    select -d $selectComps;
+	    SelectMeshUVShell;
+		$uv = `polyListComponentConversion -tuv -uvs $selectComps`;
+		$sel = `polyListComponentConversion -tf -uvs $uv`;
+		select $sel;
+	}
+	else 
+		SelectMeshUVShell;
+}
+
+global proc UVToolkitDeselectVertexCB()
+{
+	select -deselect `polyListComponentConversion -tv`;
+}
+
+global proc UVToolkitDeselectEdgeCB()
+{
+	select -deselect `polyListComponentConversion -te`;
+}
+
+global proc UVToolkitDeselectFaceCB()
+{
+	select -deselect `polyListComponentConversion -tf`;
+}
+
+global proc UVToolkitDeselectUVsCB()
+{
+	select -deselect `polyListComponentConversion -tuv`;
+}
+
+
+global proc UVToolkitBuildMenus() {
+	global string $gUVToolkitPanelMenuCont;
+	// 
+	// Create the menus in the menubar
+	//
+	menu -label (uiRes("m_UVToolkitPanel.kOptions")) -p $gUVToolkitPanelMenuCont;
+	    menuItem -label (uiRes("m_UVToolkitPanel.kResetAll"))
+		         -c "uvTkResetAllSettings";
+		menuItem -label (uiRes("m_UVToolkitPanel.kResetLayout"))
+		         -c "uvTkResetLayout";
+	menu -label (uiRes("m_UVToolkitPanel.kHelp")) -p $gUVToolkitPanelMenuCont;
+	    menuItem -label (uiRes("m_UVToolkitPanel.kHelpOnUVToolkit"))
+				-command "showHelp UVToolkit";
+}
+
+global proc uvTkBuildFrameRMBMenu(string $menu)
+{
+    menu -e -dai $menu; 
+    menuItem -p $menu -label (uiRes("m_UVToolkitPanel.kExpandAll")) -c "uvTkTurnAllFrames 0";
+    menuItem -p $menu -label (uiRes("m_UVToolkitPanel.kCollapseAll")) -c "uvTkTurnAllFrames 1";
+    menuItem -p $menu -label (uiRes("m_UVToolkitPanel.kResetSettings")) -c "uvTkResetAllSettings"; 
+}
+
+proc uvTkCreateCtlFrame(string $ctlFrame, string $frame, string $label)
+{
+	global string $gUVToolkitFloatForm;
+	global float $gUVTkFrameHeadColor[];
+	frameLayout -p $gUVToolkitFloatForm 
+				-bgc $gUVTkFrameHeadColor[0] $gUVTkFrameHeadColor[1] $gUVTkFrameHeadColor[2]
+				-dgc "uvTkDragFrameCB" 
+				-dpc "uvTkDropFrameCB" 
+				-ec ("frameLayout -e -cl false " + $frame)
+				-cc ("frameLayout -e -cl true " + $frame)
+				-cll true 
+				-cl true 
+				-label $label
+				$ctlFrame;
+	string $uvTkFrameRMBMenu = `popupMenu -b 3 -p $ctlFrame`; 
+	menu -e -pmc("uvTkBuildFrameRMBMenu " + $uvTkFrameRMBMenu) $uvTkFrameRMBMenu;
+}
+
+global proc UVToolkitBuildPanel(int $init) {
+	global string $gUVToolkitFloatForm;
+	global string $gUVTkFrames[];
+	global string $gUVTkInitFrames[];
+	
+	if($init)
+	{
+		//Define global variables
+        global int $gUVTkTwinBtnWth = 122;
+        global int $gUVTkTwinBtnHgt = 22;
+        global int $gUVTkSubAreaTitleWidth = 65;
+        global int $gUVTkSubAreaPad = 5;
+        global float $gUVTkSubAreaBGColor[] = {0.285,0.285,0.285};
+		global int $gUVTkCustomMenuMaxSlots = 2;
+        global float $gUVTkDefaultFieldColor[] = {0.25098,0.25098,0.25098};
+	    global float $gUVTkActiveFieldColor[] = {0.322,0.52,0.65};
+		global float $gUVTkFrameHeadColor[] = {0.235,0.235,0.235};
+   
+		//Prepare contents
+		$gUVTkFrames = {};
+		int $i = 0;
+		
+	    $gUVTkFrames[$i] = uvTkBuildSelectionOptions($gUVToolkitFloatForm); $i++;
+		
+		//Create a control frame for all following content frames to support 'head only' drag/drop and RMB menu.
+		//Collapse state of content frame is driven by its control frame.
+		$frame = uvTkBuildTransformOptions($gUVToolkitFloatForm);
+		uvTkCreateCtlFrame("uvTkTransformFrame", $frame, (uiRes("m_UVToolkitPanel.kTransformFrame")));
+		$gUVTkFrames[$i] = `frameLayout -q -fpn "uvTkTransformFrame"`; $i++;
+		$gUVTkFrames[$i] = $frame; $i++;
+	    
+		$frame = uvTkBuildCreateOptions($gUVToolkitFloatForm); 
+		uvTkCreateCtlFrame("uvTkCreateFrame", $frame, (uiRes("m_UVToolkitPanel.kCreateFrame")));
+		$gUVTkFrames[$i] = `frameLayout -q -fpn "uvTkCreateFrame"`; $i++;
+		$gUVTkFrames[$i] = $frame; $i++;
+	   
+		$frame = uvTkBuildCutSewOptions($gUVToolkitFloatForm); 
+		uvTkCreateCtlFrame("uvTkCutSewFrame", $frame, (uiRes("m_UVToolkitPanel.kCutSewFrame")));
+		$gUVTkFrames[$i] = `frameLayout -q -fpn "uvTkCutSewFrame"`; $i++;
+		$gUVTkFrames[$i] = $frame; $i++;
+	   
+		$frame = uvTkBuildUnfoldOptions($gUVToolkitFloatForm);
+		uvTkCreateCtlFrame("uvTkUnfoldFrame", $frame, (uiRes("m_UVToolkitPanel.kUnfoldFrame")));
+		$gUVTkFrames[$i] = `frameLayout -q -fpn "uvTkUnfoldFrame"`; $i++;
+		$gUVTkFrames[$i] = $frame; $i++;
+	    
+		$frame = uvTkBuildAlignSnapOptions($gUVToolkitFloatForm);
+		uvTkCreateCtlFrame("uvTkAlignSnapFrame", $frame, (uiRes("m_UVToolkitPanel.kAlignSnapFrame")));
+		$gUVTkFrames[$i] = `frameLayout -q -fpn "uvTkAlignSnapFrame"`; $i++;
+		$gUVTkFrames[$i] = $frame; $i++;
+	    
+		$frame = uvTkBuildArrangeLayoutOptions($gUVToolkitFloatForm);
+		uvTkCreateCtlFrame("uvTkArrangeLayoutFrame", $frame, (uiRes("m_UVToolkitPanel.kArrangeLayoutFrame")));
+		$gUVTkFrames[$i] = `frameLayout -q -fpn "uvTkArrangeLayoutFrame"`; $i++;
+		$gUVTkFrames[$i] = $frame; $i++;
+		
+		$gUVTkInitFrames = $gUVTkFrames;
+	}
+	
+	string $cmd;
+	for($i = 0; $i < size($gUVTkFrames); $i++)
+	{
+	    if($i == 0)
+	        $cmd = "formLayout -e"+
+	               " -af "+$gUVTkFrames[$i]+" top 0 "+
+	               " -af "+$gUVTkFrames[$i]+" left 0 "+
+	               " -af "+$gUVTkFrames[$i]+" right 0 ";
+	    else
+	        $cmd += " -ac "+$gUVTkFrames[$i]+" top 0 "+$gUVTkFrames[$i-1]+
+	                " -af "+$gUVTkFrames[$i]+" left 0 "+
+	                " -af "+$gUVTkFrames[$i]+" right 0 ";
+	}
+	$cmd += $gUVToolkitFloatForm;
+	
+	eval($cmd);
+}
+	
+proc string getActiveMayaTab() {
+	global string $gUIComponentDockControlArray[];
+	string $tempIndex;
+	int $tempIndNum;
+	for($tempIndNum = 0; $tempIndNum < size($gUIComponentDockControlArray); $tempIndNum += 2){
+		$tempIndex = $gUIComponentDockControlArray[$tempIndNum + 1];
+		if(`workspaceControl -q -raise $tempIndex`)
+		{
+			return $tempIndex;
+		}
+	}
+	return "";
+}
+	
+global proc UVToolkitPanel() {
+	// Ready the float layout
+	global string $gUVToolkitFloatForm;
+    if(!`workspaceControl -q -exists UVToolkitDockControl` ) 
+	{
+		string $prevActiveTab = `getActiveMayaTab`;
+		string $LEcomponent = getUIComponentDockControl("Layer Editor", false);
+		workspaceControl
+			-tabToControl $LEcomponent -1
+			-label (localizedPanelLabel("UV Toolkit"))
+			-uiScript "createUVToolkitDockControl();"
+			-loadImmediately true
+			UVToolkitDockControl;
+		//Set visiable to true, otherwise workspace will take it as a closed one.
+		workspaceControl -e -visible true UVToolkitDockControl;
+		if($prevActiveTab != "") {
+			workspaceControl -e -raise $prevActiveTab;
+		}
+	}
+	else
+	{
+	    deleteUI UVToolkitDockControl;
+	}
+}
+
+global proc createUVToolkitDockControl()
+{
+	workspaceControl -e -initialWidth 285
+						-initialHeight `optionVar -q workspacesNarrowPanelInitialHeight`
+						-minimumWidth 285 -widthProperty "preferred" UVToolkitDockControl;
+	
+	global string $gUVToolkitFloatForm, $gUVToolkitPanes, $gUVToolkitScrollForm, $gUVToolkitUVSetForm;
+
+	// we use ModelingToolkitTemplate to give a flat UI consistencey.
+	setUITemplate -pushTemplate ModelingToolkitTemplate;
+
+	global string $gUVToolkitPanelMenuCont;
+	$gUVToolkitPanelMenuCont = `menuBarLayout`;
+	// Build panel menus
+	UVToolkitBuildMenus;
+
+	$gUVToolkitPanes = `paneLayout -cn "horizontal2"  -ps 1 100 99 -ps 2 100 1 -smc "uvTkPanelSeparatorMoved"`;
+		$gUVToolkitScrollForm = `scrollLayout -cr 1 -p $gUVToolkitPanes`;
+			$gUVToolkitFloatForm = `formLayout -p $gUVToolkitScrollForm`;
+			$gUVToolkitUVSetForm = uvTkBuildUVSetsOptions($gUVToolkitPanes);
+
+	setUITemplate -popTemplate;
+
+	UVToolkitBuildPanel(1);
+}
+
+global proc uvTkPanelSeparatorMoved()
+{
+    global string $gUVToolkitPanes, $gUVToolkitUVSetForm;
+    int $size[] = `paneLayout -q -ps $gUVToolkitPanes`;
+    if($size[3] <= 2)
+    {
+        paneLayout -e -ps 1 100 100 -ps 2 100 0 $gUVToolkitPanes;
+        frameLayout -e -collapse true $gUVToolkitUVSetForm;
+    }
+    else if($size[3] > 10)
+    {
+        frameLayout -e -collapse false $gUVToolkitUVSetForm;
+    }
+    
+}

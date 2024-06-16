@@ -1,0 +1,47 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+
+global proc loadAEFilterPreset( string $presetName )
+//
+//	Description:
+//		A callback to load an AE filter preset
+//
+{
+	string $filterTypesVar = ($presetName + "AEShowFilterTypes");
+	string $filterStatesVar = ($presetName + "AEShowFilterStates");
+
+	if( !`optionVar -exists $filterTypesVar` ){
+		warning((uiRes("m_loadAEFilterPreset.kNonExistingPreset")));
+		return;
+	}
+	string $filterTypes[] = `optionVar -query $filterTypesVar`;
+	int $filterStates[] = `optionVar -query $filterStatesVar`;
+
+	// Update active filter list & replace by preset
+	//
+	optionVar -sa activeAEShowFilterTypes;
+	optionVar -ia activeAEShowFilterStates;
+
+	int $numFilterTypes = size($filterTypes);
+	int $numFilterStates = size($filterStates);
+	int $filterIndex = 0;
+	while( $filterIndex < $numFilterTypes ){
+		optionVar -sva activeAEShowFilterTypes $filterTypes[$filterIndex];
+		int $show = 1;	// Default value is (i.e., on)
+		if( $filterIndex < $numFilterStates ){
+			$show = $filterStates[$filterIndex];
+		}
+		optionVar -iva activeAEShowFilterStates $show;
+		$filterIndex++;
+	}
+	updateAEshowAllButton();
+	global string $gAEFocusNode;
+	if( $gAEFocusNode != "" ){
+		updateAE $gAEFocusNode;
+	}
+}

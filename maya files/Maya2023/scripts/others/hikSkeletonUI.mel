@@ -1,0 +1,603 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+// hikSkeletonUI.mel
+//
+// Description:
+//		Methods for creating and updating the skeleton generator UI
+//
+
+
+////////////////////////////////////////////////////////////////////////
+// Local methods...
+////////////////////////////////////////////////////////////////////////
+
+proc hikConnectControlWithSkeletonNode(string $currentSkeletonNode)
+{    
+    // Connect the controls with the corresponding node attribute
+    if(size($currentSkeletonNode))
+    {
+        connectControl -preventContextualMenu true hikSkeletonGeneratorSpineCount ($currentSkeletonNode + ".SpineCount");
+        connectControl -preventContextualMenu true hikSkeletonGeneratorNeckCount ($currentSkeletonNode + ".NeckCount");
+        connectControl -preventContextualMenu true hikSkeletonGeneratorShouldersCount ($currentSkeletonNode + ".ShoulderCount");     
+
+        connectControl -preventContextualMenu true hikSkeletonGeneratorNbUpArmRollBones ($currentSkeletonNode + ".NbUpperArmRollBones");
+        connectControl -preventContextualMenu true hikSkeletonGeneratorNbLowArmRollBones ($currentSkeletonNode + ".NbLowerArmRollBones");
+        connectControl -preventContextualMenu true hikSkeletonGeneratorNbUpLegRollBones ($currentSkeletonNode + ".NbUpperLegRollBones"); 
+        connectControl -preventContextualMenu true hikSkeletonGeneratorNbLowLegRollBones ($currentSkeletonNode + ".NbLowerLegRollBones");  
+        connectControl -preventContextualMenu true hikSkeletonGeneratorIndexFingersCheck ($currentSkeletonNode + ".WantIndexFinger");
+        connectControl -preventContextualMenu true hikSkeletonGeneratorMiddleFingersCheck ($currentSkeletonNode + ".WantMiddleFinger");
+        connectControl -preventContextualMenu true hikSkeletonGeneratorRingFingersCheck ($currentSkeletonNode + ".WantRingFinger"); 
+        connectControl -preventContextualMenu true hikSkeletonGeneratorPinkyFingersCheck ($currentSkeletonNode + ".WantPinkyFinger");            
+        connectControl -preventContextualMenu true hikSkeletonGeneratorThumbFingersCheck ($currentSkeletonNode + ".WantThumb");  
+        connectControl -preventContextualMenu true hikSkeletonGeneratorExtraFingersCheck ($currentSkeletonNode + ".WantExtraFinger");  
+        connectControl -preventContextualMenu true hikSkeletonGeneratorFingerJointsCount ($currentSkeletonNode + ".FingerJointCount"); 
+        connectControl -preventContextualMenu true hikSkeletonGeneratorFingerBaseCheck ($currentSkeletonNode + ".WantFingerBase");  
+        connectControl -preventContextualMenu true hikSkeletonGeneratorInHandBonesCheck ($currentSkeletonNode + ".WantInHandJoint"); 
+        
+        connectControl -preventContextualMenu true hikSkeletonGeneratorIndexToesCheck ($currentSkeletonNode + ".WantIndexToe");
+        connectControl -preventContextualMenu true hikSkeletonGeneratorMiddleToesCheck ($currentSkeletonNode + ".WantMiddleToe");
+        connectControl -preventContextualMenu true hikSkeletonGeneratorRingToesCheck ($currentSkeletonNode + ".WantRingToe"); 
+        connectControl -preventContextualMenu true hikSkeletonGeneratorPinkyToesCheck ($currentSkeletonNode + ".WantPinkyToe");            
+        connectControl -preventContextualMenu true hikSkeletonGeneratorBigToesCheck ($currentSkeletonNode + ".WantBigToe");  
+        connectControl -preventContextualMenu true hikSkeletonGeneratorFootThumbToesCheck ($currentSkeletonNode + ".WantFootThumb");  
+        connectControl -preventContextualMenu true hikSkeletonGeneratorToesJointsCount ($currentSkeletonNode + ".ToeJointCount"); 
+        connectControl -preventContextualMenu true hikSkeletonGeneratorToeBaseCheck ($currentSkeletonNode + ".WantToeBase");  
+        connectControl -preventContextualMenu true hikSkeletonGeneratorInFootBonesCheck ($currentSkeletonNode + ".WantInFootJoint");
+        
+        connectControl -preventContextualMenu true hikSkeletonGeneratorHipsTranslationCheck ($currentSkeletonNode + ".WantHipsTranslation");
+    }
+}
+
+////////////////////////////////////////////////////////////////////////
+// Global methods...
+////////////////////////////////////////////////////////////////////////
+
+
+global proc hikBuildSkeletonUI()
+{
+    string $frameLayoutScaleAndBones = (uiRes("m_hikSkeletonUI.kFrameLayoutScaleAndBones"));
+    string $labelCharacterScale = (uiRes("m_hikSkeletonUI.kCharacterScale"));
+    string $labelSpineCount = (uiRes("m_hikSkeletonUI.kSpineCount"));    
+    string $labelNeckCount = (uiRes("m_hikSkeletonUI.kNectCount"));
+    string $labelShoulderCount = (uiRes("m_hikSkeletonUI.kShoulderCount"));
+    
+    string $labelRollBones = (uiRes("m_hikSkeletonUI.kRollBones")); 
+    string $upArmsLabel = (uiRes("m_hikSkeletonUI.kUpArms"));
+    string $lowArmsLabel = 	(uiRes("m_hikSkeletonUI.kLowArms"));
+    string $upLegsLabel =  (uiRes("m_hikSkeletonUI.kUpLegs"));
+    string $lowLegsLabel = (uiRes("m_hikSkeletonUI.kLowLegs"));    
+    
+    string $labelFingers = (uiRes("m_hikSkeletonUI.kFingers"));
+    string $labelToes = (uiRes("m_hikSkeletonUI.kToes"));
+    string $indexLabel = (uiRes("m_hikSkeletonUI.kIndex"));    
+    string $middleLabel = (uiRes("m_hikSkeletonUI.kMiddle"));    
+    string $ringLabel = (uiRes("m_hikSkeletonUI.kRing"));    
+    string $pinkyLabel  = (uiRes("m_hikSkeletonUI.kPinky"));    
+    string $labelNumBones = (uiRes("m_hikSkeletonUI.kNumBobes"));
+    string $labelExtra = (uiRes("m_hikSkeletonUI.kExtras"));   
+    string $thumbFingerLabel = (uiRes("m_hikSkeletonUI.kThumb"));    
+    string $extrafingerLabel = (uiRes("m_hikSkeletonUI.kExtraFinger"));
+    string $fingerBaseLabel = (uiRes("m_hikSkeletonUI.kFingerBase"));    
+    string $ihjLabel = (uiRes("m_hikSkeletonUI.kInHandJts"));            
+    string $fthumbLabel = (uiRes("m_hikSkeletonUI.kFootThumb"));
+    string $ifjLabel = (uiRes("m_hikSkeletonUI.kInFootJts"));
+    string $bigToeLabel = (uiRes("m_hikSkeletonUI.kBigToe"));
+    string $toeBaseLabel = (uiRes("m_hikSkeletonUI.kToeBase"));
+    
+    string $hipsTranslation = (uiRes("m_hikSkeletonUI.kHipTranslation"));
+        
+    // Skeleton Generator controls
+    columnLayout -adjustableColumn true hikSkeletonGeneratorMainLayout;
+    
+    //
+    //  Scale and Bones
+    //
+    frameLayout -label $frameLayoutScaleAndBones -collapsable true;
+        string $form = `formLayout`;
+        
+        string $characterScaleText = `text -label $labelCharacterScale`;
+        floatField    
+            -width 60
+            -minValue 0.5 -maxValue 2
+            -value 1
+            -precision 1
+            -cc ("hikUpdateSkeletonGeneratorCharacterScale()")
+        hikSkeletonGeneratorCharacterScale;
+     
+        string $spineCountText = `text -label $labelSpineCount`;        
+        intField
+            -width 60
+            -minValue 1 -maxValue 10
+            -value 3
+            -step 1  
+            -cc ("hikSyncSkeletonGeneratorFromUI()")
+        hikSkeletonGeneratorSpineCount;
+
+        string $neckCountText = `text -label $labelNeckCount`;       
+        intField
+            -width 60
+            -minValue 0 -maxValue 10
+            -value 1
+            -step 1
+            -cc ("hikSyncSkeletonGeneratorFromUI()")
+        hikSkeletonGeneratorNeckCount;
+
+        string $shoulderCountText = `text -label $labelShoulderCount`;       
+        intField   
+            -width 60
+            -minValue 0 -maxValue 2            
+            -value 1
+            -step 1   
+            -cc ("hikSyncSkeletonGeneratorFromUI()")
+        hikSkeletonGeneratorShouldersCount;
+                                   
+        formLayout -edit 
+            -attachForm      $characterScaleText                    "top"       8
+            -attachForm      $characterScaleText                    "left"      10           
+            -attachForm      hikSkeletonGeneratorCharacterScale     "top"       5
+            -attachForm      hikSkeletonGeneratorCharacterScale     "left"      110 
+            
+            -attachControl   $spineCountText                        "top"       7   $characterScaleText
+            -attachForm      $spineCountText                        "left"      10
+            -attachControl   hikSkeletonGeneratorSpineCount         "top"       4   $characterScaleText
+            -attachForm      hikSkeletonGeneratorSpineCount         "left"      110
+            
+            -attachControl   $neckCountText                         "top"       7   $spineCountText
+            -attachForm      $neckCountText                         "left"      10
+            -attachControl   hikSkeletonGeneratorNeckCount          "top"       4   $spineCountText
+            -attachForm      hikSkeletonGeneratorNeckCount          "left"      110
+            
+            -attachControl   $shoulderCountText                     "top"       7   $neckCountText
+            -attachForm      $shoulderCountText                     "left"      10
+            -attachControl   hikSkeletonGeneratorShouldersCount     "top"       4   $neckCountText
+            -attachForm      hikSkeletonGeneratorShouldersCount     "left"      110
+            -attachForm      hikSkeletonGeneratorShouldersCount     "bottom"    5            
+        $form;  
+        setParent ..;
+    setParent ..;
+    
+    //
+    //  Roll Bones
+    //
+    frameLayout -label $labelRollBones -collapsable true -collapse true;
+        $form = `formLayout`;
+ 
+        string $nbUpArmRollBones = `text -label $upArmsLabel`;  
+        intField 
+            -width 60
+            -minValue 0 -maxValue 5            
+            -value 0
+            -step 1
+            -cc ("hikSyncSkeletonGeneratorFromUI()")
+            hikSkeletonGeneratorNbUpArmRollBones;
+        
+        string $nbLowArmRollBones = `text -label $lowArmsLabel`;  
+        intField 
+            -width 60
+            -minValue 0 -maxValue 5            
+            -value 0
+            -step 1
+            -cc ("hikSyncSkeletonGeneratorFromUI()")
+            hikSkeletonGeneratorNbLowArmRollBones;
+        
+        string $nbUpLegRollBones = `text -label $upLegsLabel`;  
+        intField 
+            -width 60
+            -minValue 0 -maxValue 5            
+            -value 0
+            -step 1
+            -cc ("hikSyncSkeletonGeneratorFromUI()")
+            hikSkeletonGeneratorNbUpLegRollBones;
+        
+        string $nbLowLegRollBones = `text -label $lowLegsLabel`;  
+        intField 
+            -width 60
+            -minValue 0 -maxValue 5            
+            -value 0
+            -step 1
+            -cc ("hikSyncSkeletonGeneratorFromUI()")
+            hikSkeletonGeneratorNbLowLegRollBones;
+        
+         
+        formLayout -edit 
+            -attachForm      $nbUpArmRollBones                      "top"       5
+            -attachForm      $nbUpArmRollBones                      "left"      10            
+
+            -attachForm      hikSkeletonGeneratorNbUpArmRollBones   "top"       0
+            -attachForm      hikSkeletonGeneratorNbUpArmRollBones   "left"      110  
+            
+            -attachControl   $nbLowArmRollBones                     "top"       5       $nbUpArmRollBones 
+            -attachForm      $nbLowArmRollBones                     "left"      10 
+            
+            -attachControl   hikSkeletonGeneratorNbLowArmRollBones  "top"       0       hikSkeletonGeneratorNbUpArmRollBones
+            -attachForm      hikSkeletonGeneratorNbLowArmRollBones  "left"      110           
+            
+            -attachControl   $nbUpLegRollBones                      "top"       5       $nbLowArmRollBones
+            -attachForm      $nbUpLegRollBones                      "left"      10 
+            
+            -attachControl   hikSkeletonGeneratorNbUpLegRollBones   "top"       0       hikSkeletonGeneratorNbLowArmRollBones
+            -attachForm      hikSkeletonGeneratorNbUpLegRollBones   "left"      110       
+            
+            -attachControl   $nbLowLegRollBones                     "top"       5       $nbUpLegRollBones
+            -attachForm      $nbLowLegRollBones                     "left"      10
+            
+            -attachControl   hikSkeletonGeneratorNbLowLegRollBones   "top"      0       hikSkeletonGeneratorNbUpLegRollBones
+            -attachForm      hikSkeletonGeneratorNbLowLegRollBones   "left"     110        
+            -attachForm      hikSkeletonGeneratorNbLowLegRollBones   "bottom"   5   
+         $form;  
+         setParent ..;
+    setParent ..;
+
+    //
+    //  Finger Bones
+    //
+    frameLayout -label $labelFingers -collapsable true;
+        $form = `formLayout`;
+
+        checkBox
+            -label $indexLabel 
+            -cc ("hikSyncSkeletonGeneratorFromUI();hikEnableDisableFingerNumBones();")
+        hikSkeletonGeneratorIndexFingersCheck;
+        
+        checkBox
+            -label $middleLabel     
+            -cc ("hikSyncSkeletonGeneratorFromUI();hikEnableDisableFingerNumBones();")
+        hikSkeletonGeneratorMiddleFingersCheck;
+        
+        checkBox
+            -label $ringLabel   
+            -cc ("hikSyncSkeletonGeneratorFromUI();hikEnableDisableFingerNumBones();")
+        hikSkeletonGeneratorRingFingersCheck;
+        
+        checkBox
+            -label $pinkyLabel     
+            -cc ("hikSyncSkeletonGeneratorFromUI();hikEnableDisableFingerNumBones();")
+        hikSkeletonGeneratorPinkyFingersCheck;
+
+        checkBox
+            -label $thumbFingerLabel   
+            -cc ("hikSyncSkeletonGeneratorFromUI();hikEnableDisableFingerNumBones();")
+        hikSkeletonGeneratorThumbFingersCheck;
+        
+        checkBox
+            -label $extrafingerLabel     
+            -cc ("hikSyncSkeletonGeneratorFromUI();hikEnableDisableFingerNumBones();")
+        hikSkeletonGeneratorExtraFingersCheck;
+
+        string $numFingerBones = `text -label $labelNumBones`;    
+        intField 
+            -width 60
+            -minValue 1 -maxValue 3            
+            -value 3
+            -step 1
+            -cc ("hikSyncSkeletonGeneratorFromUI()")
+            hikSkeletonGeneratorFingerJointsCount;
+        
+        checkBox
+            -label $fingerBaseLabel   
+            -cc ("hikSyncSkeletonGeneratorFromUI()")
+        hikSkeletonGeneratorFingerBaseCheck;
+        
+        checkBox
+            -label $ihjLabel     
+            -cc ("hikSyncSkeletonGeneratorFromUI()")
+        hikSkeletonGeneratorInHandBonesCheck;
+
+        formLayout -edit 
+            -attachForm     hikSkeletonGeneratorIndexFingersCheck   "top"       5
+            -attachForm     hikSkeletonGeneratorIndexFingersCheck   "left"      10             
+
+            -attachForm     hikSkeletonGeneratorMiddleFingersCheck  "top"       5
+            -attachForm     hikSkeletonGeneratorMiddleFingersCheck  "left"      125
+            
+            -attachControl  hikSkeletonGeneratorRingFingersCheck    "top"       -2   hikSkeletonGeneratorIndexFingersCheck
+            -attachForm     hikSkeletonGeneratorRingFingersCheck    "left"      10 
+            
+            -attachControl  hikSkeletonGeneratorPinkyFingersCheck   "top"       -2   hikSkeletonGeneratorMiddleFingersCheck
+            -attachForm     hikSkeletonGeneratorPinkyFingersCheck   "left"      125
+                        
+            -attachControl  hikSkeletonGeneratorThumbFingersCheck   "top"       -2   hikSkeletonGeneratorRingFingersCheck
+            -attachForm     hikSkeletonGeneratorThumbFingersCheck   "left"      10 
+            
+            -attachControl  hikSkeletonGeneratorExtraFingersCheck   "top"       -2   hikSkeletonGeneratorPinkyFingersCheck
+            -attachForm     hikSkeletonGeneratorExtraFingersCheck   "left"      125  
+            
+            -attachControl  $numFingerBones    "top"   3   hikSkeletonGeneratorThumbFingersCheck
+            -attachForm     $numFingerBones    "left"  10 
+                        
+            -attachControl  hikSkeletonGeneratorFingerJointsCount   "top"       1   hikSkeletonGeneratorThumbFingersCheck
+            -attachForm     hikSkeletonGeneratorFingerJointsCount   "left"      100
+            
+            -attachControl  hikSkeletonGeneratorFingerBaseCheck     "top"       5   $numFingerBones
+            -attachForm     hikSkeletonGeneratorFingerBaseCheck     "left"      10 
+            
+            -attachControl  hikSkeletonGeneratorInHandBonesCheck    "top"       5   $numFingerBones
+            -attachForm     hikSkeletonGeneratorInHandBonesCheck    "left"      125
+            -attachForm     hikSkeletonGeneratorInHandBonesCheck    "bottom"    5                          
+         $form;  
+         setParent ..;
+    setParent ..;
+        
+    //
+    // Toe Bones
+    //
+    frameLayout -label $labelToes -collapsable true;
+        $form = `formLayout`;   
+        
+        checkBox
+            -label $indexLabel   
+            -cc ("hikSyncSkeletonGeneratorFromUI();hikEnableDisableToeNumBones();")
+        hikSkeletonGeneratorIndexToesCheck;
+        
+        checkBox
+            -label $middleLabel     
+            -cc ("hikSyncSkeletonGeneratorFromUI();hikEnableDisableToeNumBones();")
+        hikSkeletonGeneratorMiddleToesCheck;
+        
+        checkBox
+            -label $ringLabel   
+            -cc ("hikSyncSkeletonGeneratorFromUI();hikEnableDisableToeNumBones();")
+        hikSkeletonGeneratorRingToesCheck;
+        
+        checkBox
+            -label $pinkyLabel     
+            -cc ("hikSyncSkeletonGeneratorFromUI();hikEnableDisableToeNumBones();")
+        hikSkeletonGeneratorPinkyToesCheck;
+
+        checkBox
+            -label $bigToeLabel   
+            -cc ("hikSyncSkeletonGeneratorFromUI();hikEnableDisableToeNumBones();")
+        hikSkeletonGeneratorBigToesCheck;
+        
+        checkBox
+            -label $fthumbLabel     
+            -cc ("hikSyncSkeletonGeneratorFromUI();hikEnableDisableToeNumBones();")
+        hikSkeletonGeneratorFootThumbToesCheck;
+        
+        string $numToeBones = `text -label $labelNumBones`;  
+        intField 
+            -width 60
+            -minValue 1 -maxValue 3            
+            -value 3
+            -step 1
+            -cc ("hikSyncSkeletonGeneratorFromUI()")
+            hikSkeletonGeneratorToesJointsCount;
+        
+        checkBox
+            -label $toeBaseLabel   
+            -cc ("hikSyncSkeletonGeneratorFromUI()")
+        hikSkeletonGeneratorToeBaseCheck;
+        
+        checkBox
+            -label $ifjLabel     
+            -cc ("hikSyncSkeletonGeneratorFromUI()")
+        hikSkeletonGeneratorInFootBonesCheck;
+        
+        formLayout -edit 
+            -attachForm     hikSkeletonGeneratorIndexToesCheck      "top"       5
+            -attachForm     hikSkeletonGeneratorIndexToesCheck      "left"      10             
+
+            -attachForm     hikSkeletonGeneratorMiddleToesCheck     "top"       5
+            -attachForm     hikSkeletonGeneratorMiddleToesCheck     "left"      125
+            
+            -attachControl  hikSkeletonGeneratorRingToesCheck       "top"       -2   hikSkeletonGeneratorIndexToesCheck
+            -attachForm     hikSkeletonGeneratorRingToesCheck       "left"      10 
+            
+            -attachControl  hikSkeletonGeneratorPinkyToesCheck      "top"       -2   hikSkeletonGeneratorMiddleToesCheck
+            -attachForm     hikSkeletonGeneratorPinkyToesCheck      "left"      125
+                        
+            -attachControl  hikSkeletonGeneratorBigToesCheck        "top"       -2   hikSkeletonGeneratorRingToesCheck
+            -attachForm     hikSkeletonGeneratorBigToesCheck        "left"      10 
+            
+            -attachControl  hikSkeletonGeneratorFootThumbToesCheck  "top"       -2   hikSkeletonGeneratorPinkyToesCheck
+            -attachForm     hikSkeletonGeneratorFootThumbToesCheck  "left"      125  
+            
+            -attachControl  $numToeBones    "top"   3   hikSkeletonGeneratorBigToesCheck
+            -attachForm     $numToeBones    "left"  10 
+                        
+            -attachControl  hikSkeletonGeneratorToesJointsCount      "top"       1   hikSkeletonGeneratorBigToesCheck
+            -attachForm     hikSkeletonGeneratorToesJointsCount      "left"      100
+            
+            -attachControl  hikSkeletonGeneratorToeBaseCheck        "top"       5   $numToeBones
+            -attachForm     hikSkeletonGeneratorToeBaseCheck        "left"      10 
+            
+            -attachControl  hikSkeletonGeneratorInFootBonesCheck    "top"       5   $numToeBones
+            -attachForm     hikSkeletonGeneratorInFootBonesCheck    "left"      125
+            -attachForm     hikSkeletonGeneratorInFootBonesCheck    "bottom"    5                        
+         $form;  
+         setParent ..;
+    setParent ..;
+
+    //
+    // Extra
+    //
+     frameLayout -label $labelExtra -collapsable true;
+        $form = `formLayout`;   
+        checkBox            
+            -label $hipsTranslation           
+            -cc ("hikSyncSkeletonGeneratorFromUI()")
+            hikSkeletonGeneratorHipsTranslationCheck;
+
+         formLayout -edit 
+            -attachForm     hikSkeletonGeneratorHipsTranslationCheck    "top"       5
+            -attachForm     hikSkeletonGeneratorHipsTranslationCheck    "left"      10          
+            -attachForm     hikSkeletonGeneratorHipsTranslationCheck    "bottom"    5                        
+         $form;  
+         setParent ..;
+    setParent ..;
+    setParent ..;    
+}
+
+global proc hikEnableDisableFingerNumBones()
+{
+    if( `checkBox -q -value hikSkeletonGeneratorIndexFingersCheck`  ||   
+        `checkBox -q -value hikSkeletonGeneratorMiddleFingersCheck` ||
+        `checkBox -q -value hikSkeletonGeneratorRingFingersCheck`   ||
+        `checkBox -q -value hikSkeletonGeneratorPinkyFingersCheck`  ||
+        `checkBox -q -value hikSkeletonGeneratorThumbFingersCheck`  ||
+        `checkBox -q -value hikSkeletonGeneratorExtraFingersCheck`  )    
+    {
+        intField -e -enable true hikSkeletonGeneratorFingerJointsCount;
+    }
+    else
+    {
+        intField -e -enable false hikSkeletonGeneratorFingerJointsCount;
+    }
+}
+
+global proc hikEnableDisableToeNumBones()
+{
+	 if( `checkBox -q -value hikSkeletonGeneratorIndexToesCheck`  ||   
+        `checkBox -q -value hikSkeletonGeneratorMiddleToesCheck` ||
+        `checkBox -q -value hikSkeletonGeneratorRingToesCheck`   ||
+        `checkBox -q -value hikSkeletonGeneratorPinkyToesCheck`  ||
+        `checkBox -q -value hikSkeletonGeneratorBigToesCheck`  ||
+        `checkBox -q -value hikSkeletonGeneratorFootThumbToesCheck`  )    
+    {
+        intField -e -enable true hikSkeletonGeneratorToesJointsCount;
+    }
+    else
+    {
+        intField -e -enable false hikSkeletonGeneratorToesJointsCount;
+    }
+}
+
+
+global proc hikBuildSkeletonButtons()
+{
+	rowLayout -numberOfColumns 4 hikSkeletonButtons;
+	
+	iconTextButton
+		-image "HIKcreateSkel.png"
+		-command "hikCreateSkeleton"
+		-annotation (uiRes("m_hikSkeletonUI.kCreateSkeleton"))
+		hikSkeletonGeneratorNewButton;
+	
+	iconTextButton
+		-image "HIKmirrorSkelLeftToRight.png"
+		-command "hikMirrorSkeleton"
+		-annotation (uiRes("m_hikSkeletonUI.kMirrorSkeleton"))
+		hikSkeletonGeneratorMirrorButton;
+
+	iconTextCheckBox
+		-changeCommand "hikToggleLockDefinition"
+		-selectionImage "lockGeneric.png"
+		-annotation (uiRes("m_hikSkeletonUI.kHIKCharacterizationLock"))
+		-image1 "unlockGeneric.png"
+		hikSkeletonGeneratorLockButton;
+	
+	iconTextButton
+		-image "deleteGeneric.png"
+		-command "hikDeleteSkeleton" 
+		-annotation (uiRes("m_hikSkeletonUI.kHIKDeleteSkeleton"))
+		hikSkeletonGeneratorDeleteButton;
+
+	setParent ..;
+}
+
+
+
+global proc hikUpdateSkeletonUI()
+{
+	if( !hikIsSkeletonTabSelected() )
+		return;
+
+//	print _NOL10N("---> hikUpdateSkeletonUI\n");
+	// TODO:
+	// If character has a Rig, we want to prevent the skeleton from being modified for now.
+
+	int $enabled = 0;
+
+	string $currCharacter = hikGetCurrentCharacter();
+	if($currCharacter != "")
+	{
+		// The skeleton generator will be disabled if this is a referenced skeleton.
+		// This is because it does joint reparenting when editing the skeleton configuration
+		// which is something we cannot do in the case of a reference.
+		int $isReference = `referenceQuery -isNodeReferenced $currCharacter`;
+		if ( $isReference ) {
+			warning (uiRes("m_hikSkeletonUI.kSkeletonGeneratorToolReferencedEditWarning"));
+		}
+
+		int $hasARig = hikHasControlRig($currCharacter); 
+		int $hasDefinition = hikHasDefinition($currCharacter);		
+		if( $hasDefinition && !$hasARig && !$isReference ) {
+            $enabled = !hikIsDefinitionLocked( $currCharacter );
+            hikConnectControlWithSkeletonNode(hikGetSkeletonGeneratorNode($currCharacter));
+			hikEnableDisableFingerNumBones();
+			hikEnableDisableToeNumBones();
+		}
+	}
+
+    columnLayout -e -enable $enabled hikSkeletonGeneratorMainLayout;    
+    iconTextCheckBox -e -value (!$enabled) hikSkeletonGeneratorLockButton;  
+}
+
+global proc hikUpdateCurrentSkeleton()
+{
+	string $currCharacter = hikGetCurrentCharacter();
+	if($currCharacter != "")
+	{
+		int $isReference = `referenceQuery -isNodeReferenced $currCharacter`;
+		int $hasARig = hikHasControlRig($currCharacter); 
+		int $hasDefinition = hikHasDefinition($currCharacter);		
+		if( $hasDefinition && !$hasARig && !$isReference ) 
+		{
+			if( !hikIsDefinitionLocked( $currCharacter ) ) 
+			{
+				hikUpdateSkeletonFromSkeletonGeneratorNode( $currCharacter, 1.0 );
+			}
+		}
+	}
+}
+
+global proc hikSyncSkeletonGeneratorFromUI()
+{
+//
+// Description:
+//		Sync the skeleton generator node settings from the UI
+//
+    string $currentName = hikGetCurrentCharacter();
+    if($currentName != "") 
+    {
+        string $skeletonGeneratorNode = hikGetSkeletonGeneratorNode($currentName);        
+        if(size($skeletonGeneratorNode))
+        {
+            hikSyncCurrentPoseToSkeletonGenerator($currentName,$skeletonGeneratorNode);
+            
+            hikUpdateSkeletonFromSkeletonGeneratorNode( $currentName, 1.0 );
+
+            // Update the bones in the characterization tool after we
+            // update the skeleton
+            hikRebuildBoneAssignments( $currentName );
+        }
+    }
+}
+
+global proc hikUpdateSkeletonGeneratorCharacterScale()
+// Description:
+//		Updates the skeleton's character scale value based on the UI setting
+//
+{
+    string $currentName = hikGetCurrentCharacter();
+    if($currentName != "")
+    {
+        string $skeletonGeneratorNode = hikGetSkeletonGeneratorNode($currentName);
+        if(size($skeletonGeneratorNode))
+        {
+
+            hikSyncCurrentPoseToSkeletonGenerator($currentName,$skeletonGeneratorNode);
+            float $scale = `floatField -q -v hikSkeletonGeneratorCharacterScale`;
+            hikUpdateSkeletonFromSkeletonGeneratorNode( $currentName, $scale );
+            
+             // why do we set it back to 1 ?
+            floatField -e -v 1 hikSkeletonGeneratorCharacterScale;
+        }
+    }   
+}

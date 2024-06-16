@@ -1,0 +1,47 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+// This array controls the node types to skip when creating a locked reference.
+//
+global proc string[] getLockReferenceExcludedNodeTypes()
+{
+    // Any node types listed in this array will be skipped when
+    // creating a locked reference.
+    //
+    global string $gLockReferenceExcludedNodeTypes[];
+    $gLockReferenceExcludedNodeTypes[0] = "lightLinker";
+    $gLockReferenceExcludedNodeTypes[1] = "displayLayerManager";
+    $gLockReferenceExcludedNodeTypes[2] = "displayLayer";
+    $gLockReferenceExcludedNodeTypes[3] = "renderLayerManager";
+    $gLockReferenceExcludedNodeTypes[4] = "renderLayer";
+    $gLockReferenceExcludedNodeTypes[5] = "FurGlobals";
+    
+    return $gLockReferenceExcludedNodeTypes;
+}
+
+// Historically, Maya has only allowed you to indicate which node types  you want to exclude from
+// reference locking. However, many times, this is not granular enough. The user may want to exclude
+// only certain nodes of a given type. To allow users to add their own custom logic before deciding
+// if a particular node should be locked, we have added a shouldLockReferencedNode function. To
+// enable this, change the return value of this function to 1 
+// NOTE: Contextual locking will work on top of the node-type exclusions in
+// getLockReferenceExcludedNodeTypes
+global proc int wantContextualLockReferencedNode()
+{
+    // By default, only look at node-type specific lock exclusions. 
+    // Change to 1 if you want Maya to call shouldLockReferencedNode
+    return 0;
+}
+
+// Return 1 to indicate that the given node should be locked, 0 to indicate unlocked
+// NOTE: Returns full paths for nodes. i.e. it will include namespaces and full dag paths if it's a dag node
+// NOTE: This will work on top of the node-type exclusions in getLockReferenceExcludedNodeTypes
+global proc int shouldLockReferencedNode(string $node)
+{
+    // by default, assume all nodes in a reference should be locked.
+    return 1;
+}

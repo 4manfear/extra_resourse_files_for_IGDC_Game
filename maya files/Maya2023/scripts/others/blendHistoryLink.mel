@@ -1,0 +1,22 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc blendHistoryLink( string $parent, string $node )
+{
+	setParent $parent ;
+
+	//  auto direction
+	//
+	connectControl -index 2 autoDirection($node + ".ad");
+
+	// flip normal
+	//
+	connectControl -index 2 flipNormalCheckBoxGrp($node + ".fl");
+	connectControl -index 3 flipNormalCheckBoxGrp($node + ".fr");
+
+
+}

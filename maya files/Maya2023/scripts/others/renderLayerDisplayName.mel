@@ -1,0 +1,38 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+// Description:
+// 
+// Returns the name to be used in UI and image file names for the given render layer.
+//
+
+global proc string renderLayerDisplayName(string $layerName)
+{
+	// Early out if the name is already a display name
+	if ($layerName == "masterLayer")
+		return $layerName;
+
+	if (`objExists $layerName` && `nodeType $layerName` == "renderLayer")
+	{
+		// Display name for default render layer
+		if (`getAttr ($layerName+".identification")` == 0)
+		{
+			return "masterLayer";
+		}
+		// If Render Setup is used the corresponding Render Setup layer name should be used
+		// instead of the legacy render layer name.
+		string $result[] = `listConnections -d true -s false -et true -t "renderSetupLayer" ($layerName+".message")`;
+		if (size($result)>0 && $result[0] != "")
+		{
+			return $result[0];
+		}
+	}
+
+	// Fallback to use the given name
+	return $layerName;
+};

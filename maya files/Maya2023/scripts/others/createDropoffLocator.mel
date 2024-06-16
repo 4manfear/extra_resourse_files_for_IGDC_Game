@@ -1,0 +1,66 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:   28 April 1997
+//
+//  Procedure Name:
+//      createDropoffLocator
+//
+//  Description:
+//      issues a dropoffLocator cmd. 
+//	    it is called by the action performDropoffLocator.
+//
+//  Input Arguments:
+//		envelope, percent, wire node name
+//
+//  Return Value:
+//      string 
+//
+
+
+global proc createDropoffLocator(float $env,float $perc,string $wire)
+{
+	if ($wire=="")
+	{
+		$wire=`whichWire`;
+	}	
+
+	if ($wire=="")
+	{
+		error( (uiRes("m_createDropoffLocator.kSelectedItemNotAWire")));
+		return;
+	}
+	string $cmd = "dropoffLocator " + $env + " " + $perc + " " + $wire;
+	evalEcho($cmd);
+}
+
+
+
+
+global proc string whichWire()
+{
+	string $curve;
+	string $sel[]=`ls -sl`;
+	if (size($sel))
+	{
+		$curve=substitute("\\..*",$sel[0],"");		
+		if (nodeType($curve)=="nurbsCurve" || nodeType($curve)=="transform")
+		{
+			if (`objExists ($curve + ".ws")`) {
+				string $nodes[]= `listConnections ($curve + ".ws")`;
+				for ($node in $nodes)
+				{
+					if (nodeType($node)=="wire") 
+						return $node;
+				}
+			}
+		}
+	}
+	return "";
+}

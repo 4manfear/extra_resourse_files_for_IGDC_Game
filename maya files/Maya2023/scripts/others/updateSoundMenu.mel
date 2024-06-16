@@ -1,0 +1,108 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+
+//
+//  Creation Date:  18 Nov 1996
+//
+//
+// Procs: setSoundDisplay, updateSoundMenu
+//
+//  Description:
+//  	Setup the menu for which sound to display by
+//	building up a list of audio nodes to choose from.
+//	Audio nodes can be created through File->import of
+//	a sound file.
+//
+global proc setSoundDisplay( string $node, int $state )
+{
+	global string $gPlayBackSlider;
+	timeControl -e -ds $state -s $node $gPlayBackSlider;
+
+	// If we are in playback, then we have to update the sound that
+	// is playing
+	//
+	if ( `play -query -state` ) {
+		$direction = `play -query -forward`;
+		if ( $state ) {
+			play -sound $node -forward $direction;
+		} else {
+			play -forward $direction;
+		}
+	}
+}
+
+global proc updateSoundMenu( string $args[] )
+//
+// Description:
+//	$menu:  the name of the menu to build with
+//	entries for all the sound nodes.
+//
+//	$cmd: the command to execute when an individual
+//	menu item is selected from the sound menu.  The name
+//	of the selected entry's sound node will be appended to
+//	the string passed in in $cmd.
+//
+{
+	string  $parent 		= `setParent -menu -query`;
+
+	// Extract the variables we need from the string array.
+	//
+	string 	$mySoundMenu	= $args[0];
+	string 	$cmd 			= $args[1];
+
+	global string $gPlayBackSlider;
+
+	setParent -m $mySoundMenu;
+
+	string $soundNodes[] = `ls -type audio`;
+	string $current = `timeControl -query -sound $gPlayBackSlider`;
+
+	// Get rid of previous contents
+	//
+	menu -edit -deleteAllItems $mySoundMenu;
+
+	//	Check to see if there's sound in the system,
+	//	and setup the menu entries appropriately
+	//
+	string $sound[] = `ls -type audio`;
+
+	if( `size( $sound )` == 0 ) {
+		//
+		//	There's no sound - inform the user
+		//
+		menuItem -label (uiRes("m_updateSoundMenu.kNoSounds")) -enable false;
+	} else {
+		// One entry for each sound node we found
+		//
+		for( $node in $soundNodes ) {
+			string $cmdString = substitute( "%s", $cmd, $node );
+			string $menuItemName = ($node + "Item");
+
+			menuItem $menuItemName;
+
+			string $annotFormat = (uiRes("m_updateSoundMenu.kDeleteAnnot"));
+			string $annot = `format -stringArg $node $annotFormat`;
+
+			menuItem -edit
+				-echoCommand on
+				-label $node
+				-command $cmdString
+				-annotation $annot
+				$menuItemName;
+		}
+	}
+
+	if( $parent != "NONE" ) {
+		setParent -menu $parent;
+	}
+}
+
+
+
+
+

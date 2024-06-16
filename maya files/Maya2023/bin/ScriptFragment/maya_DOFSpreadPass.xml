@@ -1,0 +1,88 @@
+<!--
+Copyright 2016 Autodesk, Inc. All rights reserved. 
+
+Use of this software is subject to the terms of the Autodesk 
+license agreement provided at the time of installation or download, 
+or which otherwise accompanies this software in either electronic 
+or hard copy form.
+-->
+<fragment  uiName="maya_DOFSpreadPass" name="maya_DOFSpreadPass" type="sceneEffect" class="ScriptFragment" version="1.0" feature_level="0" >
+    <description>
+    <![CDATA[
+        Spread DOF circles of confusion to affected pixels.
+    ]]>
+    </description>
+    <properties>
+        <target  name="final" />
+        <target  name="finalDesc" />
+        <target  name="input" />
+        <target  name="cocDepth" />
+        <target  name="maya_NonPEAlphaMask" />
+        <float  name="cocAtInfinity" />
+        <float  name="maxCocScale" />
+        <int  name="sampleSpacing1" />
+        <int  name="searchRadius1" />
+        <float  name="acceptThreshold" />
+        <int  name="sampleSpacing2" />
+        <int  name="searchRadius2" />
+        <float  name="spreadScale" />
+        <bool  name="debugOn" />
+    </properties>
+    <values>
+        <float name="cocAtInfinity" value="0.607640"  />
+        <float name="maxCocScale" value="5.000000"  />
+        <int name="sampleSpacing1" value="1"  />
+        <int name="searchRadius1" value="1"  />
+        <float name="acceptThreshold" value="0.050000"  />
+        <int name="sampleSpacing2" value="2"  />
+        <int name="searchRadius2" value="3"  />
+        <float name="spreadScale" value="1.000000"  />
+        <bool name="debugOn" value="false"  />
+    </values>
+    <outputs>
+        <target  name="output" />
+    </outputs>
+    <parametershare>
+    </parametershare>
+    <implementation render="OGS" language="ScriptInterpreter" version="0.1" >
+        <scriptCommands>
+            <If value="@debugOn" />
+                <AssignTarget destName="dofTarget" srcName="@final" format="@finalDesc" />
+                <SetTarget index="0" value="dofTarget" />
+                <SetEffect name="spreadDOF" path="mayaVisualizeDOF" />
+                <SetTexture effect="spreadDOF" name="cocDepth" value="PointClamp" texture="@cocDepth" />
+                <Render name="Quad" />
+            <Else />
+                <AssignTarget destName="dofTarget" srcName="@final" format="@finalDesc" />
+                <SetTarget index="0" value="dofTarget" />
+                <SetViewport value="0.0,0.0,1.0,1.0" />
+                <SetEffect name="spreadDOF" path="mayaSpreadDOF" technique="spreadDOFPass" macrolist="USE_NONPE_MASK=@maya_NonPEAlphaMask"/>
+                <SetEffectParameter effect="spreadDOF" name="cocAtInfinity" value="@cocAtInfinity" />
+                <SetEffectParameter effect="spreadDOF" name="maxCocScale" value="@maxCocScale" />
+                <SetEffectParameter effect="spreadDOF" name="searchRadius1" value="@searchRadius1" />
+                <SetEffectParameter effect="spreadDOF" name="sampleSpacing1" value="@sampleSpacing1" />
+                <SetEffectParameter effect="spreadDOF" name="searchRadius2" value="@searchRadius2" />
+                <SetEffectParameter effect="spreadDOF" name="sampleSpacing2" value="@sampleSpacing2" />
+                <SetEffectParameter effect="spreadDOF" name="spreadScale" value="@spreadScale" />
+                <SetEffectParameter effect="spreadDOF" name="acceptThreshold" value="@acceptThreshold" />
+                <SetTexture effect="spreadDOF" name="cocDepth" value="" texture="@cocDepth" />
+                <SetEffectParameter effect="spreadDOF" name="cocDepthSamp" value="PointMirror" />
+                <SetTexture effect="spreadDOF" name="source" value="" texture="@input" />
+                <SetEffectParameter effect="spreadDOF" name="sourceSamp" value="LinearMirror" />
+                <If value="@maya_NonPEAlphaMask" />
+                    <SetTexture effect="spreadDOF" name="postFXMask" value="" texture="@maya_NonPEAlphaMask" />
+                    <SetEffectParameter effect="spreadDOF" name="postFXMaskSamp" value="PointMirror" />
+                <EndIf />
+                <Render name="Quad" />
+            <EndIf />
+            <SetTexture effect="spreadDOF" name="source" value="" texture="" />
+            <SetTexture effect="spreadDOF" name="cocDepth" value="" texture="" />
+            <If value="@maya_NonPEAlphaMask" />
+                <SetTexture effect="spreadDOF" name="postFXMask" value="" texture="" />
+            <EndIf />
+            <SetParameter name="@output" value="dofTarget" />
+            <RestoreOverrideEffect />
+        </scriptCommands>
+    </implementation>
+</fragment>
+

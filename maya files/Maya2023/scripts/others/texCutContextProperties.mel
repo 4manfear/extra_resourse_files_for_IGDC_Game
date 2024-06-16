@@ -1,0 +1,78 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Description:
+//      This script defines the elements for the texture UV cut 
+//	property sheet.
+//
+//  Input Arguments:
+//      None.
+//
+//  Return Value:
+//      None.
+//
+
+global proc texCutContextProperties()
+{
+ 	string $parent = `toolPropertyWindow -query -location`;
+ 	setParent $parent;
+	
+ 	setUITemplate -pushTemplate OptionsTemplate;
+	
+ 	columnLayout texCutContext;
+ 		frameLayout 
+ 			-collapsable true
+ 			-collapse false
+ 			-label (uiRes("m_texCutContextProperties.kCutSewBrushSettings"))
+ 			textureCutFrame;
+
+ 			columnLayout texCutOptions;
+ 				separator -style "none";   
+                
+				floatSliderGrp -label (uiRes("m_texCutContextProperties.kEdgeSelectSensitivity")) -field true
+				    -annotation (uiRes("m_texCutContextProperties.kSensitiveAnnotation"))
+					-minValue 0.1 -fieldMinValue 0.1 
+                    -maxValue 0.5 -fieldMaxValue 0.5 
+                    texCutEdgeSelectionSensitiveItem ; 
+
+				floatSliderGrp -label (uiRes("m_texCutContextProperties.kBrushSize")) -field true
+				    -annotation (uiRes("m_texCutContextProperties.kFalloffSizeAnnotation"))
+					-minValue 0.00001 -fieldMinValue 0.00001 
+                    -maxValue 1.0 -fieldMaxValue 1.0 
+                    texSewBrushSizeItem ;                
+								
+                separator -height 10; 
+                checkBoxGrp -label "" -label1 (uiRes("m_texCutContextProperties.kSS"))
+				    -annotation (uiRes("m_texCutContextProperties.kSteadyStrokeAnnotation"))
+                    texCutSteadyStroke ;
+                
+				floatSliderGrp -label (uiRes("m_texCutContextProperties.kSSD")) -field true
+					-minValue 0.0 -fieldMinValue 0.0 texCutSteadyStrokeDistance ; 
+				
+                separator -height 10;
+				
+				floatSliderGrp -label (uiRes("m_texCutContextProperties.kMoveRatio")) -field true
+				    -annotation (uiRes("m_texCutContextProperties.kMoveRatioAnnotation"))
+					-minValue 0.0 -fieldMinValue 0.0 
+                    -maxValue 1.0 -fieldMaxValue 1.0 
+                    texCutMoveRatio ;
+
+				separator -height 10 dsbSpearator;
+                
+                checkBoxGrp -label "" -label1 (uiRes("m_texCutContextProperties.kDSB"))
+                    texCutDisplayShellBorder_CBG ;
+                 
+			setParent ..;
+		setParent ..;
+	setParent ..;
+
+	setUITemplate -popTemplate;
+}
+
+

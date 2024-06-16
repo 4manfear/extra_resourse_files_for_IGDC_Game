@@ -1,0 +1,57 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  May, 2016
+//
+//  Description:
+//      This script defines the procedure for getting the english name
+//		from the localized workspace name
+//
+//
+//  Procedure Name:
+//      unlocalizedFactoryWorkspaceLabel
+//
+//  Description:
+//		Returns the unlocalized factory workspace label.
+//
+//  Input Arguments:
+//		Localized version of the workspace label.
+//
+//  Return Value:
+//      English version of the workspace label.
+//
+global proc string unlocalizedFactoryWorkspaceLabel(string $localizedWsLabel)
+{
+	string $wsLabel;
+
+	if( !`exists localizedFactoryWorkspaceLabels` ) {
+		source localizedFactoryWorkspaceLabel;
+	}
+
+	int $foundIt = false;
+	string $labels[] = localizedFactoryWorkspaceLabels();
+	int $i, $count = size( $labels );
+	for( $i = 1; $i < $count; $i+=2 ) {
+		if( $localizedWsLabel == $labels[$i] ) {
+			// get english name of the matched workspace
+			$wsLabel = $labels[$i-1];
+			$foundIt = true;
+			break;
+		}
+	}
+
+	// If we couldn't find a match, just return what was
+	// passed in.
+	//
+	if( !$foundIt ) {
+		$wsLabel = $localizedWsLabel;
+	}
+
+	return $wsLabel;			 				
+}

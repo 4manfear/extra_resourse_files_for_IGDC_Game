@@ -1,0 +1,354 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+
+proc string blendShapeUniqueTargetDirectoryName(string $bsdName, string $targetDirectoryName)
+{
+	string $name = $targetDirectoryName;
+	int $i = 1;
+	while (blendShapeTargetDirectoryIndexFromName($bsdName, $name) != -1)
+	{
+		$name = $targetDirectoryName + $i;
+		++ $i;
+	}
+	return $name;
+}
+global proc blendShapeEditorDuplicateTargets()
+//
+//	Description:
+//		Callback function for duplicating selected targets in Shape Editor.
+//
+{
+
+	if (size(getShapeEditorTreeviewSelection(0))
+	|| size(getShapeEditorTreeviewSelection(1))
+	|| size(getShapeEditorTreeviewSelection(2))
+	)
+	{
+		// do not support to duplicate blendShape node and blendShape directories
+		return; 
+	}
+
+	// 5, 24 cannot be used since they return targets of selected directorys,
+	// even these targets under selected directorys are not selected. 
+	// 
+	// to get all the selected items, which are highlighted, at the Shape Editor.
+	string $selectedTargets[];
+	$selectedTargets = stringArrayCatenate($selectedTargets, getShapeEditorTreeviewSelection(3));
+	$selectedTargets = stringArrayCatenate($selectedTargets, getShapeEditorTreeviewSelection(4));
+	string $selectedIBs[] = getShapeEditorTreeviewSelection(6);
+	
+	string $combinationTargets[]; //cache all combination target
+	string $alias[]; //cache target alias and target index relationship
+	string $mirrors[]; // cache the original and mirror items for all blendShape nodes.
+	for ($item in $selectedTargets)
+	{
+		string $buffer[];
+		tokenize($item, ".", $buffer);
+		if (size($buffer) != 2)
+			continue; // in-between or others
+					
+		string $bsdName = $buffer[0];
+		string $tgtIndexStr = $buffer[1];
+		int $tgtIndex = (int)$tgtIndexStr;
+					
+		// check if ancesters are selected
+		int $highestParentDirectory = blendShapeEditorSelectedAncestor($bsdName, $tgtIndex, $selectedTargets); 
+		if ($highestParentDirectory != 0)
+		{		
+			// If a directory is selected, all children will be duplicated, 
+			// regardless what children selected inside/under it.
+ 	
+			continue;
+		}	
+				
+		if ($tgtIndex >= 0)
+		{	
+			// this selected item is a target. 
+			
+			$tempAttr = $bsdName + ".inputTarget";
+			$baseIndices = getAttr("-mi", $tempAttr);
+			for ($baseIndex in $baseIndices)				
+			{
+				$tempAttr = $bsdName + ".inputTarget[" + $baseIndex + "].inputTargetGroup[" + $tgtIndex + "].inputTargetItem[6000].inputPointsTarget";
+				getAttr $tempAttr;
+			}
+			
+			// step 1. duplicate the old target, a new target is added  
+			int $newTargetIndex = blendShapeDuplicateTarget($bsdName, $tgtIndex);
+			if ($newTargetIndex == -1)
+				continue; 
+				
+			// step 2. rename the new target 
+			string $tgtName = blendShapeTargetNameFromIndex($bsdName, $tgtIndex);
+			string $newTargetName = $tgtName + "_Copy";
+			$newTargetName = blendShapeUniqueWeighName($bsdName, $newTargetName);
+			blendShapeRenameTargetAlias($bsdName, $newTargetIndex, $newTargetName);
+						
+			// step 3. move/insert the new target to the location right after the old target 
+			// 
+			// Note: click selection in Shape Editor may affect the location when a target added, 
+			// for example setting the new target under the right directory, by setting the fCurrentDirectory,
+			// check TDNblendShape::syncMidLayer() for details, 
+			// but we cannot depend on that since for multiply selection in Shape Editor, 
+			// current directory will be changed many times. So setting dir need to be done here.
+			
+			$tempAttr = $bsdName + ".parentDirectory[" + $tgtIndex + "]";
+			int $toParent = `getAttr $tempAttr`;			
+			blendShapeTargetMove($bsdName, $newTargetIndex, $toParent, $tgtIndex, 1);	
+
+			if(`combinationShape -q -ex -bs $bsdName -cti $tgtIndex`)
+				$combinationTargets[size($combinationTargets)] = $bsdName + "." + $tgtIndex;
+			$alias[size($alias)] = longNameOf($bsdName + ".w[" + $tgtIndex + "]");
+			$alias[size($alias)] = $bsdName + "." + $tgtIndex;
+			$mirrors[size($mirrors)] = $bsdName + "." + $tgtIndex;
+			$mirrors[size($mirrors)] = $bsdName + "." + $newTargetIndex; 
+		}
+		else
+		{
+			// $tgtIndex < 0, this selected item is a directory. 
+			
+			// step 1. 
+			int $newDirectoryIndex = blendShapeCreateEmptyDirectory($bsdName, $tgtIndex);
+			if ($newDirectoryIndex == 0) 
+				continue; // fail
+				
+			// step 2. rename new target directory 
+			$fromDirectoryName = blendShapeTargetDirectoryNameFromIndex($bsdName, -$tgtIndex);
+			$newDirectoryName = $fromDirectoryName + "_Copy";
+			$newDirectoryName = blendShapeUniqueTargetDirectoryName($bsdName, $newDirectoryName);
+			blendShapeRenameTargetDirectoryAlias($bsdName, $newDirectoryIndex, $newDirectoryName);
+			
+			// step 3. move 
+			$tempAttr = $bsdName + ".targetDirectory[" + -$tgtIndex + "].parentIndex";
+			$toParent = `getAttr $tempAttr`;
+			blendShapeTargetMove($bsdName, -$newDirectoryIndex, $toParent, $tgtIndex, 1);
+			
+			int $mirrorArray[]; // element coule be >= 0 target, < 0 target directory.
+			// this array different from $mirrors[] cache items in one blendShape node. 
+			$mirrorArray[size($mirrorArray)] = $tgtIndex;           // $tgtIndex < 0, directory.
+			$mirrorArray[size($mirrorArray)] = -$newDirectoryIndex; // -$newDirectoryIndex < 0, directory. 
+			
+			$mirrors[size($mirrors)] = $bsdName + "." + $tgtIndex; 
+			$mirrors[size($mirrors)] = $bsdName + "." + -$newDirectoryIndex; 
+			
+			// step 4. copy children 
+			$tempAttr = $bsdName + ".targetDirectory[" + -$tgtIndex + "].childIndices";
+			int $childIndices[] = `getAttr $tempAttr`;
+			
+			 
+			while ( size($childIndices) )
+			{
+				int $childIndex = $childIndices[0];
+				intArrayRemoveAtIndex(0, $childIndices);
+				
+				if ($childIndex >= 0)
+				{
+					// this child item is a target. 
+										
+					$tempAttr = $bsdName + ".inputTarget";
+					$baseIndices = getAttr("-mi", $tempAttr);
+					for ($baseIndex in $baseIndices)				
+					{
+						$tempAttr = $bsdName + ".inputTarget[" + $baseIndex + "].inputTargetGroup[" + $childIndex + "].inputTargetItem[6000].inputPointsTarget";
+						getAttr $tempAttr;
+					}
+					
+					int $newChildTargetIndex = blendShapeDuplicateTarget($bsdName, $childIndex);
+					if ($newChildTargetIndex == -1)
+						continue; 
+					
+					string $childTargetName = blendShapeTargetNameFromIndex($bsdName, $childIndex);
+					string $newChildTargetName = $childTargetName + "_Copy";
+					$newChildTargetName = blendShapeUniqueWeighName($bsdName, $newChildTargetName);
+					blendShapeRenameTargetAlias($bsdName, $newChildTargetIndex, $newChildTargetName);
+					
+					$tempAttr = $bsdName + ".parentDirectory[" + $childIndex + "]";
+					int $childParent = `getAttr $tempAttr`;
+					$childParent *= -1; // $mirrorArray records directory using negative value.
+					int $findLocation = intArrayFind($childParent, 0, $mirrorArray);
+					if ($findLocation == -1)
+					{
+						//print _NOL10N("!! something is wrong at $mirrorArray.\n");
+					}
+					else
+					{
+						$findLocation += 1; // the mirror element will be next to the original element.
+						$newChildParent = $mirrorArray[$findLocation]; // $newChildParent < 0.
+						blendShapeTargetMove($bsdName, $newChildTargetIndex, $newChildParent, 0, 3);
+					}
+					
+					if(blendShapeTargetGetCombinationShape($bsdName, $childIndex) != "")
+						$combinationTargets[size($combinationTargets)] = $bsdName + "." + $childIndex;
+					$alias[size($alias)] = longNameOf($bsdName + ".w[" + $childIndex + "]");
+					$alias[size($alias)] = $bsdName + "." + $childIndex;
+					$mirrors[size($mirrors)] = $bsdName + "." + $childIndex; // $childIndex >= 0, target.
+					$mirrors[size($mirrors)] = $bsdName + "." + $newChildTargetIndex; // $newChildTargetIndex > 0, target.
+				}
+				else
+				{
+					// $childIndex < 0, this child item is a target directory
+					
+					int $newChildDirectoryIndex = blendShapeCreateEmptyDirectory($bsdName, $childIndex);
+					if ($newChildDirectoryIndex == 0)
+						continue;
+					
+					string $childDirectoryName = blendShapeTargetDirectoryNameFromIndex($bsdName, -$childIndex);
+					string $newChildDirectoryName = $childDirectoryName + "_Copy";
+					$newChildDirectoryName = blendShapeUniqueTargetDirectoryName($bsdName, $newChildDirectoryName);
+					blendShapeRenameTargetDirectoryAlias($bsdName, $newChildDirectoryIndex, $newChildDirectoryName);
+					
+					$tempAttr = $bsdName + ".targetDirectory[" + -$childIndex + "].parentIndex";
+					int $childParent = `getAttr $tempAttr`;
+					$childParent *= -1; // 
+					int $findLocation = intArrayFind($childParent, 0, $mirrorArray);
+					if ($findLocation == -1)
+					{
+						//print _NOL10N("!! something is wrong at $mirrorArray.\n");
+					}
+					else
+					{
+						$findLocation += 1;
+						$newChildParent = $mirrorArray[$findLocation]; // $newChildParent < 0.
+						blendShapeTargetMove($bsdName, -$newChildDirectoryIndex, $newChildParent, 0, 3);
+					}
+					
+					// 
+					$mirrorArray[size($mirrorArray)] = $childIndex; // $childIndex < 0.
+					$mirrorArray[size($mirrorArray)] = -$newChildDirectoryIndex; // -$newChildDirectoryIndex < 0.
+					
+					$mirrors[size($mirrors)] = $bsdName + "." + $childIndex; // $childIndex < 0, directory.
+					$mirrors[size($mirrors)] = $bsdName + "." + -$newChildDirectoryIndex; // 
+					
+					// 
+					$tempAttr = $bsdName + ".targetDirectory[" + -$childIndex + "].childIndices";
+					int $grandChildren[] = `getAttr $tempAttr`;
+					for ($gc in $grandChildren)
+					{
+						intArrayInsertAtIndex(size($childIndices), $childIndices, $gc); // add $gc at the end.
+					}					
+				}
+			} // end of while directory's children.
+		} // end if item is target or directory.
+	}
+	
+	// duplicate in-between targets 
+	
+	if (size($selectedIBs))
+	{
+		for ($selectedIB in $selectedIBs)
+		{ 
+			string $array[] = stringToStringArray($selectedIB, ".");
+			if (size($array) != 3)
+				continue; 
+			string $bsdName = $array[0];
+			int $tgtIndex = (int)$array[1]; 
+			int $inbetweenIndex = (int)$array[2];
+			float $inBetweenWeight = (float)($inbetweenIndex - 5000)/(float)1000;
+			$inBetweenWeight = blendShapeWeightRoundoff($inBetweenWeight, 3);
+	
+			if ($inbetweenIndex <= 6000)
+			{
+				$tempAttr = $bsdName + ".inputTarget";
+				$baseIndices = getAttr("-mi", $tempAttr);
+				for ($baseIndex in $baseIndices)				
+				{
+					$tempAttr = $bsdName + ".inputTarget[" + $baseIndex + "].inputTargetGroup[" + $tgtIndex + "].inputTargetItem[" + $inbetweenIndex + "].inputPointsTarget";
+					getAttr $tempAttr;
+				}
+			}
+			
+			// try to find the mirror target
+			string $encodedTarget = $bsdName + "." + $tgtIndex;
+			int $findLocation = stringArrayFind($encodedTarget, 0, $mirrors);
+			if ($findLocation == -1)
+				continue; // this target may be not duplicated.
+			
+			$findLocation += 1;
+			if ($findLocation >= size($mirrors))
+				continue; // index out of range
+			string $encodedDuplicated = $mirrors[$findLocation];
+			string $array2[] = stringToStringArray($encodedDuplicated, ".");
+			if (size($array2) != 2 || $bsdName != $array2[0])
+				continue;
+			int $newTgtIndex = (int)$array2[1];
+			if ($tgtIndex == $newTgtIndex)
+			{
+				continue;
+			}
+			 
+			blendShapeDuplicateIBTarget($bsdName, $tgtIndex, $inbetweenIndex, $newTgtIndex);	 
+		}
+	}
+	
+	// duplicate combination targets 
+	if (size($combinationTargets))
+	{
+		for($combinationTarget in $combinationTargets)
+		{
+		    string $array[] = stringToStringArray($combinationTarget, ".");
+		    if(size($array) != 2)
+		        continue;
+		    $bsdName = $array[0];
+		    int $targetIndex = $array[1];
+		    $combinationShape = blendShapeTargetGetCombinationShape($bsdName, $targetIndex);
+		    if($combinationShape == "")
+		        continue;
+			$drivers = `listConnections -d off -p on $combinationShape`;
+			
+			int $combineMethod = `combinationShape -q -cm -bs $bsdName -cti $targetIndex`;
+			//Get drivers that are also duplicated
+			string $DuplicateDrivers[];
+			string $DuplicateDriven = "";
+			for($driver in $drivers)
+			{
+			    //Get BSD name and index of driver based on alias
+			    for($i = 0; $i < size($alias);)
+			    {
+			        if($alias[$i] == $driver)
+			        {
+			            //Get duplicated driver and duplicated driven target
+			            for($j = 0; $j < size($mirrors);)
+			            {
+			                if($mirrors[$j] == $alias[$i+1]) //Find Driver
+			                    $DuplicateDrivers[size($DuplicateDrivers)] = $mirrors[$j+1];
+			                if($mirrors[$j] == $combinationTarget) //Find Driven
+			                    $DuplicateDriven = $mirrors[$j+1];
+			                $j += 2;
+			            }
+			            break;
+			        }
+			        $i += 2;
+			    }
+			}
+			if(size($DuplicateDrivers) == 0 || $DuplicateDriven == "")
+				continue;
+			
+			string $cmd = "combinationShape -cm " + $combineMethod + " -bs " + $bsdName;
+			
+			//connect driven
+			string $dupDrivenArray[] = stringToStringArray($DuplicateDriven, ".");
+			if(size($dupDrivenArray) != 2)
+				continue;
+			
+			$cmd += " -cti ";
+			$cmd += $dupDrivenArray[1];
+			
+			for($DuplicateDriver in $DuplicateDrivers)
+			{
+				string $dupDriverArray[] = stringToStringArray($DuplicateDriver, ".");
+				if(size($dupDriverArray) != 2)
+					continue;
+				$cmd += " -dti ";
+				$cmd += $dupDriverArray[1];
+			}
+			evalEcho($cmd);
+		}
+	}
+	return;
+}
+

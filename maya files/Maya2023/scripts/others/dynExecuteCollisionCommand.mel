@@ -1,0 +1,78 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+
+//
+//
+//  Creation Date:  October 1998
+//
+//  Description:
+//      dynExecuteCollisionCommand executes the collision command 
+//
+//  Input Arguments():
+//		string $collisionCmd -- the collision command string (except for the selection)
+//
+//  Return Value:
+//      None.
+//
+//
+//  ============== dynExecuteCollisionCommand ==============
+//
+//  SYNOPSIS
+//		Execute the collision command.
+//		The last item in the selection list is the collision, and all
+//		other items collide with it.
+//
+global proc	dynExecuteCollisionCommand(string $collisionCmd)
+{
+	string $fullCmd;
+	int $numParticleObjs;
+	int $i;
+
+	// Get the selection list.
+	//
+	string $selected[] = `ls -sl`;
+	int    $selCount = size($selected);
+	int    $connCount = $selCount - 1;
+
+	// Make the last object in the list a collider.
+	//
+	string $collider = $selected[ $selCount-1 ];
+	$collisionCmd = $collisionCmd + " " + $collider;
+	evalEcho( $collisionCmd );
+
+	// See if the very last object in the list was a particle shape.
+	// If that's the case, and we got this far, then it must be a soft
+	// object, because if it were anything else then the collision 
+	// command would have failed and we would not be here.
+	// In this case, get the geomtry which immediately precedes
+	// the particle shape in the list.
+	//
+	if ((`particleExists $collider`) && ($selCount > 1))
+	{
+		$collider = $selected[ $selCount-2 ];
+		$connCount = $selCount - 2;
+	}
+
+	// Now connect all the other objects in the list to it.
+	//
+    string $connectNames = "";
+    for ($i = 0; $i < $connCount; $i++)
+    {
+		string $objName = $selected[$i];
+        if (size($objName)>0)
+        	$connectNames  = $connectNames + " " + $objName;
+    }
+
+    if (size($connectNames) > 0)
+    {
+		string $connectCmd =
+			"connectDynamic -c " + $collider + " " + $connectNames;
+        evalEcho($connectCmd);
+    }
+}
+

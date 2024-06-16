@@ -1,0 +1,84 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global string $gCurrentUVBrushMode = "";
+global string $gLastUVBrushMode = "";
+
+global proc texSculptCacheContextMM(string $editor, string $editorCmd)
+{
+	global string $gLastUVBrushMode;
+	string $updateEditor = ( "txtWndUpdateEditor(\"" + $editor + "\", \"" +
+							 $editorCmd + "\", \"null\", 101);" );
+	string $ml = $gLastUVBrushMode;
+	if( $gLastUVBrushMode == "Freeze" )
+		$ml = "Pin";
+	string $lml = (uiRes("m_texSculptCacheContextMM.kLastTool")) + $ml;
+
+	menuItem -rp "N" -l (uiRes("m_texSculptCacheContextMM.kInvertPin"))
+ 		-c ("UVEditorInvertPin")
+		($editor+"Invert");
+	
+	menuItem -rp "NE" -l (uiRes("m_texSculptCacheContextMM.kCutUVTool"))
+ 		-c ( "setToolTo texCutUVContext;" + "texCutContext -edit -mode Cut texCutUVContext;" +$updateEditor)
+		($editor+"UVCutTool");
+	
+	menuItem -rp "E" -l $lml 
+		-c(("setToolToLastTool( \"" + $editor + "\");" + $updateEditor))
+		($editor+"LastTool");
+	
+	menuItem -rp "SE" -l (uiRes("m_texSculptCacheContextMM.kGrabUVTool"))
+ 		-c ("texSculptCacheContext -e -m Grab texSculptCacheContextObj; " +  "setToolTo texSculptCacheContextObj;" + $updateEditor)
+		($editor+"UVGrabTool");
+
+
+	menuItem -rp "S" -l (uiRes("m_texSculptCacheContextMM.kPinUVTool"))
+ 		-c ("texSculptCacheContext -e -m Freeze texSculptCacheContextObj; " + "setToolTo texSculptCacheContextObj;" + $updateEditor)
+		($editor+"UVPinTool");
+
+	menuItem -rp "W" -l (uiRes("m_texSculptCacheContextMM.kFalloffType")) -subMenu 1
+		($editor+"FalloffType");
+
+		menuItem -rp "W" -l (uiRes("m_texSculptCacheContextMM.kFalloffHybrid"))
+	 		-c ("texSculptCacheContext -e -falloffType 0 `currentCtx`; ")
+			($editor+"FalloffHybrid");
+		menuItem -rp "SW" -l (uiRes("m_texSculptCacheContextMM.kFalloffSurface"))
+	 		-c ("texSculptCacheContext -e -falloffType 1 `currentCtx`; ")
+			($editor+"FalloffSurface");
+		menuItem -rp "S" -l (uiRes("m_texSculptCacheContextMM.kFalloffVolume"))
+	 		-c ("texSculptCacheContext -e -falloffType 2 `currentCtx`; ")
+			($editor+"FalloffVolume");
+}
+
+global proc setToolToLastTool(string $editor)
+{
+	global string $gLastUVBrushMode;
+	string $tool = `currentCtx`;
+	if($gLastUVBrushMode == "Grab" || $gLastUVBrushMode == "Freeze" || $gLastUVBrushMode == "Pinch" || $gLastUVBrushMode == "Smear" || $gLastUVBrushMode == "Bulge")
+	{
+		setToolTo texSculptCacheContextObj;
+		texSculptCacheContext -e -mode $gLastUVBrushMode texSculptCacheContextObj; 
+	}
+	else if($gLastUVBrushMode == "Cut" || $gLastUVBrushMode == "Sew")
+	{
+		setToolTo texCutUVContext; 
+		texCutContext -edit -mode $gLastUVBrushMode texCutUVContext; 
+	}
+	else if($gLastUVBrushMode == "Unfold")
+	{
+		setToolTo texUnfoldUVContext; 
+		Unfold3DContext -e -unfold $tool;
+	}
+	else if($gLastUVBrushMode == "Optimize")
+	{
+		setToolTo texUnfoldUVContext; 
+		Unfold3DContext -e -optimize $tool; 
+	}
+	else if($gLastUVBrushMode == "Symmetrize")
+	{
+		setToolTo texSymmetrizeUVContext; 
+	}
+}

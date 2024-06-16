@@ -1,0 +1,39 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:	May 9, 1997
+//
+//  Procedure Name:
+//	AEnonAmbientLightShapeNodeTemplate
+//
+//  Description:
+//	Creates the attribute editor controls for the 
+//	nonAmbientLightShapeNode
+//
+//  Input Value:
+//	nodeName
+//
+//  Output Value:
+//	None
+//
+
+
+
+global proc AEnonAmbientLightShapeNodeTemplate ( string $nodeName )
+{
+	editorTemplate -beginLayout (uiRes("m_AEnonAmbientLightShapeNodeTemplate.kDecay"));
+		AEnonAmbientLightShapeNodeDecay $nodeName;
+	editorTemplate -endLayout;
+
+	editorTemplate -beginLayout (uiRes("m_AEnonAmbientLightShapeNodeTemplate.kDisplay"));
+		// include/call base class/node attributes
+		AEshapeTemplate $nodeName;
+	editorTemplate -endLayout;
+
+}

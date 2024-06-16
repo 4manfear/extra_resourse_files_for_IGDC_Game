@@ -1,0 +1,50 @@
+
+#include "Common.ogsfh"
+
+// Top color.
+uniform vec3 gColor1 = { 1.0, 0.0, 0.0 };
+
+// Bottom color.
+uniform vec3 gColor2 = { 0.0, 0.0, 1.0 };
+
+// Vertex shader output structure.
+attribute VS_TO_PS_Gradient
+{
+    vec3 Color : COLOR0;
+}
+
+// Vertex shader.
+// VS_TO_PS_Gradient VS_Gradient(VS_INPUT_ScreenQuad In)
+GLSLShader VS_Gradient
+{
+    void main()
+    {
+        // Output the position directly.
+        gl_Position = gWVPXf * vec4(Pos, 1.0);
+    
+    	// calculate vertex color
+        Color = mix(gColor1, gColor2, UV.y);
+    }
+}
+
+// Pixel shader.
+// NOTE: This expects screen quad vertex shader output.
+// vec4 PS_Gradient(VS_TO_PS_Gradient In) : COLOR0
+GLSLShader PS_Gradient
+{
+    void main()
+    {
+        colorOut = vec4(Color, 0.0);
+    }
+}
+
+// Main technique.
+technique Main
+{
+    pass p0
+    {
+        VertexShader (in VS_INPUT_ScreenQuad, out VS_TO_PS_Gradient) = VS_Gradient;
+        PixelShader (in VS_TO_PS_Gradient, out pixelOut) = PS_Gradient;
+    }
+}
+

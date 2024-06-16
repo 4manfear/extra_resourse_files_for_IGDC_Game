@@ -1,0 +1,90 @@
+<!--
+===========================================================================
+Copyright 2012 Autodesk, Inc. All rights reserved.
+
+Use of this software is subject to the terms of the Autodesk license
+agreement provided at the time of installation or download, or which
+otherwise accompanies this software in either electronic or hard copy form.
+===========================================================================
+
+Main fragment for color mask plugin
+-->
+
+<fragment uiName="channelsBase" name="channelsBase" type="plumbing" class="ShadeFragment" version="1.0">
+	<description><![CDATA[Color with color mask fragment]]></description>
+	<properties>
+		<float3 name="inColor" />
+		<float name="inAlpha" />
+		<int name="channelR" />
+		<int name="channelG" />
+		<int name="channelB" />
+		<int name="channelA" />
+	</properties>
+	<values>
+		<float3 name="inColor" value="0.3,0.3,0.3" />
+		<float name="inAlpha" value="0.0" />
+		<int name="channelR" value="0" />
+		<int name="channelG" value="1" />
+		<int name="channelB" value="2" />
+		<int name="channelA" value="3" />
+	</values>
+	<outputs>
+		<struct name="output" struct_name="mayaTextureOutput" />
+	</outputs>
+	<implementation>
+	<implementation render="OGSRenderer" language="Cg" lang_version="2.1">
+		<function_name val="channelsBase" />
+		<source>
+		<![CDATA[
+mayaTextureOutput channelsBase(float3 inColor, float inAlpha, int channelR, int channelG, int channelB, int channelA)
+{
+	mayaTextureOutput result;
+
+    result.outColor[0] = (channelR < 3) ? inColor[channelR]: inAlpha;
+    result.outColor[1] = (channelG < 3) ? inColor[channelG]: inAlpha;
+    result.outColor[2] = (channelB < 3) ? inColor[channelB]: inAlpha;
+	result.outAlpha	= (channelA < 3) ? inColor[channelA]: inAlpha;
+
+	return result;
+}
+		]]>
+		</source>
+	</implementation>
+	<implementation render="OGSRenderer" language="HLSL" lang_version="11.0">
+		<function_name val="channelsBase" />
+		<source>
+		<![CDATA[
+mayaTextureOutput channelsBase(float3 inColor, float inAlpha, int channelR, int channelG, int channelB, int channelA)
+{
+	mayaTextureOutput result;
+
+    result.outColor[0] = (channelR < 3) ? inColor[channelR]: inAlpha;
+    result.outColor[1] = (channelG < 3) ? inColor[channelG]: inAlpha;
+    result.outColor[2] = (channelB < 3) ? inColor[channelB]: inAlpha;
+	result.outAlpha	= (channelA < 3) ? inColor[channelA]: inAlpha;
+
+	return result;
+}
+		]]>
+		</source>
+		</implementation>
+		<implementation render="OGSRenderer" language="GLSL" lang_version="3.0">
+			<function_name val="channelsBase" />
+			<source>
+				<![CDATA[
+mayaTextureOutput channelsBase(vec3 inColor, float inAlpha, int channelR, int channelG, int channelB, int channelA)
+{
+	mayaTextureOutput result;
+
+    result.outColor[0] = (channelR < 3) ? inColor[channelR]: inAlpha;
+    result.outColor[1] = (channelG < 3) ? inColor[channelG]: inAlpha;
+    result.outColor[2] = (channelB < 3) ? inColor[channelB]: inAlpha;
+	result.outAlpha	= (channelA < 3) ? inColor[channelA]: inAlpha;
+
+	return result;
+}
+		]]>
+		</source>
+	</implementation>
+	</implementation>
+</fragment>

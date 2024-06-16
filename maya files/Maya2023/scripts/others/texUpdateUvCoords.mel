@@ -1,0 +1,68 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+// ===========================================================================
+//
+//  Procedure Name:
+//      texUpdateUvCoords
+//
+//  Description:
+//      Updates the pivot optionVar of the move/rotate/scale -contexts
+//
+//  Input Arguments
+//      None
+//
+//  Return Value:
+//      None
+//
+//  Notes:
+//  This script is part of the implementation of Nightshade UV Editor into
+//  Autodesk Maya. This script is sourced by NS_AUVM. Do not run it directly.
+//
+// ===========================================================================
+
+
+global proc texUpdateUvCoords()
+{
+    float $coords[];
+    string $cTool = "";
+    $cTool = `currentCtx`;
+
+    switch($cTool)
+    {
+    case "moveSuperContext": // Move
+        $coords = `texMoveContext -q -position texMoveContext`;
+        optionVar -floatValue "manipulatorCoordU_NSUV" $coords[0];
+        optionVar -floatValue "manipulatorCoordV_NSUV" $coords[1];
+        break;
+
+    case "RotateSuperContext": // Rotate
+        $coords = `texRotateContext -q -position texRotateContext`;
+        optionVar -floatValue "manipulatorCoordU_NSUV" $coords[0];
+        optionVar -floatValue "manipulatorCoordV_NSUV" $coords[1];
+        break;
+
+    case "scaleSuperContext": // Scale
+        $coords = `texScaleContext -q -position texScaleContext`;
+        optionVar -floatValue "manipulatorCoordU_NSUV" $coords[0];
+        optionVar -floatValue "manipulatorCoordV_NSUV" $coords[1];
+        break;
+
+    case "ModelingToolkitSuperCtx": // Modelling toolkit
+        $coords = `ModelingToolkitSuperCtx -q -position ModelingToolkitSuperCtx`;
+        optionVar -floatValue "manipulatorCoordU_NSUV" $coords[0];
+        optionVar -floatValue "manipulatorCoordV_NSUV" $coords[1];
+        break;
+
+    default: // Move
+        setToolTo "moveSuperContext";
+        $coords = `texMoveContext -q -position texMoveContext`;
+        optionVar -floatValue "manipulatorCoordU_NSUV" $coords[0];
+        optionVar -floatValue "manipulatorCoordV_NSUV" $coords[1];
+        setToolTo $cTool;
+    }
+}

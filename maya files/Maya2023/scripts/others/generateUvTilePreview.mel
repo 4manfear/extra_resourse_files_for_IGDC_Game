@@ -1,0 +1,37 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+// Helper functions for dealing with manual generation of UV tile preview
+// in the viewport
+//
+
+global proc generateUvTilePreview(string $fileNode)
+{
+	if (`getAttr ($fileNode + ".uvTilingMode")` != 0 &&
+		`getAttr ($fileNode + ".uvTileProxyQuality")` != 0)
+	{
+		ogs -regenerateUVTilePreview $fileNode;
+	}
+}
+
+global proc generateAllUvTilePreviews()
+{
+	string $fileNodes[] = `ls -type "file"`;
+	for ($fn in $fileNodes)
+	{
+		generateUvTilePreview($fn);
+	}
+}
+
+global proc generateUvTilePreviewsPostSceneReadCB()
+{
+	if (`optionVar -q generateUVTilePreviewsOnSceneLoad`)
+	{
+		generateAllUvTilePreviews();
+	}
+}

@@ -1,0 +1,53 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+// 
+//  Procedure Name:
+//      doMoveSkinInfluences
+//
+//  Description:
+//    This procedure is used to move weights to the selected transforms
+//
+//  Arguments:
+//    clusters:    The list of clusters on which to appl the operation
+//
+
+global proc doMoveSkinInfluences( string $clusters[], string $influences[] )
+{
+	if (size($clusters)==0)
+		error((uiRes("m_doMoveSkinInfluences.kInvalidClusterSelection")));
+
+	// Perform the actual operation for each of the clusters for which the influences applies
+	//
+	int $foundValidInfluence = 0;
+
+	for( $c in $clusters )
+	{
+		string $cmd     = "skinPercent ";
+		int    $cmdSize = size($cmd);
+
+		string $existingInfluences[] = `skinCluster -q -inf $c`;
+		for ($object in $influences)
+		{
+			// Validate that the given transform is not already influence of the current cluster
+			if (stringArrayFind($object, 0, $existingInfluences) == -1)
+				continue;
+
+			// If it isn't append the $objects name to the command and continue
+			$cmd += "-tmw " + $object + " ";
+			$foundValidInfluence = 1;
+		}
+
+		// If $cmd has grown in size this means we've appended to it above, so evaluate it, echoing string
+		if (size($cmd) > $cmdSize)
+			evalEcho ( $cmd + $c );
+	}
+
+	if( !$foundValidInfluence )
+		error( (uiRes("m_doMoveSkinInfluences.kInvalidInfluenceSelection")));
+}
+

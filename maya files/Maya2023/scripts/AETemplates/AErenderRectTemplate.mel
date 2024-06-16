@@ -1,0 +1,42 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:	October 26, 2006
+//
+//  Procedure Name:
+//	AErenderRectTemplate
+//
+//  Description:
+//	Creates the attribute editor controls for 
+// 	the renderRect Node
+//
+//  Input Value:
+//	nodeName
+//
+//  Output Value:
+//	None
+//
+
+
+//
+//  Procedure Name
+//	AErenderRectTemplate
+//
+
+global proc AErenderRectTemplate( string $nodeName )
+{
+	editorTemplate -beginScrollLayout;
+	
+	// include/call base class/node attributes
+	AEgeometryShapeTemplate $nodeName;
+	
+	editorTemplate -addExtraControls;
+	editorTemplate -endScrollLayout;
+
+}

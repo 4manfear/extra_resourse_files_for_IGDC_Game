@@ -1,0 +1,41 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+// Create popup menu for texture editor scale tool options
+//
+
+global proc texScaleOptionsPopup()
+{
+	commonTexReflectionOptionsPopup(); // North: Symmetry
+
+	menuItem
+		-label (uiRes("m_texScaleOptionsPopup.kStepSnap"))
+		-ecr true 
+		-radialPosition "E" 
+		-checkBox `texScaleContext -q -snap texScaleContext`
+		-command "texScaleContext -e -snap #1 texScaleContext"
+		;
+
+	commonTexSelectOptionsPopup(); // South
+
+	menuItem
+		-label (uiRes("m_texScaleOptionsPopup.kPreventNagativeScale"))
+		-version "2018"
+		-checkBox `texScaleContext -q -preventNegativeScale texScaleContext`
+		-radialPosition "W" 
+		-command "texScaleContext -e -preventNegativeScale #1 texScaleContext"
+		;
+
+	commonTexSelectionConstraintsOptionsPopup();
+	commonTexTransformConstraintsOptionsPopup();
+	menuItem -divider 1;
+	menuItem
+		-label (uiRes("m_texScaleOptionsPopup.kScaleOptions"))
+		-command ( "ScaleUVTool; " + "toolPropertyWindow; " )
+		;
+}

@@ -1,0 +1,27 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  2002
+//
+// Description: Create a locator that floats on a ponds's
+// surface. The locator has added attributes for buoyancy dynamics.
+//	
+
+global proc pondDynamicLocator(string $pond, 
+					float $px, float $py, int $useSetAttr, int $createSphere,
+					string $floatObj, int $doRotation, int $doMotor)
+{
+	string $nType = nodeType( $pond );
+	if( $nType != "fluidShape" ){
+		warning((uiRes("m_pondDynamicLocator.kNeedFluid")));	
+		return;
+	}	
+	oceanDynamicLocator($pond, $px, $py,  $useSetAttr, $createSphere,
+					$floatObj, $doRotation, $doMotor, true);
+}

@@ -1,0 +1,986 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+source teContextMenus.mel;
+source teTrackFunctions.mel;
+
+////////////////////////////// Menu Callbacks //////////////////////////////
+global proc teUpdateFileMainMenu(string $parent)
+{
+	// updated Time Editor Global Mute checkbox state
+	string $item = $parent + "|teMuteTimeEditorMenuItem";
+	if(`menuItem -exists $item`)
+	{
+		int $muted = `timeEditor -q -mute`;
+		menuItem -e -checkBox $muted $item;
+	}
+	
+	// updates the enable state of Game FBX Exporter if the plug has been loaded/unloaded
+	$item = $parent + "|teGetGameFbxExporterMainMenuItem";
+	if(`menuItem -exists $item`)
+	{
+		int $enabled = `menuItem -q -enable $item`;
+		int $loaded = `pluginInfo -q -loaded gameFbxExporter`;
+		
+		if($enabled != $loaded)
+		{
+			menuItem -e -enable ($loaded) $item;
+		}
+	}
+}
+
+
+
+
+global proc teUpdateEditMainMenu(string $parent)
+//
+//	Description:
+//		Updates the menu items in the Time Editor Edit Menu
+//
+
+{
+	int $mode = `timeEditorPanel -q -activeClipEditMode timeEditorPanel1TimeEd`;
+	
+	// Default mode is always trim.
+	if ($mode == 0)
+		$mode = 1;
+	
+	$item = $parent + "|teClipEditModeTrimMainMenuItem";
+	if(`menuItem -exists $item`) {
+		menuItem -edit -radioButton ($mode == 1) $item;
+	}
+	
+	$item = $parent + "|teClipEditModeScaleMainMenuItem";
+	if(`menuItem -exists $item`) {
+		menuItem -edit -radioButton ($mode == 2) $item;
+	}
+	
+	$item = $parent + "|teClipEditModeLoopMainMenuItem";
+	if(`menuItem -exists $item`) {
+		menuItem -edit -radioButton ($mode == 3) $item;
+	}
+	
+	$item = $parent + "|teClipEditModeHoldMainMenuItem";
+	if(`menuItem -exists $item`) {
+		menuItem -edit -radioButton ($mode == 4) $item;
+	}
+}
+
+global proc teUpdateContainerMainMenu(string $parent)
+//
+//	Description:
+//		Updates the menu items in the Time Editor Clip Menu
+//
+{
+	// --- purge remap clip and ghost sub menus so that they can be reconstructed ---
+	string $item = $parent + "|teRemapClipToNSSubMenuMainMenuItem";
+	
+	if(`menu -exists $item`)
+	{
+		menu -e -deleteAllItems $item;
+		
+		setParent -m $item;
+		teBuildRemapClipToNSSubMenu(-1);
+	}
+	
+	$item = $parent + "|teGhostSubMenuMainMenuItem";
+	
+	if(`menu -exists $item`)
+	{
+		menu -e -deleteAllItems $item;
+		
+		setParent -m $item;
+		teBuildGhostSubMenu(-1);
+	}
+	
+	// Enable/Disable transitions menu item according to selection
+	int $isTwoAdjClipsSelected = teIsTwoAdjClipSelected();
+	
+	$item = $parent + "|teCreateTransitionMainMenuItem";
+	if(`menuItem -exists $item`)
+	{
+		menuItem -e -enable $isTwoAdjClipsSelected $item;
+	}
+	
+	$item = $parent + "|teResetTransitionMainMenuItem";
+	if(`menuItem -exists $item`)
+	{
+		menuItem -e -enable $isTwoAdjClipsSelected $item;
+	}
+}
+
+proc teUpdateEnableMenuItemMainMenu(string $item, int $isEnable)
+//
+//		Description:
+//			Enable/Disable a menuItem
+//
+{
+	if(`menuItem -exists $item`)
+	{
+		menuItem -e -enable $isEnable $item;
+	}
+}
+
+global proc teUpdateRetimeMainMenu(string $parent)
+//
+//	Description:
+//		Updates the menu items in the Time Editor Retime Menu
+//
+{
+	
+	int $clipId = teGetFirstClipInSelection(-1,0);
+	int $hasSpeedCurve = (size(teGetClipSelection(-1,0))==0) ? 0 : `timeEditorClip -q -speedRamping -clipId $clipId`;
+	int $isWarped	   = (size(teGetClipSelection(-1,0))==0) ? 0 : `timeEditorClip -q -timeWarp -clipId $clipId`;
+	int $timeWarpType  = (size(teGetClipSelection(-1,0))==0) ? 0 :`timeEditorClip -q -timeWarpType -clipId $clipId`;
+	int $speedRampValue = $hasSpeedCurve ? ($isWarped ? 4 : 3) : 1;
+	
+	// update $isWarped checkbox state
+	string $item = $parent + "|teClipSpeedCurveEnabledMainMenuItem";
+	if(`menuItem -exists $item`)
+	{
+		menuItem -e -checkBox $isWarped $item;
+	}
+	teUpdateEnableMenuItemMainMenu($parent + "|teClipTimeWarpCreateMainMenuItem",(!$hasSpeedCurve));
+	teUpdateEnableMenuItemMainMenu($parent + "|teClipSpeedCurveCreateMenuItem",(!$hasSpeedCurve));
+	teUpdateEnableMenuItemMainMenu($parent + "|teClipSpeedCurveEnabledMainMenuItem",$hasSpeedCurve);
+	teUpdateEnableMenuItemMainMenu($parent + "|teClipSpeedCurveEditMainMenuItem",$hasSpeedCurve);
+	teUpdateEnableMenuItemMainMenu($parent + "|teClipSpeedCurveResetMainMenuItem",$hasSpeedCurve);
+	teUpdateEnableMenuItemMainMenu($parent + "|teClipSpeedCurveDeleteMainMenuItem",$hasSpeedCurve);
+	
+	$item = $parent + "|teClipSpeedCurveConvertToMainMenuItem";
+	
+	//Edit the menuItem to show either Convert to speed or time warp 
+	if(`menuItem -exists $item`)
+	{
+		if($timeWarpType == 0)
+		{
+			menuItem -e -label (uiRes("m_teMainMenus.kCTEContainerConvertSpeedCurveUpdate"))
+				 -ann (uiRes("m_teMainMenus.kCTEContainerConvertSpeedCurveUpdateAnnot"))
+				 -command("teChangeSpeedCurveAndEdit(-1, 7);")
+				 -enable $hasSpeedCurve
+				 $item;
+		}
+		else if($timeWarpType == 1)
+		{
+			menuItem -e -label (uiRes("m_teMainMenus.kCTEContainerConvertTimeWarpUpdate"))
+			-ann (uiRes("m_teMainMenus.kCTEContainerConvertTimeWarpUpdateAnnot"))
+			-command("teChangeSpeedCurveAndEdit(-1, 8)")
+			-enable $hasSpeedCurve
+			$item;
+		}
+	}
+}
+
+
+////////////////////////////////////////////////////////////////////////////
+
+global proc teBuildFileMainMenu(string $editor, string $parent)
+//
+//	Description:
+//		Constructs the "File" main menu in Time Editor
+//
+{	
+	
+	menu -e -postMenuCommand("teUpdateFileMainMenu(\""+$parent+"\")") $parent;
+	
+	setParent -menu $parent;
+	
+	if (`menu -query -numberOfItems $parent` != 0) 
+		return;
+		
+	menuItem -divider true -dividerLabel (uiRes("m_teMainMenus.kContainerCreate"));
+	
+	menuItem -label (uiRes("m_teMainMenus.kCreateContainerSelection"))
+			-annotation (getRunTimeCommandAnnotation("TimeEditorCreateClip"))
+			-image "teCreateClip.png"
+			-command ("TimeEditorCreateClip");	
+			
+	menuItem -optionBox true 
+			-annotation (getRunTimeCommandAnnotation("TimeEditorCreateClipOptions"))
+			-command ("TimeEditorCreateClipOptions");
+				
+	menuItem -label (uiRes("m_teMainMenus.kCreatePoseClip"))
+			-annotation (getRunTimeCommandAnnotation("TimeEditorCreatePoseClip"))
+			-image "teCreatePose.png"
+			-command ("TimeEditorCreatePoseClip");
+	
+	menuItem -optionBox true 
+			-annotation (getRunTimeCommandAnnotation("TimeEditorCreatePoseClipOptions"))
+			-command ("TimeEditorCreatePoseClipOptions");
+
+	menuItem -divider true -dividerLabel (uiRes("m_teMainMenus.kCTEFileImport"));
+	
+		menuItem -label (uiRes("m_teMainMenus.kCreateAnimationClip"))
+				 -annotation (uiRes("m_teMainMenus.kCreateAnimationClipMayaAnnot"))
+				 -command("TimeEditorImportAnimation");
+				 
+		string $cmd = "TimeEditorCreateAudioClip";
+		menuItem -label (uiRes("m_teMainMenus.kCreateContainerAudio"))
+				 -annotation (getRunTimeCommandAnnotation($cmd))
+				 -command ($cmd);
+
+		menuItem -label (uiRes("m_teMainMenus.kCreateAnimationSource"))
+				 -annotation (uiRes("m_teMainMenus.kCreateAnimationSourceMayaAnnot"))
+				 -command("teImportAnimationSource");
+
+		
+	menuItem -divider true -dividerLabel (uiRes("m_teMainMenus.kCTEFileExport"));
+	
+		
+		menuItem -label (uiRes("m_teMainMenus.kCTEExportSelection"))
+			-annotation (getRunTimeCommandAnnotation("TimeEditorExportSelection"))
+			-command ("TimeEditorExportSelection")
+			-dragMenuCommand "performTEExport 2";
+
+		$cmd = "TimeEditorExportSelectionOpt";
+		menuItem -optionBox true 
+				-annotation (getRunTimeCommandAnnotation($cmd))
+				-command ($cmd);
+
+		menuItem -label (uiRes("m_teMainMenus.kCTEExportAllFBX"))
+			-annotation (getRunTimeCommandAnnotation("TimeEditorFbxExportAll"))
+			-command ("TimeEditorFbxExportAll")
+			-dragMenuCommand ("TimeEditorFbxExportAll");			
+		
+	menuItem -divider true;
+	
+	int $gameFbxExporterLoaded = `pluginInfo -q -loaded gameFbxExporter`;
+	
+	menuItem -label (uiRes("m_teMainMenus.kCTEOpenGameExporter"))
+			 -image "teGameExporter.png"
+			 -command("gameFbxExporter;")
+			 -enable ($gameFbxExporterLoaded)
+			 teGetGameFbxExporterMainMenuItem;
+	
+	menuItem -label (uiRes("m_teMainMenus.kCTEOpenContentBrowser"))
+			 -image "teContentBrowser.png"
+			 -command("TimeEditorOpenContentBrowser");
+			 
+	menuItem -divider true;
+	
+	int $muted = `timeEditor -q -mute`;
+	$cmd = "TimeEditorSceneAuthoringToggle";
+	menuItem -label (uiRes("m_teMainMenus.kCTEMuteTimeEditor"))
+			 -annotation (getRunTimeCommandAnnotation($cmd))
+			 -checkBox $muted
+			 -image "teMuteTimeEditor.png"
+			 -command($cmd)
+			 teMuteTimeEditorMenuItem;
+    
+    $cmd = "TimeEditorRealTimeRefreshToggle";
+    int $refresh = teIseRealTimeRefreshing();
+    menuItem -label (uiRes("m_teMainMenus.kCTEEditorRealTimeRefresh"))
+			 -annotation (getRunTimeCommandAnnotation($cmd))
+             -version "2019"
+             -checkBox $refresh
+			 -command($cmd)
+             teRealtimeRefreshTimeEditorMenuItem;
+			 
+	menuItem -divider true;
+	
+	menuItem -label (uiRes("m_teMainMenus.kCTEEditorPrefs"))
+			 -annotation (uiRes("m_teMainMenus.kCTEEditorPrefsAnnot"))
+			 -command("preferencesWnd \"animation\"");
+
+
+			 
+	$cmd = "HotkeyPreferencesWindow";
+	menuItem -label (uiRes("m_teMainMenus.kCTEEditorHotkey"))
+			 -annotation (getRunTimeCommandAnnotation($cmd))
+			 -command($cmd);
+}
+
+global proc teBuildViewMainMenu(string $editor, string $parent)
+//
+//	Description:
+//		Constructs the "View" main menu in Time Editor
+//
+{	
+	setParent -menu $parent;
+	
+	if (`menu -query -numberOfItems $parent` != 0) 
+	{
+		return;
+	}
+	
+	string $cmd = "TimeEditorFrameAll";
+	menuItem -label (uiRes("m_teMainMenus.kFrameAll")) 
+			 -annotation (getRunTimeCommandAnnotation($cmd))
+			 -image "traxFrameAll.png"
+			 -command ($cmd);
+	
+	$cmd = "TimeEditorFrameSelected";
+	menuItem -label (uiRes("m_teMainMenus.kFrameSelection")) 
+			 -annotation (getRunTimeCommandAnnotation($cmd))
+			 -command ($cmd);
+	
+	$cmd = "TimeEditorFramePlaybackRange";
+	menuItem -label (uiRes("m_teMainMenus.kFramePlaybackRange")) 
+			 -annotation (getRunTimeCommandAnnotation($cmd))
+			 -image "traxFrameRange.png"
+			 -command ($cmd);
+			
+	$cmd = "TimeEditorFrameCenterView";
+	menuItem -label (uiRes("m_teMainMenus.kCenterCurrentTime")) 
+			 -annotation (getRunTimeCommandAnnotation($cmd))
+			 -image "centerCurrentTime.png"
+			 -command ($cmd);
+	
+	menuItem -divider true -dividerLabel (uiRes("m_teMainMenus.kCTEGroupTab"));
+	
+	menuItem -label (uiRes("m_teMainMenus.kCTEGroupTabView"))
+			 -ann (uiRes("m_teMainMenus.kCTEGroupTabViewAnnot"))
+			 -command("teEditGroupTabView(-1)");
+}
+
+global proc teBuildEditMainMenu(string $editor, string $parent)
+//
+//	Description:
+//		Constructs the "Edit" main menu in Time Editor
+//
+{
+	menu -e -postMenuCommand("teUpdateEditMainMenu(\""+$parent+"\")") $parent;
+	
+	setParent -menu $parent;
+	
+	if (`menu -query -numberOfItems $parent` != 0) 
+		return;
+	
+	string $cmd = "Undo";
+	menuItem -label (uiRes("m_teMainMenus.kCTEUndo"))
+		-ecr false
+		-annotation (getRunTimeCommandAnnotation($cmd))
+		-command ($cmd) 
+		teUndoMenuItem;
+		
+	$cmd = "Redo";
+	menuItem -label (uiRes("m_teMainMenus.kCTERedo"))
+		-ecr false
+		-annotation (getRunTimeCommandAnnotation($cmd))
+		-command ($cmd)
+		teRedoMenuItem;
+		
+	menuItem -divider true;
+	
+	$cmd = "TimeEditorDeleteClips";
+	menuItem -label (uiRes("m_teMainMenus.kCTEDelete"))
+			 -annotation (getRunTimeCommandAnnotation($cmd))
+			 -command($cmd);
+			
+	$cmd = "TimeEditorCutClips";
+	menuItem -label (uiRes("m_teMainMenus.kCTECut"))
+			 -annotation (getRunTimeCommandAnnotation($cmd))
+			 -command($cmd);
+	
+	$cmd = "TimeEditorCopyClips";
+	menuItem -label (uiRes("m_teMainMenus.kCTECopyClip"))
+		 -annotation (getRunTimeCommandAnnotation($cmd))
+		 -command($cmd);
+	
+	$cmd = "TimeEditorPasteClips";
+	menuItem -label (uiRes("m_teMainMenus.kCTEPaste"))
+			 -annotation (getRunTimeCommandAnnotation($cmd))
+			 -command($cmd);
+	
+	menuItem -divider true;
+	
+	$cmd = "TimeEditorClipRazor";
+	menuItem -label (uiRes("m_teMainMenus.kCTEClipEditSplit"))
+			 -annotation (getRunTimeCommandAnnotation($cmd))
+			 -image "teSplit.png"
+			 -command( $cmd );
+	
+	menuItem -divider true;
+	
+	$cmd = "TimeEditorClipTrimStart";
+	menuItem -label (uiRes("m_teMainMenus.kCTEClipEditTrimStart"))
+			 -annotation (getRunTimeCommandAnnotation($cmd))
+			 -image "teTrimBefore.png"
+			 -command( $cmd );
+	
+	$cmd = "TimeEditorClipTrimEnd";
+	menuItem -label (uiRes("m_teMainMenus.kCTEClipEditTrimEnd"))
+			 -annotation (getRunTimeCommandAnnotation($cmd))
+			 -image "teTrimAfter.png"
+			 -command( $cmd );
+	
+	menuItem -divider true;
+	
+	$cmd = "TimeEditorClipScaleStart";
+	menuItem -label (uiRes("m_teMainMenus.kCTEClipEditScaleStart"))
+			 -annotation (getRunTimeCommandAnnotation($cmd))
+			 -command( $cmd );
+
+	$cmd = "TimeEditorClipScaleEnd";
+	menuItem -label (uiRes("m_teMainMenus.kCTEClipEditScaleEnd"))
+			 -annotation (getRunTimeCommandAnnotation($cmd))
+			 -command( $cmd );
+	
+	menuItem -divider true;
+			 
+	$cmd = "TimeEditorClipResetTiming";
+	menuItem -label (uiRes("m_teMainMenus.kCTEClipResetTiming"))
+			-annotation (getRunTimeCommandAnnotation($cmd))
+			-command ($cmd);
+				
+	menuItem -divider true -dividerLabel (uiRes("m_teMainMenus.kClipEditMode"));
+	
+	radioMenuItemCollection teClipEditModeMenuCollection;
+		$cmd = "TimeEditorClipTrimToggle";
+		menuItem -label (uiRes("m_teMainMenus.kClipEditModeTrim"))
+				 -annotation (getRunTimeCommandAnnotation($cmd))
+				 -radioButton false
+				 -command($cmd)
+				teClipEditModeTrimMainMenuItem;
+		
+		$cmd = "TimeEditorClipScaleToggle";
+		menuItem -label (uiRes("m_teMainMenus.kClipEditModeScale"))
+				 -annotation (getRunTimeCommandAnnotation($cmd))
+				 -radioButton false
+				 -command($cmd)
+				teClipEditModeScaleMainMenuItem;
+	
+		$cmd = "TimeEditorClipLoopToggle";
+		menuItem -label (uiRes("m_teMainMenus.kClipEditModeLoop"))
+				 -annotation (getRunTimeCommandAnnotation($cmd))
+				 -radioButton false
+				 -command($cmd)
+				teClipEditModeLoopMainMenuItem;
+				
+		$cmd = "TimeEditorClipHoldToggle";
+		menuItem -label (uiRes("m_teMainMenus.kClipEditModeHold"))
+				 -annotation (getRunTimeCommandAnnotation($cmd))
+				 -radioButton false
+				 -command($cmd)
+				teClipEditModeHoldMainMenuItem;
+				
+	teUpdateEditMainMenu($parent);
+}
+
+global proc teBuildTracksMainMenu(string $editor, string $parent)
+//
+//	Description:
+//		Constructs the "Tracks" main menu in Time Editor
+//
+{
+	setParent -m $parent;
+	
+	if (`menu -query -numberOfItems $parent` != 0) return;
+	
+	menuItem -d true -dividerLabel (uiRes("m_teMainMenus.kTracksCreate"));
+	
+		string $cmd = "TimeEditorCreateAnimTracksAtEnd";
+		menuItem -label (uiRes("m_teMainMenus.kTracksCreateAnimTrack"))
+				 -annotation (getRunTimeCommandAnnotation($cmd))
+				 -command ($cmd);
+
+		$cmd = "TimeEditorCreateAudioTracksAtEnd";
+		menuItem -label (uiRes("m_teMainMenus.kTracksCreateAudioTrack"))
+				 -annotation (getRunTimeCommandAnnotation($cmd))
+				 -command ($cmd);
+
+	menuItem -d true;
+	
+	$cmd = "TimeEditorDeleteSelectedTracks";
+	menuItem -label (uiRes("m_teMainMenus.kCTETrackDeleteTrack"))
+			 -annotation (getRunTimeCommandAnnotation($cmd))
+			 -command ($cmd);
+	
+	menuItem -d true -dividerLabel (uiRes("m_teMainMenus.kTracksMuteSolo"));
+	
+		$cmd = "TimeEditorMuteSelectedTracks";
+		menuItem -label (uiRes("m_teMainMenus.kTracksMuteSoloMuteSelected"))
+				 -image "teMuteOn.png"
+				 -annotation (getRunTimeCommandAnnotation($cmd))
+				 -command ($cmd);
+				 
+		$cmd = "TimeEditorUnmuteSelectedTracks";
+		menuItem -label (uiRes("m_teMainMenus.kTracksMuteSoloUnmuteSelected"))
+				 -annotation (getRunTimeCommandAnnotation($cmd))
+				 -command ($cmd);
+		
+		$cmd = "TimeEditorUnmuteAllTracks";
+		menuItem -label (uiRes("m_teMainMenus.kTracksMuteSoloUnmuteAll"))
+				 -annotation (getRunTimeCommandAnnotation($cmd))
+				 -command ($cmd);
+		
+		menuItem -d true -ld false;
+		
+		$cmd = "TimeEditorSoloSelectedTracks";
+		menuItem -label (uiRes("m_teMainMenus.kTracksMuteSoloSoloSelected"))
+				 -image "teSoloOn.png"
+				 -annotation (getRunTimeCommandAnnotation($cmd))
+				 -command ($cmd);
+		
+		$cmd = "TimeEditorAddToSoloSelectedTracks";
+		menuItem -label (uiRes("m_teMainMenus.kTracksMuteSoloAddToSoloSelected"))
+				 -annotation (getRunTimeCommandAnnotation($cmd))
+				 -command ($cmd);
+		
+		$cmd = "TimeEditorUnsoloAllTracks";
+		menuItem -label (uiRes("m_teMainMenus.kTracksMuteSoloUndoSolo"))
+				 -annotation (getRunTimeCommandAnnotation($cmd))
+				 -command ($cmd);
+}
+
+global proc teBuildContainerMainMenu(string $editor, string $parent)
+//
+//	Description:
+//		Constructs the "Container" main menu in Time Editor
+//
+{	
+	menu -e -postMenuCommand("teUpdateContainerMainMenu(\""+$parent+"\")") $parent;
+	
+	setParent -menu $parent;
+	
+	if (`menu -query -numberOfItems $parent` != 0)
+	{
+		return;
+	}
+	string $cmd = "TimeEditorCreateGroupFromSelection";
+	menuItem -label (uiRes("m_teMainMenus.kCTECreateGroup"))
+			 -annotation (getRunTimeCommandAnnotation($cmd))
+			 -image "teCreateCompound.png"
+			 -command( $cmd );
+	
+	$cmd = "TimeEditorExplodeGroup";
+	menuItem -label (uiRes("m_teMainMenus.kCTEUngroup"))
+			 -annotation (getRunTimeCommandAnnotation($cmd))
+			 -image "teExplodeCompound.png"
+			 -command($cmd);
+	
+	// ---- Layers -----
+	menuItem -divider true -dividerLabel (uiRes("m_teMainMenus.kCTELayers"));
+	
+	menuItem -label (uiRes("m_teMainMenus.kCTELayerCreateOverride"))
+			 -annotation (uiRes("m_teMainMenus.kCTELayerCreateOverrideAnnot"))
+			 -command( "TimeEditorCreateOverrideLayer" );
+	
+	menuItem -label (uiRes("m_teMainMenus.kCTELayerCreateAdditive"))
+			 -annotation (uiRes("m_teMainMenus.kCTELayerCreateAdditiveAnnot"))
+			 -command( "TimeEditorCreateAdditiveLayer" );
+	
+	menuItem -divider true;
+	
+	// Transitions
+	int $isTwoAdjClipsSelected = teIsTwoAdjClipSelected();
+	
+	menuItem -label (uiRes("m_teMainMenus.kCTEContainerCreateTransition"))
+			-ann (uiRes("m_teMainMenus.kCTEContainerCreateTransitionpAnnot"))
+			-command("timeEditorClip -e -transition")
+			-enable $isTwoAdjClipsSelected
+			teCreateTransitionMainMenuItem;
+	
+	menuItem -label (uiRes("m_teMainMenus.kCTEContainerResetTransition"))
+			-ann (uiRes("m_teMainMenus.kCTEContainerResetTransitionpAnnot"))
+			-command("timeEditorClip -e -resetTransition")
+			-enable $isTwoAdjClipsSelected
+			teResetTransitionMainMenuItem;
+	
+	menuItem -label (uiRes("m_teMainMenus.kCTEContainerEditWeightCurve"))
+			 -ann (uiRes("m_teMainMenus.kCTEContainerEditWeightCurveAnnot"))
+			 -image "teGraphWeighCurves.png"
+			 -command("teEditWeightCurve(-1, \"clipWeight\")")
+			 teGraphWeightCurveMainMenuItem;
+	
+	menuItem -divider true -dividerLabel (uiRes("m_teMainMenus.kCTERemapping"));
+	
+	
+	
+	menuItem -label (uiRes("m_teMainMenus.kCTERemapClipToNS")) 
+			 -sm true 
+			 teRemapClipToNSSubMenuMainMenuItem;
+	teBuildRemapClipToNSSubMenu(-1);
+	
+	menuItem -divider true;
+	
+	menuItem -label (uiRes("m_teMainMenus.kCTEGhostSubMenu")) 
+			 -image "teGhostOn.png" 
+			 -sm true 
+			 teGhostSubMenuMainMenuItem;
+	teBuildGhostSubMenu(-1);
+	
+	menuItem -divider true;
+	
+	menuItem -label (uiRes("m_teMainMenus.kCTEClipRenameClip"))
+			 -ann (uiRes("m_teMainMenus.kCTEClipRenameClipAnnot"))
+			 -command ("teRenameClip(-1)");
+
+	menuItem -label (uiRes("m_teMainMenus.kCTESelectDrivenObjects"))
+			 -ann (uiRes("m_teMainMenus.kCTESelectDrivenObjectsAnnot"))
+			 -command( "teSelectDrivenObjects(-1)");
+
+	menuItem -label (uiRes("m_teMainMenus.kCTEMakeAnimSourceUnique"))
+	 	     -ann (uiRes("m_teMainMenus.kCTEMakeAnimSourceUniqueAnnot"))
+	 	     -command ("teMakeAnimSourceUnique(-1)")
+	 	      teMakeAnimSourceUniqueMainMenuItem;
+	 	    teUpdateContainerMainMenu($parent);
+}
+
+global proc teBuildRelocatorMainMenu(string $editor, string $parent)
+//
+//	Description:
+//		Constructs the "Relocate" main menu in Time Editor
+//
+{
+	setParent -menu $parent;
+	
+	if (`menu -query -numberOfItems $parent` != 0)
+		return;
+	
+	menuItem -label (uiRes("m_teMainMenus.kCTEContainerCreateRelocator"))
+			 -ann (uiRes("m_teMainMenus.kCTEContainerCreateRelocatorAnnot"))
+			 -image "tePoseOffset.png"
+			 -command("teCreateRelocator(-1)");
+
+	menuItem -optionBox true
+			 -annotation("")
+			 -command("TimeEditorEditRelocatorRootsOptions(-1)");
+
+	menuItem -label (uiRes("m_teContextMenus.kCTEContainerEditRelocatorRoots"))
+			 -ann (uiRes("m_teContextMenus.kCTEContainerEditRelocatorRootsAnnot"))
+			 -command("TimeEditorEditRelocatorRootsOptions(-1)");
+	
+	menuItem -label (uiRes("m_teMainMenus.kCTEContainerSelectOffset"))
+			 -ann (uiRes("m_teMainMenus.kCTEContainerSelectOffsetAnnot"))
+			 -command("teSelectRelocator(-1)");
+			 
+	menuItem -label (uiRes("m_teMainMenus.kCTEContainerResetOffset"))
+			 -ann (uiRes("m_teMainMenus.kCTEContainerResetOffsetAnnot"))
+			 -command("teResetRelocator(-1);"); 
+	
+	menuItem -label (uiRes("m_teMainMenus.kCTEContainerRemovePose"))
+			 -ann (uiRes("m_teMainMenus.kCTEContainerRemovePoseAnnot"))
+			 -command("teDeleteRelocator(-1);");
+
+	menuItem -d true;
+	
+	menuItem -label (uiRes("m_teMainMenus.kCTEContainerMatchPoses"))
+			 -ann (uiRes("m_teMainMenus.kCTEContainerMatchPosesAnnot"))
+			 -image "teMatchPoses.png"
+			 -command("teRootOffsetOptions(2, -1)");	
+	
+}
+
+
+global proc teBuildRetimeMainMenu(string $editor, string $parent)
+//
+//	Description:
+//		Constructs the "Retime" main menu in Time Editor
+//
+{	
+	setParent -menu $parent;
+	
+	if (`menu -query -numberOfItems $parent` != 0)
+		return;
+	
+	menuItem -label (uiRes("m_teMainMenus.kCTEContainerTimeWarpCreate"))
+			 -ann (uiRes("m_teMainMenus.kCTEContainerTimeWarpCreateAnnot"))
+			 -command("teCreateAndEditTimeWarp(-1, 0)")
+			 teClipTimeWarpCreateMainMenuItem;
+			 
+	menuItem -label (uiRes("m_teMainMenus.kCTEContainerSpeedCurveCreate"))
+			 -ann (uiRes("m_teMainMenus.kCTEContainerSpeedCurveCreateAnnot"))
+			 -command("teCreateAndEditTimeWarp(-1 , 1)")
+			 teClipSpeedCurveCreateMenuItem;
+	
+	menuItem -divider true;
+	
+	
+	int $hasSpeedCurve = 0;
+	int $isWarped	   = 	0;
+	
+	menuItem -label (uiRes("m_teMainMenus.kCTEContainerSpeedCurveEnable"))
+			 -ann (uiRes("m_teMainMenus.kCTEContainerSpeedCurveEnableAnnot"))
+			 -command("teEnableDisableSpeedCurve(-1)")
+			 -enable $hasSpeedCurve
+			 -checkBox $isWarped
+			 teClipSpeedCurveEnabledMainMenuItem;
+	
+	menuItem -label (uiRes("m_teMainMenus.kCTEContainerEditSpeedCurve"))
+			 -ann (uiRes("m_teMainMenus.kCTEContainerEditSpeedCurveAnnot"))
+			 -command("teChangeSpeedCurveAndEdit(-1, -1)")
+			 -enable $hasSpeedCurve
+			 teClipSpeedCurveEditMainMenuItem;
+	
+	menuItem -label (uiRes("m_teMainMenus.kCTEContainerResetCurve"))
+			 -ann (uiRes("m_teMainMenus.kCTEContainerResetCurveAnnot"))
+			 -command("teChangeSpeedCurveAndEdit(-1, 6)")
+			 -enable $hasSpeedCurve
+			 teClipSpeedCurveResetMainMenuItem;
+	
+	menuItem -label (uiRes("m_teMainMenus.kCTEContainerDeleteCurve"))
+			 -ann (uiRes("m_teMainMenus.kCTEContainerDeleteCurveAnnot"))
+			 -command("teDeleteSpeedCurve(-1)")
+			 -enable $hasSpeedCurve
+			 teClipSpeedCurveDeleteMainMenuItem;
+			 
+	menuItem -label (uiRes("m_teMainMenus.kCTEContainerConvertTimeWarp"))
+			 -ann (uiRes("m_teMainMenus.kCTEContainerConvertTimeWarpAnnot"))
+			 -command("teChangeSpeedCurveAndEdit(-1, 8)")
+			 -enable $hasSpeedCurve
+			 teClipSpeedCurveConvertToMainMenuItem;
+
+}
+
+global proc teBuildBakeMainMenu(string $editor, string $parent)
+//
+//	Description:
+//		Constructs the "Bake" main menu in Time Editor
+//
+{
+	setParent -menu $parent;
+	
+	if (`menu -query -numberOfItems $parent` != 0)
+		return;
+	
+	menuItem -label (uiRes("m_teMainMenus.kCTEContainerBake"))
+			-ann (uiRes("m_teMainMenus.kCTEContainerBakeAnnot"))
+			-command("tePerformSmartingBakingOnSelectedClips(-1, 0)");
+	
+	menuItem -label (uiRes("m_teMainMenus.kCTEContainerBakeAndDelete"))
+			-ann (uiRes("m_teMainMenus.kCTEContainerBakeAndDeleteAnnot"))
+			-command("tePerformSmartingBakingOnSelectedClips(-1, 1)");
+	
+	menuItem -label (uiRes("m_teMainMenus.kCTEContainerBakeToScene"))
+			-ann (uiRes("m_teMainMenus.kCTEContainerBakeToSceneAnnot"))
+			-command("tePerformSmartingBakingOnSelectedClips(-1, 2)");
+		
+	menuItem -label (uiRes("m_teMainMenus.kCTEContainerBakeToSceneAndDelete"))
+			-ann (uiRes("m_teMainMenus.kCTEContainerBakeToSceneAndDeleteAnnot"))
+			-command("tePerformSmartingBakingOnSelectedClips(-1, 3)");
+	
+	menuItem -label (uiRes("m_teMainMenus.kCTEContainerMergeLayers"))
+			-ann (uiRes("m_teMainMenus.kCTEContainerMergeLayersAnnot"))
+			-command("tePerformSmartingBakingOnSelectedClips(-1, 4)");
+}
+
+global proc teBuildAnimSourceSubMenuList(string $parent, int $showNS, string $command)
+//
+//	Description:
+//		Constructs a sub-menu containing the current Animation Sources in the scene
+//
+{
+	string $items[] = `ls -type "timeEditorAnimSource"`;
+	menu -edit -deleteAllItems $parent;
+	
+	if (size($items) == 0)
+	{
+		setParent -menu $parent;
+		menuItem -label (uiRes("m_teMainMenus.kCTENoAnimSources")) -enable false;
+		return;
+	}
+	
+	for ($i = 0; $i < size($items); $i++)
+	{
+		setParent -menu $parent;
+		string $newMenuItem = `menuItem -label $items[$i] -subMenu $showNS`;		
+		if ($showNS == true)
+		{
+			menuItem -edit
+					 -postMenuCommand ("if (!`exists buildRemapAnimSourceMenu`) source OutlinerEdMenu; buildRemapAnimSourceMenu(\"" + $newMenuItem + "\", \"\", \"" + $items[$i] + "\")") 
+				     $newMenuItem;
+		}
+		else if ($command != "")
+		{
+			menuItem -edit -command ($command + "(\"" + $items[$i] + "\")") $newMenuItem;
+		}
+	}
+}
+
+global proc teEditorMenuCreateClipFromAnimSource(string $animSource)
+//
+//	Description:
+//		Creates a clip from the given Animation Source
+//
+{
+	string $destTrack = teGetTrackForClipCreation(true, 0);
+	
+	if ($destTrack != "")
+	{
+		float $startTime = `timeEditorPanel -query -activeTabTime timeEditorPanel1TimeEd`;
+		int $rootClipId	= `timeEditorPanel -query -activeTabRootClipId timeEditorPanel1TimeEd`;		
+		string $clipName = substitute("_AnimSource", $animSource, "");
+		timeEditorClip -animSource $animSource -startTime $startTime -rootClipId $rootClipId -track $destTrack $clipName;
+	}
+	else
+	{
+		error( (uiRes("m_teMainMenus.kUnableToCreateTrack")) );
+	}
+}
+
+global proc teEditorMenuApplyAnimSourceToScene(string $animSource)
+//
+//	Description:
+//		Constructs the "Animation Sources" main menu in Time Editor
+//
+{
+	timeEditorAnimSource -e -apply $animSource;
+}
+
+global proc teEditorMenuExportAnimSource(string $animSource)
+//
+//	Description:
+//		Constructs the "Animation Sources" main menu in Time Editor
+//
+{
+	string $filter = 
+		(uiRes("m_teMainMenus.kTEExportAnimSourceFileType"))  + " (*.ma);;" + 
+		(uiRes("m_teMainMenus.kTEExportANimSourceFileType2")) + " (*.mb);;" ;
+
+	// ask the user for the destination file
+	string $result[] = `fileDialog2 
+		-fileMode 0
+		-caption (uiRes("m_teMainMenus.kTEExportAnimSourceCaption"))
+		-fileFilter $filter
+		-okCaption (uiRes("m_teMainMenus.kTEExport"))`;
+		
+	if (size($result) == 1)
+	{	
+		// bake the anim source to a new one, export it and remove the copy
+		string $bakedAnimSource = `timeEditorAnimSource -e -bakeToAnimSource ($animSource + "_Export") $animSource`;
+		if ($bakedAnimSource != "")
+		{
+			timeEditorAnimSource -e -export ($result[0]) $bakedAnimSource;
+			delete $bakedAnimSource;
+		}
+	}
+}
+
+global proc teBuildAnimSourcesMainMenu(string $editor, string $parent)
+//
+//	Description:
+//		Constructs the "Animation Sources" main menu in Time Editor
+//
+{
+	if (`menu -query -numberOfItems $parent` != 0)
+		return;
+
+	setParent -menu $parent;
+	
+	menuItem -divider true -label (uiRes("m_teMainMenus.kCTEAnimSourcesDivider")) -subMenu true;
+
+	setParent -menu $parent;
+	string $teClipFromAnimSourceMenuItem = 
+			`menuItem -label (uiRes("m_teMainMenus.kCTEClipFromAnimSource"))
+			-ann (uiRes("m_teMainMenus.kCTEClipFromAnimSourceAnnot"))
+			-subMenu true`;
+	menuItem -edit -postMenuCommand ("teBuildAnimSourceSubMenuList(\"" + $teClipFromAnimSourceMenuItem + "\", false, \"teEditorMenuCreateClipFromAnimSource\")") $teClipFromAnimSourceMenuItem;
+
+	setParent -menu $parent;
+	string $teRemapAnimSourceMenuItem = 
+			`menuItem -label (uiRes("m_teMainMenus.kCTERemapAnimSource"))
+			-ann (uiRes("m_teMainMenus.kCTERemapAnimSourceAnnot"))
+			-subMenu true`;
+	menuItem -edit -postMenuCommand ("teBuildAnimSourceSubMenuList(\"" + $teRemapAnimSourceMenuItem + "\", true, \"\")") $teRemapAnimSourceMenuItem;
+			
+	setParent -menu $parent;
+	string $teApplyAnimSourceToSceneMenuItem = 
+			`menuItem -label (uiRes("m_teMainMenus.kCTEApplyAnimSourceToScene"))
+			-ann (uiRes("m_teMainMenus.kCTEApplyAnimSourceToSceneAnnot"))
+			-subMenu true`;
+	menuItem -edit -postMenuCommand ("teBuildAnimSourceSubMenuList(\"" + $teApplyAnimSourceToSceneMenuItem + "\", false, \"teEditorMenuApplyAnimSourceToScene\")") $teApplyAnimSourceToSceneMenuItem;
+	
+	setParent -menu $parent;
+	string $teExportAnimSourceMenuItem = 
+			`menuItem -label (uiRes("m_teMainMenus.kCTEExportAnimSource"))
+			-ann (uiRes("m_teMainMenus.kCTEExportAnimSourceMayaAnnot"))
+			-subMenu true`;
+	menuItem -edit -postMenuCommand ("teBuildAnimSourceSubMenuList(\"" + $teExportAnimSourceMenuItem + "\", false, \"teEditorMenuExportAnimSource\")") $teExportAnimSourceMenuItem;
+}
+
+global proc teBuildMainMenus(string $editor, string $parent, string $collectionName )
+//
+//	Description:
+//		Constructs the main in Time Editor
+//
+{	
+	string $menu;
+	
+	$menu = `menu -label (uiRes("m_teMainMenus.kFile"))
+				  -tearOff true
+				  -familyImage "menuIconView.png"
+				  -allowOptionBoxes true`;
+	menu -edit -postMenuCommand ("teBuildFileMainMenu " + $editor + " " + $menu) $menu;
+	
+	$menu = `menu -label (uiRes("m_teMainMenus.kView"))
+				  -tearOff true
+				  -familyImage "menuIconView.png"
+				  -allowOptionBoxes true`;
+	menu -edit -postMenuCommand ("teBuildViewMainMenu " + $editor + " " + $menu) $menu;
+	
+	$menu = `menu -label (uiRes("m_teMainMenus.kEdit"))
+				  -tearOff true
+				  -familyImage "menuIconView.png"
+				  -allowOptionBoxes true`;
+	menu -edit -postMenuCommand ("teBuildEditMainMenu " + $editor + " " + $menu) $menu;
+	
+	$menu = `menu -label (uiRes("m_teMainMenus.kTracks"))
+				  -tearOff true
+				  -familyImage "menuIconView.png"
+				  -allowOptionBoxes true`;
+	menu -edit -postMenuCommand ("teBuildTracksMainMenu " + $editor + " " + $menu) $menu;
+	
+	$menu = `menu -label (uiRes("m_teMainMenus.kContainer"))
+				  -tearOff true
+				  -familyImage "menuIconView.png"
+				  -allowOptionBoxes true`;
+	menu -edit -postMenuCommand ("teBuildContainerMainMenu " + $editor + " " + $menu) $menu;
+	
+	$menu = `menu -label (uiRes("m_teMainMenus.kRetime"))
+				  -tearOff true
+				  -familyImage "menuIconView.png"
+				  -allowOptionBoxes true`;
+	menu -edit -postMenuCommand ("teBuildRetimeMainMenu " + $editor + " " + $menu+"; teUpdateRetimeMainMenu "+$menu) $menu;
+	
+	$menu = `menu -label (uiRes("m_teMainMenus.kRelocate"))
+				  -tearOff true
+				  -familyImage "menuIconView.png"
+				  -allowOptionBoxes true`;
+	menu -edit -postMenuCommand ("teBuildRelocatorMainMenu " + $editor + " " + $menu) $menu;
+	
+	$menu = `menu -label (uiRes("m_teMainMenus.kBake"))
+				  -tearOff true
+				  -familyImage "menuIconView.png"
+				  -allowOptionBoxes true`;
+	menu -edit -postMenuCommand ("teBuildBakeMainMenu " + $editor + " " + $menu) $menu;
+
+	$menu = `menu -label (uiRes("m_teMainMenus.kAnimSourcesMenu"))
+				  -tearOff true
+				  -familyImage "menuIconView.png"
+				  -allowOptionBoxes true`;
+	menu -edit -postMenuCommand ("teBuildAnimSourcesMainMenu " + $editor + " " + $menu) $menu;
+	
+	setParent -menu ..;
+}
+
+global proc teMainMenus(string $editor) 
+//
+//	Description:
+//		Sets up all menus in Time Editor
+//
+{
+	// Load in the common menu elements library
+	//
+	loadAnimMenuLibrary;
+	
+	string $collectionNameMenu	= "Menu";
+	string $collectionNamePopup = "Popup";
+	string $parent				= "TEEditorMenu";
+	
+	teBuildMainMenus $editor $parent $collectionNameMenu;
+	
+	// create popup menu
+	string $popupMenuName = ($editor + "PopupMenu");
+	if (!`popupMenu -exists $popupMenuName`)
+	{
+		popupMenu
+			-parent $editor
+			-postMenuCommand ("teContextMenus " + $editor + " " + $popupMenuName + " " + $collectionNamePopup)
+			$popupMenuName;
+	}
+}

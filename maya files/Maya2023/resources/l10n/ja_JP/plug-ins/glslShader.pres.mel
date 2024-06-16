@@ -1,0 +1,84 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+// Resources for Plug-in: glslShader
+// 
+// ----------------------------
+// Registered string resources:
+// ----------------------------
+setPluginResource( "glslShader", "kActionChoose", "ボタン アクションを選択:");
+setPluginResource( "glslShader", "kActionEdit", "アクション定義を編集");
+setPluginResource( "glslShader", "kActionEditorClose", "閉じる");
+setPluginResource( "glslShader", "kActionEditorCommands", "コマンド");
+setPluginResource( "glslShader", "kActionEditorCreate", "作成");
+setPluginResource( "glslShader", "kActionEditorDelete", "削除");
+setPluginResource( "glslShader", "kActionEditorDescription", "説明");
+setPluginResource( "glslShader", "kActionEditorImageFile", "イメージ ファイル");
+setPluginResource( "glslShader", "kActionEditorInsertVariable", "変数を挿入:");
+setPluginResource( "glslShader", "kActionEditorName", "名前");
+setPluginResource( "glslShader", "kActionEditorSave", "保存");
+setPluginResource( "glslShader", "kActionEditorTitle", "GLSLShader ツール ボタン エディタ");
+setPluginResource( "glslShader", "kActionEmptyCommand", "LMB: 何もしません。空のコマンドです。  RMB: このボタンで実行する操作を選択してください。");
+setPluginResource( "glslShader", "kActionNew", "新しいアクション...");
+setPluginResource( "glslShader", "kActionNewAnnotation", "新しいアクションをこのメニューに追加します");
+setPluginResource( "glslShader", "kActionNotAssigned", "LMB: 何もしません。割り当てられていません。  RMB: このボタンで実行する操作を選択してください。");
+setPluginResource( "glslShader", "kActionNothing", "(なし)");
+setPluginResource( "glslShader", "kActionNothingAnnotation", "ボタンは何もしません。割り当てられていません。");
+setPluginResource( "glslShader", "kAmbient", "アンビエント");
+setPluginResource( "glslShader", "kDiagnostics", "診断");
+setPluginResource( "glslShader", "kEditAnnotationLNX", "指定のエディタでシェーダ ファイルを編集");
+setPluginResource( "glslShader", "kEditAnnotationMAC", "TextEdit でシェーダ ファイルを編集");
+setPluginResource( "glslShader", "kEditAnnotationWIN", "シェーダ ファイルに関連付けられているアプリケーションを使用して編集");
+setPluginResource( "glslShader", "kEditCommandLNX", "この機能を使用する前にコマンドを設定してください。");
+setPluginResource( "glslShader", "kEditTool", "編集");
+setPluginResource( "glslShader", "kEffectFiles", "エフェクト ファイル");
+setPluginResource( "glslShader", "kErrorFileNotFound", "エフェクト ファイル \"^1s\" が見つかりません。");
+setPluginResource( "glslShader", "kErrorLoadingEffect", "エフェクト ファイル \"^1s\" のロード中にエラーが発生しました:\n\n^2s\n\n^3s");
+setPluginResource( "glslShader", "kErrorRegisterNodeType", "FilePathEditor に ^1s を登録できませんでした");
+setPluginResource( "glslShader", "kInvalidGLSLShader", "無効な GLSLShader ノード: ^1s");
+setPluginResource( "glslShader", "kLightBinding", "ライトのバインド");
+setPluginResource( "glslShader", "kLightConnectionExplicitTip", "Maya のシーンのライトとそのパラメータをエフェクト ファイルで定義されたライトに明示的にバインドします。");
+setPluginResource( "glslShader", "kLightConnectionImplicit", "自動バインド");
+setPluginResource( "glslShader", "kLightConnectionImplicitNone", "なし");
+setPluginResource( "glslShader", "kLightConnectionImplicitTip", "Maya はシーンのライトとパラメータをエフェクト ファイルで定義されたライトに自動的にバインドします。");
+setPluginResource( "glslShader", "kLightConnectionNone", "シェーダ設定を使用");
+setPluginResource( "glslShader", "kLightConnectionNoneTip", "Maya のライトを無視し、エフェクト ファイル内の設定を使用します。");
+setPluginResource( "glslShader", "kNiceNodeName", "GLSL シェーダ");
+setPluginResource( "glslShader", "kNoneDefined", "何も定義されていません");
+setPluginResource( "glslShader", "kNotALight", "ライトではありません: ^1s");
+setPluginResource( "glslShader", "kPrefDefaultEffectFile", "既定のエフェクト ファイル");
+setPluginResource( "glslShader", "kPrefFileOpen", "開く");
+setPluginResource( "glslShader", "kPrefGLSLShaderPanel", "GLSL シェーダのプリファレンス");
+setPluginResource( "glslShader", "kPrefGLSLShaderTab", "    GLSL シェーダ");
+setPluginResource( "glslShader", "kPrefSaveMsg", "プリファレンスを保存");
+setPluginResource( "glslShader", "kPrefSavePrefsOrNotMsg", "GLSLShader プラグインにより、[プリファレンス]ウィンドウがリフレッシュされます。[プリファレンス]ウィンドウに行った変更内容を保存しますか?");
+setPluginResource( "glslShader", "kReloadAnnotation", "シェーダ ファイルを再ロード");
+setPluginResource( "glslShader", "kReloadTool", "リロード");
+setPluginResource( "glslShader", "kShader", "シェーダ");
+setPluginResource( "glslShader", "kShaderFile", "シェーダ ファイル");
+setPluginResource( "glslShader", "kShaderParameters", "パラメータ");
+setPluginResource( "glslShader", "kSurfaceData", "サーフェス データ");
+setPluginResource( "glslShader", "kTechnique", "テクニック");
+setPluginResource( "glslShader", "kTechniqueTip", "fx ファイル内で定義されたレンダリング テクニックから選択します。");
+setPluginResource( "glslShader", "kUnknownConnectableLight", "不明な接続可能ライト: ^1s");
+setPluginResource( "glslShader", "kUnknownSceneObject", "不明なシーン オブジェクト: ^1s");
+setPluginResource( "glslShader", "kUnknownUIGroup", "不明な UI グループ: ^1s");
+// 
+// --------------------------
+// Registered node resources:
+// --------------------------
+// 
+// Node: GLSLShader
+// 
+setNodeNiceNameResource( "GLSLShader", "GLSL シェーダ" );
+setAttrNiceNameResource( "GLSLShader", "s", "シェーダ" );
+setAttrNiceNameResource( "GLSLShader", "ep", "エフェクト パラメータ" );
+setAttrNiceNameResource( "GLSLShader", "t", "テクニック" );
+setAttrNiceNameResource( "GLSLShader", "ts", "テクニック" );
+setAttrNiceNameResource( "GLSLShader", "desc", "説明" );
+setAttrNiceNameResource( "GLSLShader", "diag", "診断" );
+setAttrNiceNameResource( "GLSLShader", "linfo", "ライト情報" );

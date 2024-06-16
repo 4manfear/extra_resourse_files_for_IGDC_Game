@@ -1,0 +1,36 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:	Oct 16, 1997
+//
+//  Procedure Name:
+//	AEpoleVectorConstraintTemplate
+//
+//  Description Name;
+//	Creates the attribute editor controls for the poleVectorConstraint Node
+//
+//  Input Value:
+//	nodeName 
+//
+//  Output Value:
+//	None
+// 
+
+
+global proc AEpoleVectorConstraintTemplate ( string $nodeName )
+{
+	// The poleVectorConstraint is exactly like pointConstraint with
+	// one extra attribute, pivotSpace.  However, pivotSpace is a
+	// matrix and we want to suppress it.  So, create the
+	// pointConstraint template and then suppress the pivotSpace.
+	//
+	AEpointConstraintTemplate $nodeName;
+
+	editorTemplate -suppress "pivotSpace";
+}

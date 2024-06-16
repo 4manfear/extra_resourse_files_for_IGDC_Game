@@ -1,0 +1,85 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+///////////////////////////////////////////////////////////////////////////////
+//
+//  Description:
+//  Attribute editor template layout for polyMirror nodes
+//
+///////////////////////////////////////////////////////////////////////////////
+
+global proc checkPolyMirrorMergeMode( string $nodeName )
+{
+	if( `objExists $nodeName` == 0 )
+		return;
+			
+	string $nodeAttr = $nodeName + ".mergeMode";
+    int $value = `getAttr $nodeAttr`;
+
+	if( $value != 1 )
+	{
+		editorTemplate -dimControl $nodeName "mergeThreshold" true;
+		editorTemplate -dimControl $nodeName "smoothingAngle" true;
+	}
+	else
+	{
+		editorTemplate -dimControl $nodeName "mergeThreshold" false;
+		editorTemplate -dimControl $nodeName "smoothingAngle" false;
+	}
+}
+
+global proc checkMirrorAxisPosition( string $nodeName )
+{
+	if( `objExists $nodeName` == 0 )
+		return;
+			
+	string $nodeAttr = $nodeName + ".mirrorAxis";
+    int $value = `getAttr $nodeAttr`;
+	
+	if( $value == 0 )
+		editorTemplate -dimControl $nodeName "axisDirection" false;
+	else
+		editorTemplate -dimControl $nodeName "axisDirection" true;
+}
+
+global proc AEpolyMirrorTemplate(string $nodeName)
+{
+	editorTemplate -beginScrollLayout;
+	editorTemplate -beginLayout (uiRes("m_AEpolyMirrorTemplate.kPolygonMirrorAttributes")) -collapse 0;
+
+	editorTemplate -suppress "pivot";
+	editorTemplate -label (uiRes("m_AEpolyMirrorTemplate.kMirrorCutGeometry")) -addControl "cutMesh";
+	editorTemplate -label (uiRes("m_AEpolyMirrorTemplate.kMirrorAxisPosition")) -addControl "mirrorAxis" "checkMirrorAxisPosition";
+	editorTemplate -label (uiRes("m_AEpolyMirrorTemplate.kMirrorOffset")) -addControl "mirrorPosition";
+	editorTemplate -label (uiRes("m_AEpolyMirrorTemplate.kMirrorAxis")) -addControl "axis";
+	editorTemplate -label (uiRes("m_AEpolyMirrorTemplate.kMirrorAxisDirection")) -addControl "axisDirection";
+
+	editorTemplate -label (uiRes("m_AEpolyMirrorTemplate.kMergeVerticesType")) -addControl "mergeMode" "checkPolyMirrorMergeMode";
+	editorTemplate -label (uiRes("m_AEpolyMirrorTemplate.kMergeThreshold"))  -addControl "mergeThreshold";
+	editorTemplate -addControl "smoothingAngle";
+	editorTemplate -addControl "flipUVs";
+
+	editorTemplate -endLayout;
+
+	AEpolyModifierInclude $nodeName;
+
+	editorTemplate -suppress "inputComponents";
+	editorTemplate -suppress "direction";
+	editorTemplate -suppress "cutMesh";
+	editorTemplate -suppress "userSpecifiedPivot";
+	editorTemplate -suppress "mergeThresholdType";
+	editorTemplate -suppress "worldSpace";
+	editorTemplate -suppress "mirrorPlaneCenter";
+	editorTemplate -suppress "mirrorPlaneRotate";
+
+	editorTemplate -suppress "firstNewFace";
+	editorTemplate -suppress "lastNewFace";
+	editorTemplate -suppress "keepVertexIDs";
+
+	editorTemplate -addExtraControls;
+	editorTemplate -endScrollLayout;
+}

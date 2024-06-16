@@ -1,0 +1,256 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+// Creation Date:  13 April 1997
+//
+//
+//  Procedure Name:
+//      DynParticlesMenu
+//
+//  Description:
+//		Create the DYNAMICS->nParticles
+//
+//  Input Arguments:
+//      parent to parent the menu to.
+//
+//  Return Value:
+//      None.
+//
+
+source spriteWizard.mel;
+
+global proc string styleLabel()
+{
+	string $styleLabel = (uiRes("m_DynParticlesMenu.kStyle"));
+	string $style = `optionVar -query NParticleStyle`;
+	$styleLabel = ( $styleLabel + ": " + $style );
+	return ( $styleLabel );
+}
+
+global proc updateNParticleStyleMenu( string $parent )
+{
+	optionVar -init false -category "Dynamics.nParticles" -sv NParticleStyle "Points";
+	string $style = `optionVar -query NParticleStyle`;
+
+	setParent -m $parent;
+
+	if(`menuItem -exists  NParticleStylePointsItem`) {
+		menuItem -e -checkBox ($style == "Points") NParticleStylePointsItem;
+	}
+	if(`menuItem -exists  NParticleStyleBallsItem`) {
+		     menuItem -e -checkBox ($style == "Balls") NParticleStyleBallsItem;
+	}
+	if(`menuItem -exists  NParticleStyleCloudItem`) {
+		     menuItem -e -checkBox ($style == "Cloud") NParticleStyleCloudItem;
+	}
+	if(`menuItem -exists  NParticleStyleTHickCloudItem`) {
+		     menuItem -e -checkBox ($style == "ThickCloud") NParticleStyleThickCloudItem;
+	}
+	if(`menuItem -exists  NParticleStyleWaterItem`) {
+		     menuItem -e -checkBox ($style == "Water") NParticleStyleWaterItem;
+	}
+
+	setParent -m ..;
+}
+
+global proc NParticlesCreateOptions( string $parent )
+{
+	optionVar -init false -category "Dynamics.nParticles" -sv NParticleStyle "Points";
+	string $style = `optionVar -query NParticleStyle`;
+
+	menuItem -l (uiRes("m_DynParticlesMenu.kNParticlesCreateOptions")) -sm true -to true -pmc( "updateNParticleStyleMenu " + $parent );
+
+		menuItem -divider true -dividerLabel (uiRes("m_DynParticlesMenu.kCreateOptDefPartType"));
+		
+		radioMenuItemCollection;
+		menuItem -rtc "NParticleStylePoints"
+			-radioButton ($style == "Points")
+			NParticleStylePointsItem;
+
+		menuItem -rtc "NParticleStyleBalls"
+			-radioButton ($style == "Balls")
+			NParticleStyleBallsItem;
+
+		menuItem -rtc "NParticleStyleCloud"
+			-radioButton ($style == "Cloud")
+			NParticleStyleCloudItem;
+
+		menuItem -rtc "NParticleStyleThickCloud"
+			-radioButton ($style == "ThickCloud")
+			NParticleStyleThickCloudItem;		
+
+		menuItem -rtc "NParticleStyleWater"
+			-radioButton ($style == "Water")
+			NParticleStyleWaterItem;
+		
+		setParent -m ..;
+}
+
+proc DynParticleLegacyMenuItems() {
+	menuItem -divider true -dividerLabel (uiRes("m_DynParticlesMenu.kLegacyParticles"));
+	
+	menuItem
+		-rtc "CreateEmitter" 
+		-dragMenuCommand "performDynamics 1 Emitter 2"
+		createEmitterItem;
+		menuItem -optionBox true
+			-rtc "CreateEmitterOptions"
+			createEmitterDialogItem;
+
+	menuItem 
+		-rtc "CreateSpring"
+		-dragMenuCommand "performDynamics 2 Spring 2"
+		createLegacySpringItem;
+		menuItem -optionBox true
+			-rtc "CreateSpringOptions"
+			createLegacySpringDialogItem;
+
+	menuItem 
+		 -rtc "EmitFromObject"
+		 -dragMenuCommand "performDynamics 0 Emitter 2"
+		 addEmitterItem;
+		menuItem -optionBox true
+			-rtc "EmitFromObjectOptions"
+			addEmitterDialogItem;
+
+	menuItem 
+		-rtc "MakeCollide" 
+		-dragMenuCommand "performDynamics 0 Collision 2"
+		addCollisionItem;
+		menuItem -optionBox true 
+			-rtc "MakeCollideOptions"
+			addCollisionDialogItem;		
+
+	menuItem
+		-rtc "ParticleTool" 
+		particlesCreateItem;
+		menuItem -optionBox true
+			-rtc "ParticleToolOptions" 
+			particlesCreateDialogItem;
+
+	menuItem
+		-rtc "CreateSoftBody"
+		-dragMenuCommand "performDynamics 2 Soft 2"
+		 createSoftBodyItem;
+		menuItem -optionBox true 
+			-rtc "CreateSoftBodyOptions"
+			createSoftBodyDialogItem;
+}
+
+global proc DynParticlesMenu( string $parent )
+{
+	setParent -menu $parent;
+	if( `menu -query -numberOfItems $parent` != 0 ) {
+		//
+		//	Menu is built already - just return
+		//
+		return;
+	}
+	
+	menuItem -divider true -dividerLabel (uiRes("m_DynParticlesMenu.kPartCreate"));
+	
+	menuItem 
+		-rtc "ParticleFill"
+		-dmc "performParticleFill 2"
+		-ddc "ParticleFillOptions"
+		 nParticleFillItem;
+		menuItem -optionBox true
+			-rtc "ParticleFillOptions";
+
+	menuItem 
+		-rtc "nucleusGetnParticleExample";
+	
+	menuItem
+		-rtc "Goal" 
+		-dragMenuCommand "performDynamics 0 Goal 2"
+		addGoalItem;
+		menuItem -optionBox true
+			-rtc "GoalOptions"
+			addGoalDialogItem;
+	
+    menuItem
+        -rtc "ParticleInstancer"
+        -dragMenuCommand "performDynamics 0 ParticleInstancer 2"
+        nParticleInstancerItem;
+        menuItem -optionBox true 
+            -rtc "ParticleInstancerOptions"
+            nParticleInstancerDialogItem;
+	
+	menuItem
+		-rtc "NParticleTool" 
+		nParticlesCreateItem;
+		menuItem -optionBox true 
+			-rtc "NParticleToolOptions" 
+			nParticlesCreateDialogItem;
+	
+	menuItem
+		-version 2016
+		-rtc "CreateNSoftBody"
+		-dragMenuCommand "performDynamics 2 NSoft 2"
+		nParticlesSoftBodyItem;
+		menuItem -optionBox true
+			-rtc "CreateNSoftBodyOptions"
+			nParticlesSoftBodyOptionItem;
+
+        menuItem -rtc "PaintSoftWeights" softBodyPaintItem;
+                menuItem -optionBox true
+                    -rtc "PaintSoftWeightsOptions" 
+                    softBodyPaintDialogItem;
+
+			
+	menuItem
+		-rtc "CreateSpring"
+		-dragMenuCommand "performDynamics 2 Spring 2"
+		createSpringItem;
+		menuItem -optionBox true 
+			-rtc "CreateSpringOptions"
+			createSpringDialogItem;
+	
+	// Create Options submenu
+	NParticlesCreateOptions $parent;
+		
+	menuItem -divider true -dividerLabel (uiRes("m_DynParticlesMenu.kPartEmit"));
+	
+	menuItem
+	-rtc "NCreateEmitter" 
+	-dragMenuCommand "performDynamics 1 nEmitter 2"
+	createNEmitterItem;
+	menuItem -optionBox true
+		-rtc "NCreateEmitterOptions"
+		createNEmitterDialogItem;
+	
+	menuItem
+		 -rtc "NEmitFromObject"
+		 -dragMenuCommand "performDynamics 0 nEmitter 2"
+		 addNEmitterItem;
+		menuItem -optionBox true 
+			-rtc "NEmitFromObjectOptions"
+			addNEmitterDialogItem;
+
+	menuItem
+		 -rtc "PerPointEmissionRates"
+		 addNPPItem;
+
+	menuItem   
+		-rtc "UseSelectedEmitter"
+		connNEmitItem;
+
+	menuItem -divider true -dividerLabel (uiRes("m_DynParticlesMenu.kPartEditors"));
+
+    menuItem
+		-rtc "ParticleCollisionEvents" 
+		eventEdWinItem;
+
+    menuItem -rtc "PartSpriteWizard"
+        nSpriteWizardItem;
+
+	if(`getenv "MAYA_ENABLE_LEGACY_PARTICLES"` !="0") {
+		DynParticleLegacyMenuItems;
+	}
+}

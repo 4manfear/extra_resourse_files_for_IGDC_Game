@@ -1,0 +1,441 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc modelingToolkitLoadCallbackProc( string $pluginName ) 
+{
+	if($pluginName == "modelingToolkit")
+	{
+		MTsetToggleMenuItem;
+	}
+}
+
+global proc PolygonsBuildToolsMenu( string $parent )
+//
+// Description:
+//		Modeling Mesh Tools menu (which is also the legacy Polygons Mesh Tools menu)
+//
+{
+	if (! `isTrue "PolygonsExists"`) return;
+
+	setParent -m $parent; 
+
+	if (`menu -q -ni $parent` != 0) {
+
+		MTsetToggleMenuItem;
+
+		// Else build all UI
+	}else{
+
+		menuItem
+			-rtc "ToggleModelingToolkit"
+			-version "2014"
+			ToggleModelingToolkitMenuItem;
+
+		menuItem -divider true -dividerLabel (uiRes("m_PolygonsBuildToolsMenu.kToolsDivider"));
+
+			string $cmd = "AppendToPolygonTool";
+			menuItem
+				-ddc "setToolTo polyAppendFacetContext ; polyAppendFacetCtx -e -pc `optionVar -q polyKeepFacetsPlanar` polyAppendFacetContext; toolPropertyWindow"
+				-dmc "polygonsMenuItemToShelf \"setToolTo polyAppendFacetContext ; polyAppendFacetCtx -e -pc `optionVar -q polyKeepFacetsPlanar` polyAppendFacetContext\""
+				-rtc $cmd appendItem;
+
+				$cmd = "AppendToPolygonToolOptions";
+				menuItem -optionBox 1 -i "polyAppendFacet.png" 
+					-annotation (getRunTimeCommandAnnotation($cmd))
+					-ecr false 
+					-c $cmd appendOptionItem;
+
+			menuItem
+				-rtc "EnterConnectTool"
+				-dragDoubleClickCommand "dR_connectTool; toolPropertyWindow;"
+				MTKConnectTool;
+
+				menuItem
+					-annotation (uiRes("m_PolygonsBuildToolsMenu.kMTKConnectToolOptions"))
+					-command "dR_connectTool; toolPropertyWindow;"
+					-optionBox 1
+					-image "connect_NEX32.png" 
+					;
+
+			menuItem
+				-rtc "PolyCreaseTool" 
+				-enableCommandRepeat 1 
+				;
+
+				menuItem
+					-label (uiRes("m_PolygonsBuildToolsMenu.kCreaseToolOptions"))
+					-annotation (getRunTimeCommandAnnotation("PolyCreaseToolOptions"))
+					-command "PolyCreaseToolOptions" 
+					-optionBox 1
+					-enableCommandRepeat 1
+					-image "polyCrease.png" 
+					;
+
+			$cmd = "CreatePolygonTool";
+			menuItem 
+				-rtc $cmd 
+				-dragDoubleClickCommand "setToolTo polyCreateFacetContext ; polyCreateFacetCtx -e -pc `optionVar -q polyKeepFacetsPlanar` polyCreateFacetContext; toolPropertyWindow"
+				-dragMenuCommand "polygonsMenuItemToShelf \"setToolTo polyCreateFacetContext ; polyCreateFacetCtx -e -pc `optionVar -q polyKeepFacetsPlanar` polyCreateFacetContext\""
+				;
+				
+				$cmd = "CreatePolygonToolOptions";
+				menuItem -optionBox true 
+					-annotation (getRunTimeCommandAnnotation($cmd))
+					-image "polyCreateFacet.png" 
+					-command $cmd 
+					;
+			
+			menuItem
+				-rtc "SplitEdgeRingTool"
+				-dragDoubleClickCommand "InsertEdgeLoopToolOptions"
+				;
+
+				menuItem -optionBox true
+					-annotation (getRunTimeCommandAnnotation("SplitEdgeRingToolOptions"))
+					-image "polySplitEdgeRing.png" 
+					-command "SplitEdgeRingToolOptions" 
+					;
+
+			menuItem
+				-rtc "MakeHoleTool"
+				-dragDoubleClickCommand "MakeHoleToolOptions"
+				;
+
+				menuItem -optionBox true
+					-annotation (getRunTimeCommandAnnotation("MakeHoleToolOptions"))
+					-image "polyMergeFacet.png" 
+					-command "MakeHoleToolOptions"
+					;
+
+			menuItem
+				-version "2015"
+				-rtc "MultiCutTool"
+				-dragDoubleClickCommand "dR_multiCutTool; toolPropertyWindow;"
+				MTKMultiCutTool;
+
+				menuItem
+					-annotation (uiRes("m_PolygonsBuildToolsMenu.kMTKMultiCutToolOptions"))
+					-command "dR_multiCutTool;  toolPropertyWindow;" 
+					-optionBox 1
+					-image "multiCut_NEX32.png" 
+					;
+
+			$cmd = "DuplicateEdges";
+			menuItem
+				-rtc $cmd
+				-dragMenuCommand "performPolyDuplicateEdge 2"
+				-dragDoubleClickCommand "DuplicateEdgesOptions"
+				EditPolygonDuplicateEdgesItem
+				;
+
+				$cmd = "DuplicateEdgesOptions";
+				menuItem -optionBox true
+					-annotation (getRunTimeCommandAnnotation($cmd))
+					-image "polyDuplicateEdgeLoop.png" 
+					-command $cmd
+					EditPolygonDuplicateEdgesOptionsItem
+					;
+
+			menuItem
+				-rtc "PaintReduceWeightsTool"
+				-dragDoubleClickCommand "PaintReduceWeightsToolOptions"
+				;
+
+				menuItem -optionBox true
+					-annotation (getRunTimeCommandAnnotation("PaintReduceWeightsToolOptions"))
+					-image "polyReduce.png" 
+					-command "PaintReduceWeightsToolOptions" 
+					;
+
+			menuItem -rtc "PaintTransferAttributes" wtPaintTransferItem;
+			
+				menuItem -optionBox true 
+					-annotation (uiRes("m_PolygonsBuildToolsMenu.kPaintTransferAttributesWeightsToolOptionAnnot1")) 
+					-image "polyTransferAttributesWeights.png"
+					-command "artAttrToolScript 3 \"transferAttributes\"" wtPaintTransferDialogItem;
+
+			menuItem
+				-rtc "QuadDrawTool" 
+				-dragDoubleClickCommand "dR_quadDrawTool; toolPropertyWindow;" 
+				MTKQuadDrawTool;
+
+				menuItem
+					-annotation (uiRes("m_PolygonsBuildToolsMenu.kMTKQuadDrawToolOptions"))
+					-command "dR_quadDrawTool; toolPropertyWindow;" 
+					-optionBox 1
+					-image "quadDraw_NEX32.png" 
+					;
+
+			menuItem -label (uiRes("m_PolygonsBuildToolsMenu.kPolySculptTools")) 
+				-version "2016"
+				-subMenu 1
+				-allowOptionBoxes true 
+				-tearOff 1
+				-annotation (uiRes("m_PolygonsBuildToolsMenu.kPolySculptToolsAnn"))
+				;
+
+				menuItem
+					-rtc    ("SetMeshSculptTool")
+					-dragDoubleClickCommand ("ShowMeshSculptToolOptions");
+
+					menuItem -optionBox 1 
+						-image     "Sculpt.png"
+						-annotation `getRunTimeCommandAnnotation("ShowMeshSculptToolOptions")`
+						-enableCommandRepeat false 
+						-command    "ShowMeshSculptToolOptions" ;
+
+				menuItem
+					-rtc    ("SetMeshSmoothTool")
+					-dragDoubleClickCommand ("ShowMeshSmoothToolOptions");
+
+					menuItem -optionBox 1 
+						-image     "Smooth.png"
+						-annotation `getRunTimeCommandAnnotation("ShowMeshSmoothToolOptions")`
+						-enableCommandRepeat false 
+						-command    "ShowMeshSmoothToolOptions" ;
+
+				menuItem
+					-rtc    ("SetMeshRelaxTool")
+					-dragDoubleClickCommand ("ShowMeshRelaxToolOptions");
+
+					menuItem -optionBox 1 
+						-image     "Relax.png"
+						-annotation `getRunTimeCommandAnnotation("ShowMeshRelaxToolOptions")`
+						-enableCommandRepeat false 
+						-command    "ShowMeshRelaxToolOptions" ;
+
+				menuItem
+					-rtc    ("SetMeshGrabTool")
+					-dragDoubleClickCommand ("ShowMeshGrabToolOptions");
+
+					menuItem -optionBox 1 
+						-image     "Grab.png"
+						-annotation `getRunTimeCommandAnnotation("ShowMeshGrabToolOptions")`
+						-enableCommandRepeat false 
+						-command    "ShowMeshGrabToolOptions" ;
+
+				menuItem
+					-rtc    ("SetMeshPinchTool")
+					-dragDoubleClickCommand ("ShowMeshPinchToolOptions");
+
+					menuItem -optionBox 1 
+						-image     "Pinch.png"
+						-annotation `getRunTimeCommandAnnotation("ShowMeshPinchToolOptions")`
+						-enableCommandRepeat false 
+						-command    "ShowMeshPinchToolOptions" ;
+
+				menuItem
+					-rtc    ("SetMeshFlattenTool")
+					-dragDoubleClickCommand ("ShowMeshFlattenToolOptions");
+
+					menuItem -optionBox 1 
+						-image     "Flatten.png"
+						-annotation `getRunTimeCommandAnnotation("ShowMeshFlattenToolOptions")`
+						-enableCommandRepeat false 
+						-command    "ShowMeshFlattenToolOptions" ;
+
+				menuItem
+					-rtc    ("SetMeshFoamyTool")
+					-dragDoubleClickCommand ("ShowMeshFoamyToolOptions");
+
+					menuItem -optionBox 1 
+						-image     "Foamy.png"
+						-annotation `getRunTimeCommandAnnotation("ShowMeshFoamyToolOptions")`
+						-enableCommandRepeat false 
+						-command    "ShowMeshFoamyToolOptions" ;
+
+				menuItem
+					-rtc    ("SetMeshSprayTool")
+					-dragDoubleClickCommand ("ShowMeshSprayToolOptions");
+
+					menuItem -optionBox 1 
+						-image     "Spray.png"
+						-annotation `getRunTimeCommandAnnotation("ShowMeshSprayToolOptions")`
+						-enableCommandRepeat false 
+						-command    "ShowMeshSprayToolOptions" ;
+
+				menuItem
+					-rtc    ("SetMeshRepeatTool")
+					-dragDoubleClickCommand ("ShowMeshRepeatToolOptions");
+
+					menuItem -optionBox 1 
+						-image     "Repeat.png"
+						-annotation `getRunTimeCommandAnnotation("ShowMeshRepeatToolOptions")`
+						-enableCommandRepeat false 
+						-command    "ShowMeshRepeatToolOptions" ;
+
+				menuItem
+					-rtc    ("SetMeshImprintTool")
+					-dragDoubleClickCommand ("ShowMeshImprintToolOptions");
+
+					menuItem -optionBox 1 
+						-image     "Imprint.png"
+						-annotation `getRunTimeCommandAnnotation("ShowMeshImprintToolOptions")`
+						-enableCommandRepeat false 
+						-command    "ShowMeshImprintToolOptions" ;
+
+				menuItem
+					-rtc    ("SetMeshWaxTool")
+					-dragDoubleClickCommand ("ShowMeshWaxToolOptions");
+
+					menuItem -optionBox 1 
+						-image     "Wax.png"
+						-annotation `getRunTimeCommandAnnotation("ShowMeshWaxToolOptions")`
+						-enableCommandRepeat false 
+						-command    "ShowMeshWaxToolOptions" ;
+
+				menuItem
+					-rtc    ("SetMeshScrapeTool")
+					-dragDoubleClickCommand ("ShowMeshScrapeToolOptions");
+
+					menuItem -optionBox 1 
+						-image     "Scrape.png"
+						-annotation `getRunTimeCommandAnnotation("ShowMeshScrapeToolOptions")`
+						-enableCommandRepeat false 
+						-command    "ShowMeshScrapeToolOptions" ;
+
+				menuItem
+					-rtc    ("SetMeshFillTool")
+					-dragDoubleClickCommand ("ShowMeshFillToolOptions");
+
+					menuItem -optionBox 1 
+						-image     "Fill.png"
+						-annotation `getRunTimeCommandAnnotation("ShowMeshFillToolOptions")`
+						-enableCommandRepeat false 
+						-command    "ShowMeshFillToolOptions" ;
+
+				menuItem
+					-rtc    ("SetMeshKnifeTool")
+					-dragDoubleClickCommand ("ShowMeshKnifeToolOptions");
+
+					menuItem -optionBox 1 
+						-image     "Knife.png"
+						-annotation `getRunTimeCommandAnnotation("ShowMeshKnifeToolOptions")`
+						-enableCommandRepeat false 
+						-command    "ShowMeshKnifeToolOptions" ;
+
+				menuItem
+					-rtc    ("SetMeshSmearTool")
+					-dragDoubleClickCommand ("ShowMeshSmearToolOptions");
+
+					menuItem -optionBox 1 
+						-image     "Smear.png"
+						-annotation `getRunTimeCommandAnnotation("ShowMeshSmearToolOptions")`
+						-enableCommandRepeat false 
+						-command    "ShowMeshSmearToolOptions" ;
+
+				menuItem
+					-rtc    ("SetMeshBulgeTool")
+					-dragDoubleClickCommand ("ShowMeshBulgeToolOptions");
+
+					menuItem -optionBox 1 
+						-image     "Bulge.png"
+						-annotation `getRunTimeCommandAnnotation("ShowMeshBulgeToolOptions")`
+						-enableCommandRepeat false 
+						-command    "ShowMeshBulgeToolOptions" ;
+
+				menuItem
+					-rtc    ("SetMeshAmplifyTool")
+					-dragDoubleClickCommand ("ShowMeshAmplifyToolOptions");
+
+					menuItem -optionBox 1 
+						-image     "Amplify.png"
+						-annotation `getRunTimeCommandAnnotation("ShowMeshAmplifyToolOptions")`
+						-enableCommandRepeat false 
+						-command    "ShowMeshAmplifyToolOptions" ;
+
+				menuItem
+					-rtc    ("SetMeshFreezeTool")
+					-dragDoubleClickCommand ("ShowMeshFreezeToolOptions");
+
+					menuItem -optionBox 1 
+						-image     "Freeze.png"
+						-annotation `getRunTimeCommandAnnotation("ShowMeshFreezeToolOptions")`
+						-enableCommandRepeat false 
+						-command    "ShowMeshFreezeToolOptions" ;
+
+				menuItem -divider true -dividerLabel (uiRes("m_PolygonsBuildToolsMenu.kShapeDivider"));
+
+				menuItem
+					-version "2017"
+					-rtc    ("SetMeshSmoothTargetTool")
+					-dragDoubleClickCommand ("ShowMeshSmoothTargetToolOptions");
+
+					menuItem -optionBox 1 
+						-image     "SmoothTarget.png"
+						-annotation `getRunTimeCommandAnnotation("ShowMeshSmoothTargetToolOptions")`
+						-version "2017"
+						-enableCommandRepeat false 
+						-command    "ShowMeshSmoothTargetToolOptions" ;
+
+				menuItem
+					-version "2017"
+					-rtc    ("SetMeshCloneTargetTool")
+					-dragDoubleClickCommand ("ShowMeshCloneTargetToolOptions");
+
+					menuItem -optionBox 1 
+						-image     "CloneTarget.png"
+						-annotation `getRunTimeCommandAnnotation("ShowMeshCloneToolOptions")`
+						-version "2017"
+						-enableCommandRepeat false 
+						-command    "ShowMeshCloneTargetToolOptions" ;
+
+				menuItem
+					-version "2017"
+					-rtc    ("SetMeshMaskTool")
+					-dragDoubleClickCommand ("ShowMeshMaskToolOptions");
+
+					menuItem -optionBox 1 
+						-image     "Mask.png"
+						-annotation `getRunTimeCommandAnnotation("ShowMeshMaskToolOptions")`
+						-version "2017"
+						-enableCommandRepeat false 
+						-command    "ShowMeshMaskToolOptions" ;
+
+				menuItem
+					-version "2017"
+					-rtc    ("SetMeshEraseTool")
+					-dragDoubleClickCommand ("ShowMeshEraseToolOptions");
+
+					menuItem -optionBox 1 
+						-image     "Erase.png"
+						-annotation `getRunTimeCommandAnnotation("ShowMeshEraseToolOptions")`
+						-version "2017"
+						-enableCommandRepeat false 
+						-command    "ShowMeshEraseToolOptions" ;
+
+			setParent -m ..;
+
+			menuItem
+				-rtc "SlideEdgeTool"
+				-dragDoubleClickCommand "SlideEdgeToolOptions"
+				;
+
+				menuItem -optionBox true
+					-annotation (getRunTimeCommandAnnotation("SlideEdgeToolOptions"))
+					-image "slideEdgeTool.png"
+					-command "SlideEdgeToolOptions"
+					;
+
+			menuItem
+				-rtc "MergeVertexTool" 
+				-dragDoubleClickCommand "MergeVertexToolOptions"
+				MTKTargetWeldTool;
+
+				menuItem
+					-label (uiRes("m_PolygonsBuildToolsMenu.kMTKTargetWeldToolOptions"))
+					-annotation (getRunTimeCommandAnnotation("MergeVertexToolOptions"))
+					-command "MergeVertexToolOptions"
+					-optionBox 1
+					-image "weld_NEX32.png" 
+					;
+
+		MTsetToggleMenuItem;
+		loadPlugin -addCallback("modelingToolkitLoadCallbackProc");
+		unloadPlugin -addCallback("modelingToolkitLoadCallbackProc");
+	}
+}

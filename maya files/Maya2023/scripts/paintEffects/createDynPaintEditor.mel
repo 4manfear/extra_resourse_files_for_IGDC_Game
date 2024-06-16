@@ -1,0 +1,20 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+{
+    window;
+    showWindow;
+    string $formName = `formLayout`;
+    string $editorName = `dynPaintEditor -p $formName -newImage 200 300 1.0 0.2 0.1`;
+    formLayout -e -attachForm $editorName "top"0 
+                -attachForm $editorName "left"0 
+                -attachForm $editorName "right"0 
+                -attachForm $editorName "bottom"0 
+                $formName;
+    // dynPaintCtx
+    // setToolTo dynPaintCtx1
+}

@@ -1,0 +1,189 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+proc register(string $key, string $value){
+    catchQuiet(registerPluginResource("Type", $key, $value));
+}
+
+global proc typeToolInitStrings()
+{
+	// AEsetComponentsTemplate.mel
+	register("kSetSelectionLbl", "Set Selection");
+
+	// AEshellDeformerTemplate.mel
+	register("kTransformLbl", "Transform");
+	register("kStepLbl", "Step");
+	register("kPivotsLbl", "Pivots");
+
+	// AEvectorExtrudeTemplate.mel
+	register("kExtrudeLbl", "Extrude");
+	register("kBevelLbl", "Bevel");
+
+	// convertTypeCapsToCurves.mel
+	register("kSelectTypeError", "Please select a Type node.");
+
+	// createTypeFalloffCurve.mel
+	register("kSnapToGrid", "Snap to grid");
+	register("kOpenCurveEditorAnn", "Open the curve editor in a separate window");
+	register("kResetCurveAnn", "Reset curve in curve editor");
+	register("kProfilesLbl", "Profiles");
+	register("kCustomProfilesLbl", "Custom Profiles");
+	register("kSaveCurveAnn", "Save curve in curve editor as a custom profile");
+	register("kNoSaveSlotError", "No available save slot");
+	register("kCurveEditorLbl", "Curve Editor");
+
+	// typeUtilityScripts.mel
+	register("kSelectTypeOrSVGError", "Please select a Type or SVG node");
+	register("kSelectOnlyTypeOrSVGError", "Please only select a Type and/or SVG nodes");
+
+	// typeMoveTool.mel
+	register("kWarningLabel", "Warning: ");
+	register("kAnimWarning", "Type Manipulation works best when Animation mode is deactivated.");
+
+	/*
+	register("kLbl", "");
+	getPluginResource("Type", "")
+
+	register("kLbl", "");
+	getPluginResource("Type", "")
+
+	register("kLbl", "");
+	getPluginResource("Type", "")
+
+	register("kLbl", "");
+	getPluginResource("Type", "")
+
+	register("kLbl", "");
+	getPluginResource("Type", "")
+
+	*/
+	// typeManipulatorToolScript.mel
+	register("kTypeManipPropLbl", "Type Manipulator Properties");
+	register("kTranslateLbl", "Translate");
+	register("kScaleLbl", "Scale");
+	register("kManipModeLbl", "Manipulator Mode");
+	register("kResetManipsLbl", "Reset Manipulations");
+	register("kResetManipsAnn", "Reset current manipulations");
+	register("kResetAllManipsAnn", "Reset all manipulations");
+	register("kCurrentLbl", "Current");
+	register("kAllLbl", "All");
+
+	// AEsvgToPolyTemplate.mel
+	register("kSVGAnimLbl", "Animate");
+	register("kSVGDisplayPivotPointsLbl", "Display Pivot Points");
+	register("kSVGEnableBackBevelLbl", "Enable Back Bevel");
+	register("kSVGEnableExtrusionLbl", "Enable Extrusion");
+	register("kSVGEnableFrontBevelLbl", "Enable Bevel");
+	register("kSVGEnableOuterBevelLbl", "Enable Outer Bevel");
+	register("kSVGRandomiseDelayLbl", "Randomise Delay");
+	register("kSVGReverseOrderLbl", "Reverse Order");
+	register("kSVGUseFrontBevelLbl", "Use Front Bevel");
+	register("kSVGRotateLbl", "Rotate");
+	register("kSVGScaleLbl", "Scale");
+	register("kSVGTranslateLbl", "Translate");
+	register("kSVGDelayFramesLbl", "Delay Frames");
+	register("kSVGRandomSeedLbl", "Random Seed");
+	register("kSVGXPivotLbl", "X Pivot");
+	register("kSVGYPivotLbl", "Y Pivot");
+	register("kSVGZPivotLbl", "Z Pivot");
+	register("kSVGClearManipulationsLbl", "Reset All");
+	register("kSVGClearManipulationsTooltipLbl", "Reset position and scale manipulations for all paths");
+	register("kSVGPasteError", "SVG: Nothing to paste.");
+	register("kSVGOffsetZLbl", "Position Z Offset");
+	register("kSVGScaleZLbl", "Scale Z");
+	register("kSVGZLbl", "Z");
+	register("kSVGAnimationPivotsLbl", "Animation Pivots");
+	register("kSVGBackBevelLbl", "Back Bevel");
+	register("kSVGBevelsLbl", "Bevels");
+	register("kSVGDeformableMeshLbl", "Deformable Mesh");
+	register("kSVGDelayLbl", "Delay");
+	register("kSVGExtrusionLbl", "Extrusion");
+	register("kSVGFrontBevelLbl", "Bevel");
+	register("kSVGManipulationsLbl", "Manipulations");
+	register("kSVGOuterBevel2Lbl", "Outer Bevel");
+	register("kSVGPasteLbl", "Paste");
+	register("kSVGPasteSVGLbl", "Paste an SVG in by clicking this button");
+	register("kSVGCreateCurvesLbl", "Create Curves from SVG");
+	register("kSVGConvertSilhouetteLbl", "Create NURBS Curves from SVG paths");
+	register("kSVGImportLbl", "Import");
+	register("kSVGImportSVGLbl", "Import an SVG in by clicking this button");
+	register("kSVGSetKeysLbl", "Set Keys");
+	register("kAutoUpdateOnSetKey", "Auto Update On Set Key");
+	register("kSVGSetKeysToolTipLbl", "Set keys for Translate, Rotate and Scale");
+	register("kSVGRefreshLbl", "Refresh");
+	register("kSVGRefreshFileLbl", "Refresh File");
+	register("kSVGSpotlight1Lbl", "spotlight");
+	register("kSVGCreateSingleShaderLbl", "Create a single shader for Caps, Bevels and Extrusions.");
+	register("kSVGSpotlight2Lbl", "spotlight");
+	register("kSVGAssignSeparateShadersLbl", "Assign seperate shaders to Caps, Bevels and Extrusions.");
+	register("kSVGBlinnLbl", "blinn");
+	register("kSVGLambertLbl", "lambert");
+	register("kSVGPhongLbl", "phong");
+	register("kSVGPhoneELbl", "phongE");
+	register("kSVGRampShaderLbl", "rampShader");
+	register("kSVGDefaultShaderLbl", "Default Shader");
+	register("kSVGShowHiddenPathsLbl", "Show Hidden Paths");
+	register("kSVGPathNameLbl", "Path");
+	register("kSVGNotImplementedLbl", "Currently not implimented");
+	register("kSVGBevelStyleLbl", "Bevel Style:");
+	register("kSVGOuterBevel1Lbl", "Outer Bevel");
+	register("kSVGInnerBevel1Lbl", "Inner Bevel");
+	register("kSVGOffsetsLbl", "SVG Offsets");
+	register("kSVGLbl", "SVG");
+	register("kSVGSizeLbl", "SVG Size");
+	register("kSVGCurveResolutionLbl", "Curve Resolution");
+	register("kSVGFilterCollinearLbl", "Filter Collinear Points");
+	register("kSVGCollinearAngleLbl", "Collinear Angle");
+	register("kSVGDistanceLbl", "Distance");
+	register("kSVGDeleteCapsLbl", "Delete Caps");
+	register("kSVGOutputVertexColorsLbl", "Output Vertex Colors");
+	register("kSVGFilterByDistanceLbl", "Filter by Distance");
+	register("kSVGDeformableCheckLbl", "Deformable Mesh");
+	register("kSVGMaxEdgeDivLbl", "Max Edge Divisions");
+	register("kSVGMaxEdgeLenLbl", "Max Edge Length");
+	register("kSVGMaxRefineThreshLbl", "Refine Threshold");
+	register("kSVGReduceThreshLbl", "Reduce Threshold");
+	register("kSVGMaxTriangleCountLbl", "Max Triangle Count");
+	register("kSVGGlobalZOffsetLbl", "Global Z Offset");
+	register("kSVGFractionalOffsetLbl", "Fractional Offset");
+	register("kSVGExtrudeDistance1Lbl", "Extrude Distance");
+	register("kSVGExtrudeOffset1Lbl", "Extrude Offset");
+	register("kSVGExtrudeDivisions1Lbl", "Extrude Divisions");
+	register("kSVGBevelDistanceLbl", "Bevel Distance");
+	register("kSVGBevelDivisionsLbl", "Bevel Divisions");
+	register("kSVGBevelOffsetLbl", "Bevel Offset");
+	register("kSVGCapsShaderLbl", "Caps Shader");
+	register("kSVGBevelShaderLbl", "Bevel Shader");
+	register("kSVGExtrudeShaderLbl", "Extrude Shader");
+	register("kSVGShaderLbl", "SVG Shader");
+	register("kSVGLocalRotationPivotLbl", "Local Rotation Pivot");
+	register("kSVGLocalScalePivotLbl", "Local Scale Pivot");
+	register("kSVGSVGLbl", "SVG");
+	register("kSVGGeometryLbl", "Geometry");
+	register("kSVGTexturingLbl", "Texturing");
+	register("kSVGAnimationLbl", "Animation");
+	register("kSVGStoredLbl", "Stored");
+	register("kSVGPleaseLbl", "Please paste or import an SVG");
+	register("kSVGEmptyLbl", "Empty");
+	register("kSVGAttributesLbl", "SVG Attributes");
+	register("kSVGMeshSettingsLbl", "Mesh Settings");
+    register("kUseViewBox", "Use Artboard");
+    register("kUseViewBoxAnn", "Scale based on the Artboard / View Box size.");
+
+	register("kTypeToolCharacterLbl", "Character");
+	register("kTypeToolWordLbl", "Word");
+	register("kTypeToolLineLbl", "Line");
+
+	//register("kLbl", "");
+	//getPluginResource("Type", "")
+
+	loadPluginLanguageResources("Type", "Type.pres.mel");
+}
+
+// To use:
+//  Init here:  registerPluginResource("Type", "kTestString", "Localized string");
+// Use in MEL:  getPluginResource("Type", "kTestString")

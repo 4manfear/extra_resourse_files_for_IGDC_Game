@@ -1,0 +1,137 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+// Creation Date:  13 April 1997
+//
+//
+//  Procedure Name:
+//      RenRenderMenu
+//
+//  Description:
+//		Create the RENDERING->Render menu
+//
+//  Input Arguments:
+//      parent to parent the menu to.
+//
+//  Return Value:
+//      None.
+//
+
+// Description:  This procedure is for update ReRenderMenu.
+//
+global proc updateReRenderMenu(string $parent)
+{
+    string $oldParent = `setParent -query`;
+
+    setParent -m $parent;
+    string $currentRenderLayer = currentRenderLayerLabel();
+
+    // Show the render layer name if there is more than one render
+    // layer.
+    //
+    string $renderUsingLabel = (uiRes("m_RenRenderMenu.kRenderUsing"));
+    if ($currentRenderLayer != "")
+    {
+        string $formatString = (uiRes("m_RenRenderMenu.kRenderThisLayerUsing"));
+        $renderUsingLabel = `format -s $currentRenderLayer $formatString`;
+    }
+    
+	menuItem -edit
+		-label $renderUsingLabel 
+		("renMenuRenderUsingItemMenuItem");
+    
+    setParent $oldParent;
+}
+
+//
+// Description: Called when user opens the main render menu.
+//				This procedure calls the render menu building UI specific to the current
+//				renderer.
+//	Returns:	None
+//
+global proc RenRenderMenu( string $parent )
+{
+	setParent -m $parent;
+
+	if( `menu -q -ni $parent` != 0 ) {
+        updateMayaRenderMenu($parent);
+		return;
+	}
+
+	// Render Settings
+	menuItem -d true -dividerLabel (uiRes("m_RenRenderMenu.kRenderSettings"));
+	
+	string $annotation = getRunTimeCommandAnnotation("RenderGlobalsWindow");
+	menuItem -label (uiRes("m_RenRenderMenu.kRenderRenderSettings"))
+		-annotation $annotation
+		-c unifiedRenderGlobalsWindow
+		RenRenderSettingsItem;
+	
+	//....
+	// Create submenu to allow for renderer selection
+    //
+	menuItem
+		-annotation (uiRes("m_RenRenderMenu.kRenderUsingAnnotation"))
+		-subMenu				true
+		("renMenuRenderUsingItemMenuItem");
+    updateReRenderMenu($parent);
+    scriptJob -event renderLayerManagerChange ("updateReRenderMenu "+$parent);
+
+	menuItem
+		-edit
+		-postMenuCommand
+			("buildRenderMenuRenderUsingSubmenu renMenuRenderUsingItemMenuItem")
+		("renMenuRenderUsingItemMenuItem");
+
+    // Build the pulldown render menu.
+    //
+    mayaRenderMenu($parent);
+
+	setParent -m $parent;
+
+
+}
+
+// Description:	Builds the "Render Using" submenu that allows the user to select
+//				from the available renderers
+//	Returns: 	None
+//
+global proc buildRenderMenuRenderUsingSubmenu(string $subMenuName)
+{
+	popupMenu -e -deleteAllItems $subMenuName;
+	setParent -m $subMenuName;
+
+	string $renderers[] = `renderer -query -namesOfAvailableRenderers`;
+	int $isCurrent  = 0;
+	string $funcName = "";
+	string $rendererUIName = "";
+
+	radioMenuItemCollection	("renderWindowRenderUsingCollection" + $subMenuName);
+	
+	for ($i = 0; $i < size($renderers); $i += 1)
+	{
+		if($renderers[$i] == currentRenderer())
+		{
+			$isCurrent = 1;
+		}
+		else
+		{
+			$isCurrent = 0;
+		}
+
+		$funcName = "setCurrentRenderer " + $renderers[$i];
+		$rendererUIName = `renderer -query -rendererUIName $renderers[$i]`; 
+
+		menuItem -label $rendererUIName  			 
+             -radioButton 			$isCurrent
+			 -collection			("renderWindowRenderUsingCollection" + $subMenuName)
+			 -c  $funcName
+			 ("renderUsingItemSubMenu" + $i);
+	}
+}

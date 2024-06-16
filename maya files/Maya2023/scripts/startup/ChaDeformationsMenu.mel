@@ -1,0 +1,769 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//  Procedure Name:
+//      ChaDeformationsMenu
+//
+//  Description:
+//      Create the Deformations menu
+//
+//  Input Arguments:
+//      name of parent menu to append items to
+//
+//  Return Value:
+//      None
+//
+
+proc makeMuscleMenu(string $parent)
+{
+	// The deform menu  available in both Modeling and Rigging menu sets
+
+	// If the muscle plugin is not loaded, bail.
+	int $isLoaded = `pluginInfo -q -loaded "MayaMuscle"`;
+	if (!$isLoaded)
+		return;
+
+	// Determine the target parent to insert Muscle menu
+	global string $gRigDeformationsMenu;
+	global string $gMainDeformMenu;
+	if ($parent == "MayaWindow|mainRigDeformationsMenu")
+	{
+		if (!(`menuItem -q -exists cRigMuscleMenu`))
+			buildMuscleMenu($parent, "cRigMuscleMenu");
+	}
+	else if($parent == "MayaWindow|mainDeformMenu")
+	{
+		if (!(`menuItem -q -exists cModMuscleMenu`))
+			buildMuscleMenu($parent, "cModMuscleMenu");
+	}
+	else if ($parent == "MayaWindow|mainDeformationMenu" )
+	{
+		if (!(`menuItem -q -exists cAnimMuscleMenu`))
+			buildMuscleMenu($parent, "cAnimMuscleMenu");
+	}
+}
+
+proc makeCurveWarpMenuItem(string $parent)
+{
+	int $isLoaded = `pluginInfo -query -loaded "curveWarp"`;
+
+
+	string $name = "curveWarpItem";
+	if ($parent == "MayaWindow|mainRigDeformationsMenu")
+	{
+		$name = "curveWarpItemRig";
+	}
+	else if($parent == "MayaWindow|mainDeformMenu")
+	{
+		$name = "curveWarpItemMod";
+	}
+	else if ($parent == "MayaWindow|mainDeformationMenu" )
+	{
+		$name = "curveWarpItemAnim";
+
+	}
+
+	int $menuItemExists = `menuItem -q -exists $name`;
+
+	if (!$isLoaded && $menuItemExists)
+	{
+		deleteUI -mi  $name;
+	}
+	else if ($isLoaded && !$menuItemExists){
+
+		string $insertAfterItem;
+		if (`menuItem -q -exists "clusterDialogItem"`)
+		{
+			$insertAfterItem = "clusterDialogItem";
+		}
+		else
+		{
+			$insertAfterItem = "blendShapeDialogItem";
+		}
+
+		menuItem -rtc "CurveWarp"
+				-version 2017
+				-insertAfter $insertAfterItem
+				$name;
+				setParent -menu ..;
+
+	}
+}
+
+proc DeformMenuCreateSection(string $parent, int $dimWhenNoSelect)
+{
+	menuItem -divider true -dividerLabel  (uiRes("m_ChaDeformationsMenu.kDeformCreate"));
+
+	string $cmd = "CreateBlendShape";
+	menuItem 
+		-rtc $cmd
+		blendShapeItem;
+		$cmd = "CreateBlendShapeOptions";
+		menuItem -optionBox true 
+			-annotation (getRunTimeCommandAnnotation($cmd))
+			-image "blendShape.png"
+			-command $cmd
+			blendShapeDialogItem;
+
+	$cmd = "CreateCluster";
+	menuItem 
+		-rtc $cmd clusterItem;
+		$cmd = "CreateClusterOptions";
+		menuItem -optionBox true 
+			-annotation (getRunTimeCommandAnnotation($cmd))
+			-image "cluster.png"
+			-command $cmd 
+			clusterDialogItem;
+
+	makeCurveWarpMenuItem($parent);
+	
+
+	$cmd = "DeltaMush";
+	menuItem 
+		-version 2016
+		-rtc $cmd;
+		$cmd = "DeltaMushOptions";
+		menuItem -optionBox true
+			-annotation (getRunTimeCommandAnnotation($cmd))
+			-image "deltaMush.png"
+			-command $cmd;
+
+	$cmd = "Tension";
+	menuItem 
+        -version 2017
+		-rtc "Tension";
+		$cmd = "TensionOptions";
+		menuItem -optionBox true
+			-annotation (getRunTimeCommandAnnotation($cmd))
+			-image "tension.png"
+			-command $cmd;
+
+	$cmd = "Solidify";
+	menuItem 
+        -version 2022
+		-rtc "Solidify";
+		$cmd = "SolidifyOptions";
+		menuItem -optionBox true
+			-annotation (getRunTimeCommandAnnotation($cmd))
+			-image "solidify.png"
+			-command $cmd;
+
+	$cmd = "CreateLattice";
+	menuItem 
+		-rtc $cmd latticeItem;
+		$cmd = "CreateLatticeOptions";
+		menuItem -optionBox true 
+			-annotation (getRunTimeCommandAnnotation($cmd))
+			-image "lattice.png"
+			-command $cmd 
+			latticeDialogItem;
+
+    $cmd = "ProximityWrap";
+    menuItem
+        -version 2020
+        -rtc "ProximityWrap";
+	    $cmd = "ProximityWrapOptions";
+	    menuItem -optionBox true
+	        -annotation (getRunTimeCommandAnnotation($cmd))
+	        -image "proximityWrap.png"
+	        -command $cmd;
+
+	$cmd = "CreateWrap";
+	menuItem
+		-rtc $cmd;
+		$cmd = "CreateWrapOptions";
+		menuItem -optionBox true
+			-image "wrap.png"
+			-annotation (getRunTimeCommandAnnotation($cmd))
+			-command $cmd;
+
+	$cmd = "CreateShrinkWrap";
+	menuItem
+		-version 2015
+		-rtc $cmd;
+		$cmd = "CreateShrinkWrapOptions";
+		menuItem -optionBox true
+			-image "shrinkwrap.png"
+			-annotation (getRunTimeCommandAnnotation($cmd))
+			-version 2015
+			-command $cmd
+			createShrinkWrapOptionsItem;
+
+    $cmd = "Morph";
+    menuItem
+        -version 2022
+        -rtc "Morph";
+        $cmd = "MorphOptions";
+        menuItem -optionBox true
+            -annotation (getRunTimeCommandAnnotation($cmd))
+            -image "morph.png"
+            -command $cmd;
+
+	$cmd = "WireTool";
+	menuItem
+			-rtc $cmd wireCtxItem;
+		$cmd = "WireToolOptions";
+		menuItem -optionBox true -image "wire.png"
+			-annotation (getRunTimeCommandAnnotation($cmd))
+			-command $cmd 
+			wireCtxDialogItem;
+
+	$cmd = "WrinkleTool";
+	menuItem
+		-rtc $cmd 
+		wrinkleCtxItem;
+		$cmd = "WrinkleToolOptions";
+		menuItem -optionBox true  -image "wrinkle.png"
+			-annotation (getRunTimeCommandAnnotation($cmd))
+			-command $cmd
+			wrinkleCtxDialogItem;
+
+	menuItem -label (uiRes("m_ChaDeformationsMenu.kPoseSpaceDeformation"))
+		-subMenu true 
+		-tearOff true 
+		-version 2017 
+		poseSpaceDeformationItem;
+
+		menuItem -rtc "CreatePoseInterpolator"
+			-version 2017;
+			menuItem -optionBox true
+				-rtc "CreatePoseInterpolatorOptions"
+				-version 2017;
+
+		$cmd = "PoseEditor";
+		menuItem -rtc $cmd
+			-version 2017;
+
+	setParent -menu ..;
+
+	// Note: Muscle menu will be inserted here when the Muscle plugin loads. See cMuscle.mel for detail.
+	//       That file defines a fixed anchor point based on the version of Maya. 
+	//       Regular Maya uses wrinkleCtxDialogItem while Maya LT uses createShrinkWrapOptionsItem.
+	//
+	// Please be careful if these menu items are changed, Muscle menu will be affected.
+	// Deferring some menuItems in Edit menu for Fur plugin
+	//
+	makeMuscleMenu($parent);
+
+	menuItem -divider true;
+
+	menuItem -label (uiRes("m_ChaDeformationsMenu.kCreateNonlinear")) -aob true -subMenu true -tearOff true nonlinItem;
+
+		$cmd = "Bend";
+		menuItem 
+			-rtc $cmd;
+			$cmd = "BendOptions";
+			menuItem -optionBox true
+				-image "bendNLD.png"
+				-annotation (getRunTimeCommandAnnotation($cmd))
+				-command $cmd;
+
+		$cmd = "Flare";
+		menuItem
+			-rtc $cmd;
+			$cmd = "FlareOptions";
+			menuItem -optionBox true
+				-image "flareNLD.png"
+				-annotation (getRunTimeCommandAnnotation($cmd))
+				-command $cmd;
+
+		$cmd = "Sine";
+		menuItem
+			-rtc $cmd;
+			$cmd = "SineOptions";
+			menuItem -optionBox true
+				-image "sineNLD.png"
+				-annotation (getRunTimeCommandAnnotation($cmd))
+				-command $cmd;
+
+		$cmd = "Squash";
+		menuItem
+			-rtc $cmd;
+			$cmd = "SquashOptions";
+			menuItem -optionBox true
+				-image "squashNLD.png"
+				-annotation (getRunTimeCommandAnnotation($cmd))
+				-command $cmd;
+
+		$cmd = "Twist";
+		menuItem
+			-rtc $cmd;
+			$cmd = "TwistOptions";
+			menuItem -optionBox true
+				-image "twistNLD.png"
+				-annotation (getRunTimeCommandAnnotation($cmd))
+				-command $cmd;
+
+		$cmd = "Wave";
+		menuItem 
+			-rtc $cmd;
+			$cmd = "WaveOptions";
+			menuItem -optionBox true
+				-image "waveNLD.png"
+				-annotation (getRunTimeCommandAnnotation($cmd))
+				-command $cmd;
+
+	setParent -menu ..;
+
+	$cmd = "SoftModTool";
+	menuItem
+		-rtc $cmd softModItem;
+		$cmd = "SoftModToolOptions";
+		menuItem -optionBox true
+			-annotation (getRunTimeCommandAnnotation($cmd))
+			-image "softMod.png"
+			-command $cmd
+			softModDialogItem;
+
+	$cmd = "CreateSculptDeformer";
+	menuItem 
+		-rtc $cmd sculptItem;
+		$cmd = "CreateSculptDeformerOptions";
+		menuItem -optionBox true 
+			-annotation (getRunTimeCommandAnnotation($cmd))
+			-image "sculpt.png"
+			-command $cmd 
+			sculptDialogItem;
+
+	$cmd = "CreateTextureDeformer";
+	menuItem
+		-version 2015
+		-rtc $cmd textureDeformerItem;
+		$cmd = "CreateTextureDeformerOptions";
+		menuItem -optionBox true 
+			-annotation (getRunTimeCommandAnnotation($cmd))
+			-version 2015
+			-image "textureDeformer.png"
+			-command $cmd 
+			textureDeformerDialogItem;
+
+
+	menuItem -l (uiRes("m_ChaDeformationsMenu.kCreateJiggle")) -subMenu true -to 1  ;
+
+		$cmd = "CreateJiggleDeformer";
+		menuItem 
+			-rtc $cmd jiggleItem;
+			$cmd = "CreateJiggleOptions";
+			menuItem -optionBox true 
+				-annotation (getRunTimeCommandAnnotation($cmd))
+				-image "jiggleDeformer.png"
+				-command $cmd
+				jiggleDialogItem;
+
+		$cmd = "CreateDiskCache";
+		menuItem 
+			-rtc $cmd;
+			$cmd = "CreateDiskCacheOptions";
+			menuItem -optionBox true
+				-annotation (getRunTimeCommandAnnotation($cmd))
+				-image "jiggleCache.png"
+				-command $cmd;
+
+		$cmd = "GlobalDiskCacheControl";
+		menuItem 
+			-rtc $cmd;
+
+		setParent -m ..;
+
+	$cmd = "PointOnCurve";
+	menuItem 
+		-rtc $cmd 
+		-dmc "performPointCurveConstraint 2" 
+		pointCurveConstraintItem;
+		$cmd = "PointOnCurveOptions";
+		menuItem -optionBox true 
+			-annotation (getRunTimeCommandAnnotation($cmd))
+			-image "ptPosCrvConstraint.png"
+			-command $cmd pointCurveConstraintDialogItem;
+	if ($dimWhenNoSelect)
+		dimWhen -f "SomethingSelected" ($parent+"|pointCurveConstraintItem");
+
+	$cmd = "AddTweak";
+	menuItem
+        -version 2022
+		-rtc $cmd
+		addTweakItem;
+
+	//if ($dimWhenNoSelect)
+		dimWhen -f "SomethingSelected" ($parent+"|addTweakItem");
+}
+
+proc DeformMenuEditSection(string $parent, int $dimWhenNoSelect)
+{
+	menuItem -divider true -dividerLabel  (uiRes("m_ChaDeformationsMenu.kDeformEdit"));
+
+	// Artisan Paint Blendshape tool
+	menuItem -label (uiRes("m_ChaDeformationsMenu.kEditBlendShape"))  -aob true -subMenu true -tearOff true;
+
+		string $cmd = "AddBlendShape";
+		menuItem
+			-rtc $cmd;
+			$cmd = "AddBlendShapeOptions";
+			menuItem -optionBox true 
+				-annotation (getRunTimeCommandAnnotation($cmd))
+				-image "blendShapePlus.png"
+				-command $cmd;
+			
+		$cmd = "RemoveBlendShape";
+		menuItem
+			-rtc $cmd;
+			$cmd = "RemoveBlendShapeOptions";
+			menuItem -optionBox true
+				-annotation (getRunTimeCommandAnnotation($cmd))
+				-image "removeBlendShape.png"
+				-command $cmd;
+			
+		$cmd = "SwapBlendShape";
+		menuItem
+			-rtc $cmd;
+			$cmd = "SwapBlendShapeOptions";
+			menuItem -optionBox true
+				-annotation (getRunTimeCommandAnnotation($cmd))
+				-image "swapBlendShape.png"
+				-command $cmd;
+			
+		$cmd = "BakeTopologyToTargets";
+		menuItem 
+			-rtc $cmd bakeTopologyToTargetsItem;
+			
+		menuItem
+			-rtc "EditNormalizationGroups" editNormalizationGroupsItem;
+
+	setParent -m ..;
+
+	menuItem -label (uiRes("m_ChaDeformationsMenu.kEditLattice"))  -subMenu true -to true;
+
+		menuItem
+			-rtc "RemoveLatticeTweaks" resetLatticeTweaksItem;
+		if ($dimWhenNoSelect)
+			dimWhen -f "SomethingSelected" resetLatticeTweaksItem;
+
+		$cmd = "ResetLattice";
+		menuItem
+			-rtc $cmd resetLatticeItem;
+		if ($dimWhenNoSelect)
+			dimWhen -f "SomethingSelected" resetLatticeItem;
+
+	setParent -m ..;
+
+	menuItem -label (uiRes("m_ChaDeformationsMenu.kEditWrap"))  -aob true -subMenu true -tearOff true;
+
+		$cmd = "AddWrapInfluence";
+		menuItem
+			-rtc $cmd;
+
+		$cmd = "RemoveWrapInfluence";
+		menuItem
+			-rtc $cmd;
+
+	setParent -m ..;
+
+	menuItem -rtc "ProximityWrapEdit";
+
+	menuItem -label (uiRes("m_ChaDeformationsMenu.kEditShrinkWrap")) -aob true -subMenu true -tearOff true -version 2015;
+
+		$cmd = "AddShrinkWrapSurfaces";
+		menuItem 
+			-rtc $cmd;
+
+		$cmd = "RemoveShrinkWrapInnerObject";
+		menuItem 
+			-rtc $cmd;
+
+		$cmd = "RemoveShrinkWrapSurfaces";
+		menuItem 
+			-rtc $cmd;
+
+		$cmd = "RemoveShrinkWrapTarget";
+		menuItem 
+			-rtc $cmd;
+
+		$cmd = "SetShrinkWrapInnerObject";
+		menuItem 
+			-rtc $cmd;
+
+		$cmd = "SetShrinkWrapTarget";
+		menuItem 
+			-rtc $cmd;
+
+	setParent -m ..;
+
+	menuItem -label (uiRes("m_ChaDeformationsMenu.kEditWire"))  -aob true -subMenu true -tearOff true;
+
+		$cmd = "AddWire";
+		menuItem 
+			-rtc $cmd;
+			$cmd = "AddWireOptions";
+			menuItem -optionBox true
+				-annotation (getRunTimeCommandAnnotation($cmd))
+				-image "addWire.png"
+				-command $cmd;
+
+		$cmd = "AddHolder";
+		menuItem 
+			-rtc $cmd;
+			$cmd = "AddHolderOptions";
+			menuItem -optionBox true
+				-annotation (getRunTimeCommandAnnotation($cmd))
+				-image "addWireHolder.png"
+				-command $cmd;
+		
+		$cmd = "ParentBaseWire";
+		menuItem 
+			-rtc $cmd;
+			$cmd = "ParentBaseWireOptions";
+			menuItem -optionBox true
+				-annotation (getRunTimeCommandAnnotation($cmd))
+				-image "parentBaseWire.png"
+				-command $cmd;
+
+		$cmd = "RemoveWire";
+		menuItem 
+			-rtc $cmd;
+			$cmd = "RemoveWireOptions";
+			menuItem -optionBox true
+				-annotation (getRunTimeCommandAnnotation($cmd))
+				-image "removeWire.png"
+				-command $cmd;
+
+		$cmd = "ResetWire";
+		menuItem 
+			-rtc $cmd;
+			$cmd = "ResetWireOptions";
+			menuItem -optionBox true
+				-annotation (getRunTimeCommandAnnotation($cmd))
+				-image "resetWire.png"
+				-command $cmd;
+
+		$cmd = "ShowBaseWire";
+		menuItem 
+			-rtc $cmd;
+
+		$cmd = "WireDropoffLocator";
+		menuItem 
+			-rtc $cmd
+			wireDropoffItem;
+			$cmd = "WireDropoffLocatorOptions";
+			menuItem -optionBox true -image "wireDropoff.png"
+				-annotation (getRunTimeCommandAnnotation($cmd))
+				-command $cmd
+				wireDropoffDialogItem;
+
+	setParent -m ..; // end wire subMenu
+
+	menuItem -divider true -dividerLabel  (uiRes("m_ChaDeformationsMenu.kDeformMembership"));
+
+	$cmd = "EditMembershipTool";
+	menuItem 
+		-rtc $cmd
+		setEditItem;
+
+	menuItem -label (uiRes("m_ChaDeformationsMenu.kPruneMembership"))  -subMenu true -to true pruneItem;
+
+		$cmd = "PruneCluster";
+		menuItem 
+			-rtc $cmd
+			pruneClusterItem;
+
+		$cmd = "PruneLattice";
+		menuItem
+			-rtc $cmd
+			pruneLatticeItem;
+
+		$cmd = "PruneSculpt";
+		menuItem 
+			-rtc $cmd
+			pruneSculptItem;
+			
+		$cmd = "PruneWire";
+		menuItem
+			-rtc $cmd
+			pruneWireItem;
+
+	setParent -menu ..;
+	menuItem -divider true -dividerLabel  (uiRes("m_ChaDeformationsMenu.kDeformIntermediate"));
+
+	$cmd = "DisplayIntermediateObjects";
+	menuItem 
+		-rtc $cmd displayInterItem;
+	if ($dimWhenNoSelect)
+		dimWhen -f "SomethingSelected" displayInterItem;
+
+	$cmd = "HideIntermediateObjects";
+	menuItem
+		-rtc $cmd hideInterItem;
+	if ($dimWhenNoSelect)
+		dimWhen -f "SomethingSelected" hideInterItem;
+}
+
+proc DeformMenuPaintWeightsMenu(string $parent, int $dimWhenNoSelect)
+{
+	menuItem -label (uiRes("m_ChaDeformationsMenu.kDeformPaintWeights"))  -subMenu true -to true paintWeightsMenu;
+
+	string $cmd = "ArtPaintBlendShapeWeightsTool";
+	menuItem 
+		-rtc $cmd blendShapeWeightPaintItem;
+		$cmd = "ArtPaintBlendShapeWeightsToolOptions";
+		menuItem -optionBox true 
+			-image "paintBlendshape.png" 
+			-annotation (getRunTimeCommandAnnotation($cmd))
+			-command $cmd 
+			blendShapeWeightPaintDialogItem;
+
+	// Artisan Paint Cluster tool.
+	menuItem -rtc "PaintClusterWeightsTool"
+		wtPaintItem;
+	menuItem -optionBox true 
+		-rtc "PaintClusterWeightsToolOptions"
+		wtPaintDialogItem;
+
+
+	// Artisan DeltaMush tool.
+	menuItem -rtc "PaintDeltaMushWeightsTool"
+		-version 2016 deltaMushPaintItem;
+	menuItem -optionBox true 
+		-rtc "PaintDeltaMushWeightsToolOptions"
+		-version 2016 deltaMushPaintDialogItem;
+
+    // Artisan Tension tool.
+    menuItem 
+    	-rtc "PaintTensionWeightsTool"
+        -version 2017 tensionPaintItem;
+    menuItem -optionBox true
+    	-rtc "PaintTensionWeightsToolOptions"
+        -version 2017 tensionPaintDialogItem;
+
+    // Artisan ProximityWrap tool.
+    menuItem 
+    	-rtc "PaintProximityWrapWeightsTool"
+        -version 2020 proximityWrapPaintItem;
+    menuItem -optionBox true
+    	-rtc "PaintProximityWrapWeightsToolOptions"
+        -version 2020 proximityWrapPaintDialogItem;
+
+    // Artisan Lattice tool.
+    menuItem 
+    	-rtc "PaintLatticeWeightsTool"
+        -version 2018 latticePaintItem;
+    menuItem -optionBox true
+    	-rtc "PaintLatticeWeightsToolOptions"
+        -version 2018 latticePaintDialogItem;
+
+	// Artisan Paint ShrinkWrap tool.
+	menuItem 
+		-rtc "PaintShrinkWrapWeightsTool"
+		shrinkWrapPaintItem;
+	menuItem -optionBox true 
+		-rtc "PaintShrinkWrapWeightsToolOptions"
+		shrinkWrapPaintDialogItem;
+
+	// Artisan Paint Wire tool
+	menuItem 
+		-rtc "PaintWireWeightsTool"
+		wirePaintItem;
+	menuItem -optionBox true 
+		-rtc "PaintWireWeightsToolOptions"
+		wirePaintDialogItem;
+
+	menuItem -d true -ld false;
+
+	// Artisan Paint Nonlinear tool.
+	menuItem 
+		-rtc "PaintNonlinearWeightsTool"
+		nonlinearPaintItem;
+	menuItem -optionBox true 
+		-rtc "PaintNonlinearWeightsToolOptions"
+		nonlinearPaintDialogItem;
+
+	// Artisan Paint Jiggle tool.
+	menuItem 
+		-rtc "PaintJiggleWeightsTool"
+		jigglePaintItem;
+	menuItem -optionBox true 
+		-rtc "PaintJiggleWeightsToolOptions"
+		jigglePaintDialogItem;
+
+	// Artisan Paint Texture Deformer tool.
+	menuItem
+		-rtc "PaintTextureDeformerWeightsTool"
+		-version 2015 textureDeformerWeightPaintItem;
+	menuItem -optionBox true 
+		-rtc "PaintTextureDeformerWeightsToolOptions"
+		-version 2015 textureDeformerWeightPaintDialogItem;
+
+
+	menuItem -d true -ld false;
+
+	// Paint Set Membership tool.
+	$cmd = "PaintSetMembershipTool";
+	menuItem -rtc $cmd
+		setMemPaintItem;
+
+		$cmd = "PaintSetMembershipToolOptions";
+		menuItem -optionBox true 
+			-image "paintSetMembership.png"
+			-annotation (getRunTimeCommandAnnotation($cmd))
+			-command $cmd 
+			setMembPaintDialogItem;
+
+	setParent -menu ..; // end paint subMenu
+
+	setParent -menu ..;
+}
+
+proc DeformMenuWeightsSection(string $parent, int $dimWhenNoSelect)
+{
+	menuItem -divider true -dividerLabel  (uiRes("m_ChaDeformationsMenu.kDeformWeights"));
+
+	DeformMenuPaintWeightsMenu($parent, $dimWhenNoSelect);
+
+	// Mirror Deformer Weights command and option.
+	string $cmd = "MirrorDeformerWeights";
+	menuItem 
+		-rtc $cmd mirrorDeformerWeightsItem;
+		$cmd = "MirrorDeformerWeightsOptions";
+		menuItem -optionBox true
+			-annotation (getRunTimeCommandAnnotation($cmd))
+			-i "mirrorSkinWeight.png"
+			-c $cmd mirrorDeformerWeightsDialog;
+
+	menuItem -divider true  -ld false;
+
+	$cmd = "ExportDeformerWeights";
+	menuItem -rtc $cmd
+        -image "deformExportWeights.png"
+		exportDefWeightItem;
+
+
+	$cmd = "ImportDeformerWeights";
+	menuItem -rtc $cmd 
+		-image "deformImportWeights.png"
+		importDefWeightItem;
+
+}
+
+global proc ChaDeformationsMenu( string $parent )
+{
+	setParent -menu $parent;
+
+	// Since deform menu contents depends on the state of various
+	// plug-ins, we dynamically load the menu items in the menu
+	// that has already been created. Rest of the items remains untouched.
+	if ( `menu -q -ni $parent` != 0 )
+	{
+		makeMuscleMenu($parent);
+		makeCurveWarpMenuItem($parent);
+		return;
+	} 
+
+	int $dimWhenNoSelect = 0;
+	DeformMenuCreateSection($parent, $dimWhenNoSelect);
+	DeformMenuEditSection($parent, $dimWhenNoSelect);
+	DeformMenuWeightsSection($parent, $dimWhenNoSelect);
+	setParent -menu ..;
+}

@@ -1,0 +1,24 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//  This proc fills the join tool property sheet with 
+//  values.
+//  The property sheet is set up in joinProperties.mel
+//
+
+global proc jointInsertValues ( string $toolName ) {
+
+	string $parent = `toolPropertyWindow -q -location`;
+
+	string $icon = "kinInsert.png";
+	string $helpTag = "";
+	toolPropertySetCommon $toolName $icon $helpTag;
+
+	toolPropertySelect jointInsert;
+}
+

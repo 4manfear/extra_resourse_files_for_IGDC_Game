@@ -1,0 +1,52 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  March 17, 1997
+//
+//  Description:
+//      This script defines the elements for the directKey
+//	context tool property sheet.
+//
+//  Input Arguments:
+//      None.
+//
+//  Return Value:
+//      None.
+//
+global proc directKeyProperties ()
+{
+	string $parent = `toolPropertyWindow -query -location`;
+	setParent $parent;
+
+	setUITemplate -pushTemplate OptionsTemplate;
+
+	columnLayout directKey;
+		frameLayout
+			-collapsable true
+			-collapse false
+			-label (uiRes("m_directKeyProperties.kDirectKeySettings"))
+			directKeyFrame;
+			columnLayout directKeyOptions;
+				separator -style "none";
+				radioButtonGrp
+					-numberOfRadioButtons 2
+					-label (uiRes("m_directKeyProperties.kMoveOption"))
+					-label1 (uiRes("m_directKeyProperties.kMoveOnly"))
+					-label2 (uiRes("m_directKeyProperties.kMoveOver"))
+					directKeyOption;
+				checkBoxGrp
+					-label (uiRes("m_directKeyProperties.kSelectedOnly"))
+					-value1 on
+					selectedOnlyOption;
+			setParent ..;
+		setParent ..;
+	setParent ..;
+
+	setUITemplate -popTemplate;
+}

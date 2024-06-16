@@ -1,0 +1,153 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+proc setOptionVars(int $forceFactorySettings)
+{
+	optionVar -init $forceFactorySettings -category "Modify.Match Scaling"
+		-iv matchScaleX 1
+		-iv matchScaleY 1
+		-iv matchScaleZ 1
+		-iv matchScaleBox 0 // Default is off (for backcomp)
+		;
+}
+
+global proc performMatchScaleSetup(string $parent, int $forceFactorySettings)
+{
+	setOptionVars ($forceFactorySettings);
+	setParent $parent;
+
+	int $axisX = `optionVar -q matchScaleX`;
+	int $axisY = `optionVar -q matchScaleY`;
+	int $axisZ = `optionVar -q matchScaleZ`;
+	int $box   = `optionVar -q matchScaleBox`;
+
+	checkBoxGrp -e -v1 $box matchBoxCheckBoxGrp;
+	if ($axisX && $axisY && $axisZ) {
+		checkBoxGrp -e -v1 true matchAllCheckBoxGrp;
+		checkBoxGrp -e -v1 false -v2 false -v3 false matchXYZCheckBoxGrp;
+	} else {
+		checkBoxGrp -e -v1 false matchAllCheckBoxGrp;
+		checkBoxGrp -e -v1 $axisX -v2 $axisY -v3 $axisZ matchXYZCheckBoxGrp;
+	}
+}
+
+global proc performMatchScaleCallback(string $parent, int $doIt)
+{
+	setParent $parent;
+
+	optionVar -iv matchScaleBox `checkBoxGrp -q -v1 matchBoxCheckBoxGrp`;
+	if (`checkBoxGrp -q -v1 matchAllCheckBoxGrp`) {
+		optionVar -iv matchScaleX true;
+		optionVar -iv matchScaleY true;
+		optionVar -iv matchScaleZ true;
+	} else {
+		optionVar -iv matchScaleX `checkBoxGrp -q -v1 matchXYZCheckBoxGrp`;
+		optionVar -iv matchScaleY `checkBoxGrp -q -v2 matchXYZCheckBoxGrp`;
+		optionVar -iv matchScaleZ `checkBoxGrp -q -v3 matchXYZCheckBoxGrp`;
+	}
+
+	if ($doIt) {
+		performMatchScale 0; 
+		addToRecentCommandQueue "performMatchScale 0" "MatchScaling";
+	}
+}
+
+proc performMatchScaleOptions()
+{
+	string $commandName = "performMatchScale";
+	string $callback = ($commandName + "Callback");
+	string $setup = ($commandName + "Setup");
+
+	string $layout = getOptionBox();
+	setParent $layout;
+	setUITemplate -pushTemplate DefaultTemplate;
+	waitCursor -state 1;
+	tabLayout -tabsVisible 0 -scrollable 1;
+	
+	string $parent = `columnLayout -adjustableColumn 1`;
+	checkBoxGrp -label (uiRes("m_performMatchScale.kScaling"))
+		-ncb 1
+		-label1 (uiRes("m_performMatchScale.kAll"))
+		-onc ("checkBoxGrp -e -v1 false -v2 false -v3 false matchXYZCheckBoxGrp")
+		matchAllCheckBoxGrp;
+		
+	checkBoxGrp -ncb 3
+		-label1 (uiRes("m_performMatchScale.kX"))
+		-label2 (uiRes("m_performMatchScale.kY"))
+		-label3 (uiRes("m_performMatchScale.kZ"))
+		-onc ("checkBoxGrp -e -v1 false matchAllCheckBoxGrp")
+		matchXYZCheckBoxGrp;
+
+	separator;
+	
+	checkBoxGrp
+		-label1 (uiRes("m_performMatchScale.kBox"))
+		matchBoxCheckBoxGrp;
+
+	waitCursor -state 0;
+	setUITemplate -popTemplate;
+
+	button -edit
+		-label `runTimeCommand -q -label MatchScaling`
+		-command ($callback + " " + $parent + " " + 1)
+		`getOptionBoxApplyBtn`;
+
+	button -edit 
+		-command ($callback + " " + $parent + " " + 0 + "; hideOptionBox")
+		`getOptionBoxSaveBtn`;
+
+	button -edit
+		-command ($setup + " " + $parent + " " + 1)
+		`getOptionBoxResetBtn`;
+
+	setOptionBoxTitle `runTimeCommand -q -ann MatchScalingOptions`;
+	setOptionBoxHelpTag("MatchScaling");
+
+	eval (($setup + " " + $parent + " " + 0));
+	showOptionBox();
+}
+
+proc string assembleCmd()
+{
+	setOptionVars(false);
+	int $axisX = `optionVar -q matchScaleX`;
+	int $axisY = `optionVar -q matchScaleY`;
+	int $axisZ = `optionVar -q matchScaleZ`;
+	int $box   = `optionVar -q matchScaleBox`;
+
+	string $cmd = "";
+	if ($axisX || $axisY || $axisZ) {
+		$cmd = "matchTransform";
+		if ($axisX && $axisY && $axisZ) {
+			$cmd += " -scl";
+		} else {
+			if ($axisX) $cmd += " -sx";
+			if ($axisY) $cmd += " -sy";
+			if ($axisZ) $cmd += " -sz";
+		}
+		if ($box) $cmd += " -box";
+	}
+	return $cmd;
+}
+
+global proc string performMatchScale(int $action)
+{
+	string $cmd = "";
+	switch ($action) {
+	case 0: // Execute command
+		$cmd = `assembleCmd`;
+		if ($cmd != "") eval($cmd);
+		break;
+	case 1: // Options
+		performMatchScaleOptions;
+		break;
+	case 2: // Command string
+		$cmd = `assembleCmd`;
+		break;
+	}
+	return $cmd;
+}

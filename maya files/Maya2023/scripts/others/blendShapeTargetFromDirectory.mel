@@ -1,0 +1,56 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+
+
+global proc int[] blendShapeTargetFromDirectory(string $bsn, int $groupIndex, int $childrenType)
+//
+//	Description:
+//		Get childrens from the given directory.
+// 
+//  Input: 
+//
+//  	$childrenType: 0, to get all the targets. 
+//
+{
+	int $result[]; 
+	
+	if ($groupIndex > 0)
+		return $result; 
+		
+	$tempAttr = $bsn + ".targetDirectory[" + -$groupIndex + "].childIndices";
+	int $tempIndices[] = `getAttr $tempAttr`;
+	if ($childrenType == 0)
+	{
+		// get all the targets under this group. 
+		
+		while (size($tempIndices))
+		{
+			int $item = $tempIndices[0];
+			intArrayRemoveAtIndex(0, $tempIndices);
+			
+			if ($item >= 0)
+			{
+				if (!intArrayContains($item, $result))
+					$result[size($result)] = $item;
+			}
+			else 
+			{
+				$tempAttr = $bsn + ".targetDirectory[" + -$item + "].childIndices";
+				int $grandChildren[] = `getAttr $tempAttr`;
+				for ($gc in $grandChildren)
+				{
+					if (!intArrayContains($gc, $tempIndices))
+						intArrayInsertAtIndex(size($tempIndices), $tempIndices, $gc); // add $gc to the end.
+				}	
+			}
+		}		
+	}
+	
+	return $result;
+}
+

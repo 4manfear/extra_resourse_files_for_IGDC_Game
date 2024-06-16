@@ -1,0 +1,48 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+
+//
+//  Description:
+//		doStackedCurvesArgList is the actual proc that is executed from the
+//	View->Stacked Curves option box or menu
+//
+//  Input Arguments:
+//	$version: The version of this option box.  Used to know how to 
+//	interpret the $args array.
+//		"1" : $screenBased, $sampleRate, $updates, $graphEd
+//
+//	$args
+//	Version 1
+//	[0]		$stackedMin
+//	[1]		$stackedMax
+//	[2]		$stackedSpace
+//	[3]		$graphEd				name of the graph editor
+//
+//  Return Value:
+//      None.
+//
+
+global proc
+doStackedCurvesArgList (string $version, string $args[])
+{
+	int		$versionNum				= $version;
+
+	float	$stackedMin				= $args[0];
+	float	$stackedMax				= $args[1];
+	float	$stackedSpace			= $args[2];
+	string	$graphEd				= $args[3];
+
+	string $cmd = "animCurveEditor -edit " +
+		"-stackedCurvesMin " + $stackedMin + " " +
+		"-stackedCurvesMax " + $stackedMax + " " +
+		"-stackedCurvesSpace " + $stackedSpace + " " +
+		"-stackedCurves true " +
+		$graphEd;
+
+	evalEcho( $cmd );
+}

@@ -1,0 +1,82 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+// Creation Date:  1 December 1996
+//
+//
+//  Procedure Name:
+//		saveComponentMaskToShelf
+//
+//  Description:
+//		Saves the current component selection
+//		mask setting to the currently active
+//		shelf tab.
+//
+//  Input Arguments:
+//      None.
+//
+//  Return Value:
+//      None.
+//
+
+
+global proc saveComponentMaskToShelf( ) {
+
+	global string $gShelfTopLevel;
+
+	//  only create the shelfButton if there is an active shelf
+	//
+	if (`tabLayout -exists $gShelfTopLevel`) {
+
+		string $command = ( "selectMode -component; selectType"
+
+			+" -cv " + `selectType -q -cv` 
+			+" -vertex " + `selectType -q -vertex` 
+			+" -subdivMeshPoint " + `selectType -q -subdivMeshPoint` 
+			+" -latticePoint " + `selectType -q -latticePoint` 
+			+" -particle " + `selectType -q -particle` 
+		
+			+" -editPoint " + `selectType -q -editPoint`
+			+" -curveParameterPoint " + `selectType -q -curveParameterPoint` 
+			+" -surfaceParameterPoint " + `selectType -q -surfaceParameterPoint` 
+			+" -puv " + `selectType -q -puv` 
+
+			+" -polymeshEdge " + `selectType -q -polymeshEdge` 
+			+" -subdivMeshEdge " + `selectType -q -subdivMeshEdge` 
+			+" -isoparm " + `selectType -q -isoparm` 
+			+" -surfaceEdge " + `selectType -q -surfaceEdge` 
+			+" -surfaceFace " + `selectType -q -surfaceFace` 
+			+" -springComponent " + `selectType -q -springComponent` 
+		
+			+" -facet " + `selectType -q -facet` 
+			+" -subdivMeshFace " + `selectType -q -subdivMeshFace` 
+		
+			+" -hull " + `selectType -q -hull`
+		
+			+" -rotatePivot " + `selectType -q -rotatePivot` 
+			+" -scalePivot " + `selectType -q -scalePivot` 
+			+" -jointPivot " + `selectType -q -jointPivot` 
+		
+			+" -selectHandle " + `selectType -q -selectHandle` 
+		
+			+" -localRotationAxis " + `selectType -q -localRotationAxis`
+			+" -imagePlane " + `selectType -q -imagePlane`
+        );
+		
+
+		// Create the selection mask button on the active shelf
+		//
+		shelfButton 
+			-p `tabLayout -q -st $gShelfTopLevel`
+			-label (uiRes("m_saveComponentMaskToShelf.kComponentMask"))
+			-imageOverlayLabel (uiRes("m_saveComponentMaskToShelf.kMask"))
+			-image1 "commandButton.png" 
+			-c $command;
+	}
+}

@@ -1,0 +1,53 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:	May 3, 1997
+//
+//  Procedure Name:
+//	AEdependNodeTemplate
+//
+//  Description:
+//	Creates the attribute editor controls for the dependNode
+//
+//  Input Value:
+//	nodeName
+//
+//  Output Value:
+//	None
+//
+
+global proc AEdependNodeUUIDNew( string $attr )
+{
+	textField -editable 0 -enableKeyboardFocus 1 uuidTextField;
+	
+	AEdependNodeUUIDReplace( $attr );
+}
+
+global proc AEdependNodeUUIDReplace( string $attr )
+{
+	string $nodeName = `plugNode $attr`;
+	
+	string $uuid[] = `ls -uuid $nodeName`;
+	
+	textField -e -text $uuid[0] uuidTextField;
+}
+
+global proc AEdependNodeTemplate ( string $nodeName )
+{
+    // hook for custom UI
+    callbacks -executeCallbacks -hook "AETemplateCustomContent" $nodeName;
+	editorTemplate -beginLayout (uiRes("m_AEdependNodeTemplate.kNodeBehavior"));
+		editorTemplate -addControl "caching";
+		editorTemplate -addControl "frozen";
+		editorTemplate -addControl "nodeState";
+	editorTemplate -endLayout;
+	editorTemplate -beginLayout (uiRes("m_AEdependNodeTemplate.kUUID"));
+		editorTemplate -callCustom "AEdependNodeUUIDNew" "AEdependNodeUUIDReplace" "nodeState";
+	editorTemplate -endLayout;
+}

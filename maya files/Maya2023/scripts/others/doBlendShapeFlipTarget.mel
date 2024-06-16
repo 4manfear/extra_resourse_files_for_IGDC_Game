@@ -1,0 +1,121 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+source "blendShapePickTopoSymmetryEdges.mel";
+
+global proc doBlendShapeFlipTarget(int $axis, int $storeSymmetryEdge, string $inputBSTargets[])
+//
+//  Description:
+//		Flip blend shape targets
+//
+//  Input Arguments:
+//		$axis			- 1 for object X;
+//						  2 for object Y;
+//						  3 for object Z;
+//						  4 for topology;
+// 		$inputBSTargets - empty to get selection from Shape Editor;
+// 						  otherwise used them as input selection.
+//  Return Value:
+//      None.
+//
+{
+	string $selectedTargetL[];
+
+	if (size($inputBSTargets))
+		$selectedTargetL = $inputBSTargets;
+	else 
+		$selectedTargetL = getShapeEditorTreeviewSelection(24);
+	
+	if (size($selectedTargetL) == 0)
+		return;
+
+	int $originalSymmetry = `symmetricModelling -q -s`;
+	string $symmetrySpace, $symmetryAxis;
+	if ($originalSymmetry)
+	{
+		$symmetrySpace = `symmetricModelling -q -about`;
+		if ($symmetrySpace == "topo")
+			$symmetryAxis = blendShapeGetTopoSymmetryEdge();
+		else
+			$symmetryAxis = `symmetricModelling -q -axis`;
+	}
+
+	string $cmd;
+	string $objects[], $bsNodes[];
+	while (size($selectedTargetL) > 0)
+	{
+		// 1. Extract targets from the same blend shape node.
+		string $array[] = stringToStringArray($selectedTargetL[0], ".");
+		string $bs = $array[0];
+		string $bsTargetL[], $targetIds[];
+		for($target in $selectedTargetL)
+		{
+			string $array[] = stringToStringArray($target, ".");
+			if ($array[0] == $bs)
+			{
+				$bsTargetL[size($bsTargetL)] = $target;
+				$targetIds[size($targetIds)] = $array[1];
+			}
+		}
+		$selectedTargetL = stringArrayRemove($bsTargetL, $selectedTargetL);
+
+		// 2. Gather base geometry list of the blend shape node.
+		string $symmetryEdges[] = `blendShape -q -se $bs`;
+		string $clearCmd = "blendShape -e -se clear " + $bs + ";";
+		if (!$storeSymmetryEdge && size($symmetryEdges) > 0)
+			eval($clearCmd);
+		if (!$storeSymmetryEdge || size($symmetryEdges) == 0)
+		{
+			$bsNodes[size($bsNodes)] = $bs;
+			string $geometries[] = `blendShape -q -g $bs`;
+			$objects = stringArrayCatenate($objects, stringArrayRemove($objects, $geometries));
+		}
+
+		// 3. Get command string to flip targets for each base geometry.
+		int $geometryIndices[] = `blendShape -q -gi $bs`;
+		for($geometry in $geometryIndices)
+		{
+			$cmd += "blendShape -e ";
+			for($targetId in $targetIds)
+			{
+				$cmd += "-ft " + $geometry + " " + $targetId + " ";
+			}
+
+			if ($axis == 4)
+			{
+				$cmd += "-ss 0 ";
+			}
+			else
+			{
+				$cmd += "-ss 1 ";
+				if ($axis == 1)
+					$cmd += "-sa x ";
+				else if ($axis == 2)
+					$cmd += "-sa y ";
+				else if ($axis == 3)
+					$cmd += "-sa z ";
+			}
+			$cmd += $bs + "; ";
+		}
+
+		if (!$storeSymmetryEdge)
+			$cmd += $clearCmd;
+
+		// 4. Turn back to the original symmetry mode (not needed during undo/redo).
+		if (!$originalSymmetry || size($symmetryAxis) == 0)
+			$cmd += "eval -ue 0 \"symmetricModelling -s 0\";";
+		else if ($symmetrySpace == "topo")
+			$cmd += "eval -ue 0 \"symmetricModelling -e -about " + $symmetrySpace + " -s 1 " + $symmetryAxis + "\";";
+		else
+			$cmd += "eval -ue 0 \"symmetricModelling -e -about " + $symmetrySpace + " -axis " + $symmetryAxis + " -s 1\";";
+	}
+
+	if ($axis == 4 && (!$storeSymmetryEdge || size($bsNodes) > 0))
+		blendShapePickTopoSymmetryEdges($cmd, $objects, $bsNodes);
+	else
+		eval($cmd);
+}

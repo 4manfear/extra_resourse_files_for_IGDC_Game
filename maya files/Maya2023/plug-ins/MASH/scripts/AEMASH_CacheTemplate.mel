@@ -1,0 +1,82 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc AEMASH_CacheTemplate( string $nodeName )
+        {
+
+        editorTemplate -beginScrollLayout;
+        python("import MASH.nodeHeaders; MASH.nodeHeaders.addHeader('" + $nodeName + "', 'Cache')")
+        editorTemplate -endLayout;
+        
+		editorTemplate -beginLayout (getPluginResource("MASH", "kSpringNode")) -collapse 0;
+        editorTemplate - bn;
+        editorTemplate -callCustom "AEcacheButtons" "AEcacheButtonsEdit" "";
+
+        editorTemplate -endLayout;
+
+        editorTemplate -suppress "inIterations";
+        editorTemplate -suppress "time";
+        editorTemplate -suppress "Envelope";
+        editorTemplate -suppress "randEnvelope";
+        editorTemplate -suppress "StepEnvelope";
+        AEdependNodeTemplate $nodeName;
+        editorTemplate -addExtraControls;
+        editorTemplate -endScrollLayout;
+}
+
+//create/ show preset buttons
+global proc AEcacheButtons ( string $attr )
+{
+    string $nodeName[];
+    tokenize($attr, ".", $nodeName);
+
+    rowLayout -numberOfColumns 3 -columnWidth3 195 195 195 -columnAlign 1 "center" -columnAlign 2 "center" -columnAlign 3 "center";
+
+    button -bgc (181.0/255.0) (157.0/255.0) (136.0/255.0) -w 170 -label "Create Caches" -c ("mashCreateCacheCMDS " + $nodeName[0] + " 1")
+    mashCreateCachesButton;
+
+    button -bgc (140.0/255.0) (173.0/255.0) (119.0/255.0) -w 170 -label "Delete Caches" -c ("mashCreateCacheCMDS " + $nodeName[0] + " 2")
+    mashDeleteCachesButton;
+
+    setParent..;
+    separator -w 100 -h 5 -hr 1 -st "none";
+}
+
+global proc AEcacheButtonsEdit ( string $attr )
+{
+    string $nodeName[];
+    tokenize($attr, ".", $nodeName);
+
+    button -e -c ("mashCreateCacheCMDS " + $nodeName[0] + " 1")
+    mashCreateCachesButton;
+    button -e -c ("mashCreateCacheCMDS " + $nodeName[0] + " 2")
+    mashDeleteCachesButton;
+
+}
+
+global proc mashCreateCacheCMDS( string $attr, int $whichCMD )
+{
+    string $nodeName[];
+    tokenize($attr, ".", $nodeName);
+
+    int $start = 0;
+    int $end = 120;
+
+    if ($whichCMD == 1) {
+        MASHcacheFile($nodeName[0], "positionOutPP", "positionInPP", $start, $end);
+        MASHcacheFile($nodeName[0], "scaleOutPP", "scaleInPP", $start, $end);
+        MASHcacheFile($nodeName[0], "rotationOutPP", "rotationInPP", $start, $end);
+        MASHcacheFile($nodeName[0], "idOutPP", "idInPP", $start, $end);
+        MASHcacheFile($nodeName[0], "visibilityOutPP", "visibilityInPP", $start, $end);
+        //MASHcacheFile($nodeName[0], "colorOutPP", "colorInPP");
+        //MASHcacheFile($nodeName[0], "uvTileOutPP", "uvTileInPP");
+        //MASHcacheFile($nodeName[0], "velocityOutPP", "velocityInPP");
+        //MASHcacheFile($nodeName[0], "frameOutPP", "frameInPP");
+        //MASHcacheFile($nodeName[0], "isAnimatedOutPP", "isAnimatedInPP");
+    }
+
+}

@@ -1,0 +1,48 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc AEMASH_SpringTemplate( string $nodeName )
+        {
+
+        editorTemplate -beginScrollLayout;
+        python("import MASH.nodeHeaders; MASH.nodeHeaders.addHeader('" + $nodeName + "', 'Spring')")
+        editorTemplate -endLayout;
+
+        editorTemplate - bn;
+        editorTemplate  -label (getPluginResource("MASH", "kPosition")) -addControl "enablePosition";
+        editorTemplate  -label (getPluginResource("MASH", "kRotation")) -addControl "enableRoataion";
+        editorTemplate  -label (getPluginResource("MASH", "kScale")) -addControl "enableScale";
+        editorTemplate  -label (getPluginResource("MASH", "kVisibility")) -addControl "enableVisbility";
+        editorTemplate  -label (getPluginResource("MASH", "kId")) -addControl "enableId";
+        editorTemplate - en;
+        editorTemplate  -label (getPluginResource("MASH", "kSpringStr")) -addControl "spring";
+        editorTemplate  -label (getPluginResource("MASH", "kMaxVelocity")) -addControl "maxVelocity";
+
+        editorTemplate -addSeparator;
+        editorTemplate  -label (getPluginResource("MASH", "kDamping")) -addControl "damping";
+        editorTemplate  -label (getPluginResource("MASH", "kStiffness")) -addControl "stiffness";
+        editorTemplate -addSeparator;
+        editorTemplate  -label (getPluginResource("MASH", "kDampVar")) -addControl "dampingVariance";
+        editorTemplate  -label (getPluginResource("MASH", "kStiffVar")) -addControl "stiffnessVariance";
+
+        editorTemplate -beginLayout (getPluginResource("MASH", "kFalloffObject")) -collapse 1;
+        editorTemplate -callCustom "MASHfalloffButtons" "MASHfalloffButtonsEdit" "";
+        editorTemplate -endLayout;
+
+        editorTemplate -suppress "inIterations";
+        editorTemplate -suppress "time";
+        editorTemplate -suppress "Envelope";
+        editorTemplate -suppress "randEnvelope";
+        editorTemplate -suppress "StepEnvelope";
+        editorTemplate -suppress "falloffX";
+        editorTemplate -suppress "falloffY";
+        editorTemplate -suppress "falloffZ";
+
+        AEdependNodeTemplate $nodeName;
+        editorTemplate -addExtraControls;
+        editorTemplate -endScrollLayout;
+}

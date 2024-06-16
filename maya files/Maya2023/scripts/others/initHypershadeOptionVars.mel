@@ -1,0 +1,50 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+// Initialize Hypershade optionVars used by:
+//	hyperShadePanel.mel,
+//	hyperShadeNodeEditorPanel.mel
+//	materialBrowserPanel.mel
+//	shaderBallPanel.mel
+//
+global proc initHypershadeOptionVars()
+{
+	string $disablePropertyPanel = getenv("MAYA_DISABLE_LOOKDEV_PROPERTY_PANEL");
+	int $addPropertyPanel = (size($disablePropertyPanel) == 0);
+
+	optionVar -init false -category "Hypershade"
+		-sv hyperShadePanelTabSectionsShown "showTopAndBottomTabs"
+		-iv hsClearBeforeGraphing 1
+		-iv hsMergeConnections 1
+		-iv hsOpaqueContainers 0
+		-iv hsBinsSortShadingNodesOnly 1
+		-iv hsShapeDisplay 2
+		-iv hsShowRelationships 1
+		-iv hsTransformDisplay 1
+		-iv hyperShadeBinsProportion 21
+		-iv hyperShadeCreatePaneProportion ($addPropertyPanel ? 29 : 21)
+		-iv hypershadeNEShowFilter 1
+		-iv hyperShadePanelBinsShown 0
+		-iv hyperShadePanelCreateBarIconsAndTextWidth 172
+		-iv hyperShadePanelCreateBarShown true
+		-iv hyperShadePanelPropertyEditorShown 1
+		-iv hyperShadePropertyEditorPaneProportion 31
+		-iv hyperShadeShaderballGeometryType 1
+		-iv hypershadeShowCM 1
+		-iv hypershadeShowGridButtons 1
+		-iv hypershadeShowLayoutButtons 1
+		-iv hypershadeShowLODButtons 1
+		-iv hypershadeShowMaterialViewerOptions 1
+		-iv hypershadeShowRegraphButtons 1
+		-iv hypershadeShowSceneTabFilter 1
+		-iv hypershadeShowSwatchIcons 1
+		-iv hypershadeShowSwatchPauseButton 1
+		-iv hypershadeShowSwatchSizeIcons 1
+		-iv hypershadeShowSwatchSortIcons 1
+		-iv hyperShadeWorkAreaProportion 50
+		;
+}

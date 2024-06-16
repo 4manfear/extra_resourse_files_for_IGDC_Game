@@ -1,0 +1,76 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//
+//
+//
+//
+//  Creation Date:  April 21 1997
+//
+//
+//  Description:
+//      Global function to ensure the options for bevel plus are set.
+//
+//  Input Arguments:
+//      Force the factory setting or not.
+//
+//  Return Value:
+//      None.
+//
+
+global proc bevelPlusSetOptionVars( 
+	int $forceFactorySettings )
+//
+//
+//
+{
+	optionVar -init $forceFactorySettings -category "Modeling.Surfaces.Bevel Plus"
+        -fv bevelPlusWidth 0.1
+        -fv bevelPlusDepth 0.1
+        -fv bevelPlusExtrudeHeight 0.25
+        -iv bevelPlusInsideCurves 0
+		// Bevel curves forced to straight
+        -iv innerStyleBevelCurve 0
+        -iv outerStyleBevelCurve 0
+		// attach Surfaces.
+        -iv bevelPlusAttachSurfaces 1
+		// Bevel inner curve same as outer
+		-iv innerStyleSameAsOuter 1
+		// Number of sides.
+		// 1 - only extrude.
+		// 2 - bevel top and extrude.
+		// 3 - bevel bottom and extrude.
+		// 4 - bevel both ends and extrude.
+        -iv bevelPlusNSides 4
+		// Number of caps.
+		// 1 - None
+		// 2 - At Start
+		// 3 - At End
+		// 4 - At Start and End
+        -iv bevelPlusCaps 4
+		// bevelPlusOutputPolygons (int) -
+		// 0 - NURBS
+		// 1 - polys
+		// 2 - Bezier surfaces (NOT supported at present)
+		// 3 - subdivision surfaces
+        -iv bevelPlusOutputPolygons 1
+		// Global or local tolerance:
+		-iv bevelPlusUseGlobalTol false
+		// Tolerance for bevelPlus
+        -fv bevelPlusTolerance 0.01
+		// Now, the poly conversion options:
+		-iv bevelPlusPolyFormat 2
+		-iv bevelPlusPolyCount 200
+		-iv bevelPlusPolyTypeU 3
+		-iv bevelPlusPolyTypeV 3
+		-iv bevelPlusPolyNumberU 2
+		-iv bevelPlusPolyNumberV 6
+		;
+}
+

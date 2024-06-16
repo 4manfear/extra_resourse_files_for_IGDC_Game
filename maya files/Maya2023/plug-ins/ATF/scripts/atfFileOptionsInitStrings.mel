@@ -1,0 +1,77 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc atfFileOptionsInitStrings()
+{
+	// Register script resources
+
+	registerPluginResource("ATFPlugin", "kTessellateObjects", "Tessellate objects");
+	registerPluginResource("ATFPlugin", "kTessellateObjectsAnnot", "If this option is on, the imported objects will be tessellated.");
+	registerPluginResource("ATFPlugin", "kNoneTessellation", "None");
+	registerPluginResource("ATFPlugin", "kArubaTessellation", "Aruba Tessellation");
+	registerPluginResource("ATFPlugin", "kATFTessellation", "ATF Tessellation");
+	registerPluginResource("ATFPlugin", "kEnableCustomization", "Enable customization");
+	registerPluginResource("ATFPlugin", "kEnableCustomizationAnnot", "If this option is on, tessellation settings may be changed.");
+	registerPluginResource("ATFPlugin", "kChordalDeviation", "Chordal Deviation:");
+	registerPluginResource("ATFPlugin", "kChordalDeviationAnnot", "Specify the maximum distance, in centimeters, between mesh triangles and the model geometry.");
+
+	registerPluginResource("ATFPlugin", "kMinChordLength", "Min Chord Length:");
+	registerPluginResource("ATFPlugin", "kMinChordLengthAnnot", "Specify the minimum length, in centimeters, allowed for any chord on an edge or between any two adjacent grid lines.");
+
+	registerPluginResource("ATFPlugin", "kMaxChordLength", "Max Chord Length:");
+	registerPluginResource("ATFPlugin", "kMaxChordLengthAnnot", "Specify the maximum length, in centimeters, allowed for any chord on an edge or between any two adjacent grid lines.");
+
+	registerPluginResource("ATFPlugin", "kSampleType", "Sample Type");
+	registerPluginResource("ATFPlugin", "kSampleType_EntireDomain", "Entire Domain");
+	registerPluginResource("ATFPlugin", "kSampleType_G1Segments", "G1 Segments");
+	registerPluginResource("ATFPlugin", "kSampleType_PerSpan", "Per Span");
+	registerPluginResource("ATFPlugin", "kSampleType_KnotValues", "Knot Values");
+	registerPluginResource("ATFPlugin", "kSampleType_Adaptively", "Adaptively");
+
+	registerPluginResource("ATFPlugin", "kAdaptive", "Adaptive");
+	registerPluginResource("ATFPlugin", "kAdaptiveAnnot", "Adaptive");
+
+	registerPluginResource("ATFPlugin", "kSamples", "Samples");
+	registerPluginResource("ATFPlugin", "kSamplesAnnot", "Samples");
+
+	registerPluginResource("ATFPlugin", "kNormalTolerance", "Normal Tolerance:");
+	registerPluginResource("ATFPlugin", "kNormalToleranceAnnot", "Specify the maximum change, in degrees, in the surface normal between adjacent nodes in the mesh.");
+
+	registerPluginResource("ATFPlugin", "kUseLegacyTessellation", "Use Legacy Tessellation");
+	registerPluginResource("ATFPlugin", "kUseLegacyTessellationAnnot", "If this option is on, legacy tessellation will be done.");
+	registerPluginResource("ATFPlugin", "kLegacyEnableCustomization", "Enable Legacy customization");
+	registerPluginResource("ATFPlugin", "kLegacyEnableCustomizationAnnot", "If this option is on, tessellation settings may be changed.");
+	registerPluginResource("ATFPlugin", "kLegacyNormalTolerance", "Normal Tolerance:");
+	registerPluginResource("ATFPlugin", "kLegacyNormalToleranceAnnot", "Specify the maximum change, in degrees, in the surface normal between adjacent nodes in the mesh.");
+	registerPluginResource("ATFPlugin", "kLegacySurfaceTolerance", "Surface Tolerance:");
+	registerPluginResource("ATFPlugin", "kLegacySurfaceToleranceAnnot", "Specify the maximum distance, in centimeters, between mesh triangles and the model geometry.");
+	registerPluginResource("ATFPlugin", "kLegacyGridAspectRatio", "Grid Aspect Ratio:");
+	registerPluginResource("ATFPlugin", "kLegacyGridAspectRatioAnnot", "Specify the maximum aspect ratio allowed in the grid placed across the face.");
+	registerPluginResource("ATFPlugin", "kLegacyMaxEdgeLength", "Max Edge Length:");
+	registerPluginResource("ATFPlugin", "kLegacyMaxEdgeLengthAnnot", "Specify the maximum length, in centimeters, allowed for any chord on an edge or between any two adjacent grid lines.");
+
+	/* ATF Stitching Services */
+
+	registerPluginResource("ATFPlugin", "kStitchingServices", "ATF Stitching Services");
+	registerPluginResource("ATFPlugin", "kIsEnabledIndication", "Enabled");
+	registerPluginResource("ATFPlugin", "kStitchingServicesAnnot", "If this option is on, stitching will be performed with the indicated options.");
+	
+	registerPluginResource("ATFPlugin", "kStitchingTolerance", "Tolerance");
+	registerPluginResource("ATFPlugin", "kStitchingToleranceAnnot", "All surfaces will be stitched using the tolerance. If the gap between the surfaces is greater than tolerance, they will not be stitched together.");
+
+	registerPluginResource("ATFPlugin", "kStitchSepSettings", "Separation by");
+	registerPluginResource("ATFPlugin", "kStitchingSepAnot", "Surfaces to be stitched will be grouped together by these different options.");
+
+	registerPluginResource("ATFPlugin", "kStitchSepByLayer", "Layers");
+	registerPluginResource("ATFPlugin", "kStitchSepByStyle", "Style");
+
+	registerPluginResource("ATFPlugin", "kSymmetry", "Symmetric Layer Processing");
+	registerPluginResource("ATFPlugin", "kSymmetryAnnot", "If this option is on, the symmetric layer will be processed and displayed.");
+	
+
+	loadPluginLanguageResources("ATFPlugin", "ATFPlugin.pres.mel");
+}

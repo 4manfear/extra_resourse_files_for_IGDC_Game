@@ -1,0 +1,38 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc string isOperationAllowedOnReference(string $op, string $refNode)
+//
+//	Description:
+//		Determine whether the specified reference operation is allowed on the 
+//	specified reference node. The routine returns a warning message describing 
+//  the reason that the operation is not allowed.
+//
+//		expeccted values of $op and corresponding return values:
+//		addProxy		->	Reference proxies cannot be added to file references when used within assembly representations.
+//		removeProxy		->	Reference proxies cannot be removed from file references when used within assembly representations.
+//
+{
+	string $warningMsg = "";
+	
+	python("import maya.app.general.assemblyUtils as assemblyUtils");
+	string $command = "assemblyUtils.isReferenceInAssembly(\"" + $refNode + "\")";
+	int $isReferenceInAssembly = python($command);
+	if($isReferenceInAssembly)
+	{
+		if("addProxy" == $op)
+		{
+			$warningMsg = (uiRes("m_isOperationAllowedOnReference.kCannotAddProxyInAssembly"));
+		}
+		else if("removeProxy" == $op)
+		{
+			$warningMsg = (uiRes("m_isOperationAllowedOnReference.kCannotRemoveProxyInAssembly"));
+		}
+	}
+	
+	return $warningMsg;
+}

@@ -1,0 +1,29 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+
+
+global proc AEstereoRigTransformTemplate( string $nodeName )
+{
+
+    editorTemplate -beginScrollLayout;
+
+    editorTemplate -beginLayout (uiRes("m_AEstereoRigTransformTemplate.kRigAttr"))
+        -collapse 0;
+
+    editorTemplate -addControl "leftCam";
+    editorTemplate -addControl "rightCam";
+    editorTemplate -endLayout;
+
+    AEtransformMain $nodeName;
+    AEtransformNoScroll $nodeName;
+
+    editorTemplate -suppress "lockInfluenceWeights";
+
+    editorTemplate -addExtraControls;
+    editorTemplate -endScrollLayout;
+}

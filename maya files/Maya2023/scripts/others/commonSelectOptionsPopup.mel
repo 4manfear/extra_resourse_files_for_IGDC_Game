@@ -1,0 +1,125 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc commonSelectOptionsPopup()
+{
+	int $softSelectOn = `softSelect -q -softSelectEnabled`;
+	int $containerCentricOn = `selectPref -q -containerCentricSelection`;
+	int $pshOn = `selectPref -q -psh`;
+	int $fallofMode = `softSelect -q -softSelectFalloff`;
+	int $softSelectColourOn = `softSelect -q -enableFalseColor`;
+	int $dragSelect = `selectPref -q -paintSelect`;
+	int $highlightBackfaces = `selectPref -q -preSelectBackfacing`;
+	int $highlightClosest = `selectPref -q -preSelectClosest`;
+	int $cbsCb;
+	string $cbsCmd;
+	if (!$dragSelect)
+	{
+		$cbsCmd = "selectPref -useDepth #1";
+		$cbsCb = `selectPref -q -useDepth`;
+	}
+	else
+	{
+		$cbsCmd = "selectPref -paintSelectWithDepth #1";
+		$cbsCb = `selectPref -q -paintSelectWithDepth`;
+	}
+
+	menuItem 
+		-label (uiRes("m_commonSelectOptionsPopup.kSelectLabel"))
+		-subMenu 1
+		-radialPosition	"S";
+
+		menuItem 
+			-label (uiRes("m_commonSelectOptionsPopup.kPreSelectHiliteLabel"))
+			-radialPosition	"N"
+			-checkBox $pshOn
+			-c ("selectPref -psh #1");
+
+		menuItem
+			-label (uiRes("m_commonSelectOptionsPopup.kHighlightClosestLabel"))
+			-radialPosition	"NE"
+			-checkBox $highlightClosest
+			-c ("selectPref -preSelectClosest #1");
+
+		menuItem 
+			-label (uiRes("m_commonSelectOptionsPopup.kHighlightBackfacesLabel"))
+			-radialPosition	"E"
+			-checkBox $highlightBackfaces
+			-c ("selectPref -preSelectBackfacing #1");
+
+		menuItem 
+			-label (uiRes("m_commonSelectOptionsPopup.kContainerCentricLabel"))
+			-radialPosition	"SE"
+			-checkBox $containerCentricOn
+			-c ("selectPref -containerCentricSelection #1");
+
+		menuItem -radialPosition "NW"
+			-label (uiRes("m_commonSelectOptionsPopup.kMarqueeSelect"))
+			-checkBox (!$dragSelect) 
+			-command ("selectPref -paintSelect (!#1)");
+
+		menuItem -radialPosition "W"
+			-label (uiRes("m_commonSelectOptionsPopup.kCBSelect"))
+			-checkBox ($cbsCb) 
+			-command $cbsCmd;
+
+		menuItem -radialPosition "SW"
+			-label (uiRes("m_commonSelectOptionsPopup.kClearSelect"))
+			-command ("select -clear");
+		
+
+		menuItem 
+			-label (uiRes("m_commonSelectOptionsPopup.kSoftSelectLabel"))
+			-subMenu 1
+			-radialPosition	"S";
+
+			menuItem 
+				-label (uiRes("m_commonSelectOptionsPopup.kObjectLabel"))
+				-radialPosition	"N"
+				-c ("softSelect -e -softSelectFalloff 3")
+				-checkBox (3 == $fallofMode);
+
+			menuItem 
+				-label (uiRes("m_commonSelectOptionsPopup.kSoftSelectToggleLabel"))
+				-radialPosition	"S"
+				-checkBox $softSelectOn
+				-c ("softSelect -e -softSelectEnabled #1");
+
+			menuItem 
+				-label (uiRes("m_commonSelectOptionsPopup.kVolumeLabel"))
+				-radialPosition	"SW"
+				-c ("softSelect -e -softSelectFalloff 0")
+				-checkBox (0 == $fallofMode);
+
+			menuItem 
+				-label (uiRes("m_commonSelectOptionsPopup.kSurfaceLabel"))
+				-radialPosition	"W"
+				-c ("softSelect -e -softSelectFalloff 1")
+				-checkBox (1 == $fallofMode);
+
+			menuItem 
+				-label (uiRes("m_commonSelectOptionsPopup.kGlobalLabel"))
+				-radialPosition	"NW"
+				-c ("softSelect -e -softSelectFalloff 2")
+				-checkBox (2 == $fallofMode);
+
+			menuItem 
+				-label (uiRes("m_commonSelectOptionsPopup.kSoftSelectColourLabel"))
+				-radialPosition	"E"
+				-checkBox $softSelectColourOn
+				-c ("softSelect -e -enableFalseColor #1");
+
+		setParent -m ..;
+
+		menuItem
+			-label (uiRes("m_commonSelectOptionsPopup.kAutoCBSelect"))
+			-annotation (uiRes("m_commonSelectOptionsPopup.kAutoCBSelectAnnot"))
+			-checkBox `selectPref -q -autoUseDepth`
+			-command ("selectPref -autoUseDepth #1");
+
+	setParent -m ..;
+}

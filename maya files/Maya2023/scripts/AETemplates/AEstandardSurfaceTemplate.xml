@@ -1,0 +1,232 @@
+
+<?xml version='1.0' encoding='UTF-8'?>
+<templates>
+	<using package='maya'/>
+	<template name='AEstandardSurface'>
+		<attribute name='base' type='maya.float'>
+			<label>Weight</label>
+			<description>The base color weight.</description>
+		</attribute>
+		<attribute name='baseColor' type='maya.float3'>
+			<label>Color</label>
+			<description>The base color RGB values.</description>
+		</attribute>
+		<attribute name='diffuseRoughness' type='maya.float'>
+			<label>Diffuse Roughness</label>
+			<description>The roughness of the diffuse layer.</description>
+		</attribute>
+		<attribute name='metalness' type='maya.float'>
+			<label>Metalness</label>
+			<description>How metallic the material appears. At its maximum, the surface behaves like a metal, using fully specular reflection and complex fresnel.</description>
+		</attribute>
+		<attribute name='specular' type='maya.float'>
+			<label>Weight</label>
+			<description>The weight for specular reflections.</description>
+		</attribute>
+		<attribute name='specularColor' type='maya.float3'>
+			<label>Color</label>
+			<description>Tints the color of specular reflections. In metallic mode this controls the reflection at grazing angles.</description>
+		</attribute>
+		<attribute name='specularRoughness' type='maya.float'>
+			<label>Roughness</label>
+			<description>The roughness of the specular reflections. The lower the value, the sharper the reflection.</description>
+		</attribute>
+		<attribute name='specularIOR' type='maya.float'>
+			<label>IOR</label>
+			<description>The index of refraction.</description>
+		</attribute>
+		<attribute name='specularAnisotropy' type='maya.float'>
+			<label>Anisotropy</label>
+			<description>Reflects and transmits light with a directional bias and causes materials to appear rougher or glossier in certain directions.</description>
+		</attribute>
+		<attribute name='specularRotation' type='maya.float'>
+			<label>Rotation</label>
+			<description>Rotates the anisotropic effect.</description>
+		</attribute>
+		<attribute name='transmission' type='maya.float'>
+			<label>Weight</label>
+			<description>Allows light to transmit through the surface for materials such as glass or water. Increase this value for a more transparent material.</description>
+		</attribute>
+		<attribute name='transmissionColor' type='maya.float3'>
+			<label>Color</label>
+			<description>Tints the color of transmitted light.</description>
+		</attribute>
+		<attribute name='transmissionDepth' type='maya.float'>
+			<label>Depth</label>
+			<description>Controls the distance light travels inside the material before it becomes exactly the transmission color according to the law of Beer.</description>
+		</attribute>
+		<attribute name='transmissionScatter' type='maya.float3'>
+			<label>Scatter</label>
+			<description>Scattering coefficient of the interior medium. Suitable for a large body of liquid or one that is fairly thick, such as an ocean, honey, ice, or frosted glass.</description>
+		</attribute>
+		<attribute name='transmissionScatterAnisotropy' type='maya.float'>
+			<label>Scatter Anisotropy</label>
+			<description>The amount of directional bias, or anisotropy, of the scattering.</description>
+		</attribute>
+		<attribute name='transmissionDispersion' type='maya.float'>
+			<label>Dispersion Abbe</label>
+			<description>Dispersion Abbe number, describing how much the index of refraction varies across wavelengths.</description>
+		</attribute>
+		<attribute name='transmissionExtraRoughness' type='maya.float'>
+			<label>Extra Roughness</label>
+			<description>Additional roughness on top of specular roughness. Positive values blur refractions more than reflections, and negative values blur refractions less.</description>
+		</attribute>
+		<attribute name='subsurface' type='maya.float'>
+			<label>Weight</label>
+			<description>The blend between diffuse reflection and subsurface scattering. Set to 1.0 for full subsurface scattering and 0 for only diffuse reflection.</description>
+		</attribute>
+		<attribute name='subsurfaceColor' type='maya.float3'>
+			<label>Color</label>
+			<description>The color of the subsurface scattering effect.</description>
+		</attribute>
+		<attribute name='subsurfaceRadius' type='maya.float3'>
+			<label>Radius</label>
+			<description>The mean free path, distance which light can travel before being scattered inside the surface.</description>
+		</attribute>
+		<attribute name='subsurfaceScale' type='maya.float'>
+			<label>Scale</label>
+			<description>Scalar weight for Subsurface Radius.</description>
+		</attribute>
+		<attribute name='subsurfaceAnisotropy' type='maya.float'>
+			<label>Anisotropy</label>
+			<description>The direction of subsurface scattering. 0 scatters light evenly, positive values scatter forward and negative values scatter backward.</description>
+		</attribute>
+		<attribute name='coat' type='maya.float'>
+			<label>Weight</label>
+			<description>The weight of a reflective clear-coat layer on top of the material. Use for materials such as car paint or an oily layer.</description>
+		</attribute>
+		<attribute name='coatColor' type='maya.float3'>
+			<label>Color</label>
+			<description>The transparency color of the clear-coat layer.</description>
+		</attribute>
+		<attribute name='coatRoughness' type='maya.float'>
+			<label>Roughness</label>
+			<description>The roughness of the clear-coat reflections. The lower the value, the sharper the reflection.</description>
+		</attribute>
+		<attribute name='coatIOR' type='maya.float'>
+			<label>IOR</label>
+			<description>The index of refraction of the clear-coat layer.</description>
+		</attribute>
+		<attribute name='coatAnisotropy' type='maya.float'>
+			<label>Anisotropy</label>
+			<description>The amount of directional bias, or anisotropy, of the clear-coat layer.</description>
+		</attribute>
+		<attribute name='coatRotation' type='maya.float'>
+			<label>Rotation</label>
+			<description>Rotates the anisotropic effect of the clear-coat layer.</description>
+		</attribute>
+		<attribute name='coatAffectColor' type='maya.float'>
+			<label>Affect Color</label>
+			<description>Controls the saturation of diffuse reflection and subsurface scattering below the clear-coat.</description>
+		</attribute>
+		<attribute name='coatAffectRoughness' type='maya.float'>
+			<label>Affect Roughness</label>
+			<description>Controls the roughness of the specular reflection in the layers below the clear-coat.</description>
+		</attribute>
+		<attribute name='sheen' type='maya.float'>
+			<label>Weight</label>
+			<description>The weight of a sheen layer that can be used to approximate microfibers or fabrics such as velvet and satin.</description>
+		</attribute>
+		<attribute name='sheenColor' type='maya.float3'>
+			<label>Color</label>
+			<description>The color of the sheen layer.</description>
+		</attribute>
+		<attribute name='sheenRoughness' type='maya.float'>
+			<label>Roughness</label>
+			<description>The roughness of the sheen layer.</description>
+		</attribute>
+		<attribute name='emission' type='maya.float'>
+			<label>Weight</label>
+			<description>The amount of emitted incandescent light.</description>
+		</attribute>
+		<attribute name='emissionColor' type='maya.float3'>
+			<label>Color</label>
+			<description>The color of the emitted light.</description>
+		</attribute>
+		<attribute name='thinFilmThickness' type='maya.float'>
+			<label>Thickness</label>
+			<description>The thickness of the thin film layer on a surface. Use for materials such as multitone car paint or soap bubbles.</description>
+		</attribute>
+		<attribute name='thinFilmIOR' type='maya.float'>
+			<label>IOR</label>
+			<description>The index of refraction of the medium surrounding the material.</description>
+		</attribute>
+		<attribute name='thinWalled' type='maya.bool'>
+			<label>Thin Walled</label>
+			<description>If true the surface is double-sided and represents an infinitely thin shell. Use this for thin objects such as tree leafs or paper.</description>
+		</attribute>
+		<attribute name='opacity' type='maya.float3'>
+			<label>Opacity</label>
+			<description>The opacity of the entire material.</description>
+		</attribute>
+	</template>
+	<view name='Lookdev' template='AEstandardSurface'>
+		<description>View optimized for lookdev workflows</description>
+		<group name='base_properties'>
+			<label>Base</label>
+			<property name='base'/>
+			<property name='baseColor'/>
+			<property name='diffuseRoughness'/>
+			<property name='metalness'/>
+		</group>
+		<group name='specular_properties'>
+			<label>Specular</label>
+			<property name='specular'/>
+			<property name='specularColor'/>
+			<property name='specularRoughness'/>
+			<property name='specularIOR'/>
+			<property name='specularAnisotropy'/>
+			<property name='specularRotation'/>
+		</group>
+		<group name='transmission_properties'>
+			<label>Transmission</label>
+			<property name='transmission'/>
+			<property name='transmissionColor'/>
+			<property name='transmissionDepth'/>
+			<property name='transmissionScatter'/>
+			<property name='transmissionScatterAnisotropy'/>
+			<property name='transmissionDispersion'/>
+			<property name='transmissionExtraRoughness'/>
+		</group>
+		<group name='subsurface_properties'>
+			<label>Subsurface</label>
+			<property name='subsurface'/>
+			<property name='subsurfaceColor'/>
+			<property name='subsurfaceRadius'/>
+			<property name='subsurfaceScale'/>
+			<property name='subsurfaceAnisotropy'/>
+		</group>
+		<group name='coat_properties'>
+			<label>Coat</label>
+			<property name='coat'/>
+			<property name='coatColor'/>
+			<property name='coatRoughness'/>
+			<property name='coatIOR'/>
+			<property name='coatAnisotropy'/>
+			<property name='coatRotation'/>
+			<property name='coatAffectColor'/>
+			<property name='coatAffectRoughness'/>
+		</group>
+		<group name='sheen_properties'>
+			<label>Sheen</label>
+			<property name='sheen'/>
+			<property name='sheenColor'/>
+			<property name='sheenRoughness'/>
+		</group>
+		<group name='emission_properties'>
+			<label>Emission</label>
+			<property name='emission'/>
+			<property name='emissionColor'/>
+		</group>
+		<group name='thin_film_properties'>
+			<label>Thin Film</label>
+			<property name='thinFilmThickness'/>
+			<property name='thinFilmIOR'/>
+		</group>
+		<group name='geometry_properties'>
+			<label>Geometry</label>
+			<property name='thinWalled'/>
+			<property name='opacity'/>
+		</group>
+	</view>
+</templates>

@@ -1,0 +1,1131 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+
+//  CONTENTS
+//
+//  UTILITY PROCEDURES
+//
+//      addPositionNode
+//      addRotationNode
+//      addScaleNode
+//      addIDNode
+//      addSoupNode
+//      AEMASHwaiterFileBrowser
+//      addVisibilityNode
+//
+//  PROCEDURES TO CREATE THE LAYOUTS
+//
+//      addMASHflowLayout
+//      addMASHflowLayoutEdit
+//
+//
+//  CALLBACKS FOR THE CONTROLS
+//
+//      AEwaiterPresetButtons
+//      AEwaiterPresetButtonsEdit
+//      AEwaiterCacheButtons
+//      AEwaiterButtonsCacheEdit
+//      AEMASHwaiterFilenameNew
+//      AEMASHwaiterFilenameReplace
+//
+//  MAIN PROCEDURES
+//
+//      waiterAddNewNodeCMD
+//      waiterButtonCMDS
+
+
+//Waiter Attribute Editor main entry point
+global proc AEMASH_WaiterTemplate( string $nodeName )
+{
+    //this callcustom is stored in the points node.
+
+    editorTemplate -beginScrollLayout;
+
+    python("import MASH.nodeHeaders; MASH.nodeHeaders.addHeader('" + $nodeName + "', 'kWaiter', False)")
+    editorTemplate -endLayout;
+
+    //the main flow layout
+    editorTemplate -beginLayout (getPluginResource("MASH", "kAddNode")) -collapse 0;
+    editorTemplate -callCustom "addMASHflowLayout" "addMASHflowLayoutEdit" "";
+    editorTemplate -endLayout;
+
+    //the main flow layout
+    editorTemplate -beginLayout (getPluginResource("MASH", "kAddUtility")) -collapse 0;
+    editorTemplate -callCustom "addMASHutilitiesFlowLayout" "addMASHutilitiesFlowLayoutEdit" "";
+    editorTemplate -endLayout;
+
+    //advanced options
+    editorTemplate -beginLayout (getPluginResource("MASH", "kAdvanced")) -collapse 1;
+    editorTemplate  -label (getPluginResource("MASH", "kRenderMan")) -ann (getPluginResource("MASH", "kRenderManAnn")) -addControl "ribArchives";
+    editorTemplate -endLayout;
+
+    //presets
+    editorTemplate -beginLayout (getPluginResource("MASH", "kPresets")) -collapse 1;
+    editorTemplate -callCustom "AEMASHwaiterFilenameNew"  "AEMASHwaiterFilenameReplace" "filename";
+    editorTemplate -callCustom "AEwaiterPresetButtons" "AEwaiterPresetButtonsEdit" "";
+    editorTemplate -endLayout;
+
+    //caching
+    editorTemplate -beginLayout (getPluginResource("MASH", "kCaching")) -collapse 1;
+    editorTemplate -callCustom "AEwaiterCacheButtons" "AEwaiterButtonsCacheEdit" "";
+    editorTemplate -addSeparator;
+    editorTemplate  -label  (getPluginResource("MASH", "kEnablePosCache")) -addControl "enablePosCache";
+    editorTemplate -ccu "MASHcreateInputs" "MASHeditInputs" "cacheInArrayPP" (getPluginResource("MASH", "kPosition"));
+    editorTemplate  -label (getPluginResource("MASH", "kEnableRotCache")) -addControl "enableRotCache";
+    editorTemplate -ccu "MASHcreateInputs" "MASHeditInputs" "cacheRotationPP" (getPluginResource("MASH", "kRotation"));
+    editorTemplate  -label (getPluginResource("MASH", "kEnableScaleCache")) -addControl "enableScaleCache";
+    editorTemplate -ccu "MASHcreateInputs" "MASHeditInputs" "cacheScalePP" (getPluginResource("MASH", "kScale"));
+    editorTemplate  -label (getPluginResource("MASH", "kEnableIdCache")) -addControl "enableIDCache";
+    editorTemplate -ccu "MASHcreateInputs" "MASHeditInputs" "cacheIdPP" (getPluginResource("MASH", "kId"));
+    editorTemplate  -label (getPluginResource("MASH", "kEnableVisCache")) -addControl "enableVisCache";
+    editorTemplate -ccu "MASHcreateInputs" "MASHeditInputs" "cacheVisibilityPP" (getPluginResource("MASH", "kVisibility"));
+
+    editorTemplate -en;
+    editorTemplate -endLayout;
+    editorTemplate -endLayout;
+
+    AEdependNodeTemplate $nodeName;
+    //legacy
+    editorTemplate -suppress "showPercent";
+    editorTemplate -suppress "particleMode";
+    editorTemplate -suppress "useSetMembers";
+    editorTemplate -suppress "allNodes";
+    editorTemplate -suppress "translateInPP";
+    editorTemplate -suppress "cacheInPP";
+    editorTemplate -suppress "emptyInstancer";
+    editorTemplate -suppress "multiInstancer";
+    editorTemplate -suppress "waiterMessage";
+    editorTemplate -suppress "instancerMessage";
+    editorTemplate -suppress "positions";
+    editorTemplate -suppress "matrixOutPP";
+    editorTemplate -suppress "initialState";
+    editorTemplate -addExtraControls;
+    editorTemplate -endScrollLayout;
+}
+
+//create/ show preset buttons
+global proc AEwaiterPresetButtons ( string $attr )
+{
+    string $nodeName[];
+    tokenize($attr, ".", $nodeName);
+
+    rowLayout -numberOfColumns 2 -columnWidth2 190 190 -columnAlign 1 "center" -columnAlign 2 "center";
+
+    button -bgc (181.0/255.0) (157.0/255.0) (136.0/255.0) -w 170 -label (getPluginResource("MASH", "kCreatePreset"))  -c ("waiterButtonCMDS " + $nodeName[0] + " 20")
+    presetMASHButton;
+
+    button -bgc (140.0/255.0) (173.0/255.0) (119.0/255.0) -w 170 -label (getPluginResource("MASH", "kShowContentBrowser"))  -c ("waiterButtonCMDS " + $nodeName[0] + " 22")
+    presetContentBrowserMASHButton;
+
+    setParent..;
+    separator -w 100 -h 5 -hr 1 -st "none";
+}
+
+global proc AEwaiterPresetButtonsEdit ( string $attr )
+{
+    string $nodeName[];
+    tokenize($attr, ".", $nodeName);
+
+    button -e -c ("waiterButtonCMDS " + $nodeName[0] + " 20")
+    presetMASHButton;
+    button -e -c ("waiterButtonCMDS " + $nodeName[0] + " 22")
+    presetContentBrowserMASHButton;
+
+}
+
+global proc AEwaiterCacheButtons ( string $attr )
+{
+    string $nodeName[];
+    tokenize($attr, ".", $nodeName);
+    separator -w 100 -h 5 -hr 1 -st "none";
+
+    button -label (getPluginResource("MASH", "kOpenCacheCreator"))  -c ("waiterButtonCMDS " + $nodeName[0] + " 10")
+    cacheManagerMASHButton;
+
+    separator -w 100 -h 5 -hr 1 -st "none";
+}
+
+global proc AEwaiterButtonsCacheEdit ( string $attr )
+{
+    string $nodeName[];
+    tokenize($attr, ".", $nodeName);
+
+    button -e -c ("waiterButtonCMDS " + $nodeName[0] + " 10")
+    cacheManagerMASHButton;
+}
+
+//file browset to set presets
+global proc AEMASHwaiterFileBrowser( string $fileAttribute )
+{
+
+    string $filename[] = `fileDialog2 -fileMode 3 -caption (getPluginResource("MASH", "kSelectFolder"))`;
+    if (1 == `size($filename)`)
+    {
+        setAttr $fileAttribute -type "string" $filename[0];
+        optionVar -sv "mashPresetsFolder" $filename[0];
+    }
+}
+
+//create the presets locations widget
+global proc AEMASHwaiterFilenameNew ( string $fileAttribute )
+{
+    string $nodeName[];
+    tokenize ($fileAttribute, ".", $nodeName);
+
+    setUITemplate -pst attributeEditorTemplate;
+    columnLayout -adj true;
+    string $conFilename = `getAttr ($nodeName[0] + ".filename")`;
+    rowLayout -nc 3;
+    text -label (getPluginResource("MASH", "kPresetLocation"))  filenameName;
+    textField  -fileName $conFilename folderNameField;
+    symbolButton -image "navButtonBrowse.png" mashBrowseFolders;
+    setParent ..;
+    setParent ..;
+
+    setUITemplate -ppt;
+
+    AEMASHwaiterFilenameReplace( $fileAttribute );
+}
+
+//replace functiuon for preset location widget
+global proc int AEMASHwaiterFilenameReplace ( string $fileAttribute )
+{
+    connectControl -fileName folderNameField $fileAttribute;
+
+    string $command = "AEMASHassignAudioCB "+" "+$fileAttribute;
+    textField -e -cc ("AEMASHchangeSoundfile " + $fileAttribute) folderNameField;
+
+    string $folderCommand = "AEMASHwaiterFileBrowser "+" "+$fileAttribute;
+    button -e -c $folderCommand mashBrowseFolders;
+
+    return true;
+}
+
+//the main layout
+global proc addMASHflowLayout (string $nodeName) {
+    //only one button (1 is left mouse button), having this work with both mouse buttons has been tested but rejected
+    int $buttons[] = {1};
+    //icon size, font area width
+    int $imageSize = 58;
+    int $fontWidth = 46;
+
+    //create the layout
+    columnLayout -adjustableColumn true;
+    flowLayout -h 288 -wrap 1;
+
+    int $usingReproNode = 0;
+    if (`objExists ($nodeName + "instancerMessage")`) {
+        string $instancer[] = `listConnections -d on -s off ($nodeName + "instancerMessage")`;
+        if ((size($instancer) > 0) && (`nodeType $instancer[0]` == "MASH_Repro")) {
+            $usingReproNode = 1;
+        }
+    }
+
+    //set up create commands
+    string $addNodeCmd = "MASHaddNode(";
+
+    //audio node
+    rowColumnLayout -numberOfRows 2
+    -rowHeight 1 $imageSize
+    -rowHeight 2 10;
+    symbolButton -w $imageSize -h $imageSize -ann (getPluginResource("MASH", "kAudioAnn")) -image "ae_MASH_Audio.png" MASHAudioBtn;
+    //contextual menues
+    for ($num in $buttons) {
+        popupMenu -button $num;
+        menuItem -label (getPluginResource("MASH", "kAddNodeAudio")) -command ($addNodeCmd + "\"MASH_Audio\"" + ",\"" + $nodeName + "\")") waiterAudioCM1;
+    }
+    //set the name
+    text -bgc (56.0/255.0) (56.0/255.0) (56.0/255.0)-width $fontWidth -font "tinyBoldLabelFont" "Audio";
+    setParent ..;
+
+    //curve node
+    rowColumnLayout -numberOfRows 2
+    -rowHeight 1 $imageSize
+    -rowHeight 2 10;
+    symbolButton -w $imageSize -h $imageSize  -ann (getPluginResource("MASH", "kCurveAnn")) -image "ae_MASH_Curve.png" MASHCurveBtn;
+    for ($num in $buttons) {
+        popupMenu -button $num;
+        menuItem -label (getPluginResource("MASH", "kAddNodeCurve")) -command ($addNodeCmd + "\"MASH_Curve\"" + ",\"" + $nodeName + "\")") waiterCurveCM1;
+    }
+    text -bgc (56.0/255.0) (56.0/255.0) (56.0/255.0) -width $fontWidth -font "tinyBoldLabelFont" "Curve";
+    setParent ..;
+
+    //colour node
+    rowColumnLayout -numberOfRows 2
+    -rowHeight 1 $imageSize
+    -rowHeight 2 10;
+    symbolButton -w $imageSize -h $imageSize -enable $usingReproNode -ann (getPluginResource("MASH", "kColourAnn")) -image "ae_MASH_Color.png" MASHColorBtn;
+    for ($num in $buttons) {
+        popupMenu -button $num;
+        menuItem -label (getPluginResource("MASH", "kAddNodeColour")) -enable $usingReproNode  -command ($addNodeCmd + "\"MASH_Color\"" + ",\"" + $nodeName + "\")") waiterColourCM1;
+    }
+    text -bgc (56.0/255.0) (56.0/255.0) (56.0/255.0) -width $fontWidth -font "tinyBoldLabelFont" "Color";
+    setParent ..;
+
+    //delay node
+    rowColumnLayout -numberOfRows 2
+    -rowHeight 1 $imageSize
+    -rowHeight 2 10;
+    symbolButton -w $imageSize -h $imageSize  -ann (getPluginResource("MASH", "kDelayAnn")) -image "ae_MASH_Delay.png" MASHDelayBtn;
+    for ($num in $buttons) {
+        popupMenu -button $num;
+        menuItem -label (getPluginResource("MASH", "kAddNodeDelay")) -command ($addNodeCmd + "\"MASH_Delay\"" + ",\"" + $nodeName + "\")") waiterDelayCM1;
+    }
+    text -bgc (56.0/255.0) (56.0/255.0) (56.0/255.0) -width $fontWidth -font "tinyBoldLabelFont" "Delay";
+    setParent ..;
+
+    //dynamics node
+    rowColumnLayout -numberOfRows 2
+    -rowHeight 1 $imageSize
+    -rowHeight 2 10;
+    symbolButton -w $imageSize -h $imageSize  -ann (getPluginResource("MASH", "kDynamicsAnn")) -image "ae_MASH_Dynamics.png" MASHDynamicsBtn;
+    for ($num in $buttons) {
+        popupMenu -button $num;
+        menuItem -label (getPluginResource("MASH", "kAddNodeDynamics")) -command ($addNodeCmd + "\"MASH_Dynamics\"" + ",\"" + $nodeName + "\")") waiterDynamicsCM1;
+    }
+    text -bgc (56.0/255.0) (56.0/255.0) (56.0/255.0) -width $fontWidth -font "tinyBoldLabelFont" "Dynamics";
+    setParent ..;
+
+    //flight node
+    rowColumnLayout -numberOfRows 2
+    -rowHeight 1 $imageSize
+    -rowHeight 2 10;
+    symbolButton -w $imageSize -h $imageSize  -ann (getPluginResource("MASH", "kFlightAnn")) -image "ae_MASH_Flight.png" MASHFlightBtn;
+    popupMenu -button 1;
+    menuItem -label (getPluginResource("MASH", "kAddNodeFlight")) -command ($addNodeCmd + "\"MASH_Flight\"" + ",\"" + $nodeName + "\")") waiterFlightCM1;
+    text -bgc (56.0/255.0) (56.0/255.0) (56.0/255.0) -width $fontWidth -font "tinyBoldLabelFont" "Flight";
+    setParent ..;
+
+    //id node
+    rowColumnLayout -numberOfRows 2
+    -rowHeight 1 $imageSize
+    -rowHeight 2 10;
+    symbolButton -w $imageSize -h $imageSize  -ann (getPluginResource("MASH", "kIdAnn")) -image "ae_MASH_ID.png";
+    popupMenu -button 1;
+    menuItem -label (getPluginResource("MASH", "kAddNodeID")) -command ($addNodeCmd + "\"MASH_ID\"" + ",\"" + $nodeName + "\")") waiterIDCM1;
+    text -bgc (56.0/255.0) (56.0/255.0) (56.0/255.0) -width $fontWidth -font "tinyBoldLabelFont" "ID";
+    setParent ..;
+
+    //influence node
+    rowColumnLayout -numberOfRows 2
+    -rowHeight 1 $imageSize
+    -rowHeight 2 10;
+    symbolButton -w $imageSize -h $imageSize  -ann (getPluginResource("MASH", "kInfluenceAnn")) -image "ae_MASH_Influence.png" MASHInfluenceBtn;
+    popupMenu -button 1;
+    menuItem -label (getPluginResource("MASH", "kAddNodeInfluence")) -command ($addNodeCmd + "\"MASH_Influence\"" + ",\"" + $nodeName + "\")") waiterInfluenceCM1;
+    text -bgc (56.0/255.0) (56.0/255.0) (56.0/255.0) -width $fontWidth -font "tinyBoldLabelFont" "Influence";
+    setParent ..;
+
+    //Merge node (WAS Blend)
+    rowColumnLayout -numberOfRows 2 -rowHeight 1 $imageSize -rowHeight 2 10;
+    symbolButton -w $imageSize -h $imageSize -ann (getPluginResource("MASH", "kMergeAnn")) -image "ae_MASH_Blend.png";
+    for ($num in $buttons) {
+        popupMenu -button $num;
+        menuItem -label (getPluginResource("MASH", "kAddNodeMerge"))  -command ($addNodeCmd + "\"MASH_Merge\"" + ",\"" + $nodeName + "\")") waiterBlendCM1;
+    }
+    text -bgc (56.0/255.0) (56.0/255.0) (56.0/255.0) -width $fontWidth -font "tinyBoldLabelFont" "Merge";
+    setParent ..;
+
+
+    //offset node
+    rowColumnLayout -numberOfRows 2
+    -rowHeight 1 $imageSize
+    -rowHeight 2 10;
+    symbolButton -w $imageSize -h $imageSize -ann (getPluginResource("MASH", "kOffsetAnn")) -image "ae_MASH_Offset.png";
+    popupMenu -button 1;
+    menuItem -label (getPluginResource("MASH", "kAddNodeOffset")) -command ($addNodeCmd + "\"MASH_Offset\"" + ",\"" + $nodeName + "\")") waiterOffsetCM1;
+    text -bgc (56.0/255.0) (56.0/255.0) (56.0/255.0) -width $fontWidth -font "tinyBoldLabelFont" "Offset";
+    setParent ..;
+
+    //orient
+    rowColumnLayout -numberOfRows 2
+    -rowHeight 1 $imageSize
+    -rowHeight 2 10;
+    symbolButton -w $imageSize -h $imageSize -ann (getPluginResource("MASH", "kOrientAnn")) -image "ae_MASH_Orient.png" MASHOrientBtn;
+    popupMenu -button 1;
+    menuItem -label (getPluginResource("MASH", "kAddNodeOrient")) -command ($addNodeCmd + "\"MASH_Orient\"" + ",\"" + $nodeName + "\")") waiterOrientCM1;
+    text -bgc (56.0/255.0) (56.0/255.0) (56.0/255.0) -width $fontWidth -font "tinyBoldLabelFont" "Orient";
+    setParent ..;
+
+    //placer
+    rowColumnLayout -numberOfRows 2
+    -rowHeight 1 $imageSize
+    -rowHeight 2 10;
+    symbolButton -w $imageSize -h $imageSize -ann (getPluginResource("MASH", "kPlacerAnn")) -image "ae_MASH_Placer.png" MASHPlacerBtn;
+    popupMenu -button 1;
+    menuItem -label (getPluginResource("MASH", "kAddNodePlacer")) -command ($addNodeCmd + "\"MASH_Placer\"" + ",\"" + $nodeName + "\")") waiterPlacerCM1;
+    text -bgc (56.0/255.0) (56.0/255.0) (56.0/255.0) -width $fontWidth -font "tinyBoldLabelFont" "Placer";
+    setParent ..;
+
+    //python
+    rowColumnLayout -numberOfRows 2
+    -rowHeight 1 $imageSize
+    -rowHeight 2 10;
+    symbolButton -w $imageSize -h $imageSize -ann (getPluginResource("MASH", "kPythonAnn")) -image "ae_MASH_Python.png";
+    popupMenu -button 1;
+    menuItem -label (getPluginResource("MASH", "kAddNodePython")) -command ($addNodeCmd + "\"MASH_Python\"" + ",\"" + $nodeName + "\")") waiterPythonCM1;
+    text -bgc (56.0/255.0) (56.0/255.0) (56.0/255.0) -width $fontWidth -font "tinyBoldLabelFont" "Python";
+    setParent ..;
+
+    //random
+    rowColumnLayout -numberOfRows 2
+    -rowHeight 1 $imageSize
+    -rowHeight 2 10;
+    symbolButton -w $imageSize -h $imageSize -ann (getPluginResource("MASH", "kRandomAnn")) -image "ae_MASH_Random.png";
+    popupMenu -button 1;
+    menuItem -label (getPluginResource("MASH", "kAddNodeRandom")) -command ($addNodeCmd + "\"MASH_Random\"" + ",\"" + $nodeName + "\")") waiterRandomCM1;
+    text -bgc (56.0/255.0) (56.0/255.0) (56.0/255.0) -width $fontWidth -font "tinyBoldLabelFont" "Random";
+    setParent ..;
+
+    //replicator
+    rowColumnLayout -numberOfRows 2
+    -rowHeight 1 $imageSize
+    -rowHeight 2 10;
+    symbolButton -w $imageSize -h $imageSize -ann (getPluginResource("MASH", "kReplicatorAnn")) -image "ae_MASH_Replicator.png" MASHReplicateBtn;
+    popupMenu -button 1;
+    menuItem -label (getPluginResource("MASH", "kAddNodeReplicator")) -command ($addNodeCmd + "\"MASH_Replicator\"" + ",\"" + $nodeName + "\")") waiterReplicatorCM1;
+    text -bgc (56.0/255.0) (56.0/255.0) (56.0/255.0) -width $fontWidth -font "tinyBoldLabelFont" "Replicator";
+    setParent ..;
+
+    //signal
+    rowColumnLayout -numberOfRows 2
+    -rowHeight 1 $imageSize
+    -rowHeight 2 10;
+    symbolButton -w $imageSize -h $imageSize -ann (getPluginResource("MASH", "kSignalAnn")) -image "ae_MASH_Signal.png" MASHSignalBtn;
+    popupMenu -button 1;
+    menuItem -label (getPluginResource("MASH", "kAddNodeSignal")) -command ($addNodeCmd + "\"MASH_Signal\"" + ",\"" + $nodeName + "\")") waiterSignalCM1;
+    text -bgc (56.0/255.0) (56.0/255.0) (56.0/255.0) -width $fontWidth -font "tinyBoldLabelFont" "Signal";
+    setParent ..;
+
+    //spring
+    rowColumnLayout -numberOfRows 2
+    -rowHeight 1 $imageSize
+    -rowHeight 2 10;
+    symbolButton -w $imageSize -h $imageSize -ann (getPluginResource("MASH", "kSpringAnn")) -image "ae_MASH_Spring.png" MASHSpringBtn;
+    popupMenu -button 1;
+    menuItem -label (getPluginResource("MASH", "kAddNodeSpring")) -command ($addNodeCmd + "\"MASH_Spring\"" + ",\"" + $nodeName + "\")") waiterSpringCM1;
+    text -bgc (56.0/255.0) (56.0/255.0) (56.0/255.0) -width $fontWidth -font "tinyBoldLabelFont" "Spring";
+    setParent ..;
+
+    //strength
+    rowColumnLayout -numberOfRows 2
+    -rowHeight 1 $imageSize
+    -rowHeight 2 10;
+    symbolButton -w $imageSize -h $imageSize -ann (getPluginResource("MASH", "kStrengthAnn")) -image "ae_MASH_Strength.png" MASHStrengthBtn;
+    popupMenu -button 1;
+    menuItem -label (getPluginResource("MASH", "kAddNodeStrength")) -command ($addNodeCmd + "\"MASH_Strength\"" + ",\"" + $nodeName + "\")") waiterStrengthCM1;
+    text -bgc (56.0/255.0) (56.0/255.0) (56.0/255.0) -width $fontWidth -font "tinyBoldLabelFont" "Strength";
+    setParent ..;
+
+    //symetry
+    rowColumnLayout -numberOfRows 2
+    -rowHeight 1 $imageSize
+    -rowHeight 2 10;
+    symbolButton -w $imageSize -h $imageSize -ann (getPluginResource("MASH", "kSymmetryAnn")) -image "ae_MASH_Symmetry.png" MASHSymmetryBtn;
+    popupMenu -button 1;
+    menuItem -label (getPluginResource("MASH", "kAddNodeSymmetry")) -command ($addNodeCmd + "\"MASH_Symmetry\"" + ",\"" + $nodeName + "\")") waiterSymmetryCM1;
+    text -bgc (56.0/255.0) (56.0/255.0) (56.0/255.0) -width $fontWidth -font "tinyBoldLabelFont" "Symmetry";
+    setParent ..;
+
+    //time
+    rowColumnLayout -numberOfRows 2
+    -rowHeight 1 $imageSize
+    -rowHeight 2 10;
+    symbolButton -w $imageSize -h $imageSize -enable $usingReproNode  -ann (getPluginResource("MASH", "kTimeAnn"))-image "ae_MASH_Time.png" MASHTimeBtn;
+    popupMenu -button 1;
+    menuItem -label (getPluginResource("MASH", "kAddNodeTime")) -enable $usingReproNode  -command ($addNodeCmd + "\"MASH_Time\"" + ",\"" + $nodeName + "\")") waiterTimeCM1;
+    text -bgc (56.0/255.0) (56.0/255.0) (56.0/255.0) -width $fontWidth -font "tinyBoldLabelFont" "Time";
+    setParent ..;
+
+    //transform
+    rowColumnLayout -numberOfRows 2
+    -rowHeight 1 $imageSize
+    -rowHeight 2 10;
+    symbolButton -w $imageSize -h $imageSize -ann (getPluginResource("MASH", "kTransformAnn")) -image "ae_MASH_Transform.png";
+    popupMenu -button 1;
+    menuItem -label (getPluginResource("MASH", "kAddNodeTransform")) -command ($addNodeCmd + "\"MASH_Transform\"" + ",\"" + $nodeName + "\")") waiterTransformCM1;
+    text -bgc (56.0/255.0) (56.0/255.0) (56.0/255.0) -width $fontWidth -font "tinyBoldLabelFont" "Transform";
+    setParent ..;
+
+    //visibility
+    rowColumnLayout -numberOfRows 2
+    -rowHeight 1 $imageSize
+    -rowHeight 2 10;
+    symbolButton -w $imageSize -h $imageSize -ann (getPluginResource("MASH", "kVisibilityAnn")) -image "ae_MASH_Visibility.png" MASHVisibilityBtn;
+    popupMenu -button 1;
+    menuItem -label (getPluginResource("MASH", "kAddNodeVisibility")) -command ($addNodeCmd + "\"MASH_Visibility\"" + ",\"" + $nodeName + "\")") waiterVisibilityCM1;
+    text -bgc (56.0/255.0) (56.0/255.0) (56.0/255.0) -width $fontWidth -font "tinyBoldLabelFont" "Visibility";
+    setParent ..;
+
+    //world
+    rowColumnLayout -numberOfRows 2
+    -rowHeight 1 $imageSize
+    -rowHeight 2 10;
+    symbolButton -w $imageSize -h $imageSize -ann (getPluginResource("MASH", "kWorldAnn")) -image "ae_MASH_World.png";
+    popupMenu -button 1;
+    menuItem -label (getPluginResource("MASH", "kAddNodeWorld")) -command ($addNodeCmd + "\"MASH_World\"" + ",\"" + $nodeName + "\")") waiterWorldCM1;
+    text -bgc (56.0/255.0) (56.0/255.0) (56.0/255.0) -width $fontWidth -font "tinyBoldLabelFont" "World";
+    setParent ..;
+
+    //Adjust annotations if needed
+    if (!$usingReproNode) {
+        symbolButton -e -en $usingReproNode -ann (getPluginResource("MASH", "kTimeAnnDisabled")) MASHTimeBtn;
+        symbolButton -e -en $usingReproNode -ann (getPluginResource("MASH", "kColourAnnDisabled")) MASHColorBtn;
+    } else {
+        symbolButton -e -en $usingReproNode -ann (getPluginResource("MASH", "kTimeAnn")) MASHTimeBtn;
+        symbolButton -e -en $usingReproNode -ann (getPluginResource("MASH", "kColourAnn")) MASHColorBtn;
+    }
+
+    //SOUP (goes last)
+    string $addSOuPNodeCmd = "addSoupNode(";
+
+    int $soupLoaded = `pluginInfo -q -loaded "SOuP"`;
+    if ($soupLoaded) {
+        rowColumnLayout -numberOfRows 2
+        -rowHeight 1 $imageSize
+        -rowHeight 2 10;
+        symbolButton -w $imageSize -h $imageSize -ann (getPluginResource("MASH", "kSoupAnn")) -image "ae_MASH_Soup.png";
+        popupMenu -button 1;
+        menuItem -label "Add Cocoon node" -command ($addSOuPNodeCmd + "\"Cocoon\"" + ",\"" + $nodeName + "\")") waiterSoupCM1;
+        menuItem -label "Add Copier node" -command ($addSOuPNodeCmd + "\"Copier\"" + ",\"" + $nodeName + "\")") waiterSoupCM2;
+        text -bgc (56.0/255.0) (56.0/255.0) (56.0/255.0) -width $fontWidth -font "tinyBoldLabelFont" "SOuP";
+        setParent ..;
+    }
+}
+
+
+//the main layout
+global proc addMASHutilitiesFlowLayout (string $nodeName) {
+    //only one button (1 is left mouse button), having this work with both mouse buttons has been tested but rejected
+    int $buttons[] = {1};
+    //icon size, font area width
+    int $imageSize = 58;
+    int $fontWidth = 46;
+
+    //create the layout
+    columnLayout -adjustableColumn true;
+    flowLayout -h 70 -wrap 1;
+
+    int $usingReproNode = 0;
+    if (`objExists ($nodeName + "instancerMessage")`) {
+        string $instancer[] = `listConnections -d on -s off ($nodeName + "instancerMessage")`;
+        if ((size($instancer) > 0) && (`nodeType $instancer[0]` == "MASH_Repro")) {
+            $usingReproNode = 1;
+        }
+    }
+
+    //set up create commands
+    string $addNodeCmd = "MASHaddNode(";
+
+
+    //breakout node
+    rowColumnLayout -numberOfRows 2
+    -rowHeight 1 $imageSize
+    -rowHeight 2 10;
+    symbolButton -w $imageSize -h $imageSize  -ann (getPluginResource("MASH", "kBreakoutAnn")) -image "ae_MASH_Breakout.png";
+    for ($num in $buttons) {
+        popupMenu -button $num;
+        menuItem -label (getPluginResource("MASH", "kAddNodeBreakout")) -command ($addNodeCmd + "\"MASH_Breakout\"" + ",\"" + $nodeName + "\")") waiterBreakoutCM1;
+    }
+    text -bgc (56.0/255.0) (56.0/255.0) (56.0/255.0) -width $fontWidth -font "tinyBoldLabelFont" "Breakout";
+    setParent ..;
+
+    //explode node
+    rowColumnLayout -numberOfRows 2
+    -rowHeight 1 $imageSize
+    -rowHeight 2 10;
+    symbolButton -w $imageSize -h $imageSize  -ann (getPluginResource("MASH", "kExplodeAnn")) -image "ae_MASH_Explode.png" MASHExplodeBtn;
+    for ($num in $buttons) {
+        popupMenu -button $num;
+        menuItem -label (getPluginResource("MASH", "kAddNodeExplode")) -command ($addNodeCmd + "\"MASH_Explode\"" + ",\"" + $nodeName + "\")") waiterExplodeCM1;
+    }
+    text -bgc (56.0/255.0) (56.0/255.0) (56.0/255.0) -width $fontWidth -font "tinyBoldLabelFont" "Explode";
+    setParent ..;
+
+    //points node
+    rowColumnLayout -numberOfRows 2
+    -rowHeight 1 $imageSize
+    -rowHeight 2 10;
+    symbolButton -w $imageSize -h $imageSize  -ann (getPluginResource("MASH", "kPointsAnn")) -image "ae_MASH_Points.png";
+    for ($num in $buttons) {
+        popupMenu -button $num;
+        menuItem -label (getPluginResource("MASH", "kAddNodePoints")) -command ($addNodeCmd + "\"MASH_Points\"" + ",\"" + $nodeName + "\")") waiterPointsCM1;
+    }
+    text -bgc (56.0/255.0) (56.0/255.0) (56.0/255.0) -width $fontWidth -font "tinyBoldLabelFont" "Points";
+    setParent ..;
+
+    //trails
+    rowColumnLayout -numberOfRows 2
+    -rowHeight 1 $imageSize
+    -rowHeight 2 10;
+    symbolButton -w $imageSize -h $imageSize -ann (getPluginResource("MASH", "kTrailsAnn"))-image "ae_MASH_Trails.png" MASHTrailsBtn;
+    popupMenu -button 1;
+    menuItem -label (getPluginResource("MASH", "kAddNodeTrails")) -command ($addNodeCmd + "\"MASH_Trails\"" + ",\"" + $nodeName + "\")") waiterTrailsCM1;
+    text -bgc (56.0/255.0) (56.0/255.0) (56.0/255.0) -width $fontWidth -font "tinyBoldLabelFont" "Trails";
+    setParent ..;
+
+
+
+}
+
+global proc addMASHutilitiesFlowLayoutEdit (string $nodeName) {
+
+    int $usingReproNode = 0;
+    if (`objExists ($nodeName + "instancerMessage")`) {
+        string $instancer[] = `listConnections -d on -s off ($nodeName + "instancerMessage")`;
+        if ((size($instancer) > 0) && (`nodeType $instancer[0]` == "MASH_Repro")) {
+            $usingReproNode = 1;
+        }
+    }
+
+    string $addNodeCmd = "MASHaddNode(";
+
+    //edit menu commands to reflect changed Waiter selection
+
+    menuItem -e -command ($addNodeCmd + "\"MASH_Points\"" + ",\"" + $nodeName + "\")") waiterPointsCM1;
+    menuItem -e -command ($addNodeCmd + "\"MASH_Breakout\"" + ",\"" + $nodeName + "\")") waiterBreakoutCM1;
+    menuItem -e -command ($addNodeCmd + "\"MASH_Explode\"" + ",\"" + $nodeName + "\")") waiterExplodeCM1;
+    menuItem -e -command ($addNodeCmd + "\"MASH_Trails\"" + ",\"" + $nodeName + "\")") waiterTrailsCM1;
+
+}
+
+global proc addMASHflowLayoutEdit (string $nodeName) {
+
+    int $usingReproNode = 0;
+    if (`objExists ($nodeName + "instancerMessage")`) {
+        string $instancer[] = `listConnections -d on -s off ($nodeName + "instancerMessage")`;
+        if ((size($instancer) > 0) && (`nodeType $instancer[0]` == "MASH_Repro")) {
+            $usingReproNode = 1;
+        }
+    }
+
+    string $addNodeCmd = "MASHaddNode(";
+
+    //edit menu commands to reflect changed Waiter selection
+    menuItem -e -command ($addNodeCmd + "\"MASH_Audio\"" + ",\"" + $nodeName + "\")") waiterAudioCM1;
+    menuItem -e -command ($addNodeCmd + "\"MASH_Merge\"" + ",\"" + $nodeName + "\")") waiterBlendCM1;
+    menuItem -e -command ($addNodeCmd + "\"MASH_Color\"" + ",\"" + $nodeName + "\")") -enable $usingReproNode waiterColourCM1;
+    menuItem -e -command ($addNodeCmd + "\"MASH_Curve\"" + ",\"" + $nodeName + "\")") waiterCurveCM1;
+    menuItem -e -command ($addNodeCmd + "\"MASH_Delay\"" + ",\"" + $nodeName + "\")") waiterDelayCM1;
+    menuItem -e -command ($addNodeCmd + "\"MASH_Dynamics\"" + ",\"" + $nodeName + "\")") waiterDynamicsCM1;
+    menuItem -e -command ($addNodeCmd + "\"MASH_Flight\"" + ",\"" + $nodeName + "\")") waiterFlightCM1;
+    menuItem -e -command ($addNodeCmd + "\"MASH_ID\"" + ",\"" + $nodeName + "\")") waiterIDCM1;
+    menuItem -e -command ($addNodeCmd + "\"MASH_Influence\"" + ",\"" + $nodeName + "\")") waiterInfluenceCM1;
+    menuItem -e -command ($addNodeCmd + "\"MASH_Strength\"" + ",\"" + $nodeName + "\")") waiterStrengthCM1;
+    menuItem -e -command ($addNodeCmd + "\"MASH_Offset\"" + ",\"" + $nodeName + "\")") waiterOffsetCM1;
+    menuItem -e -command ($addNodeCmd + "\"MASH_Orient\"" + ",\"" + $nodeName + "\")") waiterOrientCM1;
+    menuItem -e -command ($addNodeCmd + "\"MASH_Python\"" + ",\"" + $nodeName + "\")") waiterPythonCM1;
+    menuItem -e -command ($addNodeCmd + "\"MASH_Placer\"" + ",\"" + $nodeName + "\")") waiterPlacerCM1;
+    menuItem -e -command ($addNodeCmd + "\"MASH_Random\"" + ",\"" + $nodeName + "\")") waiterRandomCM1;
+    menuItem -e -command ($addNodeCmd + "\"MASH_Replicator\"" + ",\"" + $nodeName + "\")") waiterReplicatorCM1;
+    menuItem -e -command ($addNodeCmd + "\"MASH_Signal\"" + ",\"" + $nodeName + "\")") waiterSignalCM1;
+    menuItem -e -command ($addNodeCmd + "\"MASH_Spring\"" + ",\"" + $nodeName + "\")") waiterSpringCM1;
+    menuItem -e -command ($addNodeCmd + "\"MASH_Symmetry\"" + ",\"" + $nodeName + "\")") waiterSymmetryCM1;
+    menuItem -e -command ($addNodeCmd + "\"MASH_Time\"" + ",\"" + $nodeName + "\")") -enable $usingReproNode waiterTimeCM1;
+    menuItem -e -command ($addNodeCmd + "\"MASH_Transform\"" + ",\"" + $nodeName + "\")") waiterTransformCM1;
+    menuItem -e -command ($addNodeCmd + "\"MASH_Visibility\"" + ",\"" + $nodeName + "\")") waiterVisibilityCM1;
+    menuItem -e -command ($addNodeCmd + "\"MASH_World\"" + ",\"" + $nodeName + "\")") waiterWorldCM1;
+
+    if (!$usingReproNode) {
+        symbolButton -e -en $usingReproNode -ann (getPluginResource("MASH", "kTimeAnnDisabled")) MASHTimeBtn;
+        symbolButton -e -en $usingReproNode -ann (getPluginResource("MASH", "kColourAnnDisabled")) MASHColorBtn;
+    } else {
+        symbolButton -e -en $usingReproNode -ann (getPluginResource("MASH", "kTimeAnn")) MASHTimeBtn;
+        symbolButton -e -en $usingReproNode -ann (getPluginResource("MASH", "kColourAnn")) MASHColorBtn;
+    }
+
+    string $addSOuPNodeCmd = "addSoupNode(";
+    int $soupLoaded = `pluginInfo -q -loaded "SOuP"`;
+    if ($soupLoaded) {
+        menuItem -e -command ($addSOuPNodeCmd + "\"Cocoon\"" + ",\"" + $nodeName + "\")") waiterSoupCM1;
+        menuItem -e -command ($addSOuPNodeCmd + "\"Copier\"" + ",\"" + $nodeName + "\")") waiterSoupCM2;
+    }
+}
+
+global proc addSoupNode (string $node, string $waiter) {
+
+    string $nodeName[];
+    tokenize($waiter, ".", $nodeName);
+
+    global string $mashChannelType;
+    global string $mashNodeType;
+
+    $mashChannelType = "Position";
+    $mashNodeType = $node;
+
+    if ($mashNodeType == "Cocoon") {
+
+        string $nodeType = ("Cocoon");
+        $newNode = `createNode cocoon -n $nodeType`;
+        string $cocoonMesh = `createNode mesh -n ($nodeType+"_Mesh")`;
+        connectAttr -f ($newNode+".outMesh") ($cocoonMesh+".inMesh");
+
+        //SOUP NODES
+        string $incomingPosition[] = `listConnections -d 0 -s 1 -p 1 ($nodeName[0]+".inputArray")`;
+        connectAttr -force $incomingPosition[0] ($newNode +".inPositionPP");
+
+    } else if ($mashNodeType == "Copier") {
+
+        string $nodeType = ("Copier");
+        $newCopier = `createNode copier -n $nodeType`;
+        $newMesh = `createNode mesh -n $nodeType`;
+
+        connectAttr -f ($newCopier+".outputMesh") ($newMesh+".inMesh");
+        setAttr ($newCopier +".orient") 1;
+
+        connectAttr -f ($nodeName[0]+".inRotationPP") ($newCopier+".rotArray");
+        connectAttr -f ($nodeName[0]+".inputArray") ($newCopier+".posArray");
+        connectAttr -f($nodeName[0]+".inScalePP") ($newCopier+".scaleArray");
+    }
+}
+
+
+//creates a new MASH node, then connects it to the Waiter and the rest of the network.
+global proc string MASHaddNode(string $newNodeType, string $waiter) {
+
+        string $tolkens[];
+        tokenize($waiter, ".", $tolkens);
+        string $nodeName = $tolkens[0];
+
+        string $selectedNode; //which node we're creating (the one selected by the user)
+        $selectedNode = $newNodeType;
+
+        string $prefix = $nodeName;
+        string $instancer[];
+        int $usingReproNode = 0;
+        if (`objExists ($nodeName + ".instancerMessage")`) {
+            $instancer = `listConnections -d on -s off ($nodeName + ".instancerMessage")`;
+            if ((size($instancer) > 0) && (`nodeType $instancer[0]` == "MASH_Repro")) {
+                $usingReproNode = 1;
+            }
+        }
+        //Part 2. Create the new node
+        string $newNode;
+        if ($selectedNode == "MASH_Noise") {
+            string $nodeType = ($prefix+"_Noise");
+            $newNode = `createNode MASH_Noise -n $nodeType`;
+        }
+        else if ($selectedNode == "MASH_Distribute") {
+            string $nodeType = ($prefix+"_Distribute");
+            $newNode = `createNode MASH_Distribute -n $nodeType`;
+            connectAttr -f ($newNode +".waiterMessage") ($nodeName +".waiterMessage");
+        }
+
+        else if ($selectedNode == "MASH_Audio") {
+            string $nodeType = ($prefix+"_Audio");
+            $newNode = `createNode MASH_Audio -n $nodeType`;
+        }
+
+        else if ($selectedNode == "MASH_Dynamics") {
+            int $canAddNode = `mashCanAddDynamics($nodeName)`;
+            if ($canAddNode) {
+                string $nodeType = ($prefix+"_Dynamics");
+                $newNode = `createNode MASH_Dynamics -n $nodeType`;
+            } else {
+                error (getPluginResource("MASH", "kDynamicsExists"));
+                return "";
+            }
+        }
+
+        else if ($selectedNode == "MASH_Color") {
+            string $nodeType = ($prefix+"_Color");
+            $newNode = `createNode MASH_Color -n $nodeType`;
+            if (size($instancer) > 0) {
+                //Turn on Vertex colours on the repro
+                if ($usingReproNode) {
+                    setAttr ($instancer[0] +".setColors") 1;
+                    string $mesh[] = `listConnections -d off -s on ($instancer[0] + ".meshMessage")`;
+                    if (size($mesh) > 0) {
+                        setAttr ($mesh[0]+".displayColors") 1;
+                    }
+                }
+            }
+        }
+
+        else if ($selectedNode == "MASH_Explode") {
+            string $nodeType = ($prefix+"_Explode");
+            $newNode = `createNode MASH_Explode -n $nodeType`;
+            //connectAttr -f ($newNode +".message") ($nodeName +".waiterMessage");
+        }
+
+        else if ($selectedNode == "MASH_Points") {
+            string $nodeType = ($prefix+"_Points");
+            string $transform = `createNode transform -n $nodeType`;
+            $newNode = `createNode MASH_Points -n ($nodeType+"Shape") -p $transform`;
+        }
+
+        else if ($selectedNode == "MASH_Breakout") {
+            string $nodeType = ($prefix+"_Breakout");
+            $newNode = `createNode MASH_Breakout -n $nodeType`;
+        }
+
+        else if ($selectedNode == "MASH_Curve") {
+            string $nodeType = ($prefix+"_Curve");
+            $newNode = `createNode MASH_Curve -n $nodeType`;
+            
+            string $filter[] = `filterExpand -sm 9`;
+            if(size($filter) > 0){
+                //connect selected curves to the curve node
+                for ( $i = 0; $i < size($filter); $i++) {
+                    string $shape[] = `listRelatives -s $filter[$i]`;
+                    int $index = getNextFreeMultiIndex( ($newNode+".inCurves"), 0 );
+                    connectAttr -force ($shape[0]+".worldSpace[0]") ($newNode+".inCurves[" + $index + "]");
+                    MASHinViewMessage(getPluginResource("MASH", "kCurveConnected"), "Info");
+                }
+            }else{
+                MASHinViewMessage(getPluginResource("MASH", "kNoCurveConnected"), "Info");
+            }
+        }
+        else if ($selectedNode == "MASH_Replicator") {
+            string $nodeType = ($prefix+"_Replicator");
+            $newNode = `createNode MASH_Replicator -n $nodeType`;
+        }
+
+        else if ($selectedNode == "MASH_Flight") {
+
+            int $canAddFlight = `mashCanAddFlight($nodeName)`;
+            if ($canAddFlight) {
+                string $nodeType = ($prefix+"_FlightShape");
+                $newNode = `createNode MASH_Flight -n $nodeType`;
+            } else {
+                error (getPluginResource("MASH", "kFlightExists"));
+                return "";
+            }
+        }
+        else if ($selectedNode == "MASH_Influence") {
+            string $nodeType = ($prefix+"_Influence");
+            $newNode = `createNode MASH_Influence -n $nodeType`;
+            int $command = 1;
+            MASHguideButtonCMDS($newNode, $command);
+        }
+
+        else if ($selectedNode == "MASH_ID") {
+            string $nodeType = ($prefix+"_ID");
+            $newNode = `createNode MASH_Id -n $nodeType`;
+            if (`nodeType $instancer[0]` == "instancer") {
+                string $children[] = `instancer -q -obj $instancer[0]`;
+                int $inIt = size($children);
+                if ($inIt == 0) $inIt = 1;
+                setAttr ($newNode +".nuob") $inIt;
+            } else if (`nodeType $instancer[0]` == "MASH_Repro") {
+                int $idx[] = `reproInstancer -q -indices ($instancer[0])`;
+                int $inIt = size($idx);
+                if ($inIt == 0) $inIt = 1;
+                setAttr ($newNode +".nuob") $inIt;
+            }
+        }
+
+        else if ($selectedNode == "MASH_Delay") {
+            int $canAddDelay = `mashCanAddDelay($nodeName)`;
+            if ($canAddDelay) {
+                string $nodeType = ($prefix+"_Delay");
+                $newNode = `createNode MASH_Delay -n $nodeType`;
+            } else {
+                error (getPluginResource("MASH", "kDelayExists"));
+                return "";
+            }
+
+
+        }
+        else if ($selectedNode == "MASH_Offset") {
+            string $nodeType = ($prefix+"_Offset");
+            $newNode = `createNode MASH_Offset -n $nodeType`;
+        }
+
+        else if ($selectedNode == "MASH_Orient") {
+            string $nodeType = ($prefix+"_Orient");
+            $newNode = `createNode MASH_Orient -n $nodeType`;
+        }
+        else if ($selectedNode == "MASH_Python") {
+            string $nodeType = ($prefix+"_Python");
+            $newNode = `createNode MASH_Python -n $nodeType`;
+        }
+        else if ($selectedNode == "MASH_Spring") {
+            string $nodeType = ($prefix+"_Spring");
+            $newNode = `createNode MASH_Spring -n $nodeType`;
+        }
+        else if ($selectedNode == "MASH_Signal") {
+            string $nodeType = ($prefix+"_Signal");
+            $newNode = `createNode MASH_Signal -n $nodeType`;
+        }
+        else if ($selectedNode == "MASH_Symmetry") {
+            string $nodeType = ($prefix+"_Symmetry");
+            $newNode = `createNode MASH_Symmetry -n $nodeType`;
+        }
+        else if ($selectedNode == "MASH_Strength") {
+            string $nodeType = ($prefix+"_Strength");
+            $newNode = `createNode MASH_Strength -n $nodeType`;
+        }
+        else if ($selectedNode == "MASH_Time") {
+            string $nodeType = ($prefix+"_Time");
+            $newNode = `createNode MASH_Time -n $nodeType`;
+        }
+        else if ($selectedNode == "MASH_Trails") {
+            string $nodeType = ($prefix+"_Trails");
+            $newNode = `createNode MASH_Trails -n $nodeType`;
+        }
+
+        else if ($selectedNode == "MASH_Transform") {
+            string $nodeType = ($prefix+"_Transform");
+            $newNode = `createNode MASH_Transform -n $nodeType`;
+        }
+
+        else if ($selectedNode == "MASH_Merge") {
+            string $nodeType = ($prefix+"_Merge");
+            $newNode = `createNode MASH_Blend -n $nodeType`;
+        }
+        else if ($selectedNode == "MASH_Mute") {
+            string $nodeType = ($prefix+"_Mute");
+            $newNode = `createNode MASH_Mute -n $nodeType`;
+
+        }
+        else if ($selectedNode == "MASH_Random") {
+            string $nodeType = ($prefix+"_Random");
+            $newNode = `createNode MASH_Random -n $nodeType`;
+        }
+        else if ($selectedNode == "MASH_Visibility") {
+            string $nodeType = ($prefix+"_Visibility");
+            $newNode = `createNode MASH_Visibility -n $nodeType`;
+        }
+        else if ($selectedNode == "MASH_World") {
+            string $nodeType = ($prefix+"_World");
+            $newNode = `createNode MASH_World -n $nodeType`;
+        }
+        else if ($selectedNode == "MASH_Placer") {
+            string $nodeType = ($prefix+"_Placer");
+            $newNode = `createNode MASH_Placer -n $nodeType`;
+        }
+
+        //                                                                                                          //
+        //  IF THIS IS A LEGACY NETWORK, ADD A CONVERSION NODE SO WE CAN ADD NODES USING THE NEW STYLE CONNECTIONS  //
+        //                                                                                                          //
+        string $legacyConnections[] = `listConnections -d 0 -s 1 -p 1 ($nodeName+".inPositionPP")`;
+        if (size($legacyConnections) > 0) {
+
+            string $legacyConnectionsRot[] = `listConnections -d 0 -s 1 -p 1 ($nodeName+".inRotationPP")`;
+            string $legacyConnectionsScale[] = `listConnections -d 0 -s 1 -p 1 ($nodeName+".inScalePP")`;
+            string $legacyConnectionsVis[] = `listConnections -d 0 -s 1 -p 1 ($nodeName+".inVisibilityPP")`;
+            string $legacyConnectionsId[] = `listConnections -d 0 -s 1 -p 1 ($nodeName+".inIdPP")`;
+
+            catchQuiet (`disconnectAttr $legacyConnections[0] ($nodeName +".inPositionPP")`);
+            catchQuiet (`disconnectAttr $legacyConnectionsRot[0] ($nodeName +".inRotationPP")`);
+            catchQuiet (`disconnectAttr $legacyConnectionsScale[0] ($nodeName +".inScalePP")`);
+            catchQuiet (`disconnectAttr $legacyConnectionsVis[0] ($nodeName +".inVisibilityPP")`);
+            catchQuiet (`disconnectAttr $legacyConnectionsId[0] ($nodeName +".inIdPP")`);
+
+            // ADD LEGACY NODE
+            string $nodeType = ($prefix+"_Legacy");
+            $legacyNode = `createNode MASH_Legacy -n $nodeType`;
+            connectAttr -force $legacyConnections[0] ($legacyNode +".positionInPP");
+
+            if (size($legacyConnections) > 0) connectAttr -force $legacyConnectionsRot[0] ($legacyNode +".rotationInPP");
+            if (size($legacyConnectionsScale) > 0) connectAttr -force $legacyConnectionsScale[0] ($legacyNode +".scaleInPP");
+            if (size($legacyConnectionsVis) > 0) connectAttr -force $legacyConnectionsVis[0] ($legacyNode +".visibilityInPP");
+            if (size($legacyConnectionsId) > 0) connectAttr -force $legacyConnectionsId[0] ($legacyNode +".idInPP");
+
+            connectAttr -force ($legacyNode +".outputPoints") ($newNode +".inputPoints");
+            connectAttr -force ($newNode +".outputPoints") ($nodeName +".inputPoints");
+
+        // Make sure to ignore some nodes as they are connected to the right side of the Waiter
+        } else if ($selectedNode != "MASH_Trails" && $selectedNode != "MASH_Explode"  && $selectedNode != "MASH_Points"  && $selectedNode != "MASH_Breakout")  {
+            // Part 3. Connect the first node in the MASH chain to the new node.
+            // Get the node nearest to the Waiter and connect it to the new node's inputPoints attribute
+            string $inConnection[] = `listConnections -d 0 -s 1 -p 1 ($nodeName+".inputPoints")`;
+            connectAttr -force $inConnection[0] ($newNode +".inputPoints");
+
+            // get the next free connection on the message attribute
+            int $index = getNextFreeMultiIndex( ($nodeName+".setMessage"), 0 );
+
+            connectAttr -force ($newNode +".outputPoints") ($nodeName +".inputPoints");
+
+        } else if ($selectedNode == "MASH_Explode" || $selectedNode == "MASH_Points" || $selectedNode == "MASH_Breakout")  {
+
+            connectAttr -force ($nodeName +".outputPoints") ($newNode +".inputPoints");
+
+        } else if ($selectedNode == "MASH_Trails") {
+            int $canAddDyn = `mashCanAddDynamics($nodeName)`;
+            // if we can't add Dynamics then it means we already have dynamics, and so should connect trails to the Solver, not the Waiter
+            if ($canAddDyn) {
+                connectAttr -force ($nodeName +".outputPoints") ($newNode +".inputPoints");
+            } else {
+                string $solver[] = `listConnections -d 0 -s 1 -p 1 ($instancer[0]+".inputPoints")`;
+                if (size($solver) > 0) {
+                    connectAttr -force $solver[0] ($newNode +".inputPoints");
+                }
+            }
+
+        }
+
+        // Additional Dynamics Setup
+        if ($selectedNode == "MASH_Dynamics") {
+            string $solvers[] = `ls -type "MASH_BulletSolver"`;
+            string $solverToUse = "";
+            if (size($solvers) > 0) {
+                $solverToUse = $solvers[0];
+            } else {
+                string $name = ($prefix+"_BulletSolverShape");
+                $solverToUse = `createNode MASH_BulletSolver -name $name`;
+
+            }
+            python("import MASH.dynamicsUtils; MASH.dynamicsUtils.connectDynamics('"+$newNode+"','"+$solverToUse+"','"+$nodeName+"','"+$instancer[0]+"')");
+        }
+
+        // Select the new node
+        select -cl;
+        select $newNode;
+    return $newNode;
+}
+
+//misc button commands on the waiter.
+global proc waiterButtonCMDS (string $nodeName, int $whichCMD)
+{
+    //preset
+    if ($whichCMD == 20)
+    {
+        //save image of scene along with the mash network to the presets folder.
+        string $currentFilePath = `getAttr ($nodeName +".filename")`;
+
+        if (size($currentFilePath) > 0) {
+
+            string $result = `promptDialog
+            -title (getPluginResource("MASH", "kNamePreset"))
+            -message (getPluginResource("MASH", "kPresetName"))
+            -button (getPluginResource("MASH", "kCreate")) -button (getPluginResource("MASH", "kCancel"))
+            -defaultButton (getPluginResource("MASH", "kCreate")) -cancelButton (getPluginResource("MASH", "kCancel"))
+            -dismissString (getPluginResource("MASH", "kCancel"))`;
+
+            // if OK pressed
+            if ($result == (getPluginResource("MASH", "kCreate"))) {
+
+                // query the entry typed by the user
+                $presetName = `promptDialog -query -text`;
+
+                string $currentFileName = $presetName;
+
+                string $path;
+                string $imagePath;
+
+                string $os = `about -operatingSystem`;
+
+                if (($os == "mac") || ($os == "linux64")) {
+                    //the preset location + the preset name
+                    $path = ($currentFilePath+ "/" +$currentFileName);
+                    //the preset location + mayaSwatches
+                    $imagePath = ($currentFilePath+ "/" + ".mayaSwatches");
+                    //make the folder, this won't overwrite it if it's already there
+                    sysFile -makeDir $imagePath;
+                    //add the name of the file plus .ma.swatch to it
+                    $imagePath += ("/" + $currentFileName+".ma.swatch");
+                } else {
+                    //PC
+                    //the preset location + the preset name
+                    $path = ($currentFilePath+ "/" + $currentFileName);
+                    toNativePath( $path );
+                    //the preset location + mayaSwatches
+                    $imagePath = ($currentFilePath+ "/" + ".mayaSwatches");
+                    toNativePath( $imagePath );
+                    //make the folder, this won't overwrite it if it's already there
+                    sysFile -makeDir $imagePath;
+                    //add .swatch to it
+                    $imagePath += ("/" + $currentFileName+".ma.swatch");
+                    toNativePath( $imagePath );
+                }
+
+                int $currentFrame =  `currentTime -q`;
+                string $createdImage = `playblast -format image -st $currentFrame -et $currentFrame -cf $imagePath -viewer 0 -compression "png" -orn 0 -fp 0 -w 500 -h 500 -p 100 -os`;
+
+                //get the instancer
+                string $instancer[] = `listConnections -d on -s off ($nodeName + ".multiInstancer[0]")`;
+                if (size($instancer) == 0) {
+                    $instancer = `listConnections -d on -s off ($nodeName + ".outputPoints")`;
+                }
+
+                select -add $instancer[0];
+
+                //all the nodes on the waiter
+                string $wconns[] = `listConnections -d 1 ($nodeName +".setMessage")`;
+                string $nconns[];
+                //if there's a multi-curve, get the curves and save them to the preset as they aren't automatically bought across.
+                for ($obj in $wconns) {
+                    select -add $obj;
+                    //get created curves, as they don't save automatically
+                    if (`nodeType $obj` == "MASH_MultiCurve") {
+                        $nconns = `listConnections -d 1 ($obj +".outputCurves")`;
+                        for ($cobj in $nconns) {
+                            select -add $cobj;
+                        }
+                    }
+                }
+                //file path
+                string $exportPath = ($currentFilePath+ "/" + $presetName);
+                //save the file
+                file -force -options "v=0;" -typ "mayaAscii" -pr -es $exportPath;
+
+                select -clear;
+
+                //confirm
+                MASHinViewMessage((getPluginResource("MASH", "kPresetCreated")), "Info");
+
+            }
+            else {
+                MASHinViewMessage((getPluginResource("MASH", "kPresetCancelled")), "Warning");
+            }
+
+        } else {
+            MASHinViewMessage((getPluginResource("MASH", "kPathNeededPresets")), "Error");
+        }
+    }
+    //show the visor window and show the MASH tab
+    if ($whichCMD == 21)
+    {
+        string $cmd = ( "{ " +
+            "    VisorWindow; " +
+            "    string $pnl=visorPanelName();" +
+            "    if( size( $pnl ) > 0 ) { " +
+                "         visorPanelMenuCommand( $pnl, \"selectOrCreateTabByLabel MASH Examples\");" +
+                "    } " +
+            "} " );
+
+        evalDeferred $cmd;
+    }
+    //show the content browser window and show the MASH tab
+    if ($whichCMD == 22)
+    {
+        string $cmd = "ContentBrowserWindow; contentBrowserSetLocation(\"MASH Examples\");";
+
+        evalDeferred $cmd;
+    }
+
+    //show the cashing ui
+    if ($whichCMD == 10)
+    {
+        MASHsetUpCachingUI($nodeName);
+    }
+
+}
+
+global proc int mashCanAddFlight(string $networkName) {
+    python("import MASH.api as mapi");
+    python("network = mapi.Network('"+$networkName+"')");
+    int $canAdd =`python("network.checkForNodeType('MASH_Flight')")`;
+    return !$canAdd;
+}
+
+global proc int mashCanAddDelay(string $networkName) {
+    python("import MASH.api as mapi");
+    python("network = mapi.Network('"+$networkName+"')");
+    int $canAdd =`python("network.checkForNodeType('MASH_Delay')")`;
+    return !$canAdd;
+}
+
+global proc int mashCanAddDynamics(string $networkName) {
+    python("import MASH.api as mapi");
+    python("network = mapi.Network('"+$networkName+"')");
+    int $canAdd =`python("network.checkForNodeType('MASH_Dynamics')")`;
+    return !$canAdd;
+}

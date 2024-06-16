@@ -1,0 +1,51 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  26 March 2003
+//
+//<doc>
+//<name isValidUiName>
+//
+//<synopsis>
+//		int isValidUiName(string $name)
+//
+//<description>
+//		Return true if the string is a valid user interface name.
+//		A valid user interface name begins with a letter and is followed
+//		letters, digits, underscores or spaces.
+//
+//<flags>
+//		string $name	The name string to test.
+//
+//<returns>
+//		int : True if the name is valid, false otherwise.
+//
+//<related isValidString isValidObjectName>
+//
+//<examples>
+//	isValidUiName("Name"); // Will succeed.
+//
+//	isValidUiName(" Name"); // Will fail.
+//
+//	isValidUiName("1 Name"); // Will fail.
+//
+//	isValidUiName("New Name"); // Will succeed.
+//
+//	isValidUiName("New_Name"); // Will succeed.
+//
+//	isValidUiName("New Name 1"); // Will succeed.
+//
+//</doc>
+//
+
+global proc int isValidUiName(string $name)
+{
+	string $regularExpression = "([a-zA-Z]+)([a-zA-Z0-9_ ])*";
+	return (isValidString($name, $regularExpression));
+}

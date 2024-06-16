@@ -1,0 +1,43 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+// provided at the time of installation or download, or which otherwise accompanies 
+
+//
+// Progress Bar scripts
+//
+
+global proc ilrProgressBegin(string $msg)
+{
+	global string $gMainProgressBar;
+	progressBar -edit -beginProgress
+		-minValue 0	-maxValue 100
+		-isInterruptable true
+		-progress 0
+		-status $msg
+		$gMainProgressBar;
+}
+
+global proc ilrProgressEnd()
+{
+	global string $gMainProgressBar;
+	progressBar -edit -endProgress $gMainProgressBar;
+}
+
+global proc ilrSetProgress(string $msg, int $percent)
+{
+	global string $gMainProgressBar;
+	progressBar -edit -progress $percent -status $msg $gMainProgressBar;
+}
+
+global proc int ilrProgressIsCancelled()
+{
+	global string $gMainProgressBar;
+	int $c = `progressBar -query -isCancelled $gMainProgressBar`;
+	return $c;
+}

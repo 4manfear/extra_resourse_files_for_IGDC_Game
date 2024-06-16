@@ -1,0 +1,37 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//  Procedure Name:
+//      performInterpolatorSelectDrivers
+//
+//
+global proc int performInterpolatorSelectDrivers()
+{
+	string $tplSelected[] = getPoseEditorTreeviewSelection(1);
+	if (size($tplSelected) == 0)
+	{
+		error (uiRes("m_performInterpolatorSelectDrivers.kNoTplSelected"));
+		return 0;
+	}
+	string $tpl = $tplSelected[0];
+	
+	string $drivers[] = poseInterpolatorDrivers($tpl);
+	if (size($drivers) == 0)
+		return 0;
+		
+	string $cmd = "select -r";
+	for($driver in $drivers)
+	{
+		$cmd += " ";
+		$cmd += $driver;
+	}
+	eval($cmd);
+	
+	return 1;
+}
+

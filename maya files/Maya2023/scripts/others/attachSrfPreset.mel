@@ -1,0 +1,31 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  April 17, 1997
+//
+//  Description:
+//      Obsolete.  Use doAttachSurfaceArgList() instead.
+
+global proc attachSrfPreset(
+ 	int $history,
+	int $replaceOriginal,
+	int $keepMultKnots )
+//
+//	attach with the preset options.
+//	Use this proc when operation dragged to Shelf.
+//
+{
+    string $args[3];
+
+    $args[0] = $history;
+    $args[1] = $replaceOriginal;
+    $args[2] = $keepMultKnots;
+
+    doAttachSurfaceArgList( "1", $args );
+}

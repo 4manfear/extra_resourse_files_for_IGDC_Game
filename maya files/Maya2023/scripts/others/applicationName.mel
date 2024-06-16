@@ -1,0 +1,35 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+// Creation Date: November 28, 2002
+//
+//<doc>
+//<name applicationName>
+//
+//<synopsis>
+//	string applicationName()
+//
+//<description>
+//		Returns the name of the application. The name is capitalized and
+//		does not include the version number.
+//
+//<returns>
+//		string : Application name
+//
+//<examples>
+//
+//	applicationName
+//
+//</doc>
+//
+global proc string applicationName()
+{
+	string $applicationName = `about -application`;
+	$applicationName = capitalizeString($applicationName);
+	return $applicationName;
+}

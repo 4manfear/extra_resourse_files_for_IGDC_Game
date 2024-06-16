@@ -1,0 +1,78 @@
+//**************************************************************************/
+// Copyright 2012 Autodesk, Inc.  
+// All rights reserved.
+// Use of this software is subject to the terms of the Autodesk license 
+// agreement provided at the time of installation or download, or which 
+// otherwise accompanies this software in either electronic or hard copy form.   
+//**************************************************************************/
+//
+// Sample shader useful for rendering a "depth" pass.
+//
+// World-view-projection transformation.
+uniform mat4 gWVPXf : WorldViewProjection 
+<
+    string UIWidget = "None"; 
+    bool rowMajor = true;
+>;
+
+// Depth priority, which shifts the model a bit forward in the z-buffer
+uniform float gDepthPriority : DepthPriority
+<
+    string UIName =  "Depth Priority";
+    string UIWidget = "Slider";
+    float UIMin = -16/1048576.0f;    // divide by 2^24/16 by default
+    float UIMax = 16/1048576.0f;
+    float UIStep = 1/1048576.0f;
+> = 0.0f;
+
+// Vertex shader input structure.
+attribute VS_INPUT
+{
+    vec3 Pos : POSITION;
+};
+
+// Vertex shader output structure.
+attribute VS_TO_PS
+{
+	// None
+};
+
+// Pixel shader output structure.
+attribute pixelOut
+{
+    vec4 colorOut : COLOR0;
+}
+
+// Vertex shader.
+GLSLShader VS_Depth
+{
+	void main()
+	{
+		// Transform the position from object space to clip space for output.
+		vec4 HPos = gWVPXf*vec4(Pos, 1.0);
+		
+		// modify the HPos a bit by biasing the Z a bit forward, based on depth priority
+		HPos.z -= HPos.w*gDepthPriority;
+
+		gl_Position = HPos;
+	}
+}
+
+// Pixel shader.
+GLSLShader PS_Depth
+{
+	void main()
+	{
+    	colorOut = vec4(0.0, 0.0, 0.0, 0.0);
+	}
+}
+
+// The main technique.
+technique Main
+{
+    pass P0
+    {
+        VertexShader (in VS_INPUT, out VS_TO_PS) = VS_Depth;
+        PixelShader (in VS_TO_PS, out pixelOut) = PS_Depth;
+    }
+}

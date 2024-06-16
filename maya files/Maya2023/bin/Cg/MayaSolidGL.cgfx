@@ -1,0 +1,282 @@
+//**************************************************************************/
+// Copyright (c) 2007 Autodesk, Inc.
+// All rights reserved.
+// 
+// These coded instructions, statements, and computer programs contain
+// unpublished proprietary information written by Autodesk, Inc., and are
+// protected by Federal copyright law. They may not be disclosed to third
+// parties or copied or duplicated in any form, in whole or in part, without
+// the prior written consent of Autodesk, Inc.
+//**************************************************************************/
+// DESCRIPTION: CgFx Solid effect. 
+// AUTHOR: Bernard Kwok
+// CREATED: January, 2008
+//**************************************************************************/
+
+// World-view-projection transformation.
+float4x4 gWVPXf : WorldViewProjection 
+< 
+    string UIWidget = "None"; 
+    bool rowMajor = true;
+>;
+
+// Color.
+float3 gColor : Color
+<
+    string UIName =  "Color";
+    string UIWidget = "Color";
+> = float3(1.0f, 1.0f, 1.0f);
+
+// Color Scale.
+float3 gColorScale : ColorScale
+<
+    string UIName =  "Color Scale";
+    string UIWidget = "Color";
+> = float3(1.0f, 1.0f, 1.0f);
+
+// Color Bias.
+float3 gColorBias : ColorBias
+<
+    string UIName =  "Color Bias";
+    string UIWidget = "Color";
+> = float3(0.0f, 0.0f, 0.0f);
+
+// Alpha scale.
+float gAlphaScale : AlphaScale
+<
+    string UIName =  "Alpha Scale";
+    string UIWidget = "Slider";
+    float UIMin = 0.0f;
+    float UIMax = 1.0f;
+    float UIStep = 0.1f;
+> = 1.0f;
+
+// Opacity factor.
+float gOpacity : Opacity
+<
+    string UIName = "Opacity";
+    string UIWidget = "Slider";
+    float UIMin = 0.0f;
+    float UIMax = 1.0f;
+    float UIStep = 0.1f;
+> = 1.0f;
+
+// The texture.
+texture gTex : Texture
+<
+    string UIName = "Texture";
+>;
+
+// Texture flag.
+bool gHasTex : TextureFlag
+<
+    string UIName = "Has Texture";
+> = false;
+
+// Texture sampler.
+sampler2D gSamp : TextureSampler = sampler_state
+{
+    Texture = <gTex>;
+};
+
+// Texture coordinate transformation.
+float4x4 gTexXf : TextureTransform
+<
+    string UIName = "Texture Matrix";
+    bool rowMajor = true;
+> =
+{
+    {1.0f, 0.0f, 0.0f, 0.0f},
+    {0.0f, 1.0f, 0.0f, 0.0f},
+    {0.0f, 0.0f, 1.0f, 0.0f},
+    {0.0f, 0.0f, 0.0f, 1.0f}
+};
+
+// Texture alpha flag.
+bool gUseTexAlpha : TextureAlphaFlag
+<
+    string UIName = "Use Texture Alpha";
+> = false;
+
+// Texture decal mode flag.
+bool gUseTexDecal : TextureDecalFlag
+<
+    string UIName = "Use Texture Decal Mode";
+> = false;
+
+// Display mode flag.
+int gDisplayMode : DisplayMode
+<
+    string UIName = "Display Mode";
+> = false;
+
+// Depth priority, which shifts the model a bit forward in the z-buffer
+float gDepthPriority : DepthPriority
+<
+    string UIName =  "Depth Priority";
+    string UIWidget = "Slider";
+    float UIMin = -16/1048576.0f;    // divide by 2^24/16 by default
+    float UIMax = 16/1048576.0f;
+    float UIStep = 1/1048576.0f;
+> = 0.0f;
+
+
+// Vertex shader input structure.
+struct VS_INPUT
+{
+    float3 Pos : POSITION;
+};
+
+// Vertex shader output structure.
+struct VS_TO_PS
+{
+    // The vertex position in clip space.
+    float4 HPos : POSITION;
+};
+
+// Vertex shader.
+VS_TO_PS VS_Solid(VS_INPUT In)
+{
+    VS_TO_PS Out;
+    
+    // Transform the position from object space to clip space for output.
+    Out.HPos = mul(float4(In.Pos, 1.0f), gWVPXf);
+    
+    // modify the HPos a bit by biasing the Z a bit forward, based on depth priority
+    Out.HPos.z -= Out.HPos.w*gDepthPriority;
+
+    return Out;
+}
+
+// Pixel shader.
+float4 PS_Solid(VS_TO_PS In) : COLOR0
+{
+    // Return the input color with the input opacity as the alpha component.
+    return float4(gColor, gOpacity);
+}
+
+// Vertex shader input structure.
+struct VS_INPUT_TEXTURED
+{
+    float3 Pos : POSITION;
+    float2 UV : TEXCOORD0;
+};
+
+// Vertex shader output structure.
+struct VS_TO_PS_TEXTURED
+{
+    // The vertex position in clip space.
+    float4 HPos : POSITION;
+    
+    // The interpolated texture coordinates.
+    float2 UV : TEXCOORD0;
+};
+
+// Vertex shader - textured.
+VS_TO_PS_TEXTURED VS_Solid_Textured(VS_INPUT_TEXTURED In)
+{
+    VS_TO_PS_TEXTURED Out;
+    
+    // Transform the position from object space to clip space for output.
+    Out.HPos = mul(float4(In.Pos, 1.0f), gWVPXf);
+
+    // modify the HPos a bit by biasing the Z a bit forward, based on depth priority
+    Out.HPos.z -= Out.HPos.w*gDepthPriority;
+
+    // Pass the texture coordinates adjusted by the texture transformation.
+    Out.UV = mul(float4(In.UV.x, 1.0f - In.UV.y, 0.0f, 1.0f), gTexXf).xy;
+
+    return Out;
+}
+
+// Pixel shader - textured.
+float4 PS_Solid_Textured(VS_TO_PS_TEXTURED In) : COLOR0
+{
+    // Get the texture color.  If there is no texture, use white.
+    float4 clrTex = gHasTex ? tex2D(gSamp, In.UV) : float4(1.0f, 1.0f, 1.0f, 1.0f);
+    
+    // The output color is the input color modulated by the texture color, or an interpolation
+    // between the color and the texture based on the texture alpha.
+    float3 outputColor;
+        
+    // The output alpha is the material opacity factor, optionally multiplied by the texture alpha.
+    float outputAlpha = gOpacity * (gUseTexAlpha ? clrTex.a : 1.0f);
+    
+    // RGBA mode
+    if( gDisplayMode == 0 )
+    {   
+		// modelate or decal
+		// If the image is transparent,we use decal mode which is C = (1 - At) * Cf + At * Ct. Cf is black color
+		// If the image is not transparent, we will use decal mode which is C = (1 - At) * Cf + At * Ct. Cf is black color
+		outputColor = gUseTexAlpha ? clrTex * gColor : lerp(gColor, clrTex, clrTex.a);
+    }
+    // RGB mode
+    // we use decal mode which is C = (1 - At) * Cf + At * Ct. Cf is black color
+    else if( gDisplayMode == 1)
+    {
+		outputColor = lerp(gColor, clrTex, clrTex.a);
+    }
+    // Luminance mode
+    else if( gDisplayMode == 2 )
+    {
+		// B * 0.114f + G * 0.587f + R * 0.299f
+        float3 ave = float3(0.114f, 0.587f, 0.299f);
+        outputColor = dot(clrTex.bgr, ave);
+        
+        // decal
+        outputColor = lerp(gColor, outputColor, clrTex.a);
+    }
+    // Alpha mode
+    else if( gDisplayMode == 3 )
+    {
+		outputColor = clrTex.a;
+    }
+    outputAlpha = gUseTexAlpha ? gOpacity * clrTex.a : 1.0f;
+    outputColor = outputColor * gColorScale + gColorBias;
+    return float4(outputColor, outputAlpha);
+}
+
+// The main technique.
+technique Main
+{
+    pass P0
+    {
+        VertexProgram = compile glslv VS_Solid();
+        FragmentProgram = compile glslf PS_Solid();
+
+        // Enable alpha blending for visualizing opacity.
+        //AlphaBlendEnable = true;
+        //BlendOp = Add;
+        //BlendFunc = int2( SrcAlpha, OneMinusSrcAlpha);
+    }
+}
+
+// The textured technique.
+technique Textured
+{
+    pass P0
+    {
+        VertexProgram = compile glslv VS_Solid_Textured();
+        FragmentProgram = compile glslf PS_Solid_Textured();
+
+        // Enable alpha blending for visualizing opacity.
+        //AlphaBlendEnable = true;
+        //BlendOp = Add;
+        //BlendFunc = int2( SrcAlpha, OneMinusSrcAlpha);
+    }
+}
+
+// The technique to use in a shader authoring tool.
+technique ShaderAuthoringTool
+{
+    pass P0
+    {
+        VertexProgram = compile glslv VS_Solid();
+        FragmentProgram = compile glslf PS_Solid();
+        
+        // Enable alpha blending for visualizing opacity.
+        AlphaBlendEnable = true;
+        BlendOp = Add;
+        BlendFunc = int2( SrcAlpha, OneMinusSrcAlpha);
+    }
+}

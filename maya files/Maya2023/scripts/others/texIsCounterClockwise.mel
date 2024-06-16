@@ -1,0 +1,42 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//  Creation Date: November 26, 2016
+//
+//  Procedure Name:
+//      texIsCounterClockwise
+//
+//  Description:
+//      UV workflow function used for calculating the 2D cross product of the
+//      vectors between three points in 2D space (UV coordinates). The
+//      calculation is on the the points making up the vectors OA and OB
+//      (ie. the Z-component of 2D coordinates 3D cross product).
+//
+//  Input Arguments
+//      O                    - Float[] - U and V coordinate of UV point O
+//      A                    - Float[] - U and V coordinate of UV point A
+//      B                    - Float[] - U and V coordinate of UV point B
+//
+//  Return Value:
+//      Float                - Either zero, a positive or negative value.
+//                             Positive: OAB makes a counter-clockwise turn.
+//                             Negative: OAB makes a clockwise turn.
+//                             Zero: All three points are collinear.
+//
+//  Notes:
+//  This script is part of the implementation of Nightshade UV Editor into
+//  Autodesk Maya. This script is sourced by other scripts. Do not run it 
+//  directly.
+//
+// ===========================================================================
+
+global proc float texIsCounterClockwise(float $O[], float $A[], float $B[]){
+    float $value = ($A[0] - $O[0]) * ($B[1] - $O[1]) - ($A[1] - $O[1]) * ($B[0] - $O[0]);
+
+    return $value;
+}

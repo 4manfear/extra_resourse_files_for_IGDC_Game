@@ -1,0 +1,1503 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+proc register(string $key, string $value){
+    catchQuiet(registerPluginResource("MASH", $key, $value));
+}
+
+global proc MASHinitStrings()
+{
+    //The first string is the plugin name.
+    //The second string is the identifier (this must be unique, contain no spaces, and start with a k).
+    //The last field is the English language label.
+
+    //API
+    register("kNoPaintMeshes", "No Paint Meshes Found");
+
+    // Dynamics
+    register("kCollisionShape", "Collision Shape");
+    register("kAutoFit", "Auto Fit");
+    register("kCollisionShapeScale", "Collision Shape Scale");
+    register("kCollisionShapeLength", "Collision Shape Length");
+    register("kPhysicalProperties", "Physical Properties");
+    register("kFriction", "Friction");
+    register("kRollingFriction", "Rolling Friction");
+    register("kRollingDamping", "Rolling Damping");
+    register("kBounce", "Bounce");
+    register("kCollisionJitter", "Collision Jitter");
+    register("kVelocity", "Velocity");
+    register("kMaxVelocity", "Maximum Translational");
+    register("kMaxRotVelocity", "Maximum Rotational");
+    register("kInitialVelocity", "Initial Translational");
+    register("kInitialRotVelocity", "Initial Rotational");
+    register("kMASHBias", "MASH Bias");
+    register("kPositionalStrength", "Position Strength");
+    register("kRotationalStregnth", "Rotational Strength");
+    register("kSleeping", "Sleeping");
+    register("kInitiallySleeping", "Initially Sleeping");
+    register("kPositionVelThreshold", "Translational Threshold");
+    register("kRotationVelThreshold", "Rotational Threshold");
+    register("kConstraints", "Constraints");
+    register("kContacts", "Contacts");
+    register("kEmitFromCollisions", "Emit From Collisions");
+    register("kCollisionDistanceThreshold", "Distance Threshold");
+    register("kIgnoreCollisions", "Ignore Invisible Objects");
+    register("kContactMaskLayers", "Contact Mask Layers");
+    register("kCollisionGroupLayers", "Collision Group Layers");
+    register("kCollisionMaskLayers", "Collision Mask Layers");
+    register("kInteractionMasks", "Interaction Masks (separate with , -)");
+    register("kMASHSolver", "MASH Bullet Solver");
+    register("kContinuousCreation", "Continuous Creation");
+
+    register("kSolverSettings", "Solver Settings");
+    register("kInternalFrameRate", "Internal Frame Rate");
+    register("kCollisionMargin", "Collision Margin");
+    register("kGravity", "Gravity");
+    register("kGroundPlaneEnable", "Ground Plane");
+    register("kDamping", "Damping");
+
+    register("kDebugging", "Debugging");
+    register("kPrintInformation", "Print Information");
+    register("kDrawStyle", "Draw Style");
+    register("kGround", "Ground");
+    register("kCollisionPositions", "Collision Positions");
+    register("kCollisionShapes", "Collision Shapes");
+    register("kForceDirection", "MASH Force Direction");
+    register("kLineThickness", "Line Thickness");
+    register("kRigidBodyColor", "Active Color");
+    register("kSleepingBodyColor", "Static/ Inactive Color");
+    register("kLineColor", "Line Color");
+
+    register("kChannelName", "Channel Name");
+    register("kConstraintChannelName", "Constraint Channel Name");
+    register("kStartValue", "Start Value");
+    register("kVarianceMinimum", "Variance Minimum");
+    register("kVarianceMaximum", "Variance Maximum");
+
+    // Dynamics Constraints
+    register("kType", "Type");
+    register("kBreakable", "Breakable");
+    register("kBreakingThreshold", "Breaking Threshold");
+    register("kConnectionMode", "Connection Mode");
+    register("kMaximumConstraints", "Maximum Constraints");
+
+    register("kMaskMap", "Mask Map");
+    register("kColorThreshold", "Color Threshold");
+    register("kConnectionMasking", "Connection Masking");
+
+    register("kDeleteSolver", "Delete Solver");
+    register("kOffsetPointsNetwork", "Constraint Positions");
+    register("kAddShellDynamics", "Add Shell Dynamics");
+    register("kAddShellDynamicsAnnot","Add rigid body dynamics to each polygon shell in a mesh (including Type and SVG)");
+    register("kAssignSolver", "Assign Solver to MASH");
+    register("kAssignSolverAnnot", "Assign a MASH Bullet solver to a MASH network");
+    register("kAddSolver", "Add MASH Solver");
+    register("kAddSolverAnnot", "Add a MASH Bullet solver to your scene");
+
+    register("kPositionalSpring", "Positional Spring");
+    register("kRotationalSpring", "Rotational Spring");
+    register("kRestLength", "Rest Length");
+    register("kMovementRange", "Movement Range");
+
+    register("kMotor", "Motor");
+    register("kPositionalMotor", "Positional Motor");
+    register("kRotationalMotor", "Rotational Motor");
+
+    register("kTargetSpeed", "Target Speed");
+    register("kMaxForce", "Maximum Force");
+
+    register("kLimits", "Limits");
+    register("kPositionalLimits", "Positional Limits");
+    register("kRotationalLimits", "Rotational Limits");
+    register("kLimitTypeX", "Limit Type X");
+    register("kLimitTypeY", "Limit Type Y");
+    register("kLimitTypeZ", "Limit Type Z");
+    register("kMinimumLimit", "Minimum Limits");
+    register("kMaximumLimit", "Maximum Limits");
+
+    //Strength node
+    register("kPositionDelay", "Position Delay");
+    register("kRotationDelay", "Rotation Delay");
+    register("kScaleDelay", "Scale Delay");
+    register("kRandomisePositionDelay", "Randomize Position Delay");
+    register("kRandomiseRotationDelay", "Randomize Rotation Delay");
+    register("kRandomiseScaleDelay", "Randomize Scale Delay");
+    register("kPositionStrength", "Position Strength");
+    register("kRotationStrength", "Rotation Strength");
+    register("kScaleStrength", "Scale Strength");
+    register("kReversePositionDelay", "Reverse Position Delay");
+    register("kReverseRotationDelay", "Reverse Rotation Delay");
+    register("kReverseScaleDelay", "Reverse Scale Delay");
+    register("kOffsetAlongCurve", "Offset Along Curve");
+    //Trigonometry node
+
+    register("kEnable", "Enable");
+    register("kTrigNode", "Trigonometry Node");
+    register("kAmplitudeX", "Amplitude X");
+    register("kAmplitudeY", "Amplitude Y");
+    register("kAmplitudeZ", "Amplitude Z");
+    register("kFrequencyX", "Frequency X");
+    register("kFrequencyY", "Frequency Y");
+    register("kFrequencyZ", "Frequency Z");
+    register("kStrength", "Strength");
+    register("kRandStrength", "Random Strength");
+    register("kStepStrength", "Step Strength");
+    register("kStrengthMap", "Strength Map");
+    register("kMapProjAxis", "Map Projection Axis");
+    register("kPerPointAdjust", "Per Point Adjustments");
+    register("kMapAmpAdjust", "Map Adjusts Amplitude");
+    register("kMapAmpAdjustAnn", "Use for 'Per Particle' style effects.\nRGB = xyz.");
+    register("kMapFreqAdjustAnn", "Use for 'Per Particle' style effects.\nRGB = xyz.");
+    register("kMapStepAdjustAnn", "Use for 'Per Particle' style effects.");
+    register("kMapFreqAdjust", "Map Adjusts Frequency");
+    register("kMapStepAdjust", "Map Adjusts Step");
+    register("kStep", "Step");
+    register("kAbsoluteValues", "Absolute Values");
+    register("kWholeNumbers", "Whole Numbers");
+    register("kFalloffObject", "Falloff Object");
+    register("kInputs", "Inputs");
+    register("kTime", "Time");
+    register("kOffsets", "Offsets");
+    register("kDelete", "Delete");
+    register("kXFunction", "X Function ");
+    register("kYFunction", "Y Function ");
+    register("kZFunction", "Z Function ");
+    register("kSin", "Sin");
+    register("kCos", "Cos");
+    register("kTan", "Tan");
+
+
+    //Audio Node
+    register("kAudioEq", "Graphic Equaliser");
+    register("kAudioNode", "Audio Node");
+    register("kOffsetType", "Type of Offset");
+    register("kNodeMode", "Mode");
+    register("kOutputMode", "Output Mode");
+    register("kSampleRate", "Sample Rate");
+    register("kAmpScale", "Amplifier");
+    register("kEnableX", "Enable X");
+    register("kEnableY", "Enable Y");
+    register("kEnableZ", "Enable Z");
+    register("kLowerThresh", "Lower Threshold");
+    register("kUpperThresh", "Upper Threshold");
+    register("kTimeOffset", "Time Offset");
+    register("kTimeStep", "Time Step Average");
+    register("kModTime", "Modified Time");
+    register("kSoundLength", "Length of Sound (frames)");
+    register("kAdvancedOptions", "Advanced Options");
+    register("kVolumeMode", "Out Volume Mode");
+    register("kMaxBands", "Max Bands");
+    register("kOutFreqAtt", "Output Frequency Attributes");
+    register("kFiltering", "Filtering");
+    register("kOutVolume", "Volume");
+    register("kSmoothing", "Smoothing");
+    register("kFFTScaling", "Fourier Scaling");
+
+    //BlendDeformer Node
+
+    register("kBlendDeformer", "Blend Deformer");
+    register("kConnections", "Connections");
+    register("kBlendValue", "Blend Value");
+    register("kBlendValueAnn", "Controls how much of the destination shape is seen");
+    register("kSmoothingIterations", "Smoothing Iterations");
+    register("kSmoothingIterationsAnn", "Smooths the mesh");
+    register("kInflate", "Inflate");
+    register("kInflateAnn", "Expands the mesh along its normals");
+    register("kMelt", "Melt");
+    register("kMeltAnn", "Controls how completely details are smoothed over");
+    register("kRamps", "Ramps");
+    register("kMapAffects", "Map Affects");
+    register("kFalloffAffects", "Falloff Affects");
+    register("kConnectGuideCurve", "Connect Guide Curve");
+    register("kConnectDestMesh", "Connect Destination Mesh");
+
+
+
+    //Blend Node
+
+    register("kMashMerge", "MASH Merge");
+    register("kMergeType", "Merge Type");
+    register("kMergePos", "Merge Position");
+    register("kMergeRot", "Merge Rotation");
+    register("kMergeScale", "Merge Scale");
+    register("kMergeID", "Merge ID");
+    register("kMergeVis", "Merge Visibility");
+    register("kWaiterMergeConect", "Connect Waiter/Merge Node");
+    register("kChildNode", "Child Node");
+    register("kRotationInterpolation", "Rotation Type");
+
+    //Explode Node
+
+    register("kThreshold", "threshold");
+    register("kEnablePos", "Enable Position");
+    register("kEnableScale", "Enable Scale");
+    register("kEnableRot", "Enable Rotation");
+    register("kEnableId", "Enable Id");
+    register("kZeroScale", "Scale to Zero");
+    register("kConnectMesh", "Connect Mesh");
+    register("kExplodingMesh", "Exploding Mesh");
+
+
+    //Falloff Node
+
+    register("kFalloffNode", "Falloff Node");
+    register("kFalloffInvert", "Invert Falloff");
+    register("kShape", "Shape");
+    register("kMode", "Mode");
+    register("kInnerZone", "Inner Zone");
+    register("kDispColour", "Display Colour");
+    register("kAddFade", "Add Mode Fade");
+    register("kCustomShapeRad", "Custom Shape Radius");
+    register("kMeshMode", "Additional Settings");
+    register("kInCompType", "Component Type");
+    register("kVertColour", "Vertex Colours");
+    register("kExcludeInterior", "Exclude Interior");
+    register("kFalloffIn", "Falloff In");
+    register("kFalloffOut", "Falloff Out");
+    register("kShapeIn", "Shape In");
+
+    //Flight Node
+
+    register("kMashFlight", "MASH Flight");
+    register("kMainControls", "Main Controls");
+    register("kSeperateStrength", "Separation Strength");
+    register("kAlignStrength", "Alignment Strength");
+    register("kCohesionStrength", "Cohesion Strength");
+    register("kSearchDist", "Search Distance");
+    register("kCompanionNum", "Number of Companions");
+    register("kVisionField", "Field of Vision");
+    register("kAlignZone", "Alignment Zone");
+    register("kSeperateZone", "Separation Zone");
+
+    register("kSpeedMass", "Speed and Mass");
+    register("kMinSpeed", "Minimum Speed");
+    register("kMaxSpeed", "Maximum Speed");
+    register("kSteerForce", "Steering Force");
+    register("kUseDensity", "Use Mass as Density");
+    register("kMass", "Mass");
+    register("kMassVar", "Mass Variance");
+    register("kRotationThreshold", "Rotational Threshold");
+    register("kRotationSteering", "Rotational Steering");
+    register("kGravInertia", "Gravitate and Inertia");
+    register("kGravStrength", "Gravitate Strength");
+    register("kGravDist", "Gravitate Distance");
+    register("kGravType", "Type of Gravitation");
+    register("kGivenLoc", "Given Location");
+    register("kInertia", "Inertia");
+    register("kGravityLocation", "Center of Gravity");
+
+    register("kControlView", "View Controls");
+    register("kDispType", "Display Type");
+    register("kPointID", "Point ID");
+
+    register("kAttractControl", "Attractor Controls");
+    register("kAttractStrength", "Attraction Strength");
+    register("kAttractSearchDist", "Attraction Search Distance");
+    register("kArrivalMode", "Arrival Mode");
+    register("kArrivalThresh", "Arrival Threshold");
+    register("kArrivalVar", "Arrival Variance");
+    register("kArrivalDamp", "Arrival Dampening");
+    register("kAttractorObjects", "Attractor Objects");
+
+    register("kObstacleCont", "Obstacle Controls");
+    register("kAvoidType", "Avoidance Type");
+    register("kObstacleStr", "Obstacle Strength");
+    register("kObstacleSearchDist", "Obstacle Search Distance");
+
+    register("kPredatorPrey", "Predator and Prey Controls");
+    register("kPredatorStr", "Predator Strength");
+    register("kPredatorSearchDist", "Predator Search Distance");
+    register("kPreyStrength", "Prey Strength");
+    register("kPreySearchDist", "Prey Search Distance");
+
+    register("kMeshFollow", "Mesh Following");
+
+    register("kConnectLoc", "Connect Locator");
+    register("kCreateLoc", "Create Locator");
+    register("kConnectAttrObj", "Connect Attractor Object");
+    register("kCreateAttrObj", "Create Attractor Object");
+    register("kConnectObstacle", "Connect Obstacle");
+    register("kCreateObstacleLoc", "Create Obstacle Locator");
+    register("kConnectObstacleMesh", "Connect Obstacle Mesh");
+
+    register("kTranslateConnected", "Translate connected.");
+    register("kPleaseSelectTranslate", "Please select a translate");
+    register("kGravitationCentre", "Gravitation Center");
+    register("kPleaseSelectMesh", "Please select a mesh");
+    register("kObstacleLocator", "Obstacle Locator");
+    register("kFollowLocator", "Follow Locator");
+
+    //ID Node
+
+    register("kIDNode", "ID Node");
+    register("kIDType", "ID Type");
+    register("kInstanceNum", "ID Count");
+    register("kInstanceNumAnn", "This is automatically set to the number of input meshes in the MASH network.");
+    register("kRandSeed", "Random Seed");
+    register("kFixID", "Fixed ID");
+    register("kCycleOptions", "Cycle Options");
+    register("kLoopType", "Loop Type");
+    register("kRandomPoint", "Randomize Cycle Start Points");
+    register("kCycleGap", "Cycle Gap");
+    register("kRandStartLimit", "Random Start Limit");
+    register("kTimeScale", "Time Scale");
+    register("kTimeScaleRandom", "Random Time Scale");
+    register("kFalloffX", "Falloff X");
+    register("kFalloffY", "Falloff Y");
+    register("kFalloffZ", "Falloff Z");
+    register("kUseProbability", "Use Probability");
+
+
+    //Influence Node
+
+    register("kInfluenceNode", "Influence Node");
+    register("kInfluencePower", "Influence Power");
+    register("kUseRadius", "Use Radius");
+    register("kInfluenceRadius", "Influence Radius");
+    register("kEnableVortex", "Enable Vortex");
+    register("kOverwriteScale", "Overwrite Scale");
+    register("kOverwriteRot", "Overwrite Rotation");
+    register("kEnableTransX", "Enable Translate X");
+    register("kEnableTransY", "Enable Translate Y");
+    register("kEnableTransZ", "Enable Translate Z");
+    register("kAddInfluenceLoc", "Add Influence Locator");
+
+
+
+    //Jiggle Node
+
+    register("kJiggleDeformer", "Jiggle Deformer");
+    register("kDampAnn", "How quickly the jiggle settles. Lower values result in slower damping.");
+    register("kStiffness", "Stiffness");
+    register("kStiffnessAnn", "The resistance to deformation. Higher = Stiffer");
+    register("kDirectionalJiggle", "Directional Jiggle");
+    register("kNormalStr", "Normal Strength");
+    register("kScale", "Scale");
+    register("kStartTime", "Start Time");
+    register("kJiggleStrAnn", "Use this to fade down the jiggle effect.");
+
+
+
+    //Maths Node
+
+    register("kMathsNode", "Maths Node");
+    register("kUseXYZExpr", "Use XYZ Expression");
+    register("kUseXExpr", "Use X Expression");
+    register("kUseYExpr", "Use Y Expression");
+    register("kUseZExpr", "Use Z Expression");
+    register("kXYZExpr", "XYZ Expression");
+    register("kZExpr", "Z Expression");
+    register("kYExpr", "Y Expression");
+    register("kXExpr", "X Expression");
+    register("kOverwriteVal", "Overwrite Incoming Values");
+    register("kPos", "Position");
+    register("kRot", "Rotation");
+
+
+
+    //Mute Node
+
+    register("kMuteNode", "Mute Node");
+    register("kRevMuteOrder", "Reverse Mute Order");
+    register("kIndiAxisControl", "Individual Axis Controls");
+    register("kXaxis", "X Axis");
+    register("kAffectX", "Affect X");
+    register("kStrX", "Strength X");
+    register("kRandStrX", "Random Strength X");
+    register("kStepStrX", "Step Strength X");
+    register("kYaxis", "Y Axis");
+    register("kAffectY", "Affect Y");
+    register("kStrY", "Strength Y");
+    register("kRandStrY", "Random Strength Y");
+    register("kStepStrY", "Step Strength Y");
+    register("kZaxis", "Z Axis");
+    register("kAffectZ", "Affect Z");
+    register("kStrZ", "Strength Z");
+    register("kRandStrZ", "Random Strength Z");
+    register("kStepStrZ", "Step Strength Z");
+    register("kTimeMute", "Time Based Mute");
+    register("kLoopFrames", "Loop Frames");
+    register("kXStr", "X Strength");
+    register("kYStr", "Y Strength");
+    register("kZStr", "Z Strength");
+    register("kStaggerF", "Stagger (frames)");
+    register("kRampLoop", "Loop the Ramp");
+    register("kInStrPowerRamp", "Use strengthPP");
+    register("kInStrPowerRampAnn", "Values from strengthPP will be used to read the Ramp. Loop frames will be ignored.");
+    register("kPartLife", "Particle Lifespan");
+    register("kMuteByString", "Mute by String");
+    register("kFilterOnSplit", "Filter On (split with: , -)");
+    register("kFilterOffSplit", "Filter Off (split with , -)");
+
+
+
+    //Offset Node
+
+    register("kOffsetNode", "Offset Node");
+    register("kClamps", "Clamps");
+    register("kClampHigh", "High Clamp");
+    register("kClampLow", "Low Clamp");
+    register("kMultByTime", "Multiply by Time");
+    register("kStartFrame", "Start Frame");
+    register("kCloseMeshPoint", "Closest Point on Mesh");
+    register("kClosestPointMode", "Closest Point Mode");
+    register("kRayDirection", "Ray Direction");
+    register("kRotCentre", "Center of Rotation");
+    register("kHoldVals", "Hold Values");
+    register("kHoldStr", "Hold Strength");
+    register("kMapOffsetAdjust", "Map Adjusts Offsets");
+    register("kMapOffsetAdjustAnn", "Use for 'Per Particle' style effects.\nRGB = xyz.");
+    register("kAddPosLocator", "Add Position Locator");
+    register("kOffsetId", "Offset Id");
+    register("kOffsetRotatation", "Offset Rotation");
+    register("kOffsetScale", "Offset Scale");
+    register("kHideOnRayMiss", "Hide on Ray Miss");
+    register("kReorderPoints", "Reorder Points");
+    register("kReverse", "Reverse");
+    register("kDistancePoint", "Distance Point");
+    register("kDistanceMesh", "Distance Mesh");
+
+    //Orient Node
+
+    register("kOrientNode", "Orient Node");
+    register("kOrientMode", "Orient Mode");
+    register("kSoloX", "Solo X");
+    register("kSoloY", "Solo Y");
+    register("kSoloZ", "Solo Z");
+    register("kUpVector", "Up Vector");
+    register("kSmoothRot", "Smooth Rotations");
+    register("kMuteRot", "Mute Incoming Rotations");
+    register("kTargertAimOpt", "Aim at Target Options");
+    register("kMeshOrientOpt", "Orient to Mesh Options");
+    register("kAddSpring", "Add Spring Node");
+    register("kCreateTarget", "Create Target");
+    register("kSetTarget", "Set Target");
+    register("kTarget", "Target");
+    register("kInputMesh", "Input Mesh");
+    register("kFlipAxis", "Flip Axis");
+
+    //Points Node
+
+    register("kPointNode", "Point Node");
+    register("kEnablePoints", "Enable Points");
+    register("kColour", "Colour");
+    register("kChannel", "Channel");
+    register("kPointSize", "3D Point Size");
+
+    //Replicator Node
+
+    register("kReplicants", "Replicants");
+
+    register("kOffsetPosX", "Offset Position X");
+    register("kOffsetPosY", "Offset Position Y");
+    register("kOffsetPosZ", "Offset Position Z");
+
+    register("kScaleTogether", "Scale Together");
+    register("kScaleTogetherAnn", "Scales all points together, from the axis (or driven position).");
+    register("kScaleRepX", "Scale Replicants X");
+    register("kScaleRepY", "Scale Replicants Y");
+    register("kScaleRepZ", "Scale Replicants Z");
+
+    register("kRotTogether", "Rotate Together (Disables these sliders)");
+    register("kRotTogetherAnn", "Rotates all points together, around the axis (or driven position). Use with Pattern or Driven Rotation");
+    register("kRotRepX", "Rotate Replicants X");
+    register("kRotRepY", "Rotate Replicants Y");
+    register("kRotRepZ", "Rotate Replicants Z");
+
+    register("kRotAround", "Rotate Around");
+
+    register("kStepID", "Step ID");
+    register("kStepIDAnn", "The ID will match the replicant value.");
+
+    register("kPattern", "Pattern");
+    register("kAffectPos", "Affects Position");
+    register("kAffectRot", "Affects Rotation");
+    register("kAffectScale", "Affects Scale");
+
+    register("kPatternOffX", "Pattern Offset X");
+    register("kPatternOffY", "Pattern Offset Y");
+    register("kPatternOffZ", "Pattern Offset Z");
+
+    register("kPatternScaleX", "Pattern Scale X");
+    register("kPatternScaleY", "Pattern Scale Y");
+    register("kPatternScaleZ", "Pattern Scale Z");
+
+    register("kPatternRotX", "Pattern Rotation X");
+    register("kPatternRotY", "pattern Rotation Y");
+    register("kPatternRotZ", "Pattern Rotation Z");
+
+    register("kTimeMachine", "Time Machine");
+    register("kTimeSlideAnim", "Animation Speed");
+    register("kCurveScale", "Curve Scale");
+    register("kRotOffset", "Rotational Offset");
+    register("kUseCurve", "Use Curve");
+    register("kDrivenChan", "Driven Channels");
+    register("kCurveConnect", "Connect Curve");
+    register("kWaiterConnect", "Connect Waiter");
+    register("kDrivingPosition", "Driving Position");
+    register("kDrivingRotation", "Driving Rotation");
+    register("kDrivingScale", "Driving Scale");
+
+    //Random Node
+
+    register("kUniformRandom", "Uniform Random");
+    register("kMinNum", "Minimum Number");
+    register("kMaxNum", "Maximum Number");
+    register("kMinNumX", "Minimum Number X");
+    register("kMaxNumX", "Maximum Number X");
+    register("kMinNumY", "Minimum Number Y");
+    register("kMaxNumY", "Maximum Number Y");
+    register("kMinNumZ", "Minimum Number Z");
+    register("kMaxNumZ", "Maximum Number Z");
+    register("kNormaliseRandom", "Normalize Random");
+    register("kRandomNode", "Random Node");
+    register("kAbsoluteScale", "Absolute Scale");
+
+    //Spring Node
+
+    register("kSpringNode", "MASH Spring");
+    register("kSpringStr", "Spring Strength");
+    register("kDampVar", "Damping Variation");
+    register("kStiffVar", "Stiffness Variation");
+    register("kPosition", "Position");
+    register("kRotation", "Rotation");
+    register("kVisibility", "Visibility");
+    register("kId", "Id");
+
+    //Symmetry Node
+
+    register("kPlacement", "Placement");
+    register("kAxis", "Axis");
+    register("kAllowNegScale", "Allow Negative Scales");
+    register("kOffsetPos", "Offset Position");
+
+    //Symmetry Node
+
+    register("kPfxNode", "Pfx Connect");
+    register("kMain", "Main");
+    register("kLeaf", "Leaves");
+    register("kFlowers", "Flowers");
+    register("kPfxMode", "Pfx Mode");
+
+    //legacy
+    register("kLegacy", "Legacy Conversion Node");
+
+    //Create Menu
+
+    register("kMASH", "MASH");
+    register("kDivider", "Motion Graphics");
+    register("kCreateMASHNetwork", "Create MASH Network");
+    register("kCreateMASHNetworkAnnot", "Procedurally scatter and animate instances.");
+    register("kCreateOptions", "Create Options");
+    register("kMASHOutliner", "MASH Editor");
+    register("kMASHOutlinerAnnot", "Open the MASH Editor to organise and reorder MASH networks.");
+    register("kMASHDocumentation", "MASH Documentation");
+    register("kUtilities", "Utilities");
+    register("kAddMashJiggleDeformerLbl", "Create Jiggle Deformer");
+    register("kAddMashBulletSolverLbl", "Add Solver");
+    register("kAssignMashBulletSolverLbl", "Assign Solver");
+    register("kCreateMASHDeformer", "Create MASH Deformer");
+    register("kCreateMASHDeformerAnnot", "Use MASH points to deform a mesh.");
+    register("kCreateBlendDeformer", "Create MASH Blend Deformer");
+    register("kCreateBlendDeformerAnnot", "Blend meshes using MASH points and Falloffs.");
+    register("kCreateJiggleDeformer", "Create MASH Jiggle Deformer");
+    register("kCreateJiggleDeformerAnnot", "Create Jiggle Deformer.");
+    register("kBakeInstancer", "Bake Instancer to objects");
+    register("kBakeInstancerAnnot", "Convert MASH instances to objects");
+    register("kCreateInstancerPivot", "Create Instancer Pivot");
+    register("kParticlesFromMASH", "Set up nParticles with an initial state from MASH");
+    register("kParticlesFromMASHAnnot", "Create nParticles at existing MASH points.");
+    register("kBreakoutUtilities", "Breakout Utility");
+    register("kSendToAE", "Send to AE");
+    register("kCreateMayaToAESelSet", "Create Maya to Adobe(R) After Effects(R) selection set");
+    register("kSendToAEDots", "Send to AE...");
+    register("kConnectParticlesToMASH", "Use nParticles to distribute MASH points");
+    register("kConnectParticlesToMASHAnnot", "Connect nParticles to a MASH network.");
+    register("kCreateMeshFromPoints", "Create Mesh from MASH Points");
+    register("kCreateMeshFromPointsAnnot", "Creates a mesh with a vertex at every MASH point in your network.");
+    register("kCreatePointsNode", "Create MASH Points Node");
+    register("kCreatePointsNodeAnnot", "Create MASH Points Node.");
+    register("kSwitchGeometryType", "Switch MASH Geometry Type");
+    register("kSwitchGeometryTypeAnnot", "Toggle between Repro (mesh) or Instancer MASH geometry types.");
+    register("kConnectTrailsToParticles", "Add Trails to Particles");
+    register("kConnectTrailsToParticlesAnnot", "Add Trails to Particles.");
+    register("kCacheThisNetwork", "Cache MASH network");
+    register("kCacheThisNetworkAnnot", "Create caches for network rendering or to speed up playback on heavy MASH networks.");
+    register("kConnectToType", "Connect MASH to Type/ SVG");
+    register("kConnectToTypeAnnot", "Animate a Type or SVG object using MASH.");
+    register("kAddBreakoutNode", "Create MASH Breakout Node");
+
+    // Annotation
+    register("kCreateMASHNetworkLongAnnot", "MASH is a suite of nodes which can be daisy chained together to scatter, transform and animate objects procedurally.\nYou can quickly create and adjust complex effects and see the results of any changes live in the viewport.\nStart with a Waiter and a Distribute node and get creative from there!");
+    register("kCacheThisNetworkLongAnnot", "Select a MASH node, then this command to cache the network as an Alembic file. \nMost useful when your MASH effect is complete and you want to create a lightweight version of the animation for rendering.");
+    register("kCreateBlendDeformerLongAnnot", "Prior to using this command, duplicate an object in the scene and alter its surface. \nSelect the original object and use this command to create a MASH Blend Deformer. \nIn the Blend Deformer node, open the Connections section and middle-drag the duplicated object into the Blend Mesh field. You can now use the Blend Value attribute to blend between shapes.");
+    register("kCreateMeshFromPointsLongAnnot", "Select a MASH node, then this command to create a new polygon mesh with vertices at all MASH points. Vertex IDs follow the same order as MASH point IDs.");
+    register("kConnectToTypeLongAnnot", "Select a Type / SVG object, then Shift + select a MASH node. \nUse this command to connect the translation of each character to a point in the MASH network.");
+    register("kConnectParticlesToMASHLongAnnot", "Select an nParticle node, then a MASH node. Use this command to connect the distribution of MASH points (creation/location) to the nParticles.");
+    register("kParticlesFromMASHLongAnnot", "Select a MASH node, then this command to create a new set of nParticles at all MASH point locations.");
+    register("kSwitchGeometryTypeLongAnnot", "Select a MASH node, then this command to toggle its geometry type. Repros require more processing power, but are also more versatile and can have a greater variety of effects applied to them. Instances perform faster, but are more limited.");
+    register("kBakeInstancerLongAnnot", "Select a MASH Instancer node, then this command to convert them to individual objects. Object will be initially grouped together and hidden.");
+    register("kAddShellDynamicsLongAnnot", "Select one or more polygon objects, then this command to add rigid body dynamics (physics) to them. \nA MASH node is created for each object, as well as a shared Bullet solver (unless one already exists, in which case that one is used).");
+    register("kAssignSolverLongAnnot", "Select a MASH Bullet Solver, then Shift + select a MASH node. \nUse this command to assign the bullet solver to the MASH network, replacing any currently assigned Bullet solver in the process.");
+    register("kAddSolverLongAnnot", "Use this to add a MASH Bullet solver to the scene, which is a rigid body dynamics solver that can affect MASH Dynamic nodes or objects with Shell Dynamics applied.");
+
+    //ColourMode
+
+
+    register("kColor", "Color");
+    register("kRandomHUE", "Random Hue");
+    register("kSaturateRandom", "Saturation Random");
+    register("kValRandom", "Value Random");
+    register("kUseVelocity", "Use Velocity");
+    register("kUVMode", "UV Mode");
+    register("kBlendMode", "Blend Mode");
+    register("kEnableBackColor", "Enable Background Color");
+    register("kBackColour", "Background Colour");
+
+    register("kUVSettings", "UV Tile Settings");
+    register("kEnableMaxTiles", "Limit Tiles");
+    register("kRandomUVTile", "Randomize UVs");
+    register("kMaxTiles", "Tile Count");
+    register("kUVMesh", "UV Mesh");
+    register("kColorSetName", "Color Set Name");
+
+
+    //Delay
+
+
+    register("kMASHDelay", "MASH Delay");
+    register("kDelayMode", "Delay Mode");
+    register("kTimeVar", "Time Variance");
+    register("kDelayPos", "Delay Position");
+    register("kDelayScale", "Delay Scale");
+    register("kDelayRot", "Delay Rotation");
+    register("kLeader", "Leader");
+    register("kConnectLead", "Connect Leader");
+    register("kCreateLead", "Create Leader");
+
+
+    //Inherit
+
+
+
+    register("kInheritNode", "Inherit Node");
+    register("kForce", "Force");
+    register("kForceVar", "Force Variation");
+    register("kDistroStyle", "Distribution Style");
+    register("kLinear", "Linear");
+    register("kConnectParent", "Connect Parent(s)");
+    register("kCreateParent", "Create Parent");
+
+
+    //Initial State
+
+    register("kInitStateSet", "Initial State Set");
+    register("kInitStateNode", "Initial State");
+
+    // Distribute
+    register("kDisplayAsWireframe", "Display as Wireframe");
+    register("kNumberOfPoints", "Number of Points");
+    register("kDistType", "Distribution Type");
+
+    register("kLinearSettings", "Linear");
+    register("kDistanceX", "Distance X");
+    register("kDistanceY", "Distance Y");
+    register("kDistanceZ", "Distance Z");
+    register("kScaleX", "Scale X");
+    register("kScaleY", "Scale Y");
+    register("kScaleZ", "Scale Z");
+    register("kRotateX", "Rotate X");
+    register("kRotateY", "Rotate Y");
+    register("kRotateZ", "Rotate Z");
+    register("kDistOffset", "Offset");
+
+    register("kRadialSettings", "Radial");
+    register("kRadius", "Radius");
+    register("kAngleDegrees", "Angle");
+    register("kZOffset", "Z Offset");
+    register("kRadialAxis", "Radial Axis");
+    register("kCalculateRotation", "Calculate Rotation");
+    register("kIgnoreRamps", "Ignore Ramps");
+
+    register("kGridSettings", "Grid");
+    register("kGridX", "Grid X");
+    register("kGridY", "Grid Y");
+    register("kGridZ", "Grid Z");
+
+    register("kVolume", "Volume");
+    register("kVolumeShape", "Volume Shape");
+    register("kVolumeSize", "Volume Size");
+    register("kSphericalBias", "Spherical Bias");
+
+    register("kSphericalSettings", "Spherical ");
+    register("kAngleX", "Angle X");
+    register("kAngleY", "Angle Y");
+    register("kAnimationSpeed", "Animation Speed");
+    register("kAnimationTime", "Animation Time");
+    register("kPleaseSelectASet", "Please select a selection set.");
+    register("kSetConnected", "Set connected.");
+
+    register("kMeshSettings", "Mesh");
+    register("kPushAlingNormal", "Push Along Normal");
+    register("kMethod", "Method");
+    register("kFloodMesh", "Flood Mesh");
+    register("kScatterUsesArea", "Use Face Area");
+    register("kFaceEdgeSettings", "Face/ Edge Settings");
+    register("kEnableScaling", "Enable Scaling");
+    register("kScaleMultiplier", "Scale Multiplier");
+    register("kEdgeAlignment", "Edge Alignment");
+    register("kVoxelSettings", "Voxel Settings");
+    register("kVoxelSize", "Voxel Size");
+    register("kBorderSize", "Border Size");
+    register("kPatternOffsetX", "Pattern Offset X");
+    register("kPatternOffsetY", "Pattern Offset Y");
+    register("kPatternOffsetZ", "Pattern Offset Z");
+    register("kPaintEffects", "Paint Effects");
+    register("kDistInitialState", "Initial State");
+    register("kZeroScaleDist", "Zero Scale");
+    register("kZeroScaleAnn", "Start Scaling from 0.0, rather then 1.0.");
+    register("kUseUpVector", "Use Up Vector");
+    register("kAdvancedEmitterSettings", "Advanced Emitter Settings");
+    register("kBatchMult", "Batch Render Multiplier");
+    register("kBatchMultAnn", "Only used while Batch Rendering.");
+
+    register("kPaintMeshes", "Paint Meshes");
+    register("kInitialTransforms", "Initial Transforms");
+    register("kPaintEffectsStrokes", "Paint Effects Strokes");
+    register("kCreateContainer", "Create Container");
+    register("kConnectSelectionSet", "Connect Selection Set");
+    register("kFillWithVoxels", "Voxel Mode");
+    register("kPackingMode", "Cluster Mode");
+    register("kRadiusVariance", "Radius Variance");
+    register("kMinimumSeparation", "Minimum Separation");
+    register("kCollisionIterations", "Collision Iterations");
+    register("kCluster", "Cluster");
+    register("kClusterRadius", "Cluster Radius");
+    //checkNoiseType
+
+    register("kNoiseType", "Noise Type");
+    register("kPerlinSettings", "Perlin/ fBM Noise Settings");
+    register("kNoiseNode", "Noise Node");
+    register("kSeekSettings", "Seek Settings");
+    register("kSeekAngle", "Seek Angle");
+    register("kPerlinLoopSet", "Perlin Loop Settings");
+    register("kLoopTime", "Loop Time (frames)");
+    register("kOctaves", "Octaves");
+    register("kPersistence", "Persistence");
+    register("kAbsoluteNoise", "Absolute Noise");
+    register("kUniformNoise", "Uniform Noise");
+    register("kOffsetVal", "Offset Values");
+    register("kCenterDistribution", "Center Distribution");
+
+    //MultiCurve
+
+    register("kMultiCurveNode", "Multi-Curve Node");
+    register("kCurveType", "Curve Type");
+    register("kTracerLength", "Tracer Length (frames)");
+    register("kTracerVar", "Length Variance (frames)");
+    register("kExperimentSet", "Experimental/ Advanced Settings");
+    register("kExtraPoints", "Extra Points");
+    register("kClosedCurve", "Closed Curve");
+    register("kCurveSmooth", "Curve Smoothing (Degree):");
+    register("kCurveSmoothAnn", "Has no effect on tracer curves");
+    register("kPointToPoint", "Point to Point Location");
+    register("kConnectPointObj", "Connect Point Object");
+    register("kCreatePointObj", "Create Point Object");
+    register("kNumCurves", "Number of Curves");
+
+
+    //Deformer Node
+    register("kDeformerNode", "Deformer Node");
+    register("kDeformerType", "Deformer Type");
+    register("kFacePosition", "Face Position");
+    register("kFaceRotation", "Face Rotation");
+    register("kFaceScale", "Face Scale");
+    register("kEnvelopeMesh", "Envelope Mesh");
+
+    //checkTimeType
+
+    register("kAnimStart", "Animation Start");
+    register("kAnimEnd", "Animation End");
+    register("kStaggerFrames", "Stagger Frames");
+    register("kRandStagger", "Random Stagger");
+    register("kLimitLoops", "Limited Loops");
+    register("kLoopNum", "Number of Loops");
+    register("kSimTime", "Simulated Time");
+    register("kSimStart", "Simulation Start Frame");
+    register("kStrAndFalloff", "Strength and Falloff");
+    register("kstrengthMode", "Strength Mode");
+
+    //checkTrailMode
+
+    register("kInheritMashScales", "Inherit Scales");
+    register("kAutoUpVector", "Automatic Up Vector");
+
+    register("kTrailsNode", "Trails Node");
+    register("kFrontCap", "Front Cap Mode");
+    register("kRearCap", "Rear Cap Mode");
+    register("kCapDiv", "Cap Divisions");
+    register("kCapDist", "Cap Distance");
+    register("kQuadSpacing", "Quadratic Spacing");
+    register("kTrailsMode", "Trails Mode");
+    register("kMaxTrails", "Max Trails");
+    register("kTrailLength", "Trail Length");
+    register("kTrailScale", "Trail Scale");
+    register("kDecayTrails", "Decay Trails");
+    register("kSearchRadius", "Search Radius");
+    register("kCapSettings", "Cap Settings");
+    register("kCurves", "Curves");
+    register("kOutTrailPoints", "Output Trail Points");
+    register("kOutToNodes", "Output Points to Nodes");
+    register("kOutTrailPointsAnn", "Connect the outPositionPP attribute to use this feature");
+    register("kProfileCurve", "Profile Curve");
+    register("kConnectionPoint", "Connection Point");
+    register("kDeleteAll", "Delete All");
+    register("kConnectionNetwork", "Connection Network");
+
+    //Transform
+
+    register("kScalePoints", "Scale Points");
+    register("kCreateContNull", "Controller Null");
+
+    // Breakout
+
+    register("kConnectedNodes", "Connected Nodes");
+    register("kIDOffset", "ID Offset");
+
+    //Signal
+
+    register("kNoiseSettings", "Noise Settings");
+    register("kPositionX", "Position X");
+    register("kPositionY", "Position Y");
+    register("kPositionZ", "Position Z");
+    register("kRotationX", "Rotation X");
+    register("kRotationY", "Rotation Y");
+    register("kRotationZ", "Rotation Z");
+    register("kNoiseScale", "Noise Scale");
+    register("kTrigSettings", "Trigonometry Settings");
+    register("kUniformScale", "Uniform Scale");
+    register("kNoiseScaleMult", "Noise Scale Multiplier");
+    register("kStepAmount", "Step Amount");
+    register("kEnableStep", "Enable Step");
+    register("kSetToTimeline", "Set to Timeline range");
+    register("kSetToPlayback", "Set to Playback range");
+
+    //Visibility
+    register("kVisNode", "Visibility Node");
+    register("kInvert", "Invert");
+
+    register("kFrustumFiltering", "Frustum Filtering");
+    register("kUseFilmGate", "Use Film Gate");
+    register("kFrustumBorder", "Frustum Border");
+    register("kEnableFrustum", "Enable Frustum Filtering");
+
+
+    //Curve node
+    register("kCurveRollDown", "Curves");
+    register("kCurveStep", "Step");
+    register("kTimeStepVar", "Time Step Variation");
+    register("kVelocityRandom", "Velocity Random" );
+    register("kVelocityNoise", "Velocity Noise");
+    register("kClipStart", "Clip Start");
+    register("kClipEnd", "Clip End");
+    register("kRollAmount", "Roll Amount");
+    register("kProportionalCounts", "Proportional Counts");
+    register("kProportionalCountsAnn", "When using multiple curves, set the number of points per curve based on the curve length.");
+    register("kEqualSpacing", "Equal Spacing");
+    register("kEqualSpacingAnn", "Each point will be the same distance apart, regardless of curve length.");
+    register("kCurveLengthAffectsSpeed", "Curve Length Affects Speed");
+    register("kCurveLengthAffectsSpeedAnn", "Objects will travel around curves of different lengths at the same speed.");
+    register("kIgnoreStep", "Ignore Step");
+    register("kIgnoreStepAnn", "Spread the objects out over the length of the curve.");
+    register("kStopAtEndOfCurve", "Stop At Curve End");
+
+
+    //Error messages
+    register("kSelectWaiterThenObject", "Please select a Waiter first, and then the objects to deform.");
+    register("kSelectObjectToDeform", "Please select a model to add the deformer to.");
+    register("kExportCancelled", "Export Cancelled");
+    register("kExportOk", "Export Successful");
+    register("kSceneExportedTo", "Scene exported to:");
+
+    //Single Drag and Drop
+    register("kDragDropType", "Accepts: ");
+    register("kShowInOutliner", "Show in Outliner");
+    register("kBreakConnection", "Break Connection");
+    register("kConnect", "Connect");
+    register("kConnected", "Connected: ");
+    register("kTo", " to ");
+    register("kIncompatibleNodes", "Incompatible node types: ");
+    register("kAnd", " and ");
+    register("kDisconnected", "Disconnected: ");
+    register("kFrom", " from ");
+    register("kNotConnected", "Not Connected");
+    register("kNoMeshFound", "Mesh not found under transform.");
+    register("kDisabled", "Disabled");
+    register("kCreate", "Create"); // also used for the create menu
+    register("kClone", "Clone");
+    register("kCreated", "Created");
+    register("kNo", "No");
+    register("kSelected", "selected");
+    register("kFalloffNoInputs", "Falloff node has no input connection");
+    register("kTypeNotSelected", "No ^1s selected.");
+    register("kIncompatibleTypes", "Incompatible node types. ^1s and ^2s");
+    register("kConnectedTheseNodes", "Connected ^1s to ^2s");
+    register("kDisconnectedNodes", "Disconnected ^1s from ^2s");
+
+    //Waiter
+    register("kWaiter", "Waiter");
+    register("kAudio", "Audio");
+    register("kCurve", "Curve");
+    register("kDelay", "Delay");
+    register("kDistribute", "Distribute");
+    register("kExplode", "Explode");
+    register("kFlight", "Flight");
+    register("kID", "ID");
+    register("kInfluence", "Influence");
+    register("kMerge", "Merge");
+    register("kMute", "Mute");
+    register("kNoise", "Noise");
+    register("kOffset", "Offset");
+    register("kOrient", "Orient");
+    register("kPython", "Python");
+    register("kRandom", "Random");
+    register("kReplicator", "Replicator");
+    register("kSpring", "Spring");
+    register("kSymmetry", "Symmetry");
+    register("kWorld", "World");
+    register("kBreakout", "Breakout");
+    register("kCache", "Cache");
+    register("kDeformer", "Deformer");
+    register("kDynamicsInitialState", "Dynamics Initial State");
+    register("kRepro", "Repro");
+    
+
+    register("kAddUtility", "Add Utility");
+    register("kAddNodeBreakout", "Add Breakout Node");
+    register("kAddNodeAudio", "Add Audio Node");
+    register("kAddNodeColour", "Add Color Node");
+    register("kAddNodeCurve", "Add Curve Node");
+    register("kAddNodeDelay", "Add Delay Node");
+    register("kAddNodeDynamics", "Add Dynamics Node");
+    register("kAddNodeDistribute", "Add Distribute Node");
+    register("kAddNodeExplode", "Add Explode Node");
+    register("kAddNodePoints", "Add Points Node");
+    register("kAddNodeFlight", "Add Flight Node");
+    register("kAddNodeID", "Add ID Node");
+    register("kAddNodeInfluence", "Add Influence Node");
+    register("kAddNodeMerge", "Add Merge Node");
+    register("kAddNodeMute", "Add Mute Node");
+    register("kAddNodeNoise", "Add Noise Node");
+    register("kAddNodeOffset", "Add Offset Node");
+    register("kAddNodeOrient", "Add Orient Node");
+    register("kAddNodePython", "Add Python Node");
+    register("kAddNodePlacer", "Add Placer Node");
+    register("kAddNodeRandom", "Add Random Node");
+    register("kAddNodeReplicator", "Add Replicator Node");
+    register("kAddNodeSpring", "Add Spring Node");
+    register("kAddPfxConnect", "Add Paint Effects Connect Node");
+    register("kAddNodeStrength", "Add Strength Node");
+    register("kAddNodeSymmetry", "Add Symmetry Node");
+    register("kAddNodeTime", "Add Time Node");
+    register("kAddNodeTrails", "Add Trails Node");
+    register("kAddNodeTransform", "Add Transform Node");
+    register("kAddNodeTrig", "Add Trig Node");
+    register("kAddNodeVisibility", "Add Visibility Node");
+    register("kAddNodeSignal", "Add Signal Node");
+    register("kAddNodeWorld", "Add World Node");
+    register("kTransform", "Transform");
+    register("kTrig", "Trig");
+    register("kAdd", "Add");
+    register("kNode", "Node");
+    register("kAddNode", "Add Node");
+    register("kAdvanced", "Advanced");
+    register("kPresets", "Presets");
+    register("kCaching", "Caching");
+    register("kEnablePosCache", "Enable Position Cache");
+    register("kEnableRotCache", "Enable Rotation Cache");
+    register("kEnableScaleCache", "Enable Scale Cache");
+    register("kEnableIdCache", "Enable ID Cache");
+    register("kEnableVisCache", "Enable Visibility Cache");
+    register("kCount", "Count");
+    register("kCountAnn", "Number of points in the MASH network");
+    register("kRenderMan", "RenderMan Archives (RIBs):");
+    register("kRenderManAnn", "Comma separated archive paths.\nRemember to add 'MASHtoRenderMan;' to 'PostWorldBegin MEL' on RIS RenderMan");
+    register("kAddToPos", "Add to Position");
+    register("kAddToRot", "Add to Rotation");
+    register("kAddToScale", "Add to Scale");
+    register("kAddToId", "Add to ID");
+    register("kAddToVis", "Add to Visibility");
+    register("kCreatePreset", "Create Preset");
+    register("kShowContentBrowser", "Show Content Browser");
+    register("kPresetLocation", "Presets location" );
+    register("kAudioAnn", "Power animation with sound." );
+    register("kColourAnn", "Assign Vertex Colours to your objects.");
+    register("kColourAnnDisabled", "Assign Vertex Colours to your objects.<br><b>Disabled: This node requires the Repro node.</b>");
+    register("kCurveAnn", "Animate objects along a curve.");
+    register("kDelayAnn", "Inherit the animation of another object delayed in time.");
+    register("kDistributeAnn", "Distribute objects.");
+    register("kExplodeAnn", "Break mesh faces apart with MASH.");
+    register("kPointsAnn", "View data from the MASH network.");
+    register("kBreakoutAnn", "Use MASH to control any attribute in Maya.");
+    register("kFlightAnn", "Flocking, Swarming and Schooling.");
+    register("kIdAnn", "For assigning objects to MASH points.");
+    register("kInfluenceAnn", "Influence position, scale and rotation with guide objects.");
+    register("kMergeAnn", "Merge two MASH networks together");
+    register("kMuteAnn", "Control the strength of other nodes.");
+    register("kNoiseAnn", "Affect objects with noise." );
+    register("kOffsetAnn", "Offset/ multiply/ rotate or overwrite values.");
+    register("kOrientAnn", "Point objects in their direction of travel or at a target.");
+    register("kPythonAnn", "Affect nodes with Python scripts.");
+    register("kPlacerAnn", "Paint and manipulate points.");
+    register("kRandomAnn", "A random number generator.");
+    register("kReplicatorAnn", "Duplicate entire MASH network.");
+    register("kSpringAnn", "Add spring to the animation.");
+    register("kSymmetryAnn", "Reflect the MASH network.");
+    register("kStrengthAnn", "Control the strength of the entire network.");
+    register("kTimeAnn", "Offset the animation on your input meshes.");
+    register("kTimeAnnDisabled", "Offset the animation on your input meshes. <br><b>Disabled: This node requires the Repro node.</b>");
+    register("kTrailsAnn", "Create trails behind points.");
+    register("kTransformAnn", "Transform (move/rotate/scale) the network.");
+    register("kTrigAnn", "Use Sin/Cos/Tan to animate objects.");
+    register("kVisibilityAnn", "Toggle the visibility of objects.");
+    register("kWorldAnn", "Cluster objects and simulate ecosystems.");
+    register("kSoupAnn", "Connect MASH network to SOuP" );
+    register("kOpenCacheCreator", "Open the Cache Creator" );
+    register("kSelectFolder", "Select Folder" );
+    register("kSignalAnn", "Add noise or trigonometry to animate your objects.");
+    register("kPfxAnn", "Place points on Paint Effects meshes.");
+    register("kExportLocation", "Select an export location" );
+    register("kNoObjectsToExport", "Maya to Adobe(R) After Effects(R): No objects for export." );
+    register("kAEInstructions", "Maya to Adobe(R) After Effects(R): Please add a Maya to Adobe(R) After Effects(R) selection set and add your objects to it." );
+    register("kSetAlreadyFound", "Maya to Adobe(R) After Effects(R): Set already found." );
+
+
+    //
+    // Scripts and callCustom injections
+    register("kDeleteThisNode", "Delete This Node" );
+    register("kDeleteThisNodeQ", "Delete This Node?" );
+    register("kYes", "Yes" );
+    register("kDelNo", "No" );
+    register("kConnectToTypeWarning", "Please select a MASH_Waiter and a Type transform." );
+    register("kNoShellDeformer", "Type has no shell deformer.");
+    register("kPleaseSelectAWaiter", "Please select a MASH_Waiter.");
+    register("kSwitchedRepro", "Successfully switched to MASH_Repro.");
+    register("kSwitchedInstancer", "Successfully switched to Particle Instancer.");
+    register("kSelectParticles", "Please select a particle transform.");
+    register("kSelectParticlesThenWaiter", "Please select an nParticle object first and a Waiter seccond.");
+    register("kMapHelper", "Map Helper");
+    register("kConnectedMapHelper", "Connected Map Helper.");
+    register("kPleaseSelectMapHelperTransform", "Please select a Map Helper transform.");
+    register("kNoTextureAdded", "Please add a texture before adding a helper.");
+    register("kSelectAudio", "Select an AIFF or WAV file");
+    register("kNamePreset", "Name the preset");
+    register("kPresetName", "Preset Name");
+    register("kCancel", "Cancel");
+    register("kPresetCreated", "Preset Created.");
+    register("kPresetCancelled", "Preset export cancelled.");
+    register("kPathNeededPresets", "Please set a path to save the presets.");
+    register("kWaiterConn", "Waiter Connected.");
+    register("kCurveConnected", "Curve connected.");
+    register("kNoCurveConnected", "Please connect a curve.");
+    register("kPleaseSelectACurve", "Please select a curve.");
+    register("kMergeConnected", "Merge Node Connected.");
+    register("kPleaseSelectWaiterOrMerge", "Please select a Waiter or Merge node to merge with.");
+    register("kPleaseSelectMASHNode", "Please select a MASH Node.");
+    register("kMeshConnected", "Mesh connected.");
+    register("kSelectionSet", "Selection Set");
+    register("kNoItemsSelected", "No items selected.");
+    register("kSourceWaiter", "Source Waiter");
+    register("kSourceChannels", "Source Channels");
+    register("kSourceAxis", "Source Axis");
+    register("kGetWaiter", "Get Waiter");
+    register("kTargetNodes", "Target Nodes");
+    register("kTargetChannels", "Target Channels");
+    register("kSortAlphabetically", "Sort Alphabetically");
+    register("kSortAlphabeticallyAnn", "This will rename objects with 4 zero padding eg. mesh1 would become mesh0001");
+    register("kGetTargets", "Get Targets");
+    register("kUtility", "Utility");
+    register("kPleaseSelectAMesh", "Please select a mesh.");
+    register("kVoxelContainerCreated", "Voxel container created.");
+    register("kVoxelContainer", "Voxel container");
+    register("kMaxVoxels", "Maximum Voxel Count");
+
+    register("kCacheCreator", "MASH Cache Creator ...");
+    register("kCreateCaches", "Create Caches");
+    register("kDeleteCaches", "Delete Caches");
+    register("kPleaseTryAgain", "Something has gone wrong, please select the Waiter and try again.");
+    register("kPleaseSelectWaiterToCache", "Please select the Waiter to be cached.");
+
+    register("kCreatedCachePos", "Created Position Cache.");
+    register("kCreatedCacheRot", "Created Rotation Cache.");
+    register("kCreatedCacheScale", "Created Scale Cache.");
+    register("kCreatedCacheId", "Created ID Cache.");
+    register("kCreatedCacheVis", "Created Visibility Cache.");
+
+    register("kStart", "Start");
+    register("kEnd", "End");
+
+    register("kNoProbsWithParent", "No problems with the parent.");
+    register("kNoProbsWithTranslates", "No problems with translates.");
+    register("kNoProbsWithRotations", "No problems with rotations.");
+    register("kPleaseSelectInstancer", "Please select an Instancer.");
+    register("kObjPositionsNotZero", "Object positions not 0,0,0.");
+    register("kMoveObjectsToZero", "Consider moving objects to 0,0,0.");
+    register("kPositionNotZero", "Position not 0,0,0:");
+    register("kSeeScriptEditorForDetails", "See script editor for details.");
+    register("kObjectRotationsNotZero", "Object rotations not 0,0,0.");
+    register("kConsiderFreezingRotations", "Consider freezing the rotation transforms.");
+    register("kRotationNotZero", "Rotation not 0,0,0:");
+    register("kParentPosNotZero", "Parent position is not 0,0,0.");
+    register("kConsiderMoving", "Consider moving ");
+    register("kToZero", "to 0,0,0.");
+    register("kBakeInstancerTool", "Bake Instancer Tool");
+    register("kCheckingForCommonProblems", "Checking for common problems:");
+    register("kBakeThisFrame", "Bake This Frame");
+    register("kBakeAnimation", "Bake Animation");
+    register("kOptimisations", "Optimisations:");
+    register("kClearMemory", "Clear Memory");
+    register("kClearMemoryAnn", "Baking long sequences can cause Maya to run out of memory and crash, this option clears memory after each frame.");
+    register("kClearUndo", "Clear Undo");
+    register("kClearUndoAnn", "Saves on RAM usage by clearing the undo queue every frame. Use this option as a last resort.");
+    register("kCloseScriptEditor", "Close Script Editor");
+    register("kCloseScriptEditorAnn", "Baking with the script editor open is much slower.");
+    register("kTranslate", "Translate");
+    register("kRotate", "Rotate");
+    register("kMASHMeshesOnly", "Mesh mode only accepts meshes.");
+    register("kNameNetwork", "Network Name:");
+    register("kTransformationSpace", "Transformation Space");
+    register("kDuplicateSpecial", "Duplicate Special");
+    register("kBakeToInstances", "Bake to Shape Instances");
+
+    //Create options
+    register("kInViewMessages", "In View Messages");
+    register("kHideSourceObjs", "Hide Source Object(s)");
+    register("kGeometryType", "Geometry Type");
+    register("kInstancer", "Instancer");
+    register("kMesh", "Mesh");
+    register("kPresetsLocation", "Presets location");
+    register("kNetworkName", "Network Name");
+    register("kNameOnCreate", "Name on Creation");
+    register("kDistributionType", "Distribution Type" );
+    register("kRadial", "Radial" );
+    register("kGrid", "Grid" );
+    register("kZeroedDist", "Zeroed Distribution" );
+    register("kMashOptions", "MASH Options");
+    register("kPaintTool", "Placer Tool");
+
+    // drag and drop labels
+    register("kDDCamera", "Camera");
+    register("kDDProfileCurve", "Profile Curve");
+    register("kDDCurve", "Curve");
+    register("kDDInfluenceLocators", "Influence Locators");
+    register("kDDBlendMesh", "Blend Mesh");
+    register("kDDGuideCurve", "Guide Curve");
+    register("kDDFalloffObjets", "Falloff Objects");
+    register("kDDPleaseSelectFalloffTransform", "Please select a MASH_Falloff transform.");
+    register("kDDFalloffCloned", "MASH_Falloff Cloned.");
+    register("kDDAimCurve", "Aim Curve");
+    register("kDDInputCurves", "Input Curves");
+
+    // MASH outliner
+    register("kEdit", "Edit");
+    register("kForceUpdate", "Force Update");
+    register("kShow", "Show");
+    register("kUtilityNodes", "Utility Nodes");
+    register("kWhite", "White");
+    register("kRed", "Red");
+    register("kBlue", "Blue");
+    register("kGrey", "Grey");
+    register("kOrange", "Orange");
+    register("kGreen", "Green");
+    register("kYellow", "Yellow");
+    register("kPurple", "Purple");
+    register("kLabelColour", "Label Color");
+    register("kDuplicateNetwork", "Duplicate Network");
+    register("kDeleteNetwork", "Delete Network");
+    register("kAfterEffectsLiveLink", "Adobe(R) After Effects(R) Live Link");
+    register("kLightRig", "Create Light Rig");
+    register("kThreeDFonts", "3D Font Browser");
+    register("kDDAvoidance", "Objects to avoid");
+
+    // Placer
+    register("kBrushRadius", "Brush Radius");
+    register("kBrushSpacing", "Brush Spacing");
+    register("kBrushStrength", "Brush Strength");
+    register("kScatterDensity", "Scatter Density");
+    register("kScatter", "Scatter");
+    register("kCollideOnCreate", "Collide on Create");
+    register("kRotationMode", "Rotation Mode");
+    register("kLeanAmount", "Lean Amount");
+    register("kAlignBrushAxis", "Align Brush Axis");
+    register("kRandomScale", "Random Scale");
+    register("kRandomRotation", "Random Rotation");
+    register("kIdMode", "Id Mode");
+    register("kPaintId", "Paint Id");
+    register("kRandomId", "Random Id");
+    register("kPoints", "Add");
+    register("kCollide", "Collide");
+    register("kMove", "Move");
+    register("kStickToMesh", "Stick to Paint Meshes");
+    register("kNudge", "Nudge");
+    register("kSnapToMesh", "Snap To Paint Meshes");
+
+    register("kSelectPointsManip", "Marquee Select MASH Points to begin Manipulation");
+    register("kDragOver", "Drag over a model to begin painting");
+    register("kUnexpectedInput", "Falloff has multiple connections. Hold Alt to clone Falloff objects");
+    register("kNodeNotSupportedWarning", "Node type not supported. Rollover input box to see accepted inputs.");
+    register("kFlightExists", "Flight node already exists in this network.");
+    register("kDelayExists", "Delay node already exists in this network.");
+    register("kDynamicsExists", "Dynamics node already exists in this network.");
+
+    // Dynamics
+    register("kExternalColliders", "Collider Objects");
+    register("kPerPointAttributes", "Per Point Adjustments");
+    register("kFields", "Fields");
+    register("kChannelRandom", "Channel Randomiser");
+    register("kDynamics", "Dynamics");
+    register("kDynamicsAnn", "Add Dynamics to your MASH network");
+    register("kConstraint", "Constraint");
+    register("kEmissionNetwork", "Emission Network");
+
+    register("kUseGPU", "Use GPU");
+    register("kUseGPUAnnotation", "Enable OpenCL");
+    register("kMotionBlurInstanceMode", "Geometry mode");
+    register("kMotionBlurInstanceModeAnnotation", "Geometry mode");
+    register("kLod", "Level Of Detail");
+    register("kLodAnnotation", "Global display override");
+    register("kRotationOrder", "Rotation Order");
+    register("kRotationOrderAnnotation", "Set the rotation order of source objects");
+    register("kLODCamera", "LOD Camera");
+    register("kLODCameraAnnotation", "Select the desired camera for LOD Display settings");
+
+    register("kOutputAttributes", "Output Attributes");
+    register("kNormals", "Normals");
+    register("kNormalsAnnotation", "Output Normals");
+    register("kUVs", "UVs");
+    register("kUVsAnnotation", "Output UVs");
+    register("kCPV", "Color Per Vertex");
+    register("kCPVAnnotation", "Output Color Per Vertex");
+
+    register("kRemapAttributes", "Remap Attributes");
+    register("kObjectIndex", "Object Index");
+    register("kUvTile", "uvTile");
+    register("kAnimated", "animated");
+    register("kFrame", "frame");
+    register("kRoundNumbers", "Whole Frame Numbers");
+
+    // World
+    register("kTerrestialEcosystem", "Terrestrial Ecosystem");
+    register("kPointsPerCluster", "Points Per Cluster");
+    register("kRandomPointsPerCluster", "Random Points Per Cluster");
+    register("kMinId", "Minimum Id");
+    register("kMaxId", "Maximum Id");
+    register("kFixedId", "Fixed Id");
+    register("kMapSettings", "Map Settings");
+    register("kPlacementMap", "Placement Map");
+    register("kIgnoreSlope", "Ignore Slope");
+
+    register("kScaleMap", "Scale Map");
+    register("kScaleMode", "Scale Mode");
+
+    register("kEcosystemAge", "Ecosystem Age");
+    register("kMaxElements", "Maximum Elements");
+    register("kSeedMultiplier", "Seed Multiplier");
+    register("kGroundMesh", "Ground Mesh");
+    register("kCalculateShade", "Calculate Shade");
+    register("kShadeVariance", "Shade Variance");
+    register("kPoleBias", "Pole Bias");
+    register("kPoleDirection", "Pole Direction");
+    register("kShadeVarianceAnn", "Use this control to simulate axial tilt.");
+
+    register("kMaps", "Maps");
+    register("kUseIdMap", "Use Genotype Map");
+    register("kIdMap", "Genotype Map");
+    register("kRTemperature", "R: Temperature"); // the red channel of the map represents temperature, this toggles the use of this channel on
+    register("kGSoilQuality", "G: Soil Quality"); // the green channel of the map represents soil quality, this toggles the use of this channel on
+    register("kBMoisture", "B: Moisture"); // the blue channel of the map represents moisture, this toggles the use of this channel on
+    register("kConditionsMap", "Conditions Map");
+
+    register("kOutputAgeAsTime", "Output Age as Time");
+    register("kTimeRange", "Time Range");
+    register("kRoundTime", "Round Time");
+    register("kSparsity", "Sparsity");
+    register("kRandomRotations", "Random Rotations");
+    register("kAvoidance", "Avoidance");
+    register("kAvoidanceRadius", "Avoidance Radius");
+    register("kPreiousPointsMode", "Previous Points Mode");
+
+    // Tristate button
+    register("kTriStateMeshAnnotation", "Display object as original mesh");
+    register("kTriStateProxyAnnotation", "Display object as a proxy object (set below)");
+    register("kTriStateLodCameraAnnotation", "Display LOD objects (set below)");
+    register("kTriStateLodNoCameraAnnotation", "Please select an LOD Camera (above)");
+
+    //widgets
+    register("kDeleteLabel", "Delete");
+    register("kRefreshLabel", "Refresh");
+    register("kRevealLabel", "Reveal in Outliner");
+    register("kAddSelectedObjsLabel", "Add selected objects");
+    register("kObjectsLabel", "Objects");
+    register("kDisplayLabel", "Display");
+    register("kProxiesLabel", "Proxies");
+    register("kLodLabel", "LOD");
+    register("kLodSpinBoxAnnotation", "Set the distance from the LOD Camera to display\nthe proxy object (requires LOD Camera to be set)");
+
+    // Breakout Connection Manager
+    register("kBCM_BCM", "Breakout Connection Manager");
+    register("kBCM_Name", "Name");
+    register("kBCM_Connections", "Connections");
+    register("kBCM_From_Breakout", "From Breakout");
+    register("kBCM_To_Selection", "To Selection");
+    register("kBCM_Show", "Show");
+    register("kBCM_Hidden", "Hidden");
+    register("kBCM_Utility", "Utility");
+    register("kBCM_Incoming", "Incoming connection exists on");
+    register("kBCM_Overwrite", "Overwrite Incoming Connection?");
+    register("kBCM_Continue", "Continue?");
+    register("kBCM_Yes", "Yes");
+    register("kBCM_No", "No");
+    register("kBCM_Change_Connection", "Change Connection ID");
+    register("kBCM_New_Id", "New Id (will realign current connections):");
+    register("kBCM_From", "From:");
+    register("kBCM_Iterate", "Iterate id");
+    register("kBCM_Disconnect", "Disconnect:");
+    register("kBCM_Disconnect_All", "Disconnect All");
+    register("kBCM_Remove", "Remove");
+    register("kBCM_New_Group", "New Group");
+    register("kBCM_Ungroup", "Ungroup");
+    register("kBCM_Cannot_Be_Connected", "Connection Manager: Attribute cannot be connected to");
+
+    // Genotype Creator
+    register("kGeno_Age", "Age");
+    register("kGeno_Seed_Age", "Seed Age");
+    register("kGeno_Seed_Count", "Seed Count");
+    register("kGeno_Rate", "Rate");
+    register("kGeno_Id", "Id");
+    register("kGeno_Id_Min", "Id Min");
+    register("kGeno_Id_Max", "Id Max");
+    register("kGeno_Size", "Size");
+    register("kGeno_Slope", "Slope");
+    register("kGeno_Variance", "Variance");
+    register("kGeno_Id_Color", "Genotype ID");
+    register("kGeno_Temperature", "Temperature");
+    register("kGeno_Soil_Quality", "Soil Quality");
+    register("kGeno_Moisture", "Moisture");
+    register("kGeno_Resilience", "Resilience");
+    register("kGeno_Name", "Name");
+    register("kGeno_Defaults", "Defaults");
+    register("kGeno_GEditor", "Genotype Editor");
+    register("kGeno_Add_Geno", "Add Genotype");
+    register("kGeno_Update_Sim", "Update Simulation");
+    register("kGeno_Presets", "Presets");
+    register("kGeno_Copy", "Copy");
+    register("kGeno_Randomize", "Randomize");
+    register("kGeno_Rename", "Rename");
+    register("kGeno_Duplicate", "Duplicate");
+    register("kGeno_Delete", "Delete");
+    register("kGeno_AutoSize", "Automatically Set Model Size");
+
+    // Maya To After Effects: Live Link
+    register("kM2AE_Title", "AE Live Link");
+    register("kM2AE_Pause", "Pause");
+    register("kM2AE_Push_All", "Push all");
+    register("kM2AE_SyncT", "Sync Timeline");
+    register("kM2AE_Import", "Import");
+    register("kM2AE_Export", "Export");
+    register("kM2AE_Advanced", "Advanced");
+    register("kM2AE_Set_IP", "Set IP");
+    register("kM2AE_Global_Scale", "Scale Ratio:");
+    register("kM2AE_Remove", "Remove");
+    register("kM2AE_Invalid_Import", "Invalid Import File");
+    register("kM2AE_Closed_AE", "Closed AE Live Link");
+    register("kM2AE_Preferences_Mismatch", "Preferences Mismatch");
+    register("kM2AE_Override", "Would you like to override the composition\'s preferences?");
+    register("kM2AE_Yes", "Yes");
+    register("kM2AE_No", "No");
+    register("kM2AE_Waiting_Conn", "Waiting for connection...");
+    register("kM2AE_Disconnected", "Disconnected");
+    register("kM2AE_Connected_To", "Connected to");
+    // M2AE->Utils
+    register("kM2AE_Sending_To", "Sending To AE ...");
+    register("kM2AE_Export_Canceled", "AE Live Link Export Canceled");
+    register("kM2AE_Exported_To", "Exported to");
+    register("kM2AE_Import_Canceled", "AE Live Link Import Canceled");
+    register("kM2AE_Opening_Failed", "Opening file failed.");
+    register("kM2AE_Choose_File", "Choose file to import from:");
+    register("kM2AE_Choose_File_Export", "Choose file to export to:");
+    // M2AE->Client
+    register("kM2AE_Connecting_To_AAE", "Connecting to Adobe(R) After Effects(R)");
+    register("kM2AE_Link_Established", "Live link established.");
+    register("kM2AE_Conn_Established", "Connection established");
+    register("kM2AE_SMessage_Failed", "Sending message failed.");
+    register("kM2AE_Connection_Closed", "Connection closed");
+    register("kM2AE_Link_Failed", "Live link failed");
+    register("kM2AE_ClosingC_Failed", "Closing connection failed.");
+    register("kM2AE_Link_Disconnected", "Live link disconnected.");
+    register("kMashNotLoaded", "MASH is not loaded.");
+
+    // Shelf
+    register("kPolyType", "Polygon Type" );
+    register("kSVG", "SVG" );
+    register("kCurveWarp", "Curve Warp" );
+    register("kCurveWarpAnnot", "Deform along a path. Select first the object to deform and then a NURBS curve as the path." );
+    register("kCreateTextureDeformer", "Texture Deformer" );
+    register("kCreateTextureDeformerAnnot", "Select object(s)" );
+    register("kImportAlembic", "Import Alembic..." );
+
+    // Generic
+    register("kNotSupported", "Action not supported.");
+
+    // TTF Keywords
+    register("kKw_mograph", "mograph");
+    register("kKw_procedural", "procedural");
+    register("kKw_distribution", "distribution");
+    register("kKw_scatter", "scatter");
+    register("kKw_points", "points");
+    register("kKw_instance", "instance");
+    register("kKw_copy", "copy");
+    register("kKw_awesome", "awesome");
+    register("kKw_wobble", "wobble");
+    register("kKw_jelly", "jelly");
+    register("kKw_dynamics", "dynamics");
+    register("kKw_rigid_body", "rigid body");
+    register("kKw_rbd", "rbd");
+    register("kKw_poly", "poly");
+    register("kKw_list", "list");
+    register("kKw_layer", "layer");
+    register("kKw_text", "text");
+    register("kKw_vector", "vector");
+    register("kKw_bake", "bake");
+    register("kKw_color", "color");
+    register("kKw_time", "time");
+    register("kKw_deform", "deform");
+    register("kKw_proxy", "proxy");
+    register("kKw_mesh", "mesh");
+    register("kKw_centre", "centre");
+    register("kKw_center", "center");
+    register("kKw_type", "type");
+
+    // TTF Tags
+    register("kTag_Effects", "Effects");
+    register("kTag_Bifrost", "Bifrost");
+    register("kTag_Hair", "Hair");
+    register("kTag_Fur", "Fur");
+    register("kTag_Fluids", "Fluids");
+    register("kTag_MASH", "MASH");
+    register("kTag_Deformers", "Deformers");
+
+    // Feedback widget
+    register("kNoObjectWithId", "No Object");
+    register("kPossibleObjects", "Object List");
+
+    // load any localized string resource
+    loadPluginLanguageResources("MASH", "MASH.pres.mel");
+
+}
+// Usage:
+// (getPluginResource("MASH", "kMapHelper"))
+// '" + (getPluginResource("MASH", "kDDInfluenceLocators")) + "'

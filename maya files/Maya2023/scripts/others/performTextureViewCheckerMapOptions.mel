@@ -1,0 +1,594 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+// 
+//  Description:
+//      This script is use to update the checker map options.
+//
+//  Input Arguments:
+//		None.
+//
+//  Return Value:
+//      None.
+//
+
+proc string textureWindowPanelName()
+//
+//  Procedure Name:
+//      textureWindowPanelName
+//
+//  Description:
+//		return the texture window panel name.
+//
+//  Input Arguments:
+//		
+//
+//  Return Value:
+//      texture window panel name
+//
+{
+	string $texWinName[] = `getPanel -sty polyTexturePlacementPanel`;
+	return $texWinName[0];
+}
+
+proc setOptionVars(int $forceFactorySettings)
+//
+//  Procedure Name:
+//      setOptionVars
+//
+//  Description:
+//		Initialize the option values.
+//
+//  Input Arguments:
+//		Whether to set the options to default values.
+//
+//  Return Value:
+//      None.
+//
+{
+	optionVar -init $forceFactorySettings -category "UV Editor.Checker Map"
+		-iv tvCheckerColorModeOptVar 0
+		-fv tvCheckerColor1rOptVar 1
+		-fv tvCheckerColor1gOptVar 1
+		-fv tvCheckerColor1bOptVar 1
+		-fv tvCheckerColor2rOptVar 0
+		-fv tvCheckerColor2gOptVar 0
+		-fv tvCheckerColor2bOptVar 0
+		-iv tvCheckerGradientOverlayOptVar 1
+		-fv tvCheckerGradient1rOptVar 1
+		-fv tvCheckerGradient1gOptVar 1
+		-fv tvCheckerGradient1bOptVar 1
+		-fv tvCheckerGradient2rOptVar 0
+		-fv tvCheckerGradient2gOptVar 0
+		-fv tvCheckerGradient2bOptVar 0
+		-iv tvCheckerResOptVar 6
+		-iv tvCheckerResCustomOptVar 64
+		-iv tvCheckerTileLabelOptVar 1
+		-fv tvCheckerTileLabelColorrOptVar 1
+		-fv tvCheckerTileLabelColorgOptVar 1
+		-fv tvCheckerTileLabelColorbOptVar 1
+		;
+}
+
+global proc tvCheckerSetup(string $parent, int $forceFactorySettings)
+// 
+//  Description:
+//		Update the state of the option box UI to reflect the option values.
+//
+//  Input Arguments:
+//      parent               - Top level parent layout of the option box UI.
+//                             Required so that UI object names can be 
+//                             successfully resolved.
+//
+//	forceFactorySettings - Whether the option values should be set to
+//                             default values.
+//
+//  Return Value:
+//      None.
+//
+{
+	setParent $parent;
+
+	setOptionVars($forceFactorySettings);
+
+	string $winName = textureWindowPanelName();
+
+	int $mode = `optionVar -query tvCheckerColorModeOptVar`;
+	if ($mode == 0)
+	{
+	    radioButtonGrp -edit -select 1 tvCheckerColorModeCustom;
+	}	
+	else 
+		radioButtonGrp -edit -select 1 tvCheckerColorModeMulti; 	
+	
+	float $CheckerColor1r = `optionVar -query tvCheckerColor1rOptVar`;
+	float $CheckerColor1g = `optionVar -query tvCheckerColor1gOptVar`;
+	float $CheckerColor1b = `optionVar -query tvCheckerColor1bOptVar`;
+	colorSliderGrp -e -rgb $CheckerColor1r $CheckerColor1g $CheckerColor1b tvCheckerColor1;  
+	
+	float $CheckerColor2r = `optionVar -query tvCheckerColor2rOptVar`;
+	float $CheckerColor2g = `optionVar -query tvCheckerColor2gOptVar`;
+	float $CheckerColor2b = `optionVar -query tvCheckerColor2bOptVar`;
+	colorSliderGrp -e -rgb $CheckerColor2r $CheckerColor2g $CheckerColor2b tvCheckerColor2;  
+	
+	int $gradientOverlay = `optionVar -query tvCheckerGradientOverlayOptVar`;
+	checkBoxGrp -edit -value1 $gradientOverlay tvCheckerGradientOverlay;
+	
+	float $Gradient1r = `optionVar -query tvCheckerGradient1rOptVar`;
+	float $Gradient1g = `optionVar -query tvCheckerGradient1gOptVar`;
+	float $Gradient1b = `optionVar -query tvCheckerGradient1bOptVar`;
+	colorSliderGrp -e -rgb $Gradient1r $Gradient1g $Gradient1b tvCheckerGradient1;  
+	
+	float $Gradient2r = `optionVar -query tvCheckerGradient2rOptVar`;
+	float $Gradient2g = `optionVar -query tvCheckerGradient2gOptVar`;
+	float $Gradient2b = `optionVar -query tvCheckerGradient2bOptVar`;
+	colorSliderGrp -e -rgb $Gradient2r $Gradient2g $Gradient2b tvCheckerGradient2;  
+	
+	int $res = `optionVar -query tvCheckerResOptVar`;
+	optionMenuGrp -edit -select $res tvCheckerRes;
+	
+	$res = `optionVar -query tvCheckerResCustomOptVar`; 
+	intSliderGrp -edit -value $res tvCheckerResCustom; 
+	
+	int $label = `optionVar -query tvCheckerTileLabelOptVar`;
+	checkBoxGrp -edit -value1 $label tvCheckerTileLabel; 
+	
+	float $labelColorr = `optionVar -query tvCheckerTileLabelColorrOptVar`;
+	float $labelColorg = `optionVar -query tvCheckerTileLabelColorgOptVar`;
+	float $labelColorb = `optionVar -query tvCheckerTileLabelColorbOptVar`;
+	colorSliderGrp -e -rgb $labelColorr $labelColorg $labelColorb tvCheckerTileLabelColor;  
+}
+
+global proc tvCheckerCallback(string $parent, int $doIt)
+// 
+//  Description:
+//		Update the option values with the current state of the option box UI.
+//
+//  Input Arguments:
+//      parent - Top level parent layout of the option box UI.  Required so
+//               that UI object names can be successfully resolved.
+//
+//	doIt   - Whether the command should execute.
+//
+//  Return Value:
+//      None.
+//
+{
+	int $mode = `radioButtonGrp -q -select tvCheckerColorModeCustom`;
+	if ($mode > 0)
+		optionVar -iv tvCheckerColorModeOptVar 0; // custom 
+	else
+	    optionVar -iv tvCheckerColorModeOptVar 1; // multi-color 
+		 
+	float $CheckerColor1[] = `colorSliderGrp -q -rgb tvCheckerColor1`;	
+	optionVar -fv tvCheckerColor1rOptVar $CheckerColor1[0]; 
+	optionVar -fv tvCheckerColor1gOptVar $CheckerColor1[1];
+	optionVar -fv tvCheckerColor1bOptVar $CheckerColor1[2];
+	
+	float $CheckerColor2[] = `colorSliderGrp -q -rgb tvCheckerColor2`;
+	optionVar -fv tvCheckerColor2rOptVar $CheckerColor2[0];
+	optionVar -fv tvCheckerColor2gOptVar $CheckerColor2[1];
+	optionVar -fv tvCheckerColor2bOptVar $CheckerColor2[2]; 
+		
+	optionVar -iv tvCheckerGradientOverlayOptVar `checkBoxGrp -q -value1 tvCheckerGradientOverlay`;
+	
+	float $Gradient1[] = `colorSliderGrp -q -rgb tvCheckerGradient1`;	
+	optionVar -fv tvCheckerGradient1rOptVar $Gradient1[0]; 
+	optionVar -fv tvCheckerGradient1gOptVar $Gradient1[1];
+	optionVar -fv tvCheckerGradient1bOptVar $Gradient1[2];
+	
+	float $Gradient2[] = `colorSliderGrp -q -rgb tvCheckerGradient2`;
+	optionVar -fv tvCheckerGradient2rOptVar $Gradient2[0];
+	optionVar -fv tvCheckerGradient2gOptVar $Gradient2[1];
+	optionVar -fv tvCheckerGradient2bOptVar $Gradient2[2]; 
+	
+	optionVar -iv tvCheckerResOptVar `optionMenuGrp -q -select tvCheckerRes`;
+	optionVar -iv tvCheckerResCustomOptVar `intSliderGrp -q -value tvCheckerResCustom`;
+	
+	optionVar -iv tvCheckerTileLabelOptVar `checkBoxGrp -q -value1 tvCheckerTileLabel`;
+	
+	float $labelColor[] = `colorSliderGrp -q -rgb tvCheckerTileLabelColor`;
+	optionVar -fv tvCheckerTileLabelColorrOptVar $labelColor[0];
+	optionVar -fv tvCheckerTileLabelColorgOptVar $labelColor[1];
+	optionVar -fv tvCheckerTileLabelColorbOptVar $labelColor[2]; 
+	
+	if ($doIt) {
+		performTextureViewCheckerMapOptions 0; 
+		addToRecentCommandQueue "performTextureViewCheckerMapOptions 0" "TextureViewCheckerMap";
+	}
+}
+
+global proc onCheckerColorModeChanged()
+{
+	int $mode = `radioButtonGrp -q -select tvCheckerColorModeCustom`;
+	print $mode; print ".\n";
+	if ($mode > 0)
+	{
+		// custom 
+		colorSliderGrp -e -enable 1 tvCheckerColor1;
+		colorSliderGrp -e -enable 1 tvCheckerColor2;
+		colorSliderGrp -e -enable 1 tvCheckerGradient1;
+		colorSliderGrp -e -enable 1 tvCheckerGradient2;
+
+	}	
+	else
+	{
+		// multi-color 
+		colorSliderGrp -e -enable 0 tvCheckerColor1;
+		colorSliderGrp -e -enable 0 tvCheckerColor2;
+		colorSliderGrp -e -enable 0 tvCheckerGradient1;
+		colorSliderGrp -e -enable 0 tvCheckerGradient2;
+	}   
+		 
+}
+ 
+global proc onCheckerResChanged()
+{
+	int $resItem = `optionMenuGrp -q -select tvCheckerRes`;
+	if ($resItem == 11)
+		intSliderGrp -edit -enable 1 tvCheckerResCustom;	
+	else 
+	    intSliderGrp -edit -enable 0 tvCheckerResCustom;	
+}
+
+//
+//  Procedure Name:
+//      tvCheckerMapOptions
+//
+//  Description:
+//		Construct the option box UI.  Involves accessing the standard option
+//		box and customizing the UI accordingly.
+//
+//  Input Arguments:
+//      None.
+//
+//  Return Value:
+//      None.
+//
+proc tvCheckerMapOptions()
+{
+	// Global template variables for form spacing
+	global int $gOptionBoxTemplateFrameSpacing;
+
+	//	Name of the command for this option box.
+	//
+	string $commandName = "tvChecker";
+
+	//	Build the option box actions.
+	//
+	string $callback = ($commandName + "Callback");
+	string $setup = ($commandName + "Setup");
+		
+ 	//	STEP 1:  Get the option box.
+	//	============================
+	//
+	//	The value returned is the name of the layout to be used as
+	//	the parent for the option box UI.
+	//
+	string $layout = getOptionBox();
+	setParent $layout;
+	
+	//	STEP 2:  Pass the command name to the option box.
+	//	=================================================
+	//
+	//	Any default option box behaviour based on the command name is set 
+	//	up with this call.  For example, updating the 'Help' menu item with
+	//	the name of the command.
+	//
+	setOptionBoxCommandName($commandName);
+	
+	//	STEP 3:  Activate the default UI template.
+	//	==========================================
+	//
+	//	Activate the default UI template so that the layout of this 
+	//	option box is consistent with the layout of the rest of the 
+	//	application.
+	//
+	setUITemplate -pushTemplate DefaultTemplate;
+
+	//	STEP 4: Create option box contents.
+	//	===================================
+	//	
+	//	This, of course, will vary from option box to option box.	
+	//	Turn on the wait cursor.
+	//
+	waitCursor -state 1;
+
+	string $parent = `formLayout`; 
+	string $settingsFrame = `frameLayout -label (uiRes("m_performTextureViewCheckerMapOptions.kSettings")) -cl 0 -cll 0 `;
+	columnLayout;
+					
+		radioButtonGrp -numberOfRadioButtons 1
+				-label (uiRes("m_performTextureViewCheckerMapOptions.kCheckerMapColorMode"))
+				-label1 (uiRes("m_performTextureViewCheckerMapOptions.kCheckerMap2Color"))
+				-select 1
+				-onCommand1 ""
+				tvCheckerColorModeCustom;
+
+			columnLayout -columnAlign "right" -cat "left" 85;
+			colorSliderGrp -label (uiRes("m_performTextureViewCheckerMapOptions.kCheckerMapChecker1")) -enable 1 -rgb 1 1 1 tvCheckerColor1;
+			colorSliderGrp -label (uiRes("m_performTextureViewCheckerMapOptions.kCheckerMapChecker2")) -enable 1 -rgb 0 0 0 tvCheckerColor2;
+			setParent ..; 
+			columnLayout -columnAlign "right" -cat "left" 15;
+			checkBoxGrp -label1 (uiRes("m_performTextureViewCheckerMapOptions.kCheckerMapGradientOverlay")) -numberOfCheckBoxes 1 -value1 1 
+				-offCommand1 ("colorSliderGrp -e -enable 0 tvCheckerGradient1; colorSliderGrp -e -enable 0 tvCheckerGradient2")
+				-onCommand1 ("colorSliderGrp -e -enable 1 tvCheckerGradient1; colorSliderGrp -e -enable 1 tvCheckerGradient2")
+				tvCheckerGradientOverlay;
+			setParent ..;
+			columnLayout -columnAlign "right" -cat "left" 85;
+			colorSliderGrp -label (uiRes("m_performTextureViewCheckerMapOptions.kCheckerMapGradient1")) -enable 1 -rgb 1 1 1 tvCheckerGradient1;
+			colorSliderGrp -label (uiRes("m_performTextureViewCheckerMapOptions.kCheckerMapGradient2")) -enable 1 -rgb 0 0 0 tvCheckerGradient2;
+			setParent ..;
+	
+		radioButtonGrp -numberOfRadioButtons 1
+				-shareCollection tvCheckerColorModeCustom
+				-label ""
+				-label1 (uiRes("m_performTextureViewCheckerMapOptions.kCheckerMapMultiColor"))
+				-onCommand1 ""
+				tvCheckerColorModeMulti;
+				
+		optionMenuGrp -label (uiRes("m_performTextureViewCheckerMapOptions.kCheckerMapResolution"))
+			-cc ("onCheckerResChanged")
+			tvCheckerRes;
+			{
+				menuItem -label "2" resolution2MenuItem;
+				menuItem -label "4" resolution4MenuItem;
+				menuItem -label "8" resolution8MenuItem;
+				menuItem -label "16" resolution16MenuItem; 
+				menuItem -label "32" resolution32MenuItem;
+				menuItem -label "64" resolution64MenuItem;
+				menuItem -label "128" resolution128MenuItem;
+				menuItem -label "256" resolution256MenuItem;
+				menuItem -label "512" resolution512MenuItem;
+				menuItem -label "1024" resolution1024MenuItem;
+				menuItem -label (uiRes("m_performTextureViewCheckerMapOptions.kResolutionCustom")) resolutionCustomMenuItem;
+
+				setParent -m ..;
+			}
+	
+		intSliderGrp -label "" -enable 0
+			-minValue 1 -maxValue 1024
+			-fieldMinValue 1 -fieldMaxValue 99999999 
+			-value 32 
+			-cc ("")
+			-dragCommand ("") 
+			tvCheckerResCustom;
+		
+		checkBoxGrp -label (uiRes("m_performTextureViewCheckerMapOptions.kCheckerMapTileLabel"))
+			-numberOfCheckBoxes 1
+			tvCheckerTileLabel; 
+  
+		colorSliderGrp -label (uiRes("m_performTextureViewCheckerMapOptions.kCheckerMapTileLabelColor"))
+			-enable 1
+			-rgb 1 1 1
+			tvCheckerTileLabelColor;
+
+	setParent ..;
+	setParent ..;
+	
+	// Attach frame to form layout
+    formLayout -e
+    	-af $settingsFrame "top" $gOptionBoxTemplateFrameSpacing
+    	-af $settingsFrame "left" $gOptionBoxTemplateFrameSpacing
+    	-af $settingsFrame "right" $gOptionBoxTemplateFrameSpacing
+    	-an $settingsFrame "bottom"
+    $parent;
+ 
+	scriptJob -parent tvCheckerRes
+		-event "texWindowEditorCheckerDensityChanged" ("callbackTexWindowEditorCheckerDensityChanged");
+ 
+	//	Turn off the wait cursor.
+	//
+	waitCursor -state 0;
+	
+	//	Step 5: Deactivate the default UI template.
+	//	===========================================
+	//
+	setUITemplate -popTemplate;
+
+	//	Step 6: Customize the buttons.  
+	//	============================== 
+	
+	string $applyBtn = getOptionBoxApplyBtn();
+	button -edit -visible 1
+		-command ($callback + " " + $parent + " " + 1 + "; ")
+		$applyBtn;
+	
+	//	'Save' button.
+	//
+	string $saveBtn = getOptionBoxSaveBtn();
+	button -edit -visible 0 
+		-command ($callback + " " + $parent + " " + 0 + "; ")
+		$saveBtn;
+
+	//	'Reset' button.
+	//
+	string $resetBtn = getOptionBoxResetBtn();
+	button -edit -visible 0 
+		-command ($setup + " " + $parent + " " + 1 + ";")
+		$resetBtn;
+
+	//	Step 7: Set the option box title.
+	//	=================================
+	//
+	setOptionBoxTitle (uiRes("m_performTextureViewCheckerMapOptions.kCheckerMapOptions"));
+
+	//	Step 8: Customize the 'Help' menu item text.
+	//	============================================
+	//
+	setOptionBoxHelpTag( "UVTextureEditorCheckerMap" );
+
+	//	Step 9: Set the current values of the option box.
+	//	=================================================
+	//
+	eval (($setup + " " + $parent + " " + 0));	
+	
+	//	Step 10: Show the option box.
+	//	=============================
+	//
+	showOptionBox();
+}
+
+
+//
+//  Procedure Name:
+//      assembleCmd
+//
+//  Description:
+//		Construct the command that will apply the option box values.
+//
+//  Input Arguments:
+//      None.
+//
+proc string assembleCmd()
+{
+	string $cmd;
+
+	setOptionVars(false);
+
+	int $colorMode = `optionVar -query tvCheckerColorModeOptVar`;
+	
+	float $Color1r = `optionVar -query tvCheckerColor1rOptVar`;
+	float $Color1g = `optionVar -query tvCheckerColor1gOptVar`;
+	float $Color1b = `optionVar -query tvCheckerColor1bOptVar`;
+		
+	float $Color2r = `optionVar -query tvCheckerColor2rOptVar`;
+	float $Color2g = `optionVar -query tvCheckerColor2gOptVar`;
+	float $Color2b = `optionVar -query tvCheckerColor2bOptVar`;
+	
+	int $gradientOverlay = `optionVar -query tvCheckerGradientOverlayOptVar`;
+	
+	float $Gradient1r = `optionVar -query tvCheckerGradient1rOptVar`;
+	float $Gradient1g = `optionVar -query tvCheckerGradient1gOptVar`;
+	float $Gradient1b = `optionVar -query tvCheckerGradient1bOptVar`;
+		
+	float $Gradient2r = `optionVar -query tvCheckerGradient2rOptVar`;
+	float $Gradient2g = `optionVar -query tvCheckerGradient2gOptVar`;
+	float $Gradient2b = `optionVar -query tvCheckerGradient2bOptVar`;
+	
+	int $resItem = `optionVar -query tvCheckerResOptVar`;
+	int $density = 1;
+	if ($resItem <= 10)
+	{
+		$density = pow(2, $resItem); 
+	}
+	else if ($resItem == 11)
+	{
+		$density = `optionVar -query tvCheckerResCustomOptVar`; 
+	}
+	
+	int $label = `optionVar -query tvCheckerTileLabelOptVar`; 
+		
+	float $labelColorr = `optionVar -query tvCheckerTileLabelColorrOptVar`;
+	float $labelColorg = `optionVar -query tvCheckerTileLabelColorgOptVar`;
+	float $labelColorb = `optionVar -query tvCheckerTileLabelColorbOptVar`;
+		
+	string $winName = textureWindowPanelName();
+
+	$cmd = "textureWindow -edit " 
+		+ " -checkerColorMode " + $colorMode + " " 
+		+ " -checkerColor1 " + $Color1r + " " + $Color1g + " " + $Color1b + " "
+		+ " -checkerColor2 " + $Color2r + " " + $Color2g + " " + $Color2b + " " 
+		+ " -cgo " + $gradientOverlay + " "
+		+ " -checkerGradient1 " + $Gradient1r + " " + $Gradient1g + " " + $Gradient1b + " "
+		+ " -checkerGradient2 " + $Gradient2r + " " + $Gradient2g + " " + $Gradient2b + " " 
+		+ " -checkerDensity " + $density + " "
+		+ " -checkerDrawTileLabels " + $label + " "
+		+ " -checkerTileLabelColor " + $labelColorr + " " + $labelColorg + " " + $labelColorb + " "
+		+ $winName;
+		
+	return $cmd;
+}
+
+//
+//  Procedure Name:
+//      performTextureViewCheckerMapOptions
+//
+//  Description:
+//
+//  Input Arguments:
+//      0 - Execute the command.
+//      1 - Show the option box dialog.
+//      2 - Return the command.
+//
+global proc string performTextureViewCheckerMapOptions(int $action)
+{
+	string $cmd = "";
+
+	switch ($action) {
+
+		//	Execute the command.
+		//
+		case 0:
+			//	Get the command.
+			//
+			$cmd = `assembleCmd`;
+
+			//	Execute the command with the option settings.
+			//
+			evalEcho($cmd);
+			break;
+
+		//	Show the option box.
+		//
+		case 1:
+			tvCheckerMapOptions;
+			break;
+
+		//	Return the command string.
+		//
+		case 2:
+			//	Get the command.
+			//
+			$cmd = `assembleCmd`;
+			break;
+	}
+	return $cmd;
+}
+ 
+// This is a callback function.
+global proc callbackTexWindowEditorCheckerDensityChanged()
+{	
+	string $winName = textureWindowPanelName();
+	int $currentDensity = eval("textureWindow -q -checkerDensity " + $winName); 
+	
+	// update the ui control and optionVar 
+	// to double check the match between ui control and optionVar
+	int $resItemA = `optionVar -query tvCheckerResOptVar`;
+	if (`optionMenuGrp -exists tvCheckerRes`)
+	{
+		int $resItemB = `optionMenuGrp -q -select tvCheckerRes`;
+		if ($resItemA != $resItemB); //something is wrong.
+	}
+		
+	if ($currentDensity == 2 && $resItemA == 1) {}
+	else if ($currentDensity == 4 && $resItemA == 2) {}
+	else if ($currentDensity == 8 && $resItemA == 3) {}
+	else if ($currentDensity == 16 && $resItemA == 4) {}
+	else if ($currentDensity == 32 && $resItemA == 5) {}
+	else if ($currentDensity == 64 && $resItemA == 6) {}
+	else if ($currentDensity == 128 && $resItemA == 7) {}
+	else if ($currentDensity == 256 && $resItemA == 8) {}
+	else if ($currentDensity == 512 && $resItemA == 9) {}
+	else if ($currentDensity == 1024 && $resItemA == 10) {}
+	else 
+	{
+		if (`optionMenuGrp -exists tvCheckerRes`)
+		{
+			optionMenuGrp -edit -select 11 tvCheckerRes; // to custom 
+		}
+		optionVar -iv tvCheckerResOptVar 11;
+		
+		if (`intSliderGrp -exists tvCheckerResCustom`)
+		{
+			intSliderGrp -edit -enable 1 tvCheckerResCustom;
+			intSliderGrp -edit -value $currentDensity tvCheckerResCustom;
+		}
+		optionVar -iv tvCheckerResCustomOptVar $currentDensity;
+	}
+}

@@ -1,0 +1,35 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+// Resources for Plug-in: matrixNodes
+// 
+// ----------------------------
+// Registered string resources:
+// ----------------------------
+// 
+//  (Plugin has no registered string resources)
+// 
+// 
+// --------------------------
+// Registered node resources:
+// --------------------------
+// 
+// Node: inverseMatrix
+// 
+setNodeNiceNameResource( "inverseMatrix", "行列の反転" );
+setAttrNiceNameResource( "inverseMatrix", "fzn", "フリーズ" );
+setAttrNiceNameResource( "inverseMatrix", "imat", "入力行列" );
+setAttrNiceNameResource( "inverseMatrix", "omat", "出力行列" );
+setAttrNiceNameResource( "inverseMatrix", "fza", "フリーズの影響を受ける" );
+// 
+// Node: transposeMatrix
+// 
+setNodeNiceNameResource( "transposeMatrix", "行列の位置変更" );
+setAttrNiceNameResource( "transposeMatrix", "fzn", "フリーズ" );
+setAttrNiceNameResource( "transposeMatrix", "imat", "入力行列" );
+setAttrNiceNameResource( "transposeMatrix", "omat", "出力行列" );
+setAttrNiceNameResource( "transposeMatrix", "fza", "フリーズの影響を受ける" );

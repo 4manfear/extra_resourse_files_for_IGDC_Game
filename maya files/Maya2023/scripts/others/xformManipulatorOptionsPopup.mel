@@ -1,0 +1,36 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+// 
+// 
+
+//
+// Create popup menu for xformManip tool options
+//
+
+global proc xformManipulatorOptionsPopup()
+{
+	string $toolName = `currentCtx`;
+
+	// Parent menu already set when this function is called,
+	// so just add a menu items
+	int $transformSpace = `setXformManip -q -worldSpace`;
+	int $rotateAround = `setXformManip -q -useRotatePivot`;
+	
+	menuItem 
+		-l	(uiRes("m_xformManipulatorOptionsPopup.kWorldTransformSpace"))
+		-rp	"W"
+		-cb	$transformSpace
+		-c	("optionVar -iv xformManipWorldSpace " + !$transformSpace + "; setXformManip -worldSpace " + !$transformSpace);
+
+	menuItem 
+		-l	(uiRes("m_xformManipulatorOptionsPopup.kUseRotatePivot"))
+		-rp	"E"
+		-cb	$rotateAround
+		-c	("optionVar -iv xformManipUseRotatePivot " + !$rotateAround + "; setXformManip -useRotatePivot " + !$rotateAround);
+
+}

@@ -1,0 +1,22 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//	Description:
+//		Set the visibility of the Time slider.
+//
+//	Arguments:
+//		$visible - Visibility for the Time slider.
+//
+//
+global proc setTimeSliderVisible(int $visible)
+{
+	int $currentlyVisible = isUIComponentVisible("Time Slider");
+
+	if ($visible && !$currentlyVisible || !$visible && $currentlyVisible) {
+		toggleUIComponentVisibility "Time Slider";
+	}
+}

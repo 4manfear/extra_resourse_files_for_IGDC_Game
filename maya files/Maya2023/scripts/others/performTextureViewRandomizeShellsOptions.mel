@@ -1,0 +1,435 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+// 
+//  Description:
+//      This script is use to update the randomize shells options.
+//
+//  Input Arguments:
+//		None.
+//
+//  Return Value:
+//      None.
+//
+
+proc string textureWindowPanelName()
+//
+//  Procedure Name:
+//      textureWindowPanelName
+//
+//  Description:
+//		return the texture window panel name.
+//
+//  Input Arguments:
+//		
+//
+//  Return Value:
+//      texture window panel name
+//
+{
+	string $texWinName[] = `getPanel -sty polyTexturePlacementPanel`;
+	return $texWinName[0];
+}
+
+proc setOptionVars(int $forceFactorySettings)
+//
+//  Procedure Name:
+//      setOptionVars
+//
+//  Description:
+//		Initialize the option values.
+//
+//  Input Arguments:
+//		Whether to set the options to default values.
+//
+//  Return Value:
+//      None.
+//
+{ 
+	optionVar -init $forceFactorySettings -category "UV Editor.Randomize Shells"
+		-iv randomizeU_NSUV 1
+		-iv randomizeV_NSUV 1
+		-fv randomizeTValue_NSUV 0.1
+		-iv randomizeCW_NSUV 0
+		-iv randomizeCCW_NSUV 0
+		-fv randomizeRValue_NSUV 22.5
+		-iv randomizeUp_NSUV 0
+		-iv randomizeDown_NSUV 0
+		-fv randomizeSValue_NSUV 10.0
+		;
+}
+
+global proc tvRandomizeShellsSetup(string $parent, int $forceFactorySettings)
+// 
+//  Description:
+//		Update the state of the option box UI to reflect the option values.
+//
+//  Input Arguments:
+//      parent               - Top level parent layout of the option box UI.
+//                             Required so that UI object names can be 
+//                             successfully resolved.
+//
+//	forceFactorySettings - Whether the option values should be set to
+//                             default values.
+//
+//  Return Value:
+//      None.
+//
+{
+	setParent $parent;
+
+	setOptionVars($forceFactorySettings);
+
+	string $winName = textureWindowPanelName();
+ 	
+	int $translateU = `optionVar -query randomizeU_NSUV`;
+	int $translateV = `optionVar -query randomizeV_NSUV`;
+	float $translateValue = `optionVar -query randomizeTValue_NSUV`;
+	checkBoxGrp -edit -value1 $translateU tvRandomizeShellsU;
+	checkBoxGrp -edit -value1 $translateV tvRandomizeShellsV;
+	floatSliderGrp -edit -value $translateValue tvRandomizeShellsUnits;
+ 	
+	int $rotateCW = `optionVar -query randomizeCW_NSUV`;
+	int $rotateCCW = `optionVar -query randomizeCCW_NSUV`;
+	float $rotateValue = `optionVar -query randomizeRValue_NSUV`;
+	checkBoxGrp -edit -value1 $rotateCW tvRandomizeShellsCW;
+	checkBoxGrp -edit -value1 $rotateCCW tvRandomizeShellsCCW;
+	floatSliderGrp -edit -value $rotateValue tvRandomizeShellsDegs;
+ 	
+	int $scaleUp = `optionVar -query randomizeUp_NSUV`;
+	int $scaleDown = `optionVar -query randomizeDown_NSUV`;
+	float $scaleValue = `optionVar -query randomizeSValue_NSUV`;
+	checkBoxGrp -edit -value1 $scaleUp tvRandomizeShellsUp;
+	checkBoxGrp -edit -value1 $scaleDown tvRandomizeShellsDown;
+	floatSliderGrp -edit -value $scaleValue tvRandomizeShellsPercent;
+}
+
+global proc tvRandomizeShellsCallback(string $parent, int $doIt)
+// 
+//  Description:
+//		Update the option values with the current state of the option box UI.
+//
+//  Input Arguments:
+//      parent - Top level parent layout of the option box UI.  Required so
+//               that UI object names can be successfully resolved.
+//
+//	doIt   - Whether the command should execute.
+//
+//  Return Value:
+//      None.
+//
+{ 
+	int $translateU = `checkBoxGrp -q -value1 tvRandomizeShellsU`;
+	int $translateV = `checkBoxGrp -q -value1 tvRandomizeShellsV`;
+	float $translateValue = `floatSliderGrp -q -value tvRandomizeShellsUnits`;
+	optionVar -iv randomizeU_NSUV $translateU;
+	optionVar -iv randomizeV_NSUV $translateV;
+	optionVar -fv randomizeTValue_NSUV $translateValue;
+ 	
+	int $rotateCW = `checkBoxGrp -q -value1 tvRandomizeShellsCW`;
+	int $rotateCCW = `checkBoxGrp -q -value1 tvRandomizeShellsCCW`;
+	float $rotateValue = `floatSliderGrp -q -value tvRandomizeShellsDegs`;
+	optionVar -iv randomizeCW_NSUV $rotateCW;
+	optionVar -iv randomizeCCW_NSUV $rotateCCW;
+	optionVar -fv randomizeRValue_NSUV $rotateValue;
+ 	
+	int $scaleUp = `checkBoxGrp -q -value1 tvRandomizeShellsUp`;
+	int $scaleDown = `checkBoxGrp -q -value1 tvRandomizeShellsDown`;
+	float $scaleValue = `floatSliderGrp -q -value tvRandomizeShellsPercent`;
+	optionVar -iv randomizeUp_NSUV $scaleUp;
+	optionVar -iv randomizeDown_NSUV $scaleDown;
+	optionVar -fv randomizeSValue_NSUV $scaleValue;
+
+	if ($doIt) {
+		performTextureViewRandomizeShellsOptions 0; 
+		addToRecentCommandQueue "performTextureViewRandomizeShellsOptions 0" "TextureViewRandomizeShells";
+	}
+}
+  
+
+//
+//  Procedure Name:
+//      tvRandomizeShellsOptions
+//
+//  Description:
+//		Construct the option box UI.  Involves accessing the standard option
+//		box and customizing the UI accordingly.
+//
+//  Input Arguments:
+//      None.
+//
+//  Return Value:
+//      None.
+//
+proc tvRandomizeShellsOptions()
+{
+	// Global template variables for form spacing
+	global int $gOptionBoxTemplateFrameSpacing;
+
+	//	Name of the command for this option box.
+	//
+	string $commandName = "tvRandomizeShells";
+
+	//	Build the option box actions.
+	//
+	string $callback = ($commandName + "Callback");
+	string $setup = ($commandName + "Setup");
+		
+ 	//	STEP 1:  Get the option box.
+	//	============================
+	//
+	//	The value returned is the name of the layout to be used as
+	//	the parent for the option box UI.
+	//
+	string $layout = getOptionBox();
+	setParent $layout;
+	
+	//	STEP 2:  Pass the command name to the option box.
+	//	=================================================
+	//
+	//	Any default option box behaviour based on the command name is set 
+	//	up with this call.  For example, updating the 'Help' menu item with
+	//	the name of the command.
+	//
+	setOptionBoxCommandName($commandName);
+	
+	//	STEP 3:  Activate the default UI template.
+	//	==========================================
+	//
+	//	Activate the default UI template so that the layout of this 
+	//	option box is consistent with the layout of the rest of the 
+	//	application.
+	//
+	setUITemplate -pushTemplate DefaultTemplate;
+
+	//	STEP 4: Create option box contents.
+	//	===================================
+	//	
+	//	This, of course, will vary from option box to option box.	
+	//	Turn on the wait cursor.
+	//
+	waitCursor -state 1;
+
+	tabLayout -tabsVisible 0 -scrollable 1;
+	
+	string $parent = `columnLayout -adjustableColumn 1`;
+
+ 	columnLayout textureMoveUV;
+ 		frameLayout -label (uiRes("m_performTextureViewRandomizeShellsOptions.kUvEditorRandomShellsTLabel")) -collapsable false -collapse false;
+ 			columnLayout;
+ 				separator -style "none"; 
+
+			checkBoxGrp
+				-label1 (uiRes("m_performTextureViewRandomizeShellsOptions.kUvEditorRandomShellsULabel"))
+				-numberOfCheckBoxes 1
+				tvRandomizeShellsU; 
+
+			checkBoxGrp
+				-label1 (uiRes("m_performTextureViewRandomizeShellsOptions.kUvEditorRandomShellsVLabel"))
+				-numberOfCheckBoxes 1
+				tvRandomizeShellsV; 
+			
+			floatSliderGrp
+				-label (uiRes("m_performTextureViewRandomizeShellsOptions.kUvEditorRandomShellsUnitsLabel"))
+				-fieldMinValue 0.01
+				-fieldMaxValue 1.0
+				-maxValue 1.0
+				-minValue 0.001
+				-precision 3
+				-sliderStep 0.01
+				tvRandomizeShellsUnits;
+
+			setParent ..;		 
+		setParent ..;
+	
+ 		frameLayout -label (uiRes("m_performTextureViewRandomizeShellsOptions.kUvEditorRandomShellsRLabel")) -collapsable false -collapse false;
+ 			columnLayout;
+ 				separator -style "none"; 
+
+ 			checkBoxGrp
+				-label1 (uiRes("m_performTextureViewRandomizeShellsOptions.kUvEditorRandomShellsCWLabel"))
+				-numberOfCheckBoxes 1
+				tvRandomizeShellsCW; 
+
+ 			checkBoxGrp
+				-label1 (uiRes("m_performTextureViewRandomizeShellsOptions.kUvEditorRandomShellsCCWLabel"))
+				-numberOfCheckBoxes 1
+				tvRandomizeShellsCCW; 
+
+			floatSliderGrp
+				-label (uiRes("m_performTextureViewRandomizeShellsOptions.kUvEditorRandomShellsDegsLabel"))
+				-fieldMinValue 1
+				-fieldMaxValue 180
+				-maxValue 180
+				-minValue 1
+				tvRandomizeShellsDegs;
+
+			setParent ..;		 
+		setParent ..;
+
+ 		frameLayout -label (uiRes("m_performTextureViewRandomizeShellsOptions.kUvEditorRandomShellsSLabel")) -collapsable false -collapse false;
+ 			columnLayout;
+ 				separator -style "none"; 
+
+ 			checkBoxGrp
+				-label1 (uiRes("m_performTextureViewRandomizeShellsOptions.kUvEditorRandomShellsUpLabel"))
+				-numberOfCheckBoxes 1
+				tvRandomizeShellsUp; 
+
+ 			checkBoxGrp
+				-label1 (uiRes("m_performTextureViewRandomizeShellsOptions.kUvEditorRandomShellsDownLabel"))
+				-numberOfCheckBoxes 1
+				tvRandomizeShellsDown; 
+
+			floatSliderGrp
+				-label (uiRes("m_performTextureViewRandomizeShellsOptions.kUvEditorRandomShellsPercentLabel"))
+				-fieldMinValue 1
+				-fieldMaxValue 100
+				-maxValue 100
+				-minValue 0.1
+				-precision 1
+				-sliderStep 1
+				tvRandomizeShellsPercent;
+
+			setParent ..;		 
+		setParent ..;
+	setParent ..;
+	
+	//	Turn off the wait cursor.
+	//
+	waitCursor -state 0;
+	
+	//	Step 5: Deactivate the default UI template.
+	//	===========================================
+	//
+	setUITemplate -popTemplate;
+
+	//	Step 6: Customize the buttons.  
+	//	============================== 
+	
+	string $applyBtn = getOptionBoxApplyBtn();
+	button -edit -visible 1
+		-command ($callback + " " + $parent + " " + 1 + "; ")
+		$applyBtn;
+	
+	//	'Save' button.
+	//
+	string $saveBtn = getOptionBoxSaveBtn();
+	button -edit -visible 0 
+		-command ($callback + " " + $parent + " " + 0 + "; ")
+		$saveBtn;
+
+	//	'Reset' button.
+	//
+	string $resetBtn = getOptionBoxResetBtn();
+	button -edit -visible 0 
+		-command ($setup + " " + $parent + " " + 1 + ";")
+		$resetBtn;
+
+	//	Step 7: Set the option box title.
+	//	=================================
+	//
+	setOptionBoxTitle (uiRes("m_performTextureViewRandomizeShellsOptions.kRandomizeShellsOptions"));
+
+	//	Step 8: Customize the 'Help' menu item text.
+	//	============================================
+	//
+	setOptionBoxHelpTag( "UVTextureEditorRandomizeShells" );
+
+	//	Step 9: Set the current values of the option box.
+	//	=================================================
+	//
+	eval (($setup + " " + $parent + " " + 0));	
+	
+	//	Step 10: Show the option box.
+	//	=============================
+	//
+	showOptionBox();
+}
+
+//
+//  Procedure Name:
+//      assembleCmd
+//
+//  Description:
+//		Construct the command that will apply the option box values.
+//
+//  Input Arguments:
+//      None.
+//
+proc string assembleCmd()
+{
+	string $cmd;
+
+	setOptionVars(false);
+ 	
+    int $translateU = `optionVar -q "randomizeU_NSUV"`;
+    int $translateV = `optionVar -q "randomizeV_NSUV"`;
+    float $translateValue = `optionVar -q "randomizeTValue_NSUV"`;
+    int $rotateCW = `optionVar -q "randomizeCW_NSUV"`;
+    int $rotateCCW = `optionVar -q "randomizeCCW_NSUV"`;
+    float $rotateValue = `optionVar -q "randomizeRValue_NSUV"`;
+    int $scaleUp = `optionVar -q "randomizeUp_NSUV"`;
+    int $scaleDown = `optionVar -q "randomizeDown_NSUV"`;
+    float $scaleValue = `optionVar -q "randomizeSValue_NSUV"`;
+		
+	$cmd = "texRandomizeShells"   
+		 + " " + $translateU + " " + $translateV + " " + $translateValue
+		 + " " + $rotateCW + " " + $rotateCCW + " " + $rotateValue
+		 + " " + $scaleUp + " " + $scaleDown + " " + $scaleValue;
+		
+	return $cmd;
+}
+
+//
+//  Procedure Name:
+//      performTextureViewRandomizeShellsOptions
+//
+//  Description:
+//
+//  Input Arguments:
+//      0 - Execute the command.
+//      1 - Show the option box dialog.
+//      2 - Return the command.
+//
+global proc string performTextureViewRandomizeShellsOptions(int $action)
+{
+	string $cmd = "";
+
+	switch ($action) {
+
+		//	Execute the command.
+		//
+		case 0:
+			//	Get the command.
+			//
+			$cmd = `assembleCmd`;
+
+			//	Execute the command with the option settings.
+			//
+			evalEcho($cmd);
+			break;
+
+		//	Show the option box.
+		//
+		case 1:
+			tvRandomizeShellsOptions;
+			break;
+
+		//	Return the command string.
+		//
+		case 2:
+			//	Get the command.
+			//
+			$cmd = `assembleCmd`;
+			break;
+	}
+	return $cmd;
+} 
+
+

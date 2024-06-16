@@ -1,0 +1,568 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//  Procedure Name:
+//      performNewScene
+//
+//  Description:
+//        
+//         
+//  Input Arguments:
+//        $option : Whether to set the options to default values.
+//  Return Value:
+//        None
+//
+source workingTimeUtil;
+
+
+global proc setDefaultUnits(string $whichUnits) 
+{	
+	if ("linear" == $whichUnits) {
+        if(!`exists linearUnits_uiToMel`){
+			source createPrefWndUI.mel; 
+		}
+        string $defaultLinearUnit = linearUnits_uiToMel(`optionMenuGrp -q -v linearOpts`);
+		optionVar -sv workingUnitLinearDefault $defaultLinearUnit; 
+	} else if ("angular" == $whichUnits) {
+		if (`optionMenuGrp -q -sl angularOpts` == 1) {
+			optionVar -sv workingUnitAngularDefault degree;
+		} else {
+			optionVar -sv workingUnitAngularDefault radian;
+		}
+	} else { 
+		int $which = `optionMenuGrp -q -sl timeOpts`;
+
+        string $timeUnit = getCurrentUnitCmdValue($which);
+
+        optionVar -sv workingUnitTimeDefault $timeUnit;
+	}
+}
+
+proc setOptionVars (int	$forceFactorySettings)
+{
+	// Force factory settings on the following vars is different from the case when vars do not exist
+	if (!$forceFactorySettings) {
+		if (!`optionVar -ex "workingUnitLinearDefault"`) {
+			optionVar -sv "workingUnitLinearDefault" `currentUnit -q -l`;
+		}
+		if (!`optionVar -ex "workingUnitAngularDefault"`) {
+			optionVar -sv "workingUnitAngularDefault" `currentUnit -q -a`;
+		}
+		if (!`optionVar -ex "workingUnitTimeDefault"`) {
+			optionVar -sv "workingUnitTimeDefault" `currentUnit -q -t`;
+		}
+		if (!`optionVar -ex "viewCubeShowCompassDefault"`) {
+			optionVar -iv "viewCubeShowCompassDefault" `viewManip -q -dc`;
+		}
+		if (!`optionVar -ex "viewCubeCompassAngleDefault"`) {
+			optionVar -fv "viewCubeCompassAngleDefault" `viewManip -q -ca`;
+		}
+		if (!`optionVar -ex "playbackMinDefault"`) {
+			optionVar -fv "playbackMinDefault" `playbackOptions -q -min`;
+		}
+		if (!`optionVar -ex "playbackMaxDefault"`) {
+			optionVar -fv "playbackMaxDefault" `playbackOptions -q -max`;
+		}
+		if (!`optionVar -ex "playbackMinRangeDefault"`) {
+			optionVar -fv "playbackMinRangeDefault" `playbackOptions -q -animationStartTime`;
+		}
+		if (!`optionVar -ex "playbackMaxRangeDefault"`) {
+			optionVar -fv "playbackMaxRangeDefault" `playbackOptions -q -animationEndTime`;
+		}
+	}
+
+	optionVar -init $forceFactorySettings -category "File.NewScene"
+		-iv "newFileEnabled" 0
+		-iv "keepCurrentWorkingUnits" 0
+		-sv "newFileName" ""
+		-iv "viewCubeShowCompassDefault" false
+		-fv "viewCubeCompassAngleDefault" 0.0
+		;
+
+	optionVar -init $forceFactorySettings -category "Settings"
+		-sv "workingUnitLinearDefault" "cm"
+		-sv "workingUnitAngularDefault" "deg"
+		-sv "workingUnitTimeDefault" "film"
+		;
+
+	optionVar -init $forceFactorySettings -category "Color Management"
+		-iv "colorManagementEnabledByDefault" 1
+		;
+
+	optionVar -init $forceFactorySettings -category "Animation"
+		-fv "playbackMinDefault" 1.0
+		-fv "playbackMaxDefault" 120.0
+		-fv "playbackMinRangeDefault" 1.0
+		-fv "playbackMaxRangeDefault" 200.0
+		;
+
+	if ($forceFactorySettings) {
+		optionMenuGrp -edit -enable 1 linearOpts;
+		optionMenuGrp -edit -enable 1 angularOpts;
+		optionMenuGrp -edit -enable 1 timeOpts;
+		text -edit -enable 0 newFileText;
+		textField -edit -enable 0 newFileName;
+		symbolButton -edit -enable 0 newFileSymbolButton;
+		frameLayout -edit -enable 1 workingUnitsLayout; 
+		frameLayout -edit -enable 1 timelineSettingsLayout;
+	}
+}
+
+global proc newFileSetup (string $parent, int $forceFactorySettings)
+{
+	setOptionVars($forceFactorySettings);
+	setParent $parent;
+
+	checkBoxGrp
+		-edit
+		-value1 `optionVar -query newFileEnabled`
+		newFileEnabled;
+	
+	checkBoxGrp
+		-edit
+		-value1 `optionVar -query keepCurrentWorkingUnits`
+		keepCurrentWorkingUnits;		
+
+	textField
+		-edit
+		-text `optionVar -query newFileName`
+		newFileName;
+		
+	string $type;
+	int $which;
+
+	//  linear units
+	//	
+	$type = `optionVar -q workingUnitLinearDefault`;	
+	if ("mm" == $type || "millimeter" == $type) {
+		$which = 1;
+	} else if ("cm" == $type || "centimeter" == $type) {
+		$which = 2;
+	} else if ("m" == $type || "meter" == $type) {
+		$which = 3;
+	} else if ("in" == $type || "inch" == $type) {
+		$which = 4;
+	} else if ("ft" == $type || "foot" == $type) {
+		$which = 5;
+	} else if ("yd" == $type || "yard" == $type) {
+		$which = 6;
+	} else {
+		$which = 1;
+	}
+	optionMenuGrp -e -sl $which linearOpts;
+
+	//  angular
+	//
+	$type = `optionVar -q workingUnitAngularDefault`;
+	if ("deg" == $type || "degree" == $type) {
+		$which = 1;
+	} else if ("rad" == $type || "radian" == $type) {
+		$which = 2;
+	} else {
+		$which = 1;
+	}
+	optionMenuGrp -e -sl $which angularOpts;
+
+	//  time
+	//
+	$type = `optionVar -q workingUnitTimeDefault`;
+    
+    $index  = getIndexFromCurrentUnitCmdValue($type);
+    
+	optionMenuGrp -e -sl $index timeOpts;
+	
+	// Display Compass
+	//
+	int	$showCompass = `optionVar -q viewCubeShowCompassDefault`;
+	checkBoxGrp -e -v1 $showCompass viewCubeShowCompassDefault;
+
+	// Compass Angle
+	//
+	floatSliderGrp -e -enable $showCompass
+		-value `optionVar -q viewCubeCompassAngleDefault`
+		viewCubeCompassAngleDefault;
+
+	// Playback Start/End 
+	//
+	timeFieldGrp -e
+		-value1 `optionVar -query playbackMinDefault`
+		-value2 `optionVar -query playbackMaxDefault`
+		timeSliderBounds;
+
+	// Animation Start/End
+	// 
+	timeFieldGrp -e
+		-value1 `optionVar -query playbackMinRangeDefault`
+		-value2 `optionVar -query playbackMaxRangeDefault`
+		rangeSliderBounds;
+
+	// Color Management Settings
+	//
+	checkBoxGrp
+		-edit
+		-value1 `optionVar -query colorManagementEnabledByDefault`
+		colorManagementEnabledByDefault;		
+
+}
+
+global proc newFileCallback (string $parent, int $doIt)
+{	
+	setParent $parent;
+
+	optionVar -intValue "newFileEnabled"
+		`checkBoxGrp -query -value1 newFileEnabled`;
+		
+	optionVar -stringValue "newFileName"
+		`textField -query -text newFileName`;
+
+	if ($doIt) 
+	{
+		performNewScene 0;
+		string $tmpCmd = "performNewScene 0 ";
+		addToRecentCommandQueue $tmpCmd "New Scene";
+	}
+}
+
+proc newFileOptions ()
+{
+	string $commandName = "newFile";
+	string $callback = ($commandName + "Callback");
+	string $setup = ($commandName + "Setup");
+	//	STEP 1:  Get the option box.
+	//	============================
+	//
+	string $layout = getOptionBox();
+	setParent $layout;
+	//	STEP 2:  Pass the command name to the option box.
+	//	=================================================
+	//
+	setOptionBoxCommandName("New Scene Options");
+	//	STEP 3:  Activate the default UI template.
+	//	==========================================
+	//
+	setUITemplate -pushTemplate DefaultTemplate;
+	//	STEP 4: Create option box contents.
+	//	===================================
+	//
+	waitCursor -state 1;
+	
+	tabLayout -scrollable true -tabsVisible false;
+	
+	string $parent = `columnLayout -adjustableColumn 1 -columnAttach "both" 5`;
+		
+	columnLayout;
+	
+	//checkbox for default on/off
+	checkBoxGrp
+		-label ""
+		-label1 (uiRes("m_performNewScene.kEnableDefaultScene")) 
+		-numberOfCheckBoxes 1
+		-offCommand ("text -edit -enable 0 newFileText;"+
+			"textField -edit -enable 0 newFileName;" +
+			"symbolButton -edit -enable 0 newFileSymbolButton;" +
+			"frameLayout -edit -enable 1 workingUnitsLayout;" + 
+			"frameLayout -edit -enable 1 timelineSettingsLayout")
+		-onCommand ("text -edit -enable 1 newFileText;"+
+			"textField -edit -enable 1 newFileName;" +
+			"symbolButton -edit -enable 1 newFileSymbolButton;" +
+			"frameLayout -edit -enable 0 workingUnitsLayout;" +
+			"frameLayout -edit -enable 0 timelineSettingsLayout")
+	newFileEnabled;
+				
+	rowLayout -numberOfColumns 3
+		-columnWidth 2 212 
+		-columnWidth 3 25
+		defaultSceneLayout;
+		text -label (uiRes("m_performNewScene.kDefaultScene"))  
+			-enable `optionVar -query "newFileEnabled"`
+			newFileText;
+		textField 
+			-enable `optionVar -query "newFileEnabled"`
+			newFileName;
+		symbolButton 
+			-image "navButtonBrowse.png"
+			-enable `optionVar -query "newFileEnabled"`
+			-command "string $newFileName = `fileDialog`; textField -edit -text $newFileName newFileName"
+			newFileSymbolButton;
+		
+	setParent $parent;	
+	
+	separator -style "none";
+
+	frameLayout -label (uiRes("m_performNewScene.kDefaultWorkingUnits")) 
+			-labelVisible true 
+			-labelIndent 5
+			-collapsable false
+			-marginWidth 5 -marginHeight 5
+			workingUnitsLayout;
+
+		columnLayout -adj true;
+			
+			//checkbox to reset working units on/off
+			checkBoxGrp
+				-label ""
+				-label1 (uiRes("m_performNewScene.kResetWorkingUnits")) 
+				-numberOfCheckBoxes 1				
+				-offCommand ("optionVar -iv keepCurrentWorkingUnits off;" +
+							 "optionMenuGrp -edit -enable 1 linearOpts;"+
+							 "optionMenuGrp -edit -enable 1 angularOpts;" +
+							 "optionMenuGrp -edit -enable 1 timeOpts")
+							
+				-onCommand ("optionVar -iv keepCurrentWorkingUnits on;" +
+							"optionMenuGrp -edit -enable 0 linearOpts;"+
+							"optionMenuGrp -edit -enable 0 angularOpts;" +
+							"optionMenuGrp -edit -enable 0 timeOpts")
+							
+			keepCurrentWorkingUnits;
+			
+			separator -style "none" -h 10;
+			
+			optionMenuGrp -label (uiRes("m_performNewScene.kLinear"))  
+				-cc ("setDefaultUnits \"linear\" ")
+				linearOpts;
+
+			    menuItem -label (uiRes("m_performNewScene.kMillimeter"));	// menu 1
+			    menuItem -label (uiRes("m_performNewScene.kCentimeter"));	// menu 2
+			    menuItem -label (uiRes("m_performNewScene.kMeter"));				// menu 3
+			    menuItem -label (uiRes("m_performNewScene.kInch"));				// menu 4
+			    menuItem -label (uiRes("m_performNewScene.kFoot"));				// menu 5
+			    menuItem -label (uiRes("m_performNewScene.kYard"));				// menu 6
+
+			separator -style "none" -h 10;			
+
+			optionMenuGrp -label (uiRes("m_performNewScene.kAngular")) 
+				-cc ("setDefaultUnits \"angular\" ")
+				angularOpts;
+
+			    menuItem -label (uiRes("m_performNewScene.kDegrees"));
+			    menuItem -label (uiRes("m_performNewScene.kRadians"));
+
+			separator -style "none" -h 10;			
+
+			optionMenuGrp -label (uiRes("m_performNewScene.kTime")) 
+				-cc ("setDefaultUnits \"time\" ")
+				timeOpts;
+
+                for($i = 0; $i < getTimeUnitDisplayStringCount(); $i++)
+                {
+                    string $displayString = getTimeUnitDisplayString($i);
+                    menuItem -label $displayString;
+                }                
+                
+			
+	setParent $parent;	
+	
+	frameLayout -label (uiRes("m_performNewScene.kDefaultViewCubeSettings")) 
+			-labelVisible true 
+			-labelIndent 5
+			-collapsable false
+			-marginWidth 5 -marginHeight 5
+			viewCubeDefaultsLayout;
+
+		columnLayout -adj true;
+
+			checkBoxGrp -label ""
+				-label1 (uiRes("m_performNewScene.kShowCompass"))
+				-on1 ("optionVar -iv viewCubeShowCompassDefault on; floatSliderGrp -e -enable on viewCubeCompassAngleDefault")
+				-of1 ("optionVar -iv viewCubeShowCompassDefault off; floatSliderGrp -e -enable off viewCubeCompassAngleDefault")
+				viewCubeShowCompassDefault;
+
+			floatSliderGrp -field true
+				-label (uiRes("m_performNewScene.kCompassAngle")) 
+				-extraLabel (uiRes("m_performNewScene.kCompassAngleUnits"))
+				-cc ("optionVar -fv viewCubeCompassAngleDefault #1")
+				-min 0 -max 360
+				-cw 1 118
+				-cw 4 64
+				viewCubeCompassAngleDefault;
+
+	setParent $parent;	
+
+	frameLayout -label (uiRes("m_performNewScene.kDefaultTimeSliderSettings")) 
+			-labelVisible true 
+			-labelIndent 5
+			-collapsable false
+			-marginWidth 5 -marginHeight 5
+			timelineSettingsLayout;
+
+	    columnLayout -adj true;
+
+			// Changing the playback range can sometimes affect the start/end
+			// range.  Update it in the callback.
+			//
+		    timeFieldGrp
+				-label (uiRes("m_performNewScene.kPlaybackStart"))  
+				-cal 1 "right"
+				-nf 2 
+				-pre 2
+				-cc ( "optionVar -fv playbackMinDefault #1; " +
+					  "optionVar -fv playbackMaxDefault #2; ")
+				timeSliderBounds;
+	
+			// Changing the start/end range can sometimes affect the playback
+			// range.  Update it in the callback.
+			//
+			timeFieldGrp
+				-label (uiRes("m_performNewScene.kAnimationStart"))  
+				-cal 1 "right"
+				-nf 2 
+				-pre 2
+				-cc ( "optionVar -fv playbackMinRangeDefault #1; " +
+					  "optionVar -fv playbackMaxRangeDefault #2; ")
+				rangeSliderBounds;	
+	
+	setParent $parent;	
+		
+	frameLayout -label (uiRes("m_performNewScene.kColorManagementTitle")) 
+			-labelVisible true 
+			-labelIndent 5
+			-collapsable false
+			-marginWidth 5 -marginHeight 5
+			colorManagementSettingsLayout;
+
+		checkBoxGrp -label ""
+          -numberOfCheckBoxes 1 
+					-label1 (uiRes("m_performNewScene.kColorMgtEnabled"))
+					-on1 "optionVar -iv colorManagementEnabledByDefault 1"
+					-of1 "optionVar -iv colorManagementEnabledByDefault 0"
+          -v1 (`optionVar -q "colorManagementEnabledByDefault"`)
+					colorManagementEnabledByDefault;
+
+	setParent $parent;	
+		
+	waitCursor -state 0;
+	//	Step 5: Deactivate the default UI template.
+	//	===========================================
+	//
+	setUITemplate -popTemplate;
+
+	//	Step 6: Customize the buttons.  
+	//	==============================
+	//
+	string $applyBtn = getOptionBoxApplyBtn();
+	button -edit 
+		-label (uiRes("m_performNewScene.kApply")) 
+		-command ($callback + " " + $parent + " " + 1) 
+		$applyBtn;
+	
+	string $applyAndCloseBtn = getOptionBoxApplyAndCloseBtn();
+	button -edit 
+		-label (uiRes("m_performNewScene.kNew")) 
+		$applyAndCloseBtn;
+
+	string $saveBtn = getOptionBoxSaveBtn();
+	button -edit 
+		-command ($callback + " " + $parent + " " + 0 + " " +"; hideOptionBox")
+		$saveBtn;
+
+	string $resetBtn = getOptionBoxResetBtn();
+	button -edit 
+		-command ($setup + " " + $parent + " " + 1)
+		$resetBtn;
+
+	//	Step 7: Set the option box title.
+	//	=================================
+	//
+	string $title = (uiRes("m_performNewScene.kNewSceneOptions"));
+	setOptionBoxTitle( $title );
+	//	Step 8: Customize the 'Help' menu item text.
+	//	============================================
+	//
+	setOptionBoxHelpTag("NewSceneOptions");
+	//	Step 9: Set the current values of the option box.
+	//	=================================================
+	//
+	eval (($setup + " " + $parent + " " + 0));
+	//	Step 10: Show the option box.
+	//	=============================
+	//
+	string $cmds="";
+	if(`optionVar -query "newFileEnabled"` == 1)
+	{
+		$cmds+="text -edit -enable 1 newFileText;"+
+			"textField -edit -enable 1 newFileName;" +
+			"symbolButton -edit -enable 1 newFileSymbolButton;" +
+			"frameLayout -edit -enable 0 workingUnitsLayout;" +
+			"frameLayout -edit -enable 0 timelineSettingsLayout";
+	}else
+	{
+		$cmds+="text -edit -enable 0 newFileText;"+
+			"textField -edit -enable 0 newFileName;" +
+			"symbolButton -edit -enable 0 newFileSymbolButton;" +
+			"frameLayout -edit -enable 1 workingUnitsLayout;" + 
+			"frameLayout -edit -enable 1 timelineSettingsLayout";
+	}
+	eval($cmds);
+	
+	$cmds="";
+	if(`optionVar -query "keepCurrentWorkingUnits"` == 1)
+	{
+		$cmds+="optionMenuGrp -edit -enable 0 linearOpts;"+
+			   "optionMenuGrp -edit -enable 0 angularOpts;" +
+			   "optionMenuGrp -edit -enable 0 timeOpts";
+	}else
+	{
+		$cmds+="optionMenuGrp -edit -enable 1 linearOpts;"+
+			   "optionMenuGrp -edit -enable 1 angularOpts;" +
+			   "optionMenuGrp -edit -enable 1 timeOpts";
+	}
+	eval($cmds);	
+
+	showOptionBox();
+}
+
+
+proc string assembleCmd()
+{
+	setOptionVars (false);
+
+	//int $doHistory = `constructionHistory -q -toggle`;
+
+	// MAYA-109648: "Send To Maya > Send Selected as New Scene" Workflow
+	// Without $result, the scene is not imported, because executeCommand() does not return MS::kSuccess for performNewScene.
+	// However, declaring $result in the global namespace causes a "variable redeclaration" warning, so we encapsulate it in a function.
+	string $cmd = "global proc int performNewSceneAssembleCmd() { int $result = `saveChanges(\"file -f -new\")`; ";
+	
+	if ((`optionVar -query "newFileEnabled"` == 1) && (`optionVar -query "newFileName"` != "")){
+		$cmd += "if($result) {";
+		$cmd += "file -import \"";
+		$cmd += `optionVar -query "newFileName"`;
+		$cmd += " \"; }";
+	}
+
+	$cmd += "return $result; } performNewSceneAssembleCmd();";
+	return $cmd;
+}
+
+
+global proc string performNewScene (int $option)
+{
+	string $cmd="";
+	
+	// we cannot open a new file dialog if the capture thumbnail component is active.
+	if(`thumbnailCaptureComponent -q -isSessionOpened`) {
+		confirmDialog 	-message (uiRes("m_performNewScene.kMustCloseCaptureComponent"))
+						-button (uiRes("m_performNewScene.kOk"))
+						-icon "warning";
+	}
+	else {
+		switch ($option) 
+		{
+			case 0:
+				$cmd = `assembleCmd`;
+				eval($cmd);
+				break;
+			case 1:
+				newFileOptions;
+				break;
+			case 2:
+				$cmd = `assembleCmd`;
+				break;
+		}
+	}
+	return $cmd;
+}

@@ -1,0 +1,27 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc string
+findUniqueAliasName(string $container, string $baseString, int $count)
+{
+	string $aliases[] = `aliasAttr -q $container`;
+	int $aliasCount = size($aliases);
+	string $proposedName = $baseString;
+	if ($count > 0) {
+		$proposedName = ($baseString+$count);
+	}
+	
+	for ($ii = 0; $ii < $aliasCount; $ii+=2) {
+		if ($aliases[$ii] == $proposedName) {
+			$count++;
+			$proposedName = findUniqueAliasName($container,
+												 $baseString, $count);
+			break;
+		}
+	}
+	return $proposedName;
+}

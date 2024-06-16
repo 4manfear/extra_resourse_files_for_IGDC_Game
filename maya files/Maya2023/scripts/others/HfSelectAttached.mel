@@ -1,0 +1,32 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//<doc>
+//<name HfSelectAttached>
+//
+//<synopsis>
+//		HfSelectAttached(string $attractorSetName)
+//
+//<description>
+//		Select the surfaces an attractor set is attached to. 
+//		This is useful, for example, if you want to detach the attractors. 
+//
+//<flags>
+//      None.
+//
+//<returns>
+//		None.
+//
+//<examples>
+// string $attractorSetName = "myAttractor";
+// HfSelectAttached $attractorSetName;
+// // Where $attractorSetName is the name of the attractor set
+// // attached to the surfaces you want to select.
+//
+//</doc>
+//

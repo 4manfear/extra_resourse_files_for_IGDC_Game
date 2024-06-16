@@ -1,0 +1,144 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date: 
+//
+
+proc int equivalent( float $a, float $b ) {
+	float $tolerance = 0.001;
+	return( ($a > $b) ? ($a - $b <= $tolerance) : ($b - $a <= $tolerance));
+}
+
+global proc string findStartUpCamera(string $type) {
+
+	string $foundCamera = "";
+	string $cameras[];
+	int    $yUp;
+	float  $rot[];
+
+	if ("persp" == $type) {
+		$cameras = `listCameras -p`;
+	} else {
+		$cameras = `listCameras -o`;
+		$yUp = ("y" == `upAxis -q -ax`);
+	}
+
+	if (0 == size($cameras)) {
+		//
+		//  Couldn't find any of the requested type.  Look for any type
+		//
+		$cameras = `listCameras`;
+		if (0 == size($cameras)) {
+			error (uiRes("m_findStartUpCamera.kNoCamerasWereFoundInTheScene"));
+		}
+	}
+
+	switch ($type) {
+	case "persp":
+		for ( $camera in $cameras ) {
+			if (`camera -q -startupCamera $camera`) {
+				$foundCamera = $camera;
+				break;
+			}
+		}
+		break;
+	case "top":
+		for ( $camera in $cameras ) {
+			if (`camera -q -startupCamera $camera`) {
+				$rot = `camera -q -rot $camera`;
+				if ($yUp) {
+					if (!equivalent(0,$rot[0]) && equivalent(0,$rot[1]) && equivalent(0,$rot[2])) {
+						$foundCamera = $camera;
+						break;
+					}
+				} else {
+					if (equivalent(0,$rot[0]) && equivalent(0,$rot[1]) && equivalent(0,$rot[2])) {
+						$foundCamera = $camera;
+						break;
+					}
+				}
+			}
+		}
+		break;
+	case "side":
+		for ( $camera in $cameras ) {
+			if (`camera -q -startupCamera $camera`) {
+				$rot = `camera -q -rot $camera`;
+				if ($yUp) {
+					if (equivalent(0,$rot[0]) && !equivalent(0,$rot[1]) && equivalent(0,$rot[2])) {
+						$foundCamera = $camera;
+						break;
+					}
+				} else {
+					if (equivalent(90,$rot[0]) && equivalent(0,$rot[1]) && equivalent(90,$rot[2])) {
+						$foundCamera = $camera;
+						break;
+					}
+				}
+			}
+		}
+		break;
+	case "front":
+		for ( $camera in $cameras ) {
+			if (`camera -q -startupCamera $camera`) {
+				$rot = `camera -q -rot $camera`;
+				if ($yUp) {
+					if (equivalent(0,$rot[0]) && equivalent(0,$rot[1]) && equivalent(0,$rot[2])) {
+						$foundCamera = $camera;
+						break;
+					}
+				} else {
+					if (equivalent(90,$rot[0]) && equivalent(0,$rot[1]) && equivalent(0,$rot[2])) {
+						$foundCamera = $camera;
+						break;
+					}
+				}
+			}
+		}
+		break;
+	default:
+		{
+			string $fmt = (uiRes("m_findStartUpCamera.kBadStartupCameraTypeSpecified"));
+			error `format -s $type $fmt`;
+		}
+		break;
+	}
+
+	if ("" == $foundCamera) {
+		{
+			string $fmt = (uiRes("m_findStartUpCamera.kCouldNotFindAnAppropriateStartupCamera"));
+			warning `format -s $type $fmt`;
+		}
+
+		//  
+		//  Try to find any othro camera for the ortho case.
+		//
+		switch ($type) {
+		case "persp":
+			//  Do nothing for persp, yet.
+			break;
+		default:
+			for( $camera in $cameras ) {
+				if (`camera -q -startupCamera $camera` &&
+				    `camera -q -orthographic $camera` ) 
+				{
+					$foundCamera = $camera;
+					break;
+				}
+			}
+			break;
+		}
+
+		if ("" == $foundCamera) {
+			$foundCamera = $cameras[0];
+		}
+	}
+
+	return $foundCamera;
+}

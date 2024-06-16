@@ -1,0 +1,35 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+// Description:
+//
+// This function converts the selected psdFileTex nodes to a Layered
+// texture network.
+//
+
+global proc hypergraphConvertSelectedPsdNodesToLT()
+{
+	source "hypergraphConvertPsdToLTNetwork.mel";
+
+	string $selection[] = eval("ls -selection");
+	int $index, $psdNodeCount = 0;
+
+	for( $index = 0; $index < size( $selection) ; $index++)
+	{		
+		string $node = $selection[$index];
+		if( (nodeType ($node)) == "psdFileTex" ) {
+			hypergraphConvertPsdToLTNetwork( $node );
+			$psdNodeCount++;
+		}
+	}
+	
+	if( $psdNodeCount == 0 )
+	{
+		error ((uiRes("m_hypergraphConvertSelectedPsdNodesToLT.kNoPSDSelected")));
+	}
+}

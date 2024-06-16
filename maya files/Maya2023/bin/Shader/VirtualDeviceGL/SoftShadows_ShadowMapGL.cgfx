@@ -1,0 +1,75 @@
+#ifndef _SOFTSHADOWS_COMMON_FXH_
+#define _SOFTSHADOWS_COMMON_FXH_
+#ifdef EVSM
+float2 gExpFactor;
+#endif
+float4x4 gWXf : World
+<
+string UIWidget = "None";
+bool rowMajor = true;
+>;
+float4x4 gWVPXf : WorldViewProjection
+<
+string UIWidget = "None";
+>;
+int gShadowMapSize
+<
+string UIName = "Shadow Map Size";
+>
+= 512;
+static float gTexelSize = 1.0f / gShadowMapSize;
+struct VS_INPUT_ScreenQuad
+{
+float3 Pos : POSITION;
+float2 UV : TEXCOORD0;
+};
+struct VS_TO_PS_ScreenQuad
+{
+float4 HPos : POSITION;
+float2 UV : TEXCOORD0;
+};
+VS_TO_PS_ScreenQuad VS_ScreenQuad(VS_INPUT_ScreenQuad In)
+{
+VS_TO_PS_ScreenQuad Out;
+#ifdef FX_COMPOSER
+Out.HPos = float4(In.Pos, 1.0f);
+Out.UV = In.UV + 0.5f / gScreenSize; // D3D9 texel offset
+#else
+Out.HPos = mul(gWVPXf, float4(In.Pos, 1.0f));
+Out.UV = In.UV;
+#endif
+return Out;
+}
+#endif // _SOFTSHADOWS_COMMON_FXH_
+#ifndef FX_COMPOSER
+texture2D gDepthMapTex < string UIWidget = "None"; > ;
+sampler2D gDepthMapSamp = sampler_state
+{
+texture = <gDepthMapTex>;
+};
+#endif
+float4 PS_ShadowMap(VS_TO_PS_ScreenQuad In) : COLOR0
+{
+float depth = tex2D(gDepthMapSamp, In.UV).r;
+float4 result = 0.0f;
+#ifdef EVSM
+result.x =  exp( gExpFactor.x * depth);
+result.y = result.x * result.x;
+result.z = -exp(-gExpFactor.y * depth);
+result.w = result.z * result.z;
+#else
+result.x = depth;
+result.y = result.x * result.x;
+#endif
+return result;
+}
+#ifndef FX_COMPOSER
+technique ShadowMap_Main
+{
+pass p0
+{
+VertexShader = compile glslv VS_ScreenQuad();
+PixelShader = compile glslf PS_ShadowMap();
+}
+}
+#endif

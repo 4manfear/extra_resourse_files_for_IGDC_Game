@@ -1,0 +1,26 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc SymmetrizeUVBrushValues_ResetTool(string $toolName)
+{
+	optionVar -iv polySymmetrizeUVAxis 0;
+	SymmetrizeUVContext -e -a 0 $toolName;
+
+	optionVar -fv polySymmetrizeUVAxisOffset 0.5;
+	SymmetrizeUVContext -e -ap 0.5 $toolName;
+
+	optionVar -fv polySymmetrizeUVAxisIncrement 0.1;
+	SymmetrizeUVContext -e -ai 0.1 $toolName;
+
+	optionVar -iv polySymmetrizeUVFloodShells 0;
+	SymmetrizeUVContext -e -fs 0 $toolName;
+
+	SymmetrizeUVContext -e -sizeuv 0.1 $toolName;
+
+	SymmetrizeUVBrushValues $toolName;
+
+}

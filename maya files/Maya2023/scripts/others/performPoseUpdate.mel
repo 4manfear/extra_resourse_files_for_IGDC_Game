@@ -1,0 +1,139 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+
+
+proc setOptionVars(int $forceFactorySettings)
+{
+	optionVar -init $forceFactorySettings -category "Pose Editor.Update Pose"
+		-iv poseUpdateRenameOptVar 1
+		;
+}
+
+global proc poseUpdateSetup(string $parent, int $forceFactorySettings)
+{ 
+	setOptionVars($forceFactorySettings);
+	setParent $parent;
+	
+	if (`optionVar -exists poseUpdateRenameOptVar`)
+	{
+		$val = `optionVar -query poseUpdateRenameOptVar`;
+		checkBoxGrp -edit -v1 $val poseUpdateRenameCheckBoxWidget;
+	}		
+}
+
+global proc poseUpdateCallback(string $parent, int $doIt)
+{
+	setParent $parent; 
+ 
+	if (`checkBoxGrp -exists poseUpdateRenameCheckBoxWidget`)
+	{
+		$val= `checkBoxGrp -q -v1 poseUpdateRenameCheckBoxWidget`;
+		optionVar -intValue poseUpdateRenameOptVar $val;
+	}
+	
+	if ($doIt)
+	{
+		hideOptionBox;
+		performPoseUpdate (0);
+		addToRecentCommandQueue "performPoseUpdate 0" "PerformPoseUpdate";
+	}
+}
+
+global proc poseUpdateOptions()
+{
+	global string $gOptionBoxOptions;
+	$gOptionBoxOptions = "noApplyAndClose"; 
+	string $layout = getOptionBox();
+	setParent $layout;
+	setUITemplate -pushTemplate DefaultTemplate;
+	waitCursor -state 1;
+
+	tabLayout -tabsVisible 0 -scrollable 1;
+
+	string $parent = `columnLayout -adjustableColumn 1`;
+
+	separator;
+
+	checkBoxGrp
+		-label "" 
+		-label1 (uiRes("m_performPoseUpdate.kRenamePose")) 
+		-numberOfCheckBoxes 1
+		-v1 1
+		poseUpdateRenameCheckBoxWidget;
+		
+	waitCursor -state 0;
+	setUITemplate -popTemplate;
+
+	int $execCmd = 1;  
+	string $applyBtn = getOptionBoxApplyBtn();
+	button -edit 
+		-command ("poseUpdateCallback " + $parent + " " + $execCmd)
+		$applyBtn;
+	
+	setOptionBoxTitle (uiRes("m_performPoseUpdate.kUpdatePoseOptions"));
+	setOptionBoxHelpTag( "EditPoseUpdate" ); 
+	eval (("poseUpdateSetup " + $parent + " " + 0));	
+	showOptionBox();
+}
+
+global proc string assemblePoseUpdateCmd()
+{
+	setOptionVars(false);
+	
+	string $cmd = "";
+	
+	string $poseSelected[] = getPoseEditorTreeviewSelection(2);
+	if (size($poseSelected) == 0)
+		return $cmd; 
+	
+	// update one pose once
+	string $pose = $poseSelected[0]; 
+	
+	string $buffer[];
+	tokenize($pose, ".", $buffer);
+	string $tpl = $buffer[0];
+	int $psIdx = $buffer[1];
+	string $psNames[] = poseInterpolatorPoseNames($tpl);
+	string $psName = $psNames[$psIdx];
+	
+	$cmd = "poseInterpolatorUpdatePose " + $tpl + " " + $psName;
+	
+	if (`optionVar -query poseUpdateRenameOptVar`)
+	{
+		string $psNewName = poseInterpolatorPoseDefaultName($tpl);
+	
+		$cmd += ";";
+		$cmd += "poseInterpolatorRenamePose " + $tpl + " " + $psName + " " + $psNewName;
+	}
+	
+	return $cmd;
+}
+
+global proc string performPoseUpdate(int $action)
+{
+	string $cmd = "";
+
+	string $poseSelected[] = getPoseEditorTreeviewSelection(2);
+	if (size($poseSelected) == 0)
+	{
+		error (uiRes("m_performPoseUpdate.kNoPoseSelected"));
+		return $cmd;
+	}
+	
+	switch ($action) {
+	case 0:
+		$cmd = `assemblePoseUpdateCmd`; 
+		eval($cmd);
+		break;
+	case 1:
+		poseUpdateOptions;
+		break;
+	}
+	return $cmd;	 
+}
+

@@ -1,0 +1,31 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+
+//  Creation Date:  22 Sept 2003
+//
+//  Description:
+//      Toggle all the main window UI components.
+//
+//  Return Value:
+//      None.
+//
+global proc toggleAllMainWindowComponentsVisible()
+{
+
+	//make sure optionVar exists
+	optionVar -init false -category "Interface" -iv "allMainWindowComponentsVisible" 1;
+
+	//get optionVar
+	int $toggle = `optionVar -query allMainWindowComponentsVisible`;
+
+	//set optionVar
+	optionVar -intValue allMainWindowComponentsVisible (!$toggle);
+
+	//show or hide UI
+	setAllMainWindowComponentsVisible $toggle;
+}

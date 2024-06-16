@@ -1,0 +1,41 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  20 Feb 2002
+//
+//  Description:
+//      Create Fluids Playback + Render cache
+//		
+//
+global proc int activeFluidHasSegmentedCache()
+//
+// Description:
+//	If any active fluid has a playback cache, return true.
+//	Cache modifications such as Append and Truncate cannot
+// 	be applied to segmented caches.
+//
+{
+	int $foundSegment = false;
+
+	if( !`exists getActiveFluidShapes` ) {
+		source "getFluidShape.mel";
+	}
+
+	string $activeFluids[] = `getActiveFluidShapes`;
+
+	for( $f in $activeFluids ) {
+		string $cache = fluidPlaybackCacheName( $f );
+		if( fluidCacheIsSegmented( $cache ) ) {
+			$foundSegment = true;
+			break;
+		}
+	}
+
+	return $foundSegment;
+}

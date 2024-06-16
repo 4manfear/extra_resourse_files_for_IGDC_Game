@@ -1,0 +1,52 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+// Resources for Plug-in: AbcImport
+// 
+// ----------------------------
+// Registered string resources:
+// ----------------------------
+setPluginResource( "AbcImport", "kAEAlembicAttributes", "Alembic 属性");
+setPluginResource( "AbcImport", "kErrorConnectionNotFound", "找不到，无法连接");
+setPluginResource( "AbcImport", "kErrorConnectionNotMade", "连接未生成");
+setPluginResource( "AbcImport", "kErrorInvalidAlembic", "不是有效的 Alembic 文件");
+setPluginResource( "AbcImport", "kWarningNoAnimatedParticleSupport", "当前不支持已设置动画的粒子系统");
+setPluginResource( "AbcImport", "kWarningSkipIndexNonArray", "跳过已创建索引的或非数组特性: ");
+setPluginResource( "AbcImport", "kWarningSkipNoSamples", "跳过无采样的特性: ");
+setPluginResource( "AbcImport", "kWarningSkipOddlyNamed", "跳过命名异常的特性: ");
+setPluginResource( "AbcImport", "kWarningUnsupportedAttr", "不支持的属性，跳过: ");
+// 
+// --------------------------
+// Registered node resources:
+// --------------------------
+// 
+// Node: AlembicNode
+// 
+setNodeNiceNameResource( "AlembicNode", "Alembic 节点" );
+setAttrNiceNameResource( "AlembicNode", "fzn", "冻结" );
+setAttrNiceNameResource( "AlembicNode", "tm", "时间" );
+setAttrNiceNameResource( "AlembicNode", "fn", "Abc 文件" );
+setAttrNiceNameResource( "AlembicNode", "fns", "Abc 层文件" );
+setAttrNiceNameResource( "AlembicNode", "sp", "速度" );
+setAttrNiceNameResource( "AlembicNode", "of", "偏移" );
+setAttrNiceNameResource( "AlembicNode", "ct", "循环类型" );
+setAttrNiceNameResource( "AlembicNode", "ift", "Regex 包括过滤器" );
+setAttrNiceNameResource( "AlembicNode", "eft", "Regex 排除过滤器" );
+setAttrNiceNameResource( "AlembicNode", "sf", "开始帧" );
+setAttrNiceNameResource( "AlembicNode", "ef", "结束帧" );
+setAttrNiceNameResource( "AlembicNode", "osubd", "输出子 DMesh" );
+setAttrNiceNameResource( "AlembicNode", "opoly", "输出多边形网格" );
+setAttrNiceNameResource( "AlembicNode", "ons", "输出 NSurface" );
+setAttrNiceNameResource( "AlembicNode", "onc", "输出 NCurve 组" );
+setAttrNiceNameResource( "AlembicNode", "olo", "输出位置" );
+setAttrNiceNameResource( "AlembicNode", "to", "平移选项" );
+setAttrNiceNameResource( "AlembicNode", "ocam", "输出摄影机" );
+setAttrNiceNameResource( "AlembicNode", "pr", "特性" );
+setAttrEnumResource( "AlembicNode", "ct", 0, "保持" );
+setAttrEnumResource( "AlembicNode", "ct", 1, "循环" );
+setAttrEnumResource( "AlembicNode", "ct", 2, "反向" );
+setAttrEnumResource( "AlembicNode", "ct", 3, "反弹" );

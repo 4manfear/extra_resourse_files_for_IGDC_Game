@@ -1,0 +1,44 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+source gameVertexCountUtils.mel;
+
+global proc gameVertexCountDeleteUI()
+//
+//	Description:
+//		Invoked on plug-in unload to delete any associated gameVertexCount UI.
+//
+{
+	// Invoke delete UI scripts for evaluator options.
+	string $evalPrefixes[] = gameVertexCount_evalOptPrefixesAll();
+	for( $prefix in $evalPrefixes )
+	{
+		if( size($prefix) > 0 )
+		{
+			string $cmd = $prefix + "DeleteUI";
+			if(`exists $cmd`)
+			{
+				eval($cmd);
+			}
+		}
+	}
+
+	string $uis[] =
+	{
+		"gameVertexCountItem",
+		"gameVertexCountOptionsItem"
+	};
+	for( $ui in $uis )
+	{
+		if( `menuItem -ex $ui` ) { deleteUI $ui; }
+	}
+
+	// Cannot delete default runTimeCommands
+	//if( `runTimeCommand -ex ToggleGameVertexCount`) { runTimeCommand -e -del ToggleGameVertexCount; }
+
+	if( `headsUpDisplay -ex HUDGameVertexCount` ) { headsUpDisplay -rem HUDGameVertexCount; }
+}

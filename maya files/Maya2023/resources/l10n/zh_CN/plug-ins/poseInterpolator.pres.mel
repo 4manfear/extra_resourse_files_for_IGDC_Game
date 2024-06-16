@@ -1,0 +1,135 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+// Resources for Plug-in: poseInterpolator
+// 
+// ----------------------------
+// Registered string resources:
+// ----------------------------
+setPluginResource( "poseInterpolator", "kAddNeutralPoses", "添加中性姿势");
+setPluginResource( "poseInterpolator", "kCannotCalculateFalloff", "无法计算已禁用或独立姿势的衰减。");
+setPluginResource( "poseInterpolator", "kCannotMirrorNode", "无法使用搜索字符串 ^2s 镜像 ^1s");
+setPluginResource( "poseInterpolator", "kCannotObtainPoseInterpolatorLicense", "无法获取 poseInterpolator 的许可证，不能加载插件。");
+setPluginResource( "poseInterpolator", "kCouldNotFindDriver", "已跳过: 找不到节点 ^2s 的驱动者 ^1s。");
+setPluginResource( "poseInterpolator", "kCouldNotOpen", "无法打开 ^1s。");
+setPluginResource( "poseInterpolator", "kDriverRotateOrderXYZ", "xyz");
+setPluginResource( "poseInterpolator", "kDriverRotateOrderXZY", "xzy");
+setPluginResource( "poseInterpolator", "kDriverRotateOrderYXZ", "yxz");
+setPluginResource( "poseInterpolator", "kDriverRotateOrderYZX", "yzx");
+setPluginResource( "poseInterpolator", "kDriverRotateOrderZXY", "zxy");
+setPluginResource( "poseInterpolator", "kDriverRotateOrderZYX", "zyx");
+setPluginResource( "poseInterpolator", "kDriverTwistAxisX", "X 轴");
+setPluginResource( "poseInterpolator", "kDriverTwistAxisY", "Y 轴");
+setPluginResource( "poseInterpolator", "kDriverTwistAxisZ", "Z 轴");
+setPluginResource( "poseInterpolator", "kExportPoses", "导出姿势");
+setPluginResource( "poseInterpolator", "kGaussianFalloff", "高斯衰减");
+setPluginResource( "poseInterpolator", "kHasDifferentDriverCount", "^1s 的驱动者计数与 ^2s 不同");
+setPluginResource( "poseInterpolator", "kHasDifferentMirroredDrivers", "^1s 的镜像驱动者与现有节点不同。");
+setPluginResource( "poseInterpolator", "kHasReferenceNode", "无法导出参考姿势插值器节点。");
+setPluginResource( "poseInterpolator", "kImportPoses", "导入姿势");
+setPluginResource( "poseInterpolator", "kIndependentPose", "独立");
+setPluginResource( "poseInterpolator", "kInterpolationGaussian", "高斯");
+setPluginResource( "poseInterpolator", "kInterpolationLinear", "线性");
+setPluginResource( "poseInterpolator", "kIsNotPoseInterpolatorNode", "^1s 不是 poseInterpolator 节点。");
+setPluginResource( "poseInterpolator", "kIsNotTransform", "^1s 不是变换。");
+setPluginResource( "poseInterpolator", "kNeutralPoseAddIssue", "警告: 选定的姿势插值器驱动者(关节)正由其他属性控制，如果在此阶段添加中性姿势，您将无法返回到中性姿势。因此，建议先指定哪些属性在控制驱动者(在姿势编辑器的“驱动者设置”面板中)，然后再添加中性姿势(以及任何其他姿势)。\n\n是否仍要添加中性姿势？");
+setPluginResource( "poseInterpolator", "kNo", "否");
+setPluginResource( "poseInterpolator", "kNoPoseInterpolators", "未选择插值器节点。");
+setPluginResource( "poseInterpolator", "kNoPoseName", "未指定姿势名称。");
+setPluginResource( "poseInterpolator", "kNoTerpolorNode", "未指定 poseInterpolator 节点。");
+setPluginResource( "poseInterpolator", "kNoTransform", "未指定变换。");
+setPluginResource( "poseInterpolator", "kNotAPoseFile", "^1s 不是一个姿势文件。\n");
+setPluginResource( "poseInterpolator", "kNotDisplayAgain", "不再显示此警告");
+setPluginResource( "poseInterpolator", "kNotPoseInterpolator", "^1s 不是一个插值器节点。");
+setPluginResource( "poseInterpolator", "kPose", "姿势");
+setPluginResource( "poseInterpolator", "kPoseInterpolatorAttrLayout", "姿势插值器属性");
+setPluginResource( "poseInterpolator", "kPoseInterpolatorIsNotShape", "^1s 不是形状节点。");
+setPluginResource( "poseInterpolator", "kPoseTypeSwingAndTwist", "摆动和扭曲");
+setPluginResource( "poseInterpolator", "kPoseTypeSwingOnly", "仅摆动");
+setPluginResource( "poseInterpolator", "kPoseTypeTwistOnly", "仅扭曲");
+setPluginResource( "poseInterpolator", "kSearchAndReplaceFlag", "镜像 poseInterpolator 节点需要 searchAndReplace 标志。");
+setPluginResource( "poseInterpolator", "kSkippedDifferentDriver", "已跳过: ^1s 的驱动者与现有节点不同。");
+setPluginResource( "poseInterpolator", "kSkippedDifferentDriverCount", "已跳过: ^1s 的驱动者计数与现有节点不同。");
+setPluginResource( "poseInterpolator", "kUnableCreatePoseInterpolatorNode", "无法创建 poseInterpolator 节点。");
+setPluginResource( "poseInterpolator", "kUnableToAddNewPose", "无法添加新姿势。");
+setPluginResource( "poseInterpolator", "kUnableToDeletePose", "无法删除姿势 ^1s");
+setPluginResource( "poseInterpolator", "kUnableToRenamePose", "无法重命名姿势 ^1s");
+setPluginResource( "poseInterpolator", "kUnableToUpdatePose", "无法更新姿势 ^1s");
+setPluginResource( "poseInterpolator", "kVertexCountMisMatch", "顶点计数不匹配。");
+setPluginResource( "poseInterpolator", "kYes", "是");
+// 
+// --------------------------
+// Registered node resources:
+// --------------------------
+// 
+// Node: poseInterpolator
+// 
+setNodeNiceNameResource( "poseInterpolator", "姿势插值器" );
+setAttrNiceNameResource( "poseInterpolator", "out", "输出" );
+setAttrNiceNameResource( "poseInterpolator", "regularization", "调整" );
+setAttrNiceNameResource( "poseInterpolator", "outputSmoothing", "输出平滑" );
+setAttrNiceNameResource( "poseInterpolator", "interpolation", "插值" );
+setAttrNiceNameResource( "poseInterpolator", "allowNegativeWeights", "允许负权重" );
+setAttrNiceNameResource( "poseInterpolator", "enableRotation", "启用旋转" );
+setAttrNiceNameResource( "poseInterpolator", "enableTranslation", "启用平移" );
+setAttrNiceNameResource( "poseInterpolator", "displayOutput", "显示输出" );
+setAttrNiceNameResource( "poseInterpolator", "displaySpacing", "显示间距" );
+setAttrNiceNameResource( "poseInterpolator", "pose", "姿势" );
+setAttrNiceNameResource( "poseInterpolator", "poseRotation", "姿势旋转" );
+setAttrNiceNameResource( "poseInterpolator", "poseTranslation", "姿势平移" );
+setAttrNiceNameResource( "poseInterpolator", "poseName", "姿势名称" );
+setAttrNiceNameResource( "poseInterpolator", "isIndependent", "独立" );
+setAttrNiceNameResource( "poseInterpolator", "poseRotationFalloff", "姿势旋转衰减" );
+setAttrNiceNameResource( "poseInterpolator", "poseTranslationFalloff", "姿势平移衰减" );
+setAttrNiceNameResource( "poseInterpolator", "poseType", "姿势类型" );
+setAttrNiceNameResource( "poseInterpolator", "poseFalloff", "高斯衰减" );
+setAttrNiceNameResource( "poseInterpolator", "isEnabled", "已启用" );
+setAttrNiceNameResource( "poseInterpolator", "poseControllerData", "姿势控制器数据" );
+setAttrNiceNameResource( "poseInterpolator", "poseControllerDataItem", "姿势控制器数据项" );
+setAttrNiceNameResource( "poseInterpolator", "poseControllerDataItemName", "姿势控制器数据项名称" );
+setAttrNiceNameResource( "poseInterpolator", "poseControllerDataItemType", "姿势控制器数据项类型" );
+setAttrNiceNameResource( "poseInterpolator", "poseControllerDataItemValue", "姿势控制器数据项值" );
+setAttrNiceNameResource( "poseInterpolator", "driver", "驱动者" );
+setAttrNiceNameResource( "poseInterpolator", "driverMatrix", "驱动者矩阵" );
+setAttrNiceNameResource( "poseInterpolator", "driverOrient", "驱动者方向" );
+setAttrNiceNameResource( "poseInterpolator", "driverOrientX", "驱动者方向 X" );
+setAttrNiceNameResource( "poseInterpolator", "driverOrientY", "驱动者方向 Y" );
+setAttrNiceNameResource( "poseInterpolator", "driverOrientZ", "驱动者方向 Z" );
+setAttrNiceNameResource( "poseInterpolator", "driverRotateAxis", "驱动者旋转轴" );
+setAttrNiceNameResource( "poseInterpolator", "driverRotateAxisX", "驱动者旋转轴 X" );
+setAttrNiceNameResource( "poseInterpolator", "driverRotateAxisY", "驱动者旋转轴 Y" );
+setAttrNiceNameResource( "poseInterpolator", "driverRotateAxisZ", "驱动者旋转轴 Z" );
+setAttrNiceNameResource( "poseInterpolator", "driverTwistAxis", "驱动者扭曲轴" );
+setAttrNiceNameResource( "poseInterpolator", "driverRotateOrder", "驱动者旋转顺序" );
+setAttrNiceNameResource( "poseInterpolator", "driverEulerTwist", "驱动者 Euler 扭曲" );
+setAttrNiceNameResource( "poseInterpolator", "driverController", "驱动者控制器" );
+setAttrNiceNameResource( "poseInterpolator", "midLayerId", "中间层 ID" );
+setAttrNiceNameResource( "poseInterpolator", "midLayerParent", "中间层父对象" );
+setAttrNiceNameResource( "poseInterpolator", "nextNode", "下一个节点" );
+setAttrEnumResource( "poseInterpolator", "interpolation", 0, "线性" );
+setAttrEnumResource( "poseInterpolator", "interpolation", 1, "高斯" );
+setAttrEnumResource( "poseInterpolator", "poseType", 0, "摆动和扭曲" );
+setAttrEnumResource( "poseInterpolator", "poseType", 1, "仅摆动" );
+setAttrEnumResource( "poseInterpolator", "poseType", 2, "仅扭曲" );
+setAttrEnumResource( "poseInterpolator", "poseControllerDataItemType", 0, "布尔" );
+setAttrEnumResource( "poseInterpolator", "poseControllerDataItemType", 1, "字符" );
+setAttrEnumResource( "poseInterpolator", "poseControllerDataItemType", 2, "短" );
+setAttrEnumResource( "poseInterpolator", "poseControllerDataItemType", 3, "整型" );
+setAttrEnumResource( "poseInterpolator", "poseControllerDataItemType", 4, "Int64" );
+setAttrEnumResource( "poseInterpolator", "poseControllerDataItemType", 5, "浮点型" );
+setAttrEnumResource( "poseInterpolator", "poseControllerDataItemType", 6, "双精度" );
+setAttrEnumResource( "poseInterpolator", "poseControllerDataItemType", 7, "字符串" );
+setAttrEnumResource( "poseInterpolator", "poseControllerDataItemType", 8, "MObject" );
+setAttrEnumResource( "poseInterpolator", "driverTwistAxis", 0, "X 轴" );
+setAttrEnumResource( "poseInterpolator", "driverTwistAxis", 1, "Y 轴" );
+setAttrEnumResource( "poseInterpolator", "driverTwistAxis", 2, "Z 轴" );
+setAttrEnumResource( "poseInterpolator", "driverRotateOrder", 0, "xyz" );
+setAttrEnumResource( "poseInterpolator", "driverRotateOrder", 1, "yzx" );
+setAttrEnumResource( "poseInterpolator", "driverRotateOrder", 2, "zxy" );
+setAttrEnumResource( "poseInterpolator", "driverRotateOrder", 3, "xzy" );
+setAttrEnumResource( "poseInterpolator", "driverRotateOrder", 4, "yxz" );
+setAttrEnumResource( "poseInterpolator", "driverRotateOrder", 5, "zyx" );

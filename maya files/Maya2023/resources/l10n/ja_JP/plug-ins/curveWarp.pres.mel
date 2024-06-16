@@ -1,0 +1,71 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+// Resources for Plug-in: curveWarp
+// 
+// ----------------------------
+// Registered string resources:
+// ----------------------------
+setPluginResource( "curveWarp", "kAccuracy", "サンプリング精度");
+setPluginResource( "curveWarp", "kAim", "エイム");
+setPluginResource( "curveWarp", "kAimCurve", "エイム カーブ");
+setPluginResource( "curveWarp", "kAimCurveMode", "エイム カーブ モード");
+setPluginResource( "curveWarp", "kAlignment", "位置合わせ");
+setPluginResource( "curveWarp", "kCurve", "カーブ");
+setPluginResource( "curveWarp", "kCurveRotation", "カーブの回転");
+setPluginResource( "curveWarp", "kCurveWarp", "カーブ ワープ");
+setPluginResource( "curveWarp", "kDeformerNoDefObjError", "変形可能なオブジェクトが選択されていません。");
+setPluginResource( "curveWarp", "kEnvelope", "エンベロープ");
+setPluginResource( "curveWarp", "kFlipAxis", "軸を反転");
+setPluginResource( "curveWarp", "kKeepLength", "長さを保持");
+setPluginResource( "curveWarp", "kLengthScale", "長さスケール");
+setPluginResource( "curveWarp", "kLoopCurves", "閉じたカーブをループ");
+setPluginResource( "curveWarp", "kMaxScale", "最大スケール");
+setPluginResource( "curveWarp", "kMeshScaling", "メッシュのスケーリング");
+setPluginResource( "curveWarp", "kOffset", "オフセット");
+setPluginResource( "curveWarp", "kRotation", "回転");
+setPluginResource( "curveWarp", "kTooManyCurvesError", "複数のカーブが選択されています。メッシュを選択し、カーブを 1 つのみ選択してカーブ ワープを作成します。");
+setPluginResource( "curveWarp", "kTwistRotation", "ツイスト回転");
+// 
+// --------------------------
+// Registered node resources:
+// --------------------------
+// 
+// Node: curveWarp
+// 
+setNodeNiceNameResource( "curveWarp", "カーブ ワープ" );
+setAttrNiceNameResource( "curveWarp", "rotation", "回転" );
+setAttrNiceNameResource( "curveWarp", "twistRotation", "ツイスト回転" );
+setAttrNiceNameResource( "curveWarp", "offset", "オフセット" );
+setAttrNiceNameResource( "curveWarp", "lengthScale", "長さスケール" );
+setAttrNiceNameResource( "curveWarp", "samplingAccuracy", "サンプリング精度" );
+setAttrNiceNameResource( "curveWarp", "maxScale", "最大スケール" );
+setAttrNiceNameResource( "curveWarp", "flipAxis", "軸を反転" );
+setAttrNiceNameResource( "curveWarp", "loopClosedCurves", "閉じたカーブをループ" );
+setAttrNiceNameResource( "curveWarp", "keepLength", "長さを保持" );
+setAttrNiceNameResource( "curveWarp", "alignmentMode", "位置合わせモード" );
+setAttrNiceNameResource( "curveWarp", "aimCurveMode", "エイム カーブ モード" );
+setAttrNiceNameResource( "curveWarp", "aimMode", "エイム モード" );
+setAttrNiceNameResource( "curveWarp", "scaleCurve", "カーブをスケール" );
+setAttrNiceNameResource( "curveWarp", "scaleCurvep", "カーブの位置をスケール" );
+setAttrNiceNameResource( "curveWarp", "scaleCurvev", "カーブの値をスケール" );
+setAttrNiceNameResource( "curveWarp", "twistCurve", "ツイスト カーブ" );
+setAttrNiceNameResource( "curveWarp", "twistCurvep", "ツイスト カーブの位置" );
+setAttrNiceNameResource( "curveWarp", "twistCurvev", "ツイスト カーブの値" );
+setAttrNiceNameResource( "curveWarp", "inputCurve", "入力カーブ" );
+setAttrNiceNameResource( "curveWarp", "aimCurve", "エイム カーブ" );
+setAttrNiceNameResource( "curveWarp", "curveParams", "カーブ パラメータ" );
+setAttrNiceNameResource( "curveWarp", "legacy2017", "旧バージョン 2017" );
+setAttrEnumResource( "curveWarp", "alignmentMode", 1, "自動" );
+setAttrEnumResource( "curveWarp", "alignmentMode", 2, "X" );
+setAttrEnumResource( "curveWarp", "alignmentMode", 3, "Y" );
+setAttrEnumResource( "curveWarp", "alignmentMode", 4, "Z" );
+setAttrEnumResource( "curveWarp", "aimCurveMode", 1, "U 値(高速)" );
+setAttrEnumResource( "curveWarp", "aimCurveMode", 2, "最近接ポイント(低速)" );
+setAttrEnumResource( "curveWarp", "aimMode", 1, "カーブの法線" );
+setAttrEnumResource( "curveWarp", "aimMode", 2, "自動法線" );
+setAttrEnumResource( "curveWarp", "aimMode", 3, "エイム カーブ" );

@@ -1,0 +1,330 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//  Creation Date:  12/12/2016
+//
+//  Description:
+//      This script is use to display and update the UV Statistics HUD options.
+//
+
+//
+//  Procedure Name:
+//      performTextureViewUVStatisticsHUDOptions
+//
+//  Description:
+//      Construct the option box UI.  Involves accessing the standard option
+//      box and customizing the UI accordingly.
+//
+//  Input Arguments:
+//      None.
+//
+//  Return Value:
+//      None.
+//
+global proc textureViewUVStatisticsHUDOptions()
+{
+
+	//  Name of the command for this option box.
+    //
+    string $commandName;
+   
+    $commandName = "TextureViewUVStatisticsHUD";
+	
+    //  Build the option box actions.
+    //
+    string $callback = $commandName + "Callback";
+    string $setup    = $commandName + "Setup";
+    
+    //  STEP 1:  Get the option box.
+    //  ============================
+    //
+    //  The value returned is the name of the layout to be used as
+    //  the parent for the option box UI.
+    //
+    string $layout = getOptionBox();
+	
+    //  STEP 2:  Pass the command name to the option box.
+    //  =================================================
+    //
+    //  Any default option box behaviour based on the command name is set
+    //  up with this call. For example, updating the 'Help' menu item with
+    //  the name of the command.
+    //  TODO: Check with Doc team
+    setOptionBoxCommandName($commandName);
+    
+    //  STEP 3:  Create option box contents.
+    //  ====================================
+    //
+	setParent $layout;
+	    $parent = textureViewUVStatisticsHUDOptionsUI();
+	setParent ..;
+    
+    //  STEP 4:  Customize the buttons.
+    //  ===============================
+    //
+    //  Provide more descriptive labels for the buttons.
+    //  Disable those buttons that are not applicable to the option box.
+    //  Attach actions to those buttons that are applicable to the option box.
+  
+    string $applyAndCloseBtn = getOptionBoxApplyAndCloseBtn();
+    button -e -command ($callback + " " + $parent + " 1; hideOptionBox;") $applyAndCloseBtn;
+	
+    string $applyBtn = getOptionBoxApplyBtn();
+    button -e -command ($callback + " " + $parent + " 1;") $applyBtn;
+
+    string $resetBtn = getOptionBoxResetBtn();
+    button -e -command($setup + " " + $parent + " 1") $resetBtn;
+
+    string $saveBtn = getOptionBoxSaveBtn();
+    button -e -command($callback + " " + $parent + " 0; hideOptionBox;") $saveBtn;
+		   
+    //  STEP 5:  Set the option box title.
+    //  ==================================
+    //
+    setOptionBoxTitle((uiRes("m_performTextureViewUVStatisticsHUDOptions.kTextureViewUVStatisticsHUDOptions")));
+
+    // STEP 6:  Customize the 'Help' menu item text.
+    // TODO: Check with doc team
+    //  =============================================
+    //
+    setOptionBoxHelpTag($commandName);
+
+    //  Set the current values of the option box.
+    //  =========================================
+    //
+    eval ($setup + " " + $parent + " 0");
+
+    //  Show the option box.
+    //  ====================
+    //
+    showOptionBox();
+}
+
+//
+//  Procedure Name:
+//      textureViewUVStatisticsHUDOptionsUI
+//
+//  Description:
+//      Build options UI
+//
+//  Input Arguments:
+//      parent - Top level parent layout of the option box UI.  Required so
+//               that UI object names can be successfully resolved.
+//
+//  Return Value:
+//      Layout.
+//
+global proc string textureViewUVStatisticsHUDOptionsUI()
+{
+	setUITemplate -pushTemplate DefaultTemplate;
+	$layout = `columnLayout -adjustableColumn true`;		
+		//Settings
+		frameLayout -collapsable false -l (uiRes("m_performTextureViewUVStatisticsHUDOptions.kSettings"));
+			checkBoxGrp -vr -ncb 4 -label (uiRes("m_performTextureViewUVStatisticsHUDOptions.kDisplay")) 
+			    -label1 (uiRes("m_performTextureViewUVStatisticsHUDOptions.kUVShellCount")) 
+			    -label2 (uiRes("m_performTextureViewUVStatisticsHUDOptions.kOverlappingUVCount")) 
+				-label3 (uiRes("m_performTextureViewUVStatisticsHUDOptions.kReversedUVCount")) 
+			    -label4 (uiRes("m_performTextureViewUVStatisticsHUDOptions.kPercentageOfUsedUVSpace")) 
+				texUVSttHUDSettingsCheckBoxGrp;
+				
+			rowLayout -nc 3 -cw3 220 40 40 -cal 1 right
+			          -cat 1 "both" 0 -cat 2 "both" 0 -cat 3 "both" 0;
+			text -l (uiRes("m_performTextureViewUVStatisticsHUDOptions.kU"));
+			floatField -pre 2 -width 40 texUVSttHUDUsedPercentageRangeMinUField;
+			floatField -pre 2 -width 40 texUVSttHUDUsedPercentageRangeMaxUField;
+			setParent ..;
+			
+			rowLayout -nc 3 -cw3 220 40 40 -cal 1 right
+			          -cat 1 "both" 0 -cat 2 "both" 0 -cat 3 "both" 0;
+			text -l (uiRes("m_performTextureViewUVStatisticsHUDOptions.kV"));
+			floatField -pre 2 -width 40 texUVSttHUDUsedPercentageRangeMinVField;
+			floatField -pre 2 -width 40 texUVSttHUDUsedPercentageRangeMaxVField;
+			setParent ..;
+		setParent ..;
+	setParent..;
+	return $layout;
+}
+
+
+
+//
+//  Procedure Name:
+//      TextureViewUVStatisticsHUDCallback
+//
+//  Description:
+//      Update the option values and execute command
+//
+//  Input Arguments:
+//      parent - Top level parent layout of the option box UI.  Required so
+//               that UI object names can be successfully resolved.
+//
+//  	doIt   - Whether the command should execute.
+//
+//  Return Value:
+//      None.
+//
+global proc TextureViewUVStatisticsHUDCallback(string $parent, int $doIt)
+{
+    textureViewUVStatisticsHUDSetOptionVars (false);
+	setParent $parent;
+	if(`checkBoxGrp -q -ex texUVSttHUDSettingsCheckBoxGrp`)
+	{
+		optionVar -iv texUVSttHUDUVShellCount (`checkBoxGrp -q -value1 texUVSttHUDSettingsCheckBoxGrp`);
+		optionVar -iv texUVSttHUDOverlappingUVCount (`checkBoxGrp -q -value2 texUVSttHUDSettingsCheckBoxGrp`);
+		optionVar -iv texUVSttHUDReversedUVCount (`checkBoxGrp -q -value3 texUVSttHUDSettingsCheckBoxGrp`);
+		optionVar -iv texUVSttHUDPercentageOfUsedUVSpace (`checkBoxGrp -q -value4 texUVSttHUDSettingsCheckBoxGrp`);
+	}
+	if(`floatField -q -ex texUVSttHUDUsedPercentageRangeMinUField`)
+		optionVar -fv texUVSttHUDUsedPercentageRangeMinU (`floatField -q -value texUVSttHUDUsedPercentageRangeMinUField`);
+	if(`floatField -q -ex texUVSttHUDUsedPercentageRangeMaxUField`)
+		optionVar -fv texUVSttHUDUsedPercentageRangeMaxU (`floatField -q -value texUVSttHUDUsedPercentageRangeMaxUField`);
+	if(`floatField -q -ex texUVSttHUDUsedPercentageRangeMinVField`)
+		optionVar -fv texUVSttHUDUsedPercentageRangeMinV (`floatField -q -value texUVSttHUDUsedPercentageRangeMinVField`);
+	if(`floatField -q -ex texUVSttHUDUsedPercentageRangeMaxVField`)
+		optionVar -fv texUVSttHUDUsedPercentageRangeMaxV (`floatField -q -value texUVSttHUDUsedPercentageRangeMaxVField`);
+    if($doIt)
+        performTextureViewUVStatisticsHUDOptions 0;
+}
+
+//
+//  Procedure Name:
+//      TextureViewUVStatisticsHUDSetup
+//
+//  Description:
+//      Update the state of the option box UI to reflect the option values.
+//
+//  Input Arguments:
+//      parent               - Top level parent layout of the option box UI.
+//                             Required so that UI object names can be 
+//                             successfully resolved.
+//
+//      forceFactorySettings - Whether the option values should be set to
+//                             default values.
+//
+//  Return Value:
+//      None.
+//
+global proc TextureViewUVStatisticsHUDSetup(string $parent, int $forceFactorySettings)
+{
+    // Retrieve the option settings
+    //
+    textureViewUVStatisticsHUDSetOptionVars ($forceFactorySettings);
+    setParent $parent;
+	if(`checkBoxGrp -q -ex texUVSttHUDSettingsCheckBoxGrp`)
+	{
+		checkBoxGrp -e -value1 (`optionVar -q texUVSttHUDUVShellCount`) 
+		               -value2 (`optionVar -q texUVSttHUDOverlappingUVCount`) 
+		               -value3 (`optionVar -q texUVSttHUDReversedUVCount`) 
+		               -value4 (`optionVar -q texUVSttHUDPercentageOfUsedUVSpace`) 
+					   texUVSttHUDSettingsCheckBoxGrp;
+	}
+	if(`floatField -q -ex texUVSttHUDUsedPercentageRangeMinUField`)
+	    floatField -e -value (`optionVar -q texUVSttHUDUsedPercentageRangeMinU`) texUVSttHUDUsedPercentageRangeMinUField;
+	if(`floatField -q -ex texUVSttHUDUsedPercentageRangeMaxUField`)
+        floatField -e -value (`optionVar -q texUVSttHUDUsedPercentageRangeMaxU`) texUVSttHUDUsedPercentageRangeMaxUField;
+	if(`floatField -q -ex texUVSttHUDUsedPercentageRangeMinVField`)
+	    floatField -e -value (`optionVar -q texUVSttHUDUsedPercentageRangeMinV`) texUVSttHUDUsedPercentageRangeMinVField;
+	if(`floatField -q -ex texUVSttHUDUsedPercentageRangeMaxVField`)
+        floatField -e -value (`optionVar -q texUVSttHUDUsedPercentageRangeMaxV`) texUVSttHUDUsedPercentageRangeMaxVField;
+}
+
+//
+//  Procedure Name:
+//      textureViewUVStatisticsHUDSetOptionVars
+//
+//  Description:
+//      Initialize the option values.
+//
+//  Input Arguments:
+//      forceFactorySettings - Whether to set the options to default values.
+//
+//  Return Value:
+//      None.
+//
+global proc textureViewUVStatisticsHUDSetOptionVars(int $forceFactorySettings)
+{
+	optionVar -init $forceFactorySettings -category "UV Editor.UV Statistics"
+		-iv texUVSttHUDUVShellCount 1
+		-iv texUVSttHUDOverlappingUVCount 1
+		-iv texUVSttHUDReversedUVCount 1
+		-iv texUVSttHUDPercentageOfUsedUVSpace 0
+		-fv texUVSttHUDUsedPercentageRangeMinU 0
+		-fv texUVSttHUDUsedPercentageRangeMaxU 1
+		-fv texUVSttHUDUsedPercentageRangeMinV 0
+		-fv texUVSttHUDUsedPercentageRangeMaxV 1
+		;
+}
+
+proc string assembleCmd()
+{
+	textureViewUVStatisticsHUDSetOptionVars(false);
+	string $texWinName[] = `getPanel -sty polyTexturePlacementPanel`;
+    string $cmd = "textureWindow -e -displayUVShellCountHUD ";
+	$cmd += (`optionVar -q texUVSttHUDUVShellCount`);
+	$cmd += " -displayOverlappingUVCountHUD ";
+	$cmd += (`optionVar -q texUVSttHUDOverlappingUVCount`);
+	$cmd += " -displayReversedUVCountHUD ";
+	$cmd += (`optionVar -q texUVSttHUDReversedUVCount`);
+	$cmd += " -displayUsedPercentageHUD " ;
+	$cmd += (`optionVar -q texUVSttHUDPercentageOfUsedUVSpace`);
+	$cmd += " -usedPercentageHUDRange ";
+	$cmd += (`optionVar -q texUVSttHUDUsedPercentageRangeMinU`);
+	$cmd += " ";
+	$cmd += (`optionVar -q texUVSttHUDUsedPercentageRangeMinV`);
+	$cmd += " ";
+	$cmd += (`optionVar -q texUVSttHUDUsedPercentageRangeMaxU`);
+	$cmd += " ";
+	$cmd += (`optionVar -q texUVSttHUDUsedPercentageRangeMaxV`);
+	$cmd += " ";
+	$cmd += $texWinName[0];
+    return $cmd;
+}
+
+//
+//  Procedure Name:
+//      performTextureViewUVStatisticsHUDOptions
+//
+//  Description:
+//      Display and update the UV Statistics HUD options.
+//
+//  Input Arguments:
+//      0 - Execute the command.
+//      1 - Show the option box dialog.
+//      2 - Return the command.
+//
+global proc string performTextureViewUVStatisticsHUDOptions(int $action)
+{
+	string $cmd = "";
+	
+	switch ($action) {
+
+		//	Execute the command.
+		//
+		case 0:
+			$cmd = assembleCmd();
+            //  Execute the command with the option settings.
+            //
+            eval($cmd);
+			break;
+
+		//	Show the option box.
+		//
+		case 1:
+			textureViewUVStatisticsHUDOptions();
+			break;
+
+		//	Return the command string.
+		//
+		case 2:
+			//	Get the command.
+			//
+			$cmd = assembleCmd();
+			break;
+	}
+	return $cmd;
+}

@@ -1,0 +1,104 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc int poseInterpolatorAddShapePose(string $tpl, string $poseName, string $poseType, string $blendShapes[], int $startEdit)
+{
+	// cache selection
+	string $sl[] = `ls -sl`;
+	
+	// Add new pose reset the weights of all other poses, in order to keep the 
+	// deltas from other poses, we need to make duplication first and add it
+	// as the new target shape, instead of adding a target with empty delta.
+	string $dupMeshes[];
+	string $dupOffsets[];
+	int $currOffset = 0;
+	$dupOffsets[0] = 0;
+	for ($bs in $blendShapes)
+	{
+		string $baseMeshes[] = `blendShape -q -g $bs`;
+		for ($i = 0; $i < size($baseMeshes); ++$i)
+		{
+			string $longName = longNameOf($baseMeshes[$i]);
+			string $copyMesh[] = `duplicate $longName`;
+			$dupMeshes[size($dupMeshes)] = $copyMesh[0];
+			$currOffset++;
+		}
+		if( size($baseMeshes) )
+			$dupOffsets[size($dupOffsets)] = $currOffset;
+	}
+	
+	$poseName = substituteAllString($poseName, "|", "_");
+	$poseName = substituteAllString($poseName, ":", "_");
+	
+	int $poseIndex = poseInterpolatorAddPose($tpl, $poseName);
+	poseInterpolatorSetPoseType($tpl, $poseName, $poseType);
+
+	if ( size($blendShapes) == 0 )
+		return $poseIndex;
+
+	string $invertedMeshes[];
+	string $srcAttr = $tpl + ".output[" + $poseIndex + "]";
+	for ($i = 0; $i < size($blendShapes); $i++)
+	{
+		string $targetMeshes[];
+		
+		string $bs = $blendShapes[$i];
+		int $start = $dupOffsets[$i];
+		int $end = $dupOffsets[$i+1];
+
+		int $invertShapeLoaded = `pluginInfo -q -loaded invertShape`;
+		string $attrOrderString = $bs + ".deformationOrder";
+		if(`getAttr $attrOrderString` == 0 && $invertShapeLoaded)
+		{
+			// pre-deformation case, we need to invert shape first
+			string $baseMeshes[] = `blendShape -q -g $bs`;
+			for ($j = $start; $j < $end; $j++)
+			{
+				string $invertedMesh;
+				if( !catch( $invertedMesh = `invertShape $baseMeshes[$j - $start] $dupMeshes[$j]` ) )
+				{
+					$invertedMeshes[size($invertedMeshes)] = $invertedMesh;
+					$targetMeshes[size($targetMeshes)] = $invertedMesh;				
+				}
+			}
+		}
+		else
+		{
+			for ($j = $start; $j < $end; $j++)
+			{
+				$targetMeshes[size($targetMeshes)] = $dupMeshes[$j];
+			}		
+		}
+		
+		if( size($targetMeshes) )
+		{
+			//MAYA-63862:Adding a pose should auto-enable Edit for that pose (so long as a target shape is being created for the pose)
+			int $tgtIdxL[] = doBlendShapeAddTarget($bs, 1, 1, "", $startEdit, 0, $targetMeshes);
+			if($startEdit)
+				$startEdit = 0;
+			 
+			string $attrStr = $bs + ".w[" + $tgtIdxL[0] + "]";
+			$cmd = "aliasAttr " + $poseName + " " + $attrStr;
+			evalEcho($cmd); 
+	 
+			$cmd = "connectAttr -force " + $srcAttr + " " + $attrStr; 
+			evalEcho($cmd);
+		}
+		else
+		{
+			poseInterpolatorDeletePose($tpl, $poseName);
+		}
+	}
+	
+	for($dupMesh in $dupMeshes)
+		delete $dupMesh;
+		
+	for($invertedMesh in $invertedMeshes)
+		delete $invertedMesh;
+	
+	return $poseIndex;  
+}

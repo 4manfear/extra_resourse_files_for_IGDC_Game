@@ -1,0 +1,269 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+// Creation Date:  21 Jan. 1997
+//
+//
+//  Procedure Name:
+//
+//      hyperUserInit.mel 
+//
+//  Description:
+//              
+//		If this script is in your script path, this will allow for simple
+//		hypergraph editing. This will work in the "DG" mode of the hypergraph
+//		and will allow the ability to build shader networks and other graph 
+//		editing for 1.0.  Have fun.....  corban
+//
+//  Input Arguments:
+//      
+//  Return Value:
+//      
+
+global proc nodePressCallback(string $editor, string $node)
+{
+//
+//  Description:
+//		Callback when node is pressed
+}
+
+global proc nodeReleaseCallback(string $editor, string $node, string $mod)
+{
+//
+//  Description:
+//		Callback when node is released
+}
+
+global proc nodeDropCallback(string $editor, string $srcNode, string $dstNode, string $mod)
+{
+//
+//  Description:
+//		Callback when node is dropped on another node
+
+		string $graphType = `hyperGraph -q -graphType $editor`;
+
+		if ($mod == "shift") {
+			connectWindowWith $srcNode $dstNode;	
+		} else {
+			defaultNavigation -f true -ce -s $srcNode -d $dstNode;
+		}
+}
+
+global proc nodeDblClickCallback(string $editor, string $node)
+{
+//
+//  Description:
+//		Callback when node is double clicked
+
+	hyperGraph -e -attributeEditor single $editor;
+}
+
+global proc edgePressCallback(string $editor, string $edge)
+{
+//
+//  Description:
+//		Callback when edge is pressed
+}
+
+global proc edgeReleaseCallback(string $editor, string $edge)
+{
+//
+//  Description:
+//		Callback when edge is released
+}
+
+global proc edgeDropCallback(string $editor, string $edge)
+{
+//
+//  Description:
+//		Callback when edge is dropped on another edge
+}
+
+global proc edgeDblClickCallback(string $editor, string $edge)
+{
+//
+//  Description:
+//		Callback when edge is double clicked
+
+	global string $gHyperUserFromAttr;
+	$gHyperUserFromAttr = `hyperGraph -q -fromAttr $editor`;
+	global string $gHyperUserToAttr;
+	$gHyperUserToAttr = `hyperGraph -q -toAttr $editor`;
+
+	connectWindowWith $gHyperUserFromAttr $gHyperUserToAttr;
+	
+}
+
+global proc edgeDimmedDblClickCallback(string $editor, string $edge)
+{
+//
+//  Description:
+//		Callback when a dimmed edge is double clicked
+
+	minorNodesWindow;;
+}
+
+
+global proc nodeConnectCallback(string $editor, string $srcNode, string $dstNode, string $direction, string $mod)
+{
+//
+//  Description:
+//		Callback when connect request is made by connecting edge
+
+	global string $gHyperUserFromAttr;
+	$gHyperUserFromAttr = `hyperGraph -q -fromAttr $editor`;
+	global string $gHyperUserToAttr;
+	$gHyperUserToAttr = `hyperGraph -q -toAttr $editor`;
+
+	global string $gHyperUserOutliner;
+
+
+	if ($direction == "from")
+	{
+		if (!`window -exists hyperConnectWin`)
+		{
+			window -ret -title ($srcNode + " -->") -wh 200 450 hyperConnectWin;
+			formLayout myForm;
+
+			$gHyperUserOutliner = `nodeOutliner`;
+
+			formLayout -e
+				-af $gHyperUserOutliner top 0
+				-af $gHyperUserOutliner left 0
+				-af $gHyperUserOutliner right 0
+				-af $gHyperUserOutliner bottom 0
+				myForm;
+		}
+		else
+		{
+			window -e -title ($srcNode + " -->") hyperConnectWin;
+			nodeOutliner -e -rma $gHyperUserOutliner;
+		}
+
+		showWindow hyperConnectWin;
+		nodeOutliner -e -sh true -snk true -si true -connectivity $gHyperUserToAttr -a $srcNode -so true -snk true $gHyperUserOutliner;
+		nodeOutliner -e -sc "outSelected" $gHyperUserOutliner;
+
+
+	}
+	else
+	{
+		if (!`window -exists hyperConnectWin`)
+		{	
+			window -ret -title ("--> " + $dstNode) -wh 200 450 hyperConnectWin;
+			formLayout myForm;
+
+			$gHyperUserOutliner = `nodeOutliner`;
+
+			formLayout -e
+				-af $gHyperUserOutliner top 0
+				-af $gHyperUserOutliner left 0
+				-af $gHyperUserOutliner right 0
+				-af $gHyperUserOutliner bottom 0
+				myForm;
+		}
+		else
+		{
+			window -e -title ("--> " + $dstNode)  hyperConnectWin;	
+			nodeOutliner -e -rma $gHyperUserOutliner;
+		}
+
+		showWindow hyperConnectWin;
+		nodeOutliner -e -sh true -snk true -si true -connectivity $gHyperUserFromAttr -a $dstNode -so true -snk true $gHyperUserOutliner;
+		nodeOutliner -e -sc "inSelected" $gHyperUserOutliner;
+	}
+}
+
+global proc disconnectCallback(string $editor, string $srcAttr, string $dstAttr)
+{
+//
+//  Description:
+//		Callback when delete connection request is made
+	evalEcho ("disconnectAttr " + $srcAttr + " " + $dstAttr);
+}
+
+
+// global proc used for the above proc. (nodeConnectCallback)
+// Called from nodeConnectCallback.
+//
+
+global proc inSelected ()
+{
+        global string $gHyperUserOutliner;
+        global string $gHyperUserFromAttr;
+        global string $gHyperUserToAttr;
+        string $inAttrSelected[0]; 
+        $inAttrSelected = `nodeOutliner -q -cs $gHyperUserOutliner`;
+        disconnectAttr $gHyperUserFromAttr $gHyperUserToAttr;
+        
+	string $msg = (uiRes("m_hyperUserInit.kResultDisconect")) ;
+	print `format -stringArg $gHyperUserFromAttr -stringArg $gHyperUserToAttr $msg` ;
+
+        int $length = `size $inAttrSelected`;
+        if( $length > 0 ) {
+                connectAttr $gHyperUserFromAttr $inAttrSelected[0];
+		
+		$msg = (uiRes("m_hyperUserInit.kResultConnect")) ;
+		print `format -stringArg $gHyperUserFromAttr -stringArg $inAttrSelected[0] $msg` ;
+        }
+        window -e -visible false hyperConnectWin;
+
+}
+
+global proc outSelected ()
+{
+        global string $gHyperUserOutliner;
+        global string $gHyperUserFromAttr;
+        global string $gHyperUserToAttr;
+        string $outAttrSelected[0]; 
+        $outAttrSelected = `nodeOutliner -q -cs $gHyperUserOutliner`;
+        disconnectAttr $gHyperUserFromAttr $gHyperUserToAttr;
+	
+	string $msg = uiRes("m_hyperUserInit.kResultDisconect") ;
+	print `format -stringArg $gHyperUserFromAttr -stringArg $gHyperUserToAttr $msg` ;
+
+
+        int $length = `size $outAttrSelected`;
+        if( $length > 0 ) {
+                connectAttr $outAttrSelected[0] $gHyperUserToAttr;
+		$msg = uiRes("m_hyperUserInit.kResultConnect") ;
+		print `format -stringArg $outAttrSelected[0] -stringArg $gHyperUserToAttr $msg` ;
+        }
+        window -e -visible false hyperConnectWin;
+
+}
+
+global proc
+hyperUserInit ( string $editor )
+{
+	hyperGraph -e 
+		-nodePressCommand		nodePressCallback 
+		-nodeReleaseCommand 	nodeReleaseCallback
+		-nodeDropCommand 		nodeDropCallback
+		-edgePressCommand 		edgePressCallback 
+		-edgeReleaseCommand 	edgeReleaseCallback
+		-edgeDropCommand 		edgeDropCallback
+		-edgeDblClickCommand 	edgeDblClickCallback
+		-edgeDimmedDblClickCommand 	edgeDimmedDblClickCallback
+		-nodeConnectCommand		nodeConnectCallback
+		-breakConnectionCommand disconnectCallback
+		$editor;
+		
+	// only put the double-click event on HyperShade and Visor
+	//
+	string $type = `hyperGraph -query -graphType $editor`;
+	if ( $type != "DAG" && $type != "DG" ){
+		hyperGraph -e
+			-nodeDblClickCommand nodeDblClickCallback
+			$editor;
+	}		
+}
+
+
+

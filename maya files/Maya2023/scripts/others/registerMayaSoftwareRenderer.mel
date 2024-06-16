@@ -1,0 +1,76 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+// Description: This procedure is called to register the 
+// maya software renderer.
+// 
+
+global proc mayaSoftwareBatchRender(string $option)
+{
+
+	string $cmd = "render -batch " + $option ;
+	eval $cmd;
+}
+
+global proc registerMayaSoftwareRenderer()
+{
+    renderer 
+		-rendererUIName						(uiRes("m_registerMayaSoftwareRenderer.kMayaSoftware"))
+		-iprRenderProcedure					"mayaSoftwareIprRender"
+		-iprOptionsProcedure				""
+		-isRunningIprProcedure				"mayaSoftwareIsRunningIpr"
+		-startIprRenderProcedure			"mayaSoftwareStartIprRender"
+		-stopIprRenderProcedure				"mayaSoftwareStopIprRender"
+		-pauseIprRenderProcedure			"mayaSoftwarePauseIprRender"
+		-refreshIprRenderProcedure			"mayaSoftwareRefreshIprImage"
+		-changeIprRegionProcedure			"mayaSoftwareChangeIprRegion"
+		-iprOptionsMenuLabel			    (uiRes("m_registerMayaSoftwareRenderer.kIPRTuningOptions"))
+		-iprOptionsSubMenuProcedure		    "mayaSoftwareIprUpdateOptionsSubMenu"
+		-iprRenderSubMenuProcedure		    "mayaSoftwareIprUpdateRenderSubMenu"
+		-renderProcedure					"mayaSoftwareRender"
+		-renderDiagnosticsProcedure			"mayaSoftwareRenderDiagnostics"
+		-commandRenderProcedure				"mayaSoftwareCmdlineRender"
+		-batchRenderProcedure				"mayaSoftwareBatchRender"
+		-batchRenderOptionsProcedure		"batchRenderWindow"
+		-batchRenderOptionsStringProcedure  "mayaSoftwareBatchRenderOptionsString"
+		-cancelBatchRenderProcedure			"batchRender"
+		-showBatchRenderProcedure			"batchRender -showImage true"
+		-showRenderLogProcedure				""
+		-showBatchRenderLogProcedure		""
+		-renderRegionProcedure				"mayaRenderRegion"
+		-renderSequenceProcedure			"mayaRenderSequence"
+		-textureBakingProcedure				"performConvertSolidTx"
+		-polyPrelightProcedure				"performPrelight"
+		-renderingEditorsSubMenuProcedure	""
+        mayaSoftware;
+
+	
+	//
+	//The first argument of the "-addGlobalsTab" flag is used in creating layout names
+	//and should not be localized.
+	//
+	
+	renderer
+		-edit
+		-addGlobalsTab 
+			"Common"
+			"createMayaSoftwareCommonGlobalsTab"
+			"updateMayaSoftwareCommonGlobalsTab"
+		mayaSoftware;
+	renderer
+        -edit
+        -addGlobalsTab  
+			"Maya Software"
+			"createMayaSoftwareGlobalsTab"
+			"updateMayaSoftwareGlobalsTab"
+        mayaSoftware;
+
+    renderer -edit -addGlobalsNode "defaultRenderQuality" mayaSoftware;
+    renderer -edit -addGlobalsNode "defaultRenderGlobals" mayaSoftware;
+    renderer -edit -addGlobalsNode "defaultResolution"    mayaSoftware;
+
+}

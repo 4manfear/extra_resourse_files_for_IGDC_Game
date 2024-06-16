@@ -1,0 +1,88 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//  This implements the "Visualize" menu on the Animation Menu Set.
+//
+//  Input Arguments:
+//      The parent control for the menu.
+//
+//  Return Value:
+//      None.
+//
+global proc AniVisualizeMenu ( string $parent ) {
+	setParent -menu $parent;
+
+	if( `menu -q -ni $parent` != 0 ) {
+		//
+		//	Menu is built already - just return
+		//
+		return;
+	}
+	
+	// Editors
+	menuItem -divider true -dividerLabel (uiRes("m_AniVisualizeMenu.kTimeEditors"));
+	
+	$cmd = "CreateMotionTrail" ;
+	menuItem 
+		-rtc $cmd
+		-dragMenuCommand("performMotionTrail 2")
+		createMotionTrailItem;
+		$cmd = "CreateMotionTrailOptions";
+		menuItem -optionBox true
+			-command $cmd
+			-annotation (getRunTimeCommandAnnotation($cmd))
+			-image "motionTrail.png" 		
+			createMotionTrailOptionItem;
+	
+	menuItem
+		-rtc "AnimationTurntable"
+		animTurntableItem;
+		menuItem -optionBox true 
+				-annotation (getRunTimeCommandAnnotation("AnimationTurntableOptions"))
+				-command "AnimationTurntableOptions" animTurntableDialogItem;
+
+	menuItem
+		-rtc "OpenBluePencil"
+		-version "2023"
+		bluePencilItem;
+
+	python( "from maya.app.ghosting.GhostingMenus import create_visualize_ghosting_menu_items" );
+	python( "create_visualize_ghosting_menu_items()" );
+
+	// Snapshot
+	menuItem -divider true -dividerLabel (uiRes("m_AniVisualizeMenu.kTimeSnapshot"));
+	
+	$cmd = "AnimationSnapshot";
+	menuItem
+		-rtc $cmd
+		-dragMenuCommand "performSnapshot 2"
+		snapshotItem;
+		$cmd = "AnimationSnapshotOptions";
+		menuItem -optionBox true
+			-image "animateSnapshot.png"
+			-command $cmd
+			-annotation (getRunTimeCommandAnnotation($cmd))
+			snapshotDialogItem;
+
+	menuItem -rtc "UpdateSnapshot"
+		updateMotionTrailItem;
+
+	$cmd = "AnimationSweep";
+	menuItem
+		-rtc $cmd
+		-dragMenuCommand "performAnimSweep 2"
+		animsweepItem;
+		$cmd = "AnimationSweepOptions";
+		menuItem -optionBox true
+			-image "animateSweep.png"
+			-command $cmd
+			-annotation (getRunTimeCommandAnnotation($cmd))
+			animsweepDialogItem;
+
+    menuItem -divider true;
+    python("from maya.plugin.timeSliderBookmark.bookmarkButton import createBookmarkMenus; createBookmarkMenus()");
+}

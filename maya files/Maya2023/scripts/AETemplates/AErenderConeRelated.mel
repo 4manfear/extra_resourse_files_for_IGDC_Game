@@ -1,0 +1,20 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+// FILE: AErenderConeRelated.mel
+// INPUT: string (node name)
+// RETURN:	string[] (list of related nodes, with the node whose
+//			tab you want to be opened duplicated at the
+//			end of the array)
+//
+
+global proc string[] AErenderConeRelated (string $node)
+{
+	// use same relations as render sphere
+	return AErenderSphereRelated( $node );
+}
+

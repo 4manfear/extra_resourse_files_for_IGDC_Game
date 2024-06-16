@@ -1,0 +1,80 @@
+<!--
+Copyright 2016 Autodesk, Inc. All rights reserved. 
+
+Use of this software is subject to the terms of the Autodesk 
+license agreement provided at the time of installation or download, 
+or which otherwise accompanies this software in either electronic 
+or hard copy form.
+-->
+<fragment  uiName="mayaOpaqueDrawPass" name="mayaOpaqueDrawPass" type="sceneEffect" class="ScriptFragment" version="1.0" feature_level="0" >
+    <description>
+        <![CDATA[
+            Opaque and alpha-tested 3D shape surfaces
+        ]]>
+    </description>
+    <properties>
+        <countedObject  name="opaqueList" />
+        <countedObject  name="alphaCutList" />
+        <camera  name="camera" />
+        <target  name="final" />
+        <target  name="depth" />
+        <float4  name="viewport" />
+        <effectInstance  name="materialOverrideInstance" />
+        <bool  name="drawOpaqueList" />
+        <bool  name="opaqueListsEmpty" />
+    </properties>
+    <values>
+        <float4 name="viewport" value="0.000000,0.000000,1.000000,1.000000"  />
+        <bool name="drawOpaqueList" value="true"  />
+        <bool name="opaqueListsEmpty" value="false"  />
+    </values>
+    <outputs>
+        <target  name="output" />
+    </outputs>
+    <parametershare>
+    </parametershare>
+    <implementation render="OGS" language="ScriptInterpreter" version="0.1" >
+        <scriptCommands>
+            <Declare name="opaqueRenderer" type="ScriptPipeRenderer" value="::StdDrawAgents" />
+            <SetRenderer name="opaqueRenderer" />
+            <SetTarget index="0" value="@final" />
+            <SetDepthStencil value="@depth" />
+            <SetViewport value="@viewport" />
+            <SetCamera value="@camera" />
+            <SetEffect name="" />
+            <If value="@drawOpaqueList" /><!--MSceneRender::MSceneFilterOption::kRenderOpaqueShadedItems-->
+                <Call name="isListEmptyTwo" arg0="@opaqueList" arg1="@alphaCutList" arg2="@opaqueListsEmpty" />
+                <IfNot value="@opaqueListsEmpty" />
+                    <Call name="SetPassSemantic" arg0="opaqueGeometry" arg1="TRUE" />
+
+                    <!--Default material or MSceneRender::shaderOverride()-->
+                    <If value="@materialOverrideInstance" />
+                        <Call name="SetEffectInstance" arg0="@materialOverrideInstance" />
+                        <Call name="SetPassSemantic" arg0="materialOverride" arg1="TRUE" />
+                    <EndIf />
+
+                    <Render name="@opaqueList" />
+
+                    <!--Draw alpha-tested surfaces-->
+                    <Call name="isListEmpty" arg0="@alphaCutList" arg1="@opaqueListsEmpty" />
+                    <IfNot value="@opaqueListsEmpty" />
+                        <Call name="mayaTransparentCB" arg0="cutOffAlpha" />
+                        <Render name="@alphaCutList" />
+                        <Call name="mayaTransparentCB" arg0="transparentOff" />
+                    <EndIf />
+
+                    <!--Clear the effect/material override-->
+                    <If value="@materialOverrideInstance" />
+                        <Call name="SetPassSemantic" arg0="materialOverride" arg1="FALSE" />
+                        <Call name="SetEffectInstance" arg0="" />
+                    <EndIf />
+
+                    <Call name="SetPassSemantic" arg0="opaqueGeometry" arg1="FALSE" />
+                <EndIf />
+            <EndIf />
+
+            <SetParameter name="@output" value="@final" />
+        </scriptCommands>
+    </implementation>
+</fragment>
+

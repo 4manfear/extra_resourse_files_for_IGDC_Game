@@ -1,0 +1,308 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc AEpolySuperShapeTemplate( string $nodeName )
+{
+    editorTemplate -beginScrollLayout;
+	editorTemplate -beginLayout (getPluginResource("modelingToolkit", "kPolySuperShapeHistory")) -collapse 0;
+
+    editorTemplate -addControl "shape" "AECSSmodeChanged";
+    editorTemplate -addControl "radius";
+    editorTemplate -addControl "heightBaseline";
+    editorTemplate -addControl "horizontalDivisions";
+    editorTemplate -addControl "verticalDivisions";
+    editorTemplate -label (getPluginResource("modelingToolkit", "kSuperShapeUVModeAE")) -addControl "uvMode";
+    
+    editorTemplate -callCustom "AECSSaddRandomButton" "AECSSaddRandomButtonEdit" "";
+
+    editorTemplate -beginLayout (getPluginResource("modelingToolkit", "kHelixFrame")) -collapse 1;
+        editorTemplate -addControl "mergeVertices" "AECSSmergeVertsChanged";
+        editorTemplate -addControl "horizontalRevolutions";
+        editorTemplate -addControl "verticalRevolutions";
+        editorTemplate -addControl "verticalOffset";
+        editorTemplate -addControl "internalRadius";
+        editorTemplate -addControl "xOffset";
+        editorTemplate -addControl "zOffset";
+    editorTemplate -endLayout;
+
+    editorTemplate -addSeparator;
+    editorTemplate -addSeparator;
+    editorTemplate -addSeparator;
+
+    editorTemplate -beginLayout (getPluginResource("modelingToolkit", "kEllipseFrame")) -collapse 1;
+        editorTemplate -label (getPluginResource("modelingToolkit", "kEllipseVExponentAE")) -addControl "ellipse0";
+        editorTemplate -label (getPluginResource("modelingToolkit", "kEllipseHExponentAE")) -addControl "ellipse1";
+        editorTemplate -label (getPluginResource("modelingToolkit", "kEllipseMirrorAE")) -addControl "ellipseMirror" "AECSSmirrorChanged";
+    editorTemplate -endLayout;
+
+    editorTemplate -beginLayout (getPluginResource("modelingToolkit", "kSHFrame")) -collapse 1;
+        editorTemplate -label (getPluginResource("modelingToolkit", "kSHVmult1AE")) -addControl "harmonics0";
+        editorTemplate -label (getPluginResource("modelingToolkit", "kSHVexp1AE")) -addControl "harmonics1";
+        editorTemplate -addSeparator;
+
+        editorTemplate -label (getPluginResource("modelingToolkit", "kSHVmult2AE")) -addControl "harmonics2";
+        editorTemplate -label (getPluginResource("modelingToolkit", "kSHVexp2AE")) -addControl "harmonics3";
+        editorTemplate -addSeparator;
+
+        editorTemplate -label (getPluginResource("modelingToolkit", "kSHHmult1AE")) -addControl "harmonics4";
+        editorTemplate -label (getPluginResource("modelingToolkit", "kSHHexp1AE")) -addControl "harmonics5";
+        editorTemplate -addSeparator;
+
+        editorTemplate -label (getPluginResource("modelingToolkit", "kSHHmult2AE")) -addControl "harmonics6";
+        editorTemplate -label (getPluginResource("modelingToolkit", "kSHHexp2AE")) -addControl "harmonics7";
+    editorTemplate -endLayout;
+
+    editorTemplate -beginLayout (getPluginResource("modelingToolkit", "kUltraFrame")) -collapse 1;
+        editorTemplate -beginLayout (getPluginResource("modelingToolkit", "kUltraHorizontalFrame"));
+            editorTemplate -label (getPluginResource("modelingToolkit", "kUHmult1AE")) -addControl "ultra0";
+            editorTemplate -label (getPluginResource("modelingToolkit", "kUHexp1AE")) -addControl "ultra1";
+            editorTemplate -label (getPluginResource("modelingToolkit", "kUHexp2AE")) -addControl "ultra2";
+
+            editorTemplate -addSeparator;
+            editorTemplate -label (getPluginResource("modelingToolkit", "kUHMixerAE")) -addControl "ultra3";
+            editorTemplate -addSeparator;
+
+            editorTemplate -label (getPluginResource("modelingToolkit", "kUHmult2AE")) -addControl "ultra4";
+            editorTemplate -label (getPluginResource("modelingToolkit", "kUHexp3AE")) -addControl "ultra5";
+            editorTemplate -label (getPluginResource("modelingToolkit", "kUHexp4AE")) -addControl "ultra6";
+
+            editorTemplate -addSeparator;
+            editorTemplate -label (getPluginResource("modelingToolkit", "kUHexp5AE")) -addControl "ultra7";
+            editorTemplate -addSeparator;
+        editorTemplate -endLayout;
+
+        editorTemplate -beginLayout (getPluginResource("modelingToolkit", "kUltraVerticalFrame"));
+            editorTemplate -label (getPluginResource("modelingToolkit", "kUVmult1AE")) -addControl "ultra8";
+            editorTemplate -label (getPluginResource("modelingToolkit", "kUVexp1AE")) -addControl "ultra9";
+            editorTemplate -label (getPluginResource("modelingToolkit", "kUVexp2AE")) -addControl "ultra10";
+
+            editorTemplate -addSeparator;
+            editorTemplate -label (getPluginResource("modelingToolkit", "kUVMixerAE")) -addControl "ultra11";
+            editorTemplate -addSeparator;
+
+            editorTemplate -label (getPluginResource("modelingToolkit", "kUVmult2AE")) -addControl "ultra12";
+            editorTemplate -label (getPluginResource("modelingToolkit", "kUVexp3AE")) -addControl "ultra13";
+            editorTemplate -label (getPluginResource("modelingToolkit", "kUVexp4AE")) -addControl "ultra14";
+
+            editorTemplate -addSeparator;
+            editorTemplate -label (getPluginResource("modelingToolkit", "kUVexp5AE")) -addControl "ultra15";
+            editorTemplate -addSeparator;
+        editorTemplate -endLayout;
+        editorTemplate -label (getPluginResource("modelingToolkit", "kUltraMirrorAE")) -addControl "ultraMirror" "AECSSmirrorChanged";
+    editorTemplate -endLayout;
+
+    editorTemplate -addSeparator;
+    editorTemplate -addSeparator;
+    editorTemplate -addSeparator;
+
+	editorTemplate -endLayout;		
+
+	AEdependNodeTemplate $nodeName;
+
+    editorTemplate -addExtraControls;
+    editorTemplate -endScrollLayout;
+}
+
+
+global proc AECSSmodeChanged ( string $nodeName )
+{
+    if ( `objExists $nodeName` == 0 )
+        return;
+
+    string $nodeAttr = $nodeName + ".shape";
+    int $shape = `getAttr $nodeAttr`;
+    int $value;
+
+    //Ellipse
+    $value = $shape!=0;
+    editorTemplate  -dimControl $nodeName "ellipse0" ($value);
+    editorTemplate  -dimControl $nodeName "ellipse1" ($value);
+    editorTemplate  -dimControl $nodeName "ellipseMirror" ($value);
+
+    //Harmonics
+    $value = $shape!=1;
+    editorTemplate  -dimControl $nodeName "harmonics0" ($value);
+    editorTemplate  -dimControl $nodeName "harmonics1" ($value);
+    editorTemplate  -dimControl $nodeName "harmonics2" ($value);
+    editorTemplate  -dimControl $nodeName "harmonics3" ($value);
+    editorTemplate  -dimControl $nodeName "harmonics4" ($value);
+    editorTemplate  -dimControl $nodeName "harmonics5" ($value);
+    editorTemplate  -dimControl $nodeName "harmonics6" ($value);
+    editorTemplate  -dimControl $nodeName "harmonics7" ($value);
+
+    //Ultra
+    $value = $shape!=2;
+    editorTemplate  -dimControl $nodeName "ultra0" ($value);
+    editorTemplate  -dimControl $nodeName "ultra1" ($value);
+    editorTemplate  -dimControl $nodeName "ultra2" ($value);
+    editorTemplate  -dimControl $nodeName "ultra3" ($value);
+    editorTemplate  -dimControl $nodeName "ultra4" ($value);
+    editorTemplate  -dimControl $nodeName "ultra5" ($value);
+    editorTemplate  -dimControl $nodeName "ultra6" ($value);
+    editorTemplate  -dimControl $nodeName "ultra7" ($value);
+    editorTemplate  -dimControl $nodeName "ultra8" ($value);
+    editorTemplate  -dimControl $nodeName "ultra9" ($value);
+    editorTemplate  -dimControl $nodeName "ultra10" ($value);
+    editorTemplate  -dimControl $nodeName "ultra11" ($value);
+    editorTemplate  -dimControl $nodeName "ultra12" ($value);
+    editorTemplate  -dimControl $nodeName "ultra13" ($value);
+    editorTemplate  -dimControl $nodeName "ultra14" ($value);
+    editorTemplate  -dimControl $nodeName "ultra15" ($value);
+    editorTemplate  -dimControl $nodeName "ultraMirror" ($value);
+}
+
+global proc AECSSmergeVertsChanged ( string $nodeName )
+{
+    if ( `objExists $nodeName` == 0 )
+        return;
+
+	string $mergeAttr = $nodeName + ".mergeVertices";
+	int $merge = `getAttr $mergeAttr`;
+
+	editorTemplate  -dimControl $nodeName "horizontalRevolutions" ($merge);
+	editorTemplate  -dimControl $nodeName "verticalRevolutions" ($merge);
+	editorTemplate  -dimControl $nodeName "verticalOffset" ($merge);
+	editorTemplate  -dimControl $nodeName "internalRadius" ($merge);
+	editorTemplate  -dimControl $nodeName "xOffset" ($merge);
+	editorTemplate  -dimControl $nodeName "zOffset" ($merge);
+}
+
+global proc AECSSmirrorChanged ( string $nodeName )
+{
+    if ( `objExists $nodeName` == 0 )
+        return;
+
+    string $nodeAttr = $nodeName + ".ellipseMirror";
+    int $ellipseMirror = `getAttr $nodeAttr`;
+    $nodeAttr = $nodeName + ".ultraMirror";
+    int $ultraMirror = `getAttr $nodeAttr`;
+    $nodeAttr = $nodeName + ".shape";
+    int $shape = `getAttr $nodeAttr`;
+
+    //Ellipse
+    editorTemplate  -dimControl $nodeName "ellipse1" ($shape!=0 || $ellipseMirror==1);
+    //Ultra
+    editorTemplate  -dimControl $nodeName "ultra8" ($shape!=2 || $ultraMirror==1);
+    editorTemplate  -dimControl $nodeName "ultra9" ($shape!=2 || $ultraMirror==1);
+    editorTemplate  -dimControl $nodeName "ultra10" ($shape!=2 || $ultraMirror==1);
+    editorTemplate  -dimControl $nodeName "ultra11" ($shape!=2 || $ultraMirror==1);
+    editorTemplate  -dimControl $nodeName "ultra12" ($shape!=2 || $ultraMirror==1);
+    editorTemplate  -dimControl $nodeName "ultra13" ($shape!=2 || $ultraMirror==1);
+    editorTemplate  -dimControl $nodeName "ultra14" ($shape!=2 || $ultraMirror==1);
+    editorTemplate  -dimControl $nodeName "ultra15" ($shape!=2 || $ultraMirror==1);
+}
+
+global proc AECSSrandomize ( string $nodeName )
+{
+	int $mode = `getAttr ($nodeName+".shape")`;
+	if ( $mode == 0 )
+	{
+		setAttr ($nodeName+".ellipse0") `rand 5`;
+		setAttr ($nodeName+".ellipse1") `rand 5`;
+	}
+
+	if ( $mode == 1 )
+	{
+		setAttr ($nodeName+".harmonics0") `rand 4`;
+		setAttr ($nodeName+".harmonics1") `rand 4`;
+		setAttr ($nodeName+".harmonics2") `rand 4`;
+		setAttr ($nodeName+".harmonics3") `rand 4`;
+		setAttr ($nodeName+".harmonics4") `rand 4`;
+		setAttr ($nodeName+".harmonics5") `rand 4`;
+		setAttr ($nodeName+".harmonics6") `rand 4`;
+		setAttr ($nodeName+".harmonics7") `rand 4`;
+	}
+
+	if ( $mode == 2 )
+	{
+		setAttr ($nodeName+".ultra0") `rand 30`;
+		setAttr ($nodeName+".ultra1") `rand 3`;
+		setAttr ($nodeName+".ultra2") `rand 3`;
+		setAttr ($nodeName+".ultra4") `rand 30`;
+		setAttr ($nodeName+".ultra5") `rand 3`;
+		setAttr ($nodeName+".ultra6") `rand 3`;
+		setAttr ($nodeName+".ultra7") `rand 3`;
+		setAttr ($nodeName+".ultra8") `rand 30`;
+		setAttr ($nodeName+".ultra9") `rand 3`;
+		setAttr ($nodeName+".ultra10") `rand 3`;
+		setAttr ($nodeName+".ultra12") `rand 30`;
+		setAttr ($nodeName+".ultra13") `rand 3`;
+		setAttr ($nodeName+".ultra14") `rand 3`;
+		setAttr ($nodeName+".ultra15") `rand 3`;
+	}
+}
+
+global proc AECSSreset ( string $nodeName )
+{
+	int $mode = `getAttr ($nodeName+".shape")`;
+	if ( $mode == 0 )
+	{
+		setAttr ($nodeName+".ellipse0") 1;
+		setAttr ($nodeName+".ellipse1") 1;
+	}
+
+	if ( $mode == 1 )
+	{
+		setAttr ($nodeName+".harmonics0") 0;
+		setAttr ($nodeName+".harmonics1") 1;
+		setAttr ($nodeName+".harmonics2") 0;
+		setAttr ($nodeName+".harmonics3") 1;
+		setAttr ($nodeName+".harmonics4") 0;
+		setAttr ($nodeName+".harmonics5") 1;
+		setAttr ($nodeName+".harmonics6") 0;
+		setAttr ($nodeName+".harmonics7") 1;
+	}
+
+	if ( $mode == 2 )
+	{
+		setAttr ($nodeName+".ultra0") 0;
+		setAttr ($nodeName+".ultra1") 1;
+		setAttr ($nodeName+".ultra2") 1;
+		setAttr ($nodeName+".ultra3") 0.5;
+		setAttr ($nodeName+".ultra4") 0;
+		setAttr ($nodeName+".ultra5") 1;
+		setAttr ($nodeName+".ultra6") 1;
+		setAttr ($nodeName+".ultra7") 1;
+		setAttr ($nodeName+".ultra8") 0;
+		setAttr ($nodeName+".ultra9") 1;
+		setAttr ($nodeName+".ultra10") 1;
+		setAttr ($nodeName+".ultra11") 0.5;
+		setAttr ($nodeName+".ultra12") 0;
+		setAttr ($nodeName+".ultra13") 1;
+		setAttr ($nodeName+".ultra14") 1;
+		setAttr ($nodeName+".ultra15") 1;
+	}
+}
+
+global proc AECSSaddRandomButton ( string $attr )
+{
+    string $nodeName[];
+    tokenize($attr, ".", $nodeName);
+    
+    separator -w 100 -h 5 -hr 1 -st "none";
+
+    rowLayout -numberOfColumns 2 -columnWidth2 216 216;
+        button -label (getPluginResource("modelingToolkit", "kSuperShapeRandom")) -c ( "AECSSrandomize " + $nodeName[0] )
+        CSSRandomButton;
+        button -label (getPluginResource("modelingToolkit", "kSuperShapeReset")) -c ( "AECSSreset " + $nodeName[0] )
+        CSSResetButton;
+    setParent ..;
+
+    separator -w 100 -h 5 -hr 1 -st "none";
+}
+
+
+global proc AECSSaddRandomButtonEdit ( string $attr )
+{
+    string $nodeName[];
+    tokenize($attr, ".", $nodeName);
+
+    button -e -c ( "AECSSrandomize " + $nodeName[0] )
+    CSSRandomButton;
+    button -e -c ( "AECSSreset " + $nodeName[0] )
+    CSSResetButton;
+}

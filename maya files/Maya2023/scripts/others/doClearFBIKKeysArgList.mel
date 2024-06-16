@@ -1,0 +1,38 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  6 May 05
+//
+//  Description:
+//		doClearFBIKKeysArgList is the actual proc that is executed from the
+//	Edit->Keys->Delete FBIK Keys menu
+//
+//  Input Arguments:
+//	$version: The version of this option box.  Used to know how to 
+//	interpret the $args array.
+//		"1" : $whichTypeOfKey
+//	
+//	$args
+//	Version 1
+//	[0]		$$whichTypeOfKey		all :      remove keys on all body parts
+//									bodypart : remove keys on selected body part
+//									selected : remove keys on selected object and associated
+//                                             fk joint/effector
+//
+global proc doClearFBIKKeysArgList( string $version, string $args[] )
+{
+	int		$versionNum				= $version;
+
+	string	$whichTypeOfKey			= $args[0];
+	
+	loadFullBodyIKFunctions();
+    clearFBIKKeyFromTimeSlider($whichTypeOfKey);
+	
+}
+

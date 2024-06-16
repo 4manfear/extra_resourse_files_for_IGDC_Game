@@ -1,0 +1,41 @@
+<!--
+Copyright 2016 Autodesk, Inc. All rights reserved. 
+
+Use of this software is subject to the terms of the Autodesk 
+license agreement provided at the time of installation or download, 
+or which otherwise accompanies this software in either electronic 
+or hard copy form.
+-->
+<fragment_graph  name="Maya_NonPostEffects" ref="Maya_NonPostEffects" class="FragmentGraph" version="1.0" feature_level="0" >
+    <fragments>
+        <fragment_ref name="Operator_IfElse_RenderTarget" ref="Operator_IfElse_RenderTarget" />
+        <fragment_ref name="mayaNonPECompositeScript" ref="mayaNonPECompositeScript" />
+        <fragment_ref name="mayaNonPEAlphaMaskScript" ref="mayaNonPEAlphaMaskScript" />
+        <fragment_ref name="A8_Target" ref="A8_Target" />
+        <fragment_ref name="nonPostEffectListEmpty" ref="nonPostEffectListEmpty" />
+    </fragments>
+    <connections>
+        <connect from="nonPostEffectListEmpty.listEmpty" to="Operator_IfElse_RenderTarget.value" name="value" />
+        <connect from="mayaNonPECompositeScript.output" to="Operator_IfElse_RenderTarget.b" name="b" />
+        <connect from="mayaNonPEAlphaMaskScript.output" to="mayaNonPECompositeScript.maya_NonPEAlphaMask" name="maya_NonPEAlphaMask" />
+        <connect from="A8_Target.output" to="mayaNonPEAlphaMaskScript.maya_NonPEAlphaMaskTarget" name="maya_NonPEAlphaMaskTarget" />
+    </connections>
+    <properties>
+        <countedObject  name="nonPostEffectList" ref="nonPostEffectListEmpty.nonPostEffectList" />
+        <target  name="maya_ScenePostEffectFinal" ref="Operator_IfElse_RenderTarget.a" evaluatedByOwner="true"  />
+        <target  name="final" ref="mayaNonPECompositeScript.final" />
+        <target  name="finalDesc" ref="mayaNonPECompositeScript.finalDesc" />
+        <target  name="maya_SceneNormalFinal" ref="mayaNonPECompositeScript.maya_SceneNormalFinal" />
+        <camera  name="camera" ref="mayaNonPEAlphaMaskScript.camera" />
+        <countedObject  name="postEffectList" ref="mayaNonPEAlphaMaskScript.postEffectList" />
+        <countedObject  name="advancedEffectList" ref="mayaNonPEAlphaMaskScript.advancedEffectList" />
+        <float4  name="viewport" ref="A8_Target.viewport" />
+        <bool  name="evaluateAll" ref="Operator_IfElse_RenderTarget.evaluateAll" />
+    </properties>
+    <values>
+        <float4 name="viewport" value="0.000000,0.000000,1.000000,1.000000"  />
+    </values>
+    <outputs>
+        <target  name="res" ref="Operator_IfElse_RenderTarget.res" />
+    </outputs>
+</fragment_graph>

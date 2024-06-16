@@ -1,0 +1,54 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc cameraSetLocation( string $camera,  string $cameraView, string $selection[])
+{
+    if ($camera == "") {
+        string $selected[] = `ls -selection`;
+        $camera = $selected[0];
+    }
+
+	int $view = `optionVar -query CreateCameraOptions_View`;
+	switch ($view) {
+
+		// Frame all
+		case 2:
+			viewFit -all $camera;
+			break;
+
+		// Frame selected
+		case 3:
+			viewFit $camera $selection;
+			break;
+
+		// Frame selected with children
+		case 4:
+
+			break;
+
+		// View along x-axis
+		case 5:
+			viewSet -viewX $camera;
+			break;
+
+		// View along y-axis
+		case 6:
+			viewSet -viewY $camera;
+			break;
+
+		// View along z-axis
+		case 7:
+			viewSet -viewZ $camera;
+			break;
+
+		// Default home
+		case 1: 
+		default:
+			viewSet -home $camera;
+			break;
+	}
+}

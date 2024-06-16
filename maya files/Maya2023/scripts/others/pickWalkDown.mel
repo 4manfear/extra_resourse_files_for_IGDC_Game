@@ -1,0 +1,60 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+// Selects the appropriate pickWalk command,
+//   depending on the current selection.
+//
+
+global proc pickWalkDown()
+{
+	string $cmd;
+
+	string $p = `getPanel -withFocus`;
+	int $isUV = startsWith($p, "polyTexturePlacementPanel");
+
+	if ($isUV)
+	{
+		int $nudgeUVAbsolute = 0;
+		if(`optionVar -ex polyNudgeUVAbsolute`)
+			$nudgeUVAbsolute = `optionVar -q polyNudgeUVAbsolute`;
+		if( $nudgeUVAbsolute )
+			optionVar -intValue polyNudgeUVAbsolute 0;
+
+		$cmd = "performPolyNudgeUVs down";
+		evalEcho($cmd);
+		
+		if( $nudgeUVAbsolute )
+			optionVar -intValue polyNudgeUVAbsolute 1;
+	}
+	else
+	{
+		$cmd = "pickWalk -d down";
+	
+		string $type = "";
+	
+		// if any poly edges are selected, do an edgering pickwalk
+		string $edgeSel[] = `filterExpand -sm 32`;
+		if ( size( $edgeSel ) != 0 ) {
+			$type = "edgering";
+		}
+	
+		if ( size( $type ) == 0 ) {
+			// if any lattice points are selected, do a lattice pickwalk
+			string $latticeSel[] = `filterExpand -sm 46`;
+			if ( size( $latticeSel ) != 0 ) {
+				$type = "latticePoints";
+			}
+		}
+	
+		// append the type, if any
+		if ( size( $type ) != 0 ) {
+			$cmd += " -type " + $type;
+		}
+		
+		evalEcho($cmd);
+	}
+}

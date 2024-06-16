@@ -1,0 +1,101 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+// Creation Date:  14 January 1999
+//
+//
+//  Procedure Name:
+//      smoothCurveToolScript
+//
+//  Description:
+//	create wrapper around the smoothCurve command
+//
+//  Input Arguments:
+//		0 ==> do the command.
+//		1 ==> show the action option box
+//		2 ==> return the command
+//		3 ==> show tool option box
+//		4 ==> enter the tool
+//
+//  Return Value:
+//      None.
+//
+
+global proc smoothCurveToolSetup( int $forceFactorySettings, string $goToTool )
+{
+	optionVar -init $forceFactorySettings -category "Modeling.Curves.Smooth"
+		-iv smoothCurveEuc 0
+		-iv smoothCurveLac 1
+		;
+
+	if( "" != $goToTool ) {
+		scriptCtx -e -euc `optionVar -q smoothCurveEuc` $goToTool;
+		scriptCtx -e -lac `optionVar -q smoothCurveLac` $goToTool;
+	}
+}
+
+global proc smoothCurveValues ( string $toolName ) 
+{
+	performSmoothCurve 3 $toolName;
+	scriptCtxCommonValues( $toolName );
+}
+
+global proc smoothCurveProperties()
+{
+	scriptCtxCommonProperties;
+}
+
+proc createSmoothCurveContext( string $tool )
+{
+	if( ! `scriptCtx -exists $tool` ) {
+		smoothCurveToolSetup( 0, "" );
+		scriptCtx -i1 "smoothCurve.png"
+			-title (uiRes("m_smoothCurveToolScript.kSmoothCurveTool"))
+			-bcn "smoothCurve"
+
+			-exitUponCompletion `optionVar -q smoothCurveEuc`
+			-totalSelectionSets 1
+			-expandSelectionList true
+			-fcs ("smoothCurveToolScript 0")
+
+			-setNoSelectionPrompt (uiRes("m_smoothCurveToolScript.kSelect"))
+			-setSelectionPrompt (uiRes("m_smoothCurveToolScript.kComplete"))
+
+			-setAutoToggleSelection true
+			-setAutoComplete `optionVar -q smoothCurveLac`
+			-showManipulators true
+			-setSelectionCount 0
+
+			-nurbsCurve true
+			-cv true
+		$tool;
+	}
+}
+
+global proc string smoothCurveToolScript( int $setToTool )
+//
+//	Description :
+//		0 ==> do the command.
+//		1 ==> show the action option box
+//		2 ==> return the command
+//		3 ==> show tool/action option box
+//		4 ==> enter the tool/do the command
+{
+	string $tool = "";
+	if( $setToTool > 2 ) {
+		if( !`optionVar -q modelWithToolSmoothCurve` ) {
+			$setToTool = 4 - $setToTool;
+		}
+		else {
+			$tool = "smoothCurveContext";
+			createSmoothCurveContext $tool;
+		}
+	}
+	return scriptToolScript( "performSmoothCurve", $setToTool, $tool );
+}

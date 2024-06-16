@@ -1,0 +1,45 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  March 22 1997
+//
+//  Description:
+//      Global function to ensure the options for extrude are set.
+//
+//  Input Arguments:
+//      Force the factory setting or not.
+//
+//  Return Value:
+//      None.
+//
+
+global proc freeFormFilletSetOptionVars( 
+	int $forceFactorySettings )
+//
+//
+//
+{
+    optionVar -init $forceFactorySettings -category "Modeling.Surfaces.Surface Fillet.Freeform Fillet"
+        // depth.
+        -fv freeFormFilletDepth 0.5
+        // bias.
+        -fv freeFormFilletBias 0.0
+        // filletOutputPolygons (int) - 0|1 for polygon or Nurbs output
+        -iv freeFormFilletOutputPolygons 0
+        // use global Vs local tolerance.
+        //
+        // Tolerances - To use global Vs local tolerances.
+        // tolerance (boolean), local positional tolerance (float),
+        // local tangent Tolerance (float).
+        -iv freeFormFilletUseUseGlobalTolerance 1
+        -fv freeFormFilletLocalPositionalTolerance 0.01
+        -fv freeFormFilletLocalTangentTolerance 0.1
+        ;
+}
+

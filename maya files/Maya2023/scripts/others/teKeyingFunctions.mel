@@ -1,0 +1,361 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+// Creation Date:  August, 2015
+//
+// Description:
+//		Clip and Layer Keying related functions
+//
+
+proc string teGetAttributeString(string $attributeName, string $attribute)
+{
+	return getAttr($attributeName + "." + $attribute);
+}
+
+proc int teGetAttributeInt(string $attributeName, string $attribute) 
+{
+	return getAttr($attributeName + "." + $attribute);
+}
+
+// START of fast wrapper function
+// NOTE: all this function are made to be fast, so it skip all form of checking, it assumes all check has already been done to ensure 
+//       that those attributes are present and the selected type is the indicated type 
+
+proc string convertLayerAttributeToClipAttributeName(string $layerAttributeName) 
+//
+//	Description:
+//		this returns the attribute name of the selected layer's clip
+//
+{
+	string $nodeName = plugNode($layerAttributeName); // get node name of plug
+
+	return $nodeName + ".clip[0]"; 	// concatenate everything into the clip attribute name 
+									//(plug index is always one for the clip of a layer since it is not a group
+}
+
+proc string getSelectedKeyingLayerClipAttribute() 
+{
+	string $attributeName = teGetSelectedKeyingTarget();
+	return convertLayerAttributeToClipAttributeName($attributeName);
+}
+
+proc string convertClipAttributeToLayerAttributeName(string $clipAttributeName, string $oldLayerAttributeName) 
+{
+	string $nodeName = plugNode($clipAttributeName); 							// get node name of plug
+	string $oldLayerPlugIndex = match("\\[[0-9]+\\]", $oldLayerAttributeName); 	// extract the plug index
+	return $nodeName + ".layer" + $oldLayerPlugIndex; 							// concatenate everything into the layer attribute name
+}
+
+proc int getSelectedKeyingLayerClipId() 
+{
+	string $selectedLayerClipAttribute = getSelectedKeyingLayerClipAttribute();
+	return teGetAttributeInt($selectedLayerClipAttribute, "clipid");
+}
+// END of fast wrapper function
+
+proc refreshButtonStatus(string $text, string $buttonName) 
+{
+	if(`iconTextButton -exists $buttonName` == 1) 
+	{	
+		// first check if button exist
+		if($text == "") 
+		{
+			// if text is set to empty string, we disable the button
+			iconTextButton -edit -enable false $buttonName;
+		} 
+		else 
+		{
+			// else enable it
+			iconTextButton -edit -enable true $buttonName;
+		}
+	}
+}
+
+proc setAuthoringLayerName(string $clipName, string $layerName)
+{
+	string $displayName = $clipName;
+	
+	if($displayName != "" && $layerName != "")
+	{
+		$displayName = $layerName;
+	}
+	
+	if(`textField -exists teActiveLayerDisplayName`)
+	{
+		textField -edit -text $displayName teActiveLayerDisplayName;
+	}
+	
+	refreshButtonStatus( $displayName, "teSetKeyframeButton" );
+	refreshButtonStatus( $displayName, "teSetZeroKeyButton");
+}
+
+proc int isLayerAttribute(string $nodeName) 
+{
+	return (objExists ($nodeName) && (nodeType($nodeName) == "timeEditorClip") && (objExists($nodeName + ".layerName") == 1));
+} 
+
+proc int isClipAttribute(string $nodeName) {
+	if(objExists ($nodeName) && `nodeType $nodeName` == "timeEditorClip") 
+	{
+		if(objExists($nodeName + ".clipName") == 1) 
+		{ 
+			// else if it has clip name its a clip 
+			// selected object could be a container or group, we need to filter out group
+			int $clipId = getAttr($nodeName + ".clipid"); // we grab the clip id first
+			
+			if(`timeEditorClip -q -isContainer $clipId` == 1) 
+			{
+				return 1;
+			}
+		}
+	}	
+	
+	return 0;
+}
+
+global proc teInvalidateActiveClipAndLayerDisplayName() 
+{
+	teSetKeyingTarget("");
+}
+
+// the actual keying target command takes in clip id and layer id (if it's keying target is a layer)
+// this function converts the given name into clip id and if applicable the layer id
+global proc teSetKeyingTarget(string $keyingTarget) 
+{	
+	if(isLayerAttribute($keyingTarget) == true)
+	{
+		int $layerId = teGetAttributeInt($keyingTarget, "layerId");
+		
+		string $clipAttributeName = convertLayerAttributeToClipAttributeName($keyingTarget);
+		int $clipId = teGetAttributeInt($clipAttributeName, "clipid");
+		
+		teSetKeyingTargetWithId($clipId, $layerId);
+	}
+	/*else if(isClipAttribute($keyingTarget))
+	{
+		int $clipId = teGetAttributeInt($keyingTarget, "clipid");
+		teSetKeyingTargetWithId($clipId, -1);
+	}*/
+	// if neither a clip nor layer, its invalid target, so set to a invalid clip id
+	else
+	{
+		teSetKeyingTargetWithId(-1, -1);
+	}
+}
+
+// refresh ui display name when it's invalid
+global proc teRefreshKeyingTargetDisplayForInvalid()
+{
+	setAuthoringLayerName("", "");
+}
+
+// refresh ui display name for clip
+global proc teRefreshKeyingTargetDisplayForClip() 
+{
+	string $keyingTarget = teGetSelectedKeyingTarget();
+
+	setAuthoringLayerName(teGetAttributeString($keyingTarget, "clipName"), "");
+}
+
+// refresh ui display name for layer
+global proc teRefreshKeyingTargetDisplayForLayer() 
+{
+	string $keyingTarget = teGetSelectedKeyingTarget();
+	if ($keyingTarget == "")
+	{
+		setAuthoringLayerName("", "");
+	}
+	else
+	{
+		string $clipAttributeName = convertLayerAttributeToClipAttributeName($keyingTarget);
+		setAuthoringLayerName(teGetAttributeString($clipAttributeName, "clipName"), teGetAttributeString($keyingTarget, "layerName"));
+	}
+}
+
+// used to refresh the selected clip/layer for keying
+// if selected clip/layer is invalid, it will disable the setKey button
+global proc teRefreshClipOrLayerSelection () 
+{
+	string $selectedObjectArray[] = `ls -sl -type compound`;
+	
+	// ensure only one object is selected (no multi-select support) and that object is a clip/layer before setting it as the selected keying object
+	if(size($selectedObjectArray) == 1) 
+	{
+	   teSetKeyingTarget($selectedObjectArray[0]);
+	} 
+	else 
+	{
+		teSetKeyingTarget("");
+	}
+}
+
+// if empty string is returned, it means no valid clip/layer is selected
+global proc string teGetSelectedKeyingTarget() 
+{
+	return `timeEditorPanel -q -kt timeEditorPanel1TimeEd`;
+}
+
+// return 1 if it successfully set the key on the layer/clip
+// else return 0
+global proc int teSetKeyFrameOnActiveLayerOrClip(int $zeroKey) 
+{
+	global string $gChannelBoxName;
+	string $attributeName = teGetSelectedKeyingTarget();
+	
+	if($attributeName != "") 
+	{ 
+		// Retrieve what attributes to key from the channel box
+		//
+		int $clipId = getSelectedKeyingLayerClipId();
+		
+		string $selectedObjectsArray[] = `channelBox -q -mol $gChannelBoxName`; 	// get the object used in the channel box
+		string $selectedAttributesArray[] = `channelBox -q -sma $gChannelBoxName`; 	// get the attributes selected in the channel box
+		
+	
+
+		
+		// Determine if we are keying into layers or clips
+		// if active clip display name is empty string, no reason to proceed
+		//
+		if(isLayerAttribute($attributeName) == 1) 	 /////// LAYERS ///////
+		{ 
+			int $layerId = teGetAttributeInt($attributeName, "layerId");
+			
+			// add all attrib in all objects into a long string
+			string $queryString = "timeEditorClipLayer -clipId " + $clipId + " -layerId " + $layerId + " ";
+			string $finalCmdString = "timeEditorClipLayer -edit -clipId " + $clipId + " -layerId " + $layerId + " -setKeyframe ";
+			
+			int $hasInvalidAttrib = 0;
+			int $hasValidAttrib = 0;
+			
+			// might be too slow if there's too many attributes, 
+			// consider batching all mel function call into one single call instead
+			for($currentObject in $selectedObjectsArray) 
+			{ 
+				// If no attribute is selected, make every keyable attribute available for keying
+				//
+				int $showWarning = 1;
+				string $selAttr[];
+                $selAttr = $selectedAttributesArray;
+                if(size($selAttr) == 0){
+                    $selAttr = `listAttr -keyable -hd -multi $currentObject`;
+                    $showWarning = 0;
+                }
+
+
+				// loop through every single object in the channel box
+				for($currentAttribute in $selAttr) 
+				{ 
+					// loop through every attribute	
+					string $attribName = $currentObject + "." + $currentAttribute + " ";
+					
+					int $keyable = eval($queryString + "-attributeKeyable " + $attribName + " -query;");
+					
+					// first check if attribute is keyable before attempting to key it
+					if($keyable == 1) 
+					{
+						$hasValidAttrib = 1;
+						$finalCmdString += "-attribute " + $attribName;
+					} 
+					else if($showWarning) 
+					{ 
+						// if user selected the object instead of the attribute, we don't show the warning
+						$hasInvalidAttrib = 1;
+						
+						string $errorMsg = (uiRes("m_teKeyingFunctions.kUnableToKeyAttrib"));
+						warning(`format -s $attribName $errorMsg`);
+					}
+				}
+			}
+			
+			// if no valid attribute added, we first check if there's a attempt to add invalid attrib
+			if($hasInvalidAttrib == 0 || $hasValidAttrib == 1) 
+			{
+				if($zeroKey == 1) 
+				{
+					$finalCmdString += " -zeroKeying ";		
+				}
+				
+				$finalCmdString += ";";
+				evalEcho($finalCmdString);
+				return 1;
+			} 
+			else 
+			{
+				warning( (uiRes("m_teKeyingFunctions.kInvalidObjSelectedForKeying")) );
+			}
+		} 
+		/*else if(isClipAttribute($attributeName) == 1) 	/////// CLIPS ///////
+		{ 
+			$animSource = `timeEditorClip -q -animSource -clipId $clipId`;
+			
+			string $attributesToKey[];
+			int $index = 0;
+			
+			// gather all the attributes that needs to be keyed
+			// loop through every single object in the channel box
+			//
+			for($currentObject in $selectedObjectsArray) 
+			{ 
+				// loop through every attribute
+				for($currentAttribute in $selectedAttributesArray) 
+				{ 
+					string $attribName = $currentObject + "." + $currentAttribute;
+					
+					// check if attrib is driven by the clip's anim source
+					if(`timeEditorAnimSource -q -targetIndex $animSource  $attribName` != -1)
+					{
+						$attributesToKey[$index] = $attribName;
+						$index++;
+					}
+					else
+					{
+						// warn users attributes that are not driven by the clip's anim source
+						string $errorMsg = (uiRes("m_teKeyingFunctions.kAttrNotDrivenByAnimSource"));
+						warning(`format -s $attribName $errorMsg`);
+					}
+				}
+			}
+				
+			if(size($attributesToKey) != 0)
+			{
+				string $cmdToRun = "timeEditorClip -e -clipId " + $clipId;
+				
+				for($attr in $attributesToKey)
+				{
+					$cmdToRun += " -setKeyframe " + $attr;
+				}
+				
+				if($zeroKey)
+				{
+					$cmdToRun += " -zeroKeying";
+				}
+				
+				$cmdToRun += ";";
+				
+				evalEcho $cmdToRun;	// KEY!!!
+				return 1;
+			}
+		}	*/
+	} 
+	else 
+	{
+		warning( (uiRes("m_teKeyingFunctions.kCTENoValidLayerClipSelected")) );
+	}
+	
+	global int $gCteSetKeyFrameResult;
+	$gCteSetKeyFrameResult = 0;
+
+	return 0;
+}
+
+global proc teSetKeyingTargetWithId(int $clipId, int $layerId) 
+{
+	timeEditorPanel -e -kt $clipId -l $layerId timeEditorPanel1TimeEd;
+}

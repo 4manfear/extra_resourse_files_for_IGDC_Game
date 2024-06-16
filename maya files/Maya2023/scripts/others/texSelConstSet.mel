@@ -1,0 +1,30 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc texSelConstSet(string $selType) 
+{ 
+		global string $gPrevTexSelConsType; 
+		if ($selType != "off") 
+			$gPrevTexSelConsType = $selType; 
+ 
+		if($selType == "off") 
+			polySelectConstraint -bo false -uv false -ulp false -urp false -ubs false -ufo 0 -uvc true; 
+		if($selType == "backFacing") 
+			polySelectConstraint -bo false -uv false -ulp false -urp false -ubs false -ufo 2 -m 1 -uvc true; 
+		if($selType == "frontFacing") 
+			polySelectConstraint -bo false -uv false -ulp false -urp false -ubs false -ufo 1 -m 1 -uvc true; 
+		if($selType == "geometryBorder") 
+			polySelectConstraint -bo true  -uv false -ulp false -urp false -ubs false -ufo 0 -uvc true; 
+		if($selType == "textureBorder") 
+			polySelectConstraint -bo false -uv false -ulp false -urp false -ubs true  -ufo 0 -uvc true; 
+		if($selType == "uvEdgeLoop") 
+			polySelectConstraint -bo false -uv false -ulp true  -urp false -ubs false -ufo 0 -uvc true; 
+		if($selType == "uvEdgeRing") 
+			polySelectConstraint -bo false -uv false -ulp false -urp true  -ubs false -ufo 0 -uvc true; 
+		if($selType == "uvShell") 
+			polySelectConstraint -bo false -uv true  -ulp false -urp false -ubs false -ufo 0 -uvc true; 
+}

@@ -1,0 +1,122 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc AEMASH_ExplodeTemplate( string $nodeName )
+{
+    editorTemplate -beginScrollLayout;
+    python("import MASH.nodeHeaders; MASH.nodeHeaders.addHeader('" + $nodeName + "', 'Explode')")
+    editorTemplate -endLayout;
+
+    editorTemplate -addControl (getPluginResource("MASH", "kThreshold"));
+    editorTemplate -addSeparator;
+    editorTemplate -bn;
+    editorTemplate  -label (getPluginResource("MASH", "kEnablePos")) -addControl "enablePosition";
+    editorTemplate  -label (getPluginResource("MASH", "kEnableRot")) -addControl "enableRotation";
+    editorTemplate  -label (getPluginResource("MASH", "kEnableScale")) -addControl "enableScale";
+    editorTemplate -en;
+    editorTemplate -callCustom "MASHexplodeSingleInputBuildQt" "MASHexplodeSingleInputUpdateQt" "";
+
+    editorTemplate -beginLayout (getPluginResource("MASH", "kStrength")) -collapse 0;
+    editorTemplate  -label (getPluginResource("MASH", "kZeroScale")) -addControl "scaleToZero";
+    editorTemplate  -label (getPluginResource("MASH", "kStrength")) -addControl "Envelope";
+    editorTemplate  -label (getPluginResource("MASH", "kRandStrength")) -addControl "randEnvelope";
+    editorTemplate  -label (getPluginResource("MASH", "kStepStrength")) -addControl "StepEnvelope";
+    editorTemplate -addSeparator;
+    editorTemplate  -label (getPluginResource("MASH", "kStrengthMap")) -addControl "mColour";
+    editorTemplate  -label (getPluginResource("MASH", "kMapProjAxis")) -addControl "mapDirection";
+    editorTemplate -callCustom "MASHmapHelperButton" "MASHmapHelperButtonEdit" "";
+    editorTemplate -endLayout;
+
+    editorTemplate -beginLayout (getPluginResource("MASH", "kFalloffObject")) -collapse 1;
+    editorTemplate -callCustom "MASHfalloffButtons" "MASHfalloffButtonsEdit" "";
+    editorTemplate -endLayout;
+
+    AEdependNodeTemplate $nodeName;
+    editorTemplate -addExtraControls;
+    editorTemplate -endScrollLayout;
+}
+
+global proc MASHexplodeButtons ( string $attr )
+{
+    string $nodeName[];
+    tokenize($attr, ".", $nodeName);
+
+    button -label (getPluginResource("MASH", "kConnectMesh"))  -c ("explodeButtonCMDS " + $nodeName[0] + " 1")
+    setOffsetMASHButton;
+
+
+    separator -w 100 -h 5 -hr 1 -st "none";
+}
+
+global proc MASHexplodeButtonsEdit ( string $attr )
+{
+    string $nodeName[];
+    tokenize($attr, ".", $nodeName);
+
+    button -e -c ("explodeButtonCMDS " + $nodeName[0] + " 1")
+    setOffsetMASHButton;
+
+}
+
+global proc explodeButtonCMDS (string $nodeName, string $draggedNode, int $whichCMD) {
+    if ($whichCMD == 1)
+    {
+        //history is a bit odd on this mesh.
+        //usually you diplicate the mesh and the duplicate becomes the intermediate object and the original mesh is still the destination mesh
+        //however, because the original mesh may already be plugged into the MASH network we need to avoid compute cycles (infinate loops)
+        //thus the mesh duplicate is the new destination mesh, and the original mesh becomes the intermediate object
+
+        // If it is already connected -> clear connections first
+        string $alreadyConnected[] = `listConnections -d 1 -s 0 -p 1 ($nodeName+".outputMesh")`;
+        if (size($alreadyConnected) != 0) {
+            for ($conn in $alreadyConnected) {
+                catchQuiet (`disconnectAttr ($nodeName+".outputMesh") $conn`);
+            }
+        }
+
+        string $newEndMesh[] = `duplicate $draggedNode`;
+        print ("duplicate: "+$newEndMesh[0]+"\n");
+        polySoftEdge -angle 30 -ch 1 $newEndMesh[0]; // Explode does not recalculate normals.
+        connectAttr -force ($nodeName+".outputMesh") ($newEndMesh[0]+".inMesh");
+
+        //hide the original mesh and put the new mesh under the original transform
+        setAttr ($draggedNode+".intermediateObject") 1;
+        string $origMeshParent[] = `listRelatives -parent $draggedNode`;
+        parent $newEndMesh[0] $origMeshParent[0];
+
+        MASHinViewMessage((getPluginResource("MASH", "kMeshConnected")), "Info");
+        showEditorExact($nodeName);
+    }
+    evalDeferred("updateAE " + $nodeName);
+
+}
+
+global proc MASHexplodeSingleInputBuildQt(string $nodeName)
+{
+    string $buffer[];
+    tokenize($nodeName, ".", $buffer);
+    $nodeName = $buffer[0];
+
+    python("import MASHsingleInputQtWidget");
+    rowLayout -numberOfColumns 2 -columnWidth2 139 250 explodeMesh;
+    text -w 105 -h 20 -vis 1
+    -label (getPluginResource("MASH", "kExplodingMesh"))
+    -align "right" -font "plainLabelFont" ;
+    //get python to create the widget, include the desired nodeType as an arguement
+    python("MASHsingleInputQtWidget.build_qt_widget('explodeMesh', '" + $nodeName + "', 'mesh', 'inputMesh', 'worldMesh', 'ExplodeNodeConnect')");
+    setParent..;
+
+}
+
+global proc MASHexplodeSingleInputUpdateQt(string $nodeName )
+{
+    string $buffer[];
+    tokenize($nodeName, ".", $buffer);
+    $nodeName = $buffer[0];
+    python("import MASHsingleInputQtWidget");
+    python("MASHsingleInputQtWidget.update_qt_widget('explodeMesh', '" + $nodeName + "', 'mesh', 'inputMesh', 'worldMesh', 'ExplodeNodeConnect')");
+}

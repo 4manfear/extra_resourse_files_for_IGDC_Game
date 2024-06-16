@@ -1,0 +1,72 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+// Creation Date:  14 January 1999
+//
+//  Procedure Name:
+//      modelWithType
+//
+//  Description:
+//	    Set or get the values for the output geometry type
+//
+//  Input Arguments:
+//		-1 --> query and return what the current settings are
+//       0 --> set all to NURBS
+//       1 --> set all to polys
+//       2 --> set all to subd's
+//       3 --> set all to beziers
+//
+//  Return Value:
+//      0 if all are NURBS, 1 if all are polys, 2 if all are subd's,
+//      3 if all are beziers, -1 if its mixed.
+//
+global string $gModelWithTypeVars[] = {
+	"bevelOutputPolygons",
+	"birail1OutputPoly",
+	"birail2OutputPoly",
+	"birail3OutputPoly",
+	"blendOutputPoly",
+	"boundaryPolys",
+	"circularFilletOutputPolygons",
+	"extrudeOutputPolygons",
+	"freeFormFilletOutputPolygons",
+	"loftPolys",
+	"planarTrimPolys",
+	"rebuildSurfacePolys",
+	"revolveOutputPolygons",
+	"squareSrfPolys",
+	"sweepOutputPolygons"
+};
+
+global proc int modelWithType( int $type )
+{
+	string $optVar;
+	int $val = $type;
+	global string $gModelWithTypeVars[];
+
+	if ($type == -1) {
+		// Query current value
+		$val = `optionVar -q $gModelWithTypeVars[0]`;
+		for ($optVar in $gModelWithTypeVars) {
+			if (`optionVar -q $optVar` != $val) return -1; // mixed values
+		}
+	} else if (!`optionVar -ex $gModelWithTypeVars[0]`) {
+		// Set default values (called from createPreferencesOptVars.mel)
+		for ($optVar in $gModelWithTypeVars) {
+			optionVar -default -category "Modeling.NURBS Output Geometry" -iv $optVar $type;
+		}
+	} else {
+		// Set value
+		for ($optVar in $gModelWithTypeVars) {
+			optionVar -iv $optVar $type;
+		}
+	}
+	return $val;
+}
+

@@ -1,0 +1,21 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//	Description:
+//		Set the visibility of the status line.
+//
+//	Arguments:
+//		$visible - Visibility for the status line.
+//
+global proc setStatusLineVisible(int $visible)
+{
+	int $currentlyVisible = isUIComponentVisible("Status Line");
+
+	if ($visible && !$currentlyVisible || !$visible && $currentlyVisible) {
+		toggleUIComponentVisibility "Status Line";
+	}
+}

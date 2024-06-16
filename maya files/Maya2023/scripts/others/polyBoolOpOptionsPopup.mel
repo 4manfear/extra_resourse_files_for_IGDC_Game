@@ -1,0 +1,40 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc polyBoolOpOptionsPopup( string $node )
+{
+	string $unionLabel = (uiRes("m_polyBoolOpOptionsPopup.kUnion"));
+	string $differenceLabel = (uiRes("m_polyBoolOpOptionsPopup.kDifferenece"));
+	string $intersectionLabel = (uiRes("m_polyBoolOpOptionsPopup.kIntersection"));
+
+	string $unionCommand = ("setAttr " + $node + ".operation 1");
+	string $differenceCommand = ("setAttr " + $node + ".operation 2");
+	string $intersectionCommand  = ("setAttr " + $node + ".operation 3");
+
+	int $value = `getAttr ($node + ".operation")`;
+
+	menuItem
+		-label $unionLabel
+		-command $unionCommand
+		-checkBox (1 == $value)
+		-radialPosition "W" 
+		;
+
+	menuItem
+		-label $differenceLabel
+		-command $differenceCommand
+		-checkBox (2 == $value)
+		-radialPosition "N" 
+		;
+
+	menuItem
+		-label $intersectionLabel
+		-command $intersectionCommand
+		-checkBox (3 == $value)
+		-radialPosition "E" 
+		;
+}

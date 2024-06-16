@@ -1,0 +1,52 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+
+//
+//
+//  Creation Date:	May 27, 1997
+//
+//  Procedure Name:
+//	AEnewtonFieldTemplate
+//
+//  Description Name;
+//	Creates the attribute editor controls for the newtonField Node
+//
+//  Input Value:
+//	nodeName 
+//
+//  Output Value:
+//	None
+// 
+
+
+//
+//  Procedure Name:
+//	AEnewtonFieldTemplate
+//
+
+global proc AEnewtonFieldTemplate ( string $nodeName )
+{
+	editorTemplate -beginScrollLayout;
+		AEtransformMain $nodeName;
+		editorTemplate -beginLayout (uiRes("m_AEnewtonFieldTemplate.kNewtonFieldAttributes"))  -collapse 0;
+			// include/call base class/node attributes
+			AEfieldCommon $nodeName;
+	
+			editorTemplate -addControl "minDistance";
+
+			editorTemplate -suppress "ownerMassData";
+		editorTemplate -endLayout;	
+		// include/call base class/node attributes
+		AEfieldNoScroll $nodeName;
+
+	editorTemplate -addExtraControls;
+	editorTemplate -endScrollLayout;
+
+
+
+}

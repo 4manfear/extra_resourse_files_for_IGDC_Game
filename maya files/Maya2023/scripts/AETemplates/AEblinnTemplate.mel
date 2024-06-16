@@ -1,0 +1,61 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:	May 16, 1997
+//
+//  Procedure Name:
+//	AEblinnTemplate
+//
+//  Description Name;
+//	Creates the attribute editor controls for the blinn Node
+//
+//  Input Value:
+//	nodeName 
+//
+//  Output Value:
+//	None
+// 
+
+
+global proc AEblinnTemplate ( string $nodeName )
+{
+	AEswatchDisplay $nodeName; 
+	editorTemplate -beginScrollLayout;
+		AElambertCommon $nodeName;
+
+		editorTemplate -beginLayout (uiRes("m_AEblinnTemplate.kSpecularShading")) -collapse 0;
+			editorTemplate -addControl "eccentricity";
+			editorTemplate -addControl "specularRollOff";
+
+			// include/call base class/node attributes
+			AEreflectCommonSpecularShading $nodeName;		
+
+			editorTemplate -addControl "reflectedAlpha";
+		editorTemplate -endLayout;
+
+		// include/call base class/node attributes
+		AEreflectCommon $nodeName;
+
+       if(isLegacyViewportEnabled())
+       {
+           //
+           // Add the Hardware texture section only if the user enable the legacy viewport
+           //
+            editorTemplate -beginLayout (uiRes("m_AEblinnTemplate.kHardwareTexturing")) -collapse true;
+                AEhardwareTextureTemplate $nodeName
+                    ("color transparency ambientColor incandescence "+
+                     "normalCamera diffuse translucence eccentricity "+
+                     "specularRollOff specularColor reflectivity "+
+                     "reflectedColor");
+            editorTemplate -endLayout;
+        }
+
+	editorTemplate -addExtraControls;
+	editorTemplate -endScrollLayout;
+}

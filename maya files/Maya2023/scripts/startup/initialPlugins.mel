@@ -1,0 +1,82 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+
+//
+//
+//  Creation Date:  May 1997
+//
+//  Description:
+//      This script dynamicly load's DSO's based on preferences
+//
+//  Input Arguments:
+//      None.
+//
+//  Return Value:
+//      None.
+//
+//  Note:
+//      None.
+// 
+
+{
+	if(`optionVar -q loadNURBS` || !`optionVar -ex loadNURBS`)
+	{
+		catch (`dynamicLoad libNurbsUISlice.so`);
+	}
+	if(`optionVar -q loadPolygons` || !`optionVar -ex loadPolygons`)
+	{
+		catch (`dynamicLoad libPolyUISlice.so`);
+	}
+
+	if(`optionVar -q loadAnimation` || !`optionVar -ex loadAnimation`)
+	{
+		catch (`dynamicLoad libAnimUISlice.so`);
+	}
+	if(`optionVar -q loadDeformers` || !`optionVar -ex loadDeformers`)
+	{
+		catch (`dynamicLoad libDeformUISlice.so`);
+	}
+	if(`optionVar -q loadKinematics` || !`optionVar -ex loadKinematics`)
+	{
+		catch (`dynamicLoad libKinUISlice.so`);
+	}
+
+	if(`optionVar -q loadRendering` || !`optionVar -ex loadRendering`)
+	{
+		catch (`dynamicLoad libRenderUISlice.so`);
+	}
+
+	if(`optionVar -q loadProjectManager` || !`optionVar -ex loadProjectManager`)
+	{
+		catch (`dynamicLoad libProjectSlice.so`);
+	}
+
+	if(`optionVar -q loadHyperGraph` || !`optionVar -ex loadHyperGraph`)
+	{
+		catch (`dynamicLoad libExplorerSlice.so`);
+	}
+
+//	catch (`dynamicLoad libJasperSlice.so`);
+
+	if(`optionVar -q loadSubdiv` || !`optionVar -ex loadSubdiv`)
+	{
+		catch (`dynamicLoad libSubdivEngine.so`);
+		catch (`dynamicLoad libSubdiv.so`);
+		catch (`dynamicLoad libSubdivUI.so`);
+	}
+	if(`optionVar -q loadDynamics` || !`optionVar -ex loadDynamics`)
+	{
+		catch (`dynamicLoad libDynUISlice.so`);
+	}
+	if ((`optionVar -q loadUrchin` || !`optionVar -ex loadUrchin`) ) {
+		catch (`dynamicLoad libUrchinSlice.so`);
+		catch (`dynamicLoad libUrchinUISlice.so`);
+	}
+	// Load plugin modules.  Ignore any errors produced.
+	catch ( `initialPluginLoad` );
+}

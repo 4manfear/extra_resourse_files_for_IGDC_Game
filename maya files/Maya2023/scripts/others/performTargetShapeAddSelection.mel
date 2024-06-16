@@ -1,0 +1,344 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  May 9, 2016
+//
+//  Description:
+//      This script provides an option box dialog for the BlendShapeAddSelectionAsTarget command.
+//
+//  Input Arguments:
+//      None.
+//
+//  Return Value:
+//      None.
+//
+
+//
+//  Procedure Name:
+//      setOptionVars
+//
+//  Description:
+//		Initialize the option values.
+//
+//  Input Arguments:
+//		Whether to set the options to default values.
+//
+//  Return Value:
+//      None.
+//
+proc setOptionVars(int $forceFactorySettings)
+{
+	optionVar -init $forceFactorySettings -category "Shape Editor.Add Selection as Target"
+		-fv seAddSelAsTgtTgtType 1
+		-iv seAddSelAsTgtCheckTop 1
+		-sv seAddSelAsTgtTransformName ""
+		;
+}
+
+//
+//  Procedure Name:
+//      BlendShapeAddSelectionAsTargetSetup
+//
+//  Description:
+//		Update the state of the option box UI to reflect the option values.
+//
+//  Input Arguments:
+//      parent               - Top level parent layout of the option box UI.
+//                             Required so that UI object names can be 
+//                             successfully resolved.
+//
+//	    forceFactorySettings - Whether the option values should be set to
+//                             default values.
+//
+//  Return Value:
+//      None.
+//
+global proc BlendShapeAddSelectionAsTargetSetup(string $parent, int $forceFactorySettings)
+{
+	setOptionVars($forceFactorySettings);
+	setParent $parent;
+
+	int $type=`optionVar -q seAddSelAsTgtTgtType`;
+	optionMenuGrp -e -sl $type seAddSelAsTgtTgtTypeList;
+
+	$val = `optionVar -query seAddSelAsTgtCheckTop`;
+	checkBoxGrp -edit -v1 $val seAddSelAsTgtTgtTopWidget;
+
+    $transformName = `optionVar -query seAddSelAsTgtTransformName`;
+	textFieldButtonGrp -edit -text $transformName seAddSelAsTgtTransformNameFBGrp;
+
+	seAddSelAsTgtDeformerModeCallBack();
+}
+
+//
+//  Procedure Name:
+//      seAddSelAsTgtDeformerModeCallBack
+//
+//  Description:
+//		Update state of seAddSelAsTgtTransformNameFBGrp by selection in seAddSelAsTgtTgtTypeList.
+//  Return Value:
+//      None.
+//
+global proc seAddSelAsTgtDeformerModeCallBack()
+{
+	int $selectItem = `optionMenuGrp -q -select seAddSelAsTgtTgtTypeList`;
+	if ($selectItem == 4) // transform space
+		textFieldButtonGrp -e -enable 1 seAddSelAsTgtTransformNameFBGrp;
+	else
+		textFieldButtonGrp -e -enable 0 seAddSelAsTgtTransformNameFBGrp;
+}
+
+//
+//  Procedure Name:
+//      seAddSelAsTgtTransformCallBack
+//
+//  Description:
+//		Update transform object
+//  Return Value:
+//      None.
+//
+global proc seAddSelAsTgtTransformCallBack(string $textFieldName)
+{
+    string $selection[] = `ls -sl -type "transform"`;
+	if(size($selection))
+		textFieldButtonGrp -e -text $selection[0] -forceChangeCommand $textFieldName;
+	else
+		print (uiRes("m_performTargetShapeAddSelection.kNoTransformSelected")) ;
+}
+
+//
+//  Procedure Name:
+//      BlendShapeAddSelectionAsTargetCallback
+//
+//  Description:
+//		Update the option values with the current state of the option box UI.
+//
+//  Input Arguments:
+//      parent - Top level parent layout of the option box UI.  Required so
+//               that UI object names can be successfully resolved.
+//	    doIt   - Whether the command should execute.
+//
+//  Return Value:
+//      None.
+//
+global proc BlendShapeAddSelectionAsTargetCallback(string $parent, int $doIt)
+{
+	setParent $parent;
+
+	int $type= `optionMenuGrp -q -select seAddSelAsTgtTgtTypeList`;
+	optionVar -intValue seAddSelAsTgtTgtType $type;
+
+	$val= `checkBoxGrp -q -v1 seAddSelAsTgtTgtTopWidget`;
+	optionVar -intValue seAddSelAsTgtCheckTop $val;
+
+	$transformName = `textFieldButtonGrp -q -text seAddSelAsTgtTransformNameFBGrp`;
+	optionVar -stringValue seAddSelAsTgtTransformName $transformName;
+
+
+	if ($doIt)
+	{
+		string $cmd = "performTargetShapeAddSelection 0";
+		eval($cmd);
+		addToRecentCommandQueue $cmd "BlendShapeAddSelectionAsTarget";
+	}
+}
+
+//
+//  Procedure Name:
+//      seAddSelAsTgtOptions
+//
+//  Description:
+//		Construct the option box UI.  Involves accessing the standard option
+//		box and customizing the UI accordingly.
+//
+//  Input Arguments:
+//      None.
+//
+//  Return Value:
+//      None.
+//
+proc seAddSelAsTgtOptions()
+{
+	// Name of the command for this option box 
+	//
+	string $commandName = "BlendShapeAddSelectionAsTarget";
+
+	// Build the option box "methods"
+	//
+	string $callback = ($commandName + "Callback");
+	string $setup = ($commandName + "Setup");
+	
+	//	Get the option box.
+	//
+	//  The value returned is the name of the layout to be used as
+	//	the parent for the option box UI.
+	//
+	string $layout = getOptionBox();
+	setParent $layout;
+
+	setOptionBoxCommandName($commandName);
+
+	setUITemplate -pushTemplate DefaultTemplate;
+	
+	waitCursor -state 1;
+
+	tabLayout -tabsVisible 0 -scrollable 1;
+
+	string $parent = `columnLayout -adjustableColumn 1`;
+
+	optionMenuGrp -enable 1 -label (uiRes("m_performTargetShapeAddSelection.kType"))
+	-changeCommand("seAddSelAsTgtDeformerModeCallBack")
+	seAddSelAsTgtTgtTypeList;
+	
+	menuItem -label (uiRes("m_performTargetShapeAddSelection.kAutomatic"));
+	menuItem -label (uiRes("m_performTargetShapeAddSelection.kObjectSpace"));
+	menuItem -label (uiRes("m_performTargetShapeAddSelection.kPDMTangentSpace"));
+	menuItem -label (uiRes("m_performTargetShapeAddSelection.kPDMTransformSpace"));
+	textFieldButtonGrp -label (uiRes("m_performTargetShapeAddSelection.kTransformName"))
+		-editable true -buttonLabel (uiRes("m_performTargetShapeAddSelection.kUseSelected"))
+		-text ""
+		-cw 3 100
+		-buttonCommand("seAddSelAsTgtTransformCallBack(\"seAddSelAsTgtTransformNameFBGrp\")") seAddSelAsTgtTransformNameFBGrp;
+	textFieldButtonGrp -e -enable 0 seAddSelAsTgtTransformNameFBGrp;
+
+	separator;
+
+	checkBoxGrp
+		-label "" 
+		-label1 (uiRes("m_performTargetShapeAddSelection.kCheckTopology")) 
+		-numberOfCheckBoxes 1
+		-v1 0
+		seAddSelAsTgtTgtTopWidget;
+	waitCursor -state 0;
+	
+	setUITemplate -popTemplate;
+
+	//	'Apply' button.
+	//
+	string $applyBtn = getOptionBoxApplyBtn();
+	button -edit
+		-command ($callback + " " + $parent + " " + 1)
+		$applyBtn;
+
+	//	'Save' button.
+	//
+	string $saveBtn = getOptionBoxSaveBtn();
+	button -edit 
+		-command ($callback + " " + $parent + " " + 0 + "; hideOptionBox")
+		$saveBtn;
+
+	//	'Reset' button.
+	//
+	string $resetBtn = getOptionBoxResetBtn();
+	button -edit 
+		-command ($setup + " " + $parent + " " + 1)
+		$resetBtn;
+
+	//	Set the option box title.
+	//
+	setOptionBoxTitle (uiRes("m_performTargetShapeAddSelection.kTitle"));
+
+	//	Customize the 'Help' menu item text.
+	//
+	setOptionBoxHelpTag( $commandName );
+
+	//	Set the current values of the option box.
+	//
+	eval (($setup + " " + $parent + " " + 0));	
+	
+	//	Show the option box.
+	//
+	showOptionBox();
+}
+
+
+//
+//  Procedure Name:
+//      assembleCmd
+//
+//  Description:
+//		Construct the command that will apply the option box values.
+//
+//  Input Arguments:
+//      None.
+//
+//  Return Value:
+//      None.
+//
+proc string assembleCmd()
+{
+	string $cmd = "";
+	string $bsNodeName = getBlendShapeForAddTarget();
+	if($bsNodeName != "")
+	{
+		int $top=`optionVar -q seAddSelAsTgtCheckTop`;
+		int $type=`optionVar -q seAddSelAsTgtTgtType`;
+		string $transform = "\"\"";
+		if($type == 4)//Transform Space, check joint
+		{
+			$transform = `optionVar -q seAddSelAsTgtTransformName`;
+			if($transform == "")
+			{
+				error((uiRes("m_performTargetShapeAddSelection.kNoJointSelected")));
+				return $cmd;
+			}
+		}
+		$cmd = "doBlendShapeAddSelectionAsTarget " + $bsNodeName + " " + $top + " " + $type + " " + $transform + " 0 1";
+	}
+	return $cmd;
+}
+
+//
+//  Procedure Name:
+//      performTargetShapeAddSelection
+//
+//  Description:
+//		Perform the BlendShapeAddSelectionAsTarget command using the corresponding 
+//		option values.  This procedure will also show the option box window if 
+//      necessary as well as construct the command string that will invoke the 
+//      targetShapeAdd command with the current option box values.
+//
+//  Input Arguments:
+//		0 - do the command
+//		1 - show the option box
+//		2 - return the drag command
+//
+global proc string performTargetShapeAddSelection (int $action)
+{
+	string $cmd = "";
+
+	switch ($action) {
+		case 0: // Execute the command
+			// Retrieve the option settings
+			//
+			setOptionVars (false);
+
+			// Get the command and print it in the command window
+			$cmd = `assembleCmd`;
+			
+			// Execute the command with the option settings
+			evalEcho($cmd);
+
+			break;
+		case 1:  // Do the option box
+			seAddSelAsTgtOptions;
+			break;
+		case 2: // Return the drag string
+			// Retrieve the option settings
+			//
+			setOptionVars (false);
+
+			// Get the command
+			$cmd = `assembleCmd`;
+
+			break;
+	}
+	return $cmd;
+}
+

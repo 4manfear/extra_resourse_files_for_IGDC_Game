@@ -1,0 +1,17 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//! This script is called on startup in order to ensure that all preferences are initialized
+//! It should only ever be called once. Prevention of double-calls is left to the individual preference initializers
+
+// Ghosting
+//
+python( "from maya.app.ghosting.ghosting_preferences import initialize_ghosting_preferences ; initialize_ghosting_preferences()" );
+
+// Blue Pencil
+//
+python( "from maya.plugin.bluepencil.bluePencilInitPrefs import bluePencil_preferences_initialize ; bluePencil_preferences_initialize()" );

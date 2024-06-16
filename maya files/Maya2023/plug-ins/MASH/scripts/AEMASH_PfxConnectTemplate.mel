@@ -1,0 +1,35 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc AEMASH_PfxConnectTemplate( string $nodeName )
+{
+
+    editorTemplate -beginScrollLayout;
+    python("import MASH.nodeHeaders; MASH.nodeHeaders.addHeader('" + $nodeName + "', 'kPfxNode', False)")
+    editorTemplate -endLayout;
+    
+    editorTemplate -beginLayout (getPluginResource("MASH", "kPfxNode")) -collapse 0;
+    editorTemplate  -label (getPluginResource("MASH", "kMain")) -addControl "enableMain";
+    editorTemplate  -label (getPluginResource("MASH", "kLeaf")) -addControl "enableLeaf";
+    editorTemplate  -label (getPluginResource("MASH", "kFlowers")) -addControl "enableFlowers";
+    editorTemplate -endLayout;
+
+
+    AEdependNodeTemplate $nodeName;
+
+    // include all other inherited attrs
+    editorTemplate -addExtraControls;
+    editorTemplate -endScrollLayout;
+
+    // Inheritted attributes
+    editorTemplate -suppress "caching";
+    editorTemplate -suppress "normal";
+    editorTemplate -suppress "frozen";
+    editorTemplate -suppress "nodeState";
+
+}
+

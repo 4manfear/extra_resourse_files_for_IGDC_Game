@@ -1,0 +1,69 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//  Procedure Name:
+//      defaultAmbientLight
+//
+//  Description:
+//		Construct the command that will apply the option box values.
+//
+//  Input Arguments:
+//      None.
+//
+//  Return Value:
+//      None.
+//
+global proc defaultAmbientLight(
+	float $intensity,
+	float $shade,
+	float $lightColourR,
+	float $lightColourG,
+	float $lightColourB,
+	string $useShadows,
+	float $shadowColourR,
+	float $shadowColourG,
+	float $shadowColourB,
+	string $shadowSamples
+	)
+{
+	string $cmd = "shadingNode -asLight ambientLight";
+	string $lightName = `eval $cmd`;
+
+	// setOptionVars(false);
+
+	$cmd = ("setAttr " + $lightName + ".intensity " + $intensity);
+	eval $cmd;
+	
+	$cmd = ("setAttr " + $lightName + ".ambientShade " + $shade);
+	eval $cmd;
+
+	$cmd = ("setAttr " + $lightName + ".colorR " + $lightColourR);
+	eval $cmd;
+	$cmd = ("setAttr " + $lightName + ".colorG " + $lightColourG);
+	eval $cmd;
+	$cmd = ("setAttr " + $lightName + ".colorB " + $lightColourB);
+	eval $cmd;
+
+	$cmd = ("setAttr " + $lightName + ".useRayTraceShadows " + $useShadows);
+	eval $cmd;
+
+	$cmd = ("setAttr " + $lightName + ".shadColorR " + $shadowColourR);
+	eval $cmd;
+	$cmd = ("setAttr " + $lightName + ".shadColorG " + $shadowColourG);
+	eval $cmd;
+	$cmd = ("setAttr " + $lightName + ".shadColorB " + $shadowColourB);
+	eval $cmd;
+
+	// cant do filter size, d.m. resolution, d.m. bias, either.
+	$cmd = ("setAttr "+$lightName+".shadowRays " + $shadowSamples);
+	eval $cmd;
+
+	select -r $lightName;
+
+	objectMoveCommand;
+}

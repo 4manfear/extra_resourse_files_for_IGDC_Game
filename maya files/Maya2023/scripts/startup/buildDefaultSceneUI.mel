@@ -1,0 +1,284 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//  Description:
+//		This script is executed when a file is opened.  It will create panels
+//		only if no panels exist.
+//
+//  Creation Date: 
+//
+
+global proc buildDefaultSceneUI() {
+	global string  	$gMainPane;
+
+	if (`paneLayout -exists $gMainPane`) {
+		string $panels[] = `getPanel -all`;
+		if (size($panels) == 0) {
+			//  
+			//  Currently no panels so use the new file panels configuration.
+			//
+			buildNewSceneUI;
+		} else {
+			//
+			//  Check that filters exist
+			//
+			string $filters[] = `ls -type objectFilter`;
+			if (size($filters) == 0) {
+				initDefaultFilters;
+			}
+
+			//
+			//  Init any panels that need it.
+			//
+			string $panels[] = `getPanel -all`;
+			string $panel;
+
+			for ($panel in $panels) {
+				if (`panel -q -ni $panel`) {
+					panel -e -init $panel;
+				}
+			}
+
+			//
+			//  get current state of the UI
+			//
+			sceneUIReplacement -update $gMainPane;
+
+			int    $menusOkayInPanels = `optionVar -q allowMenusInPanels`;
+			//
+			//	Initialize the Relationship Editor.
+			//
+			if (`exists relationshipEditor`) {
+				$panelLabel = localizedPanelLabel("Relationship Editor");
+				$panelName = 
+					`sceneUIReplacement 
+							 -getNextScriptedPanel"relationshipPanel" 
+							 $panelLabel`;
+				if ("" == $panelName) {
+					$panelName = `scriptedPanel -mbv $menusOkayInPanels
+									-unParent -type "relationshipPanel" 
+									-label $panelLabel`;
+				} else {
+					scriptedPanel -edit -label $panelLabel $panelName;
+				}
+			}
+
+			string $match, $relationshipEditorPanel = "";
+
+			//	Find the Relationship Editor panel.
+			//
+			string $allPanels[] = `getPanel -allPanels`;
+			for ($panel in $allPanels) {
+				$match = match("relationshipPanel", $panel);
+				if ("" != $match) {
+					$relationshipEditorPanel = $panel;
+					break;
+				}
+			}
+
+			//	Check if Set Editor or Shading Group Editor is one of the visible
+			//	panels.  If they are then replace them with the Relationship Editor.
+			//
+			$allPanels = `getPanel -allPanels`;
+			for ($panel in $allPanels) {
+				$match = match("setEditor", $panel);
+				if ("" != $match) {
+					warning (uiRes("m_buildDefaultSceneUI.kSetEditorWarn"));
+					if ("" != $relationshipEditorPanel) {
+						scriptedPanel -edit -replacePanel $panel $relationshipEditorPanel;
+					}
+					deleteUI -panel $panel;
+				}
+				$match = match("shadingGroupEditor", $panel);
+				if ("" != $match) {
+					warning (uiRes("m_buildDefaultSceneUI.kShadingGroupWarn"));
+					if ("" != $relationshipEditorPanel) {
+						scriptedPanel -edit -replacePanel $panel $relationshipEditorPanel;
+					}
+					deleteUI -panel $panel;
+				}
+			}
+			updatePanelLayoutFromCurrent( localizedPanelLabel("Current Layout") );
+
+			//
+			// Make sure Hypershade and Visor panels are present.
+			//
+			$menusOkayInPanels = `optionVar -q allowMenusInPanels`;
+			string $panelName, $editorName;
+
+			$panels = `getPanel -scriptType "hyperShadePanel"`;
+			if (`size($panels)` == 0) {
+				$panelName = 
+					`scriptedPanel 
+						-menuBarVisible $menusOkayInPanels 
+						-unParent 
+						-type "hyperShadePanel" 
+						-label (localizedPanelLabel("Hypershade"))`;
+			}
+			$panels = `getPanel -scriptType "visorPanel"`;
+			if (`size($panels)` == 0) {
+				$panelName = 
+					`scriptedPanel 
+						-menuBarVisible $menusOkayInPanels 
+						-unParent 
+						-type "visorPanel" 
+						-label (localizedPanelLabel("Visor"))`;
+				$editorName = ($panelName+"VisorEd");
+				hyperGraph -e 
+					-graphType "Visor" 
+					-dn defaultShaderList
+					$editorName;
+			}
+
+            // Make sure the Node Editor panel exists
+			$panels = `getPanel -scriptType "nodeEditorPanel"`;
+			if (`size($panels)` == 0) {
+				$panelName = 
+					`scriptedPanel 
+						-mbv $menusOkayInPanels 
+						-unParent 
+						-type "nodeEditorPanel" 
+						-label (localizedPanelLabel("Node Editor"))`;
+			}
+
+            // Make sure the Create Node panel exists
+			$panels = `getPanel -scriptType "createNodePanel"`;
+			if (`size($panels)` == 0) {
+				$panelName = 
+					`scriptedPanel 
+						-mbv $menusOkayInPanels 
+						-unParent 
+						-type "createNodePanel" 
+						-label (localizedPanelLabel("Create Node"))`;
+			}
+
+			// Make sure the Shape Editor panel exists
+			if (`exists shapePanel`) {
+				$shapePanelLabel = localizedPanelLabel("Shape Editor" );
+				$shapePanelName = `sceneUIReplacement -getNextPanel "shapePanel" $shapePanelLabel`;
+				if ("" == $shapePanelName) {
+					$shapePanelName = `shapePanel -mbv $menusOkayInPanels -unParent -label $shapePanelLabel`;
+				} else {
+					$label = `panel -q -label $shapePanelName`;
+					shapePanel -edit -label $shapePanelLabel $shapePanelName;
+				}
+			}
+			// Make sure the Pose Editor panel exists
+			if (`exists posePanel`) {
+				$posePanelLabel = localizedPanelLabel("Pose Editor" );
+				$posePanelName = `sceneUIReplacement -getNextPanel "posePanel" $posePanelLabel`;
+				if ("" == $posePanelName) {
+					$posePanelName = `posePanel -mbv $menusOkayInPanels -unParent -label $posePanelLabel`;
+				} else {
+					$label = `panel -q -label $posePanelName`;
+					posePanel -edit -label $posePanelLabel $posePanelName;
+				}
+			}
+
+			// Make sure the profiler panel exists
+			$panels = `getPanel -scriptType "profilerPanel"`;
+			if (`size($panels)` == 0) {
+				$panelName = 
+					`scriptedPanel 
+						-mbv $menusOkayInPanels 
+						-unParent 
+						-type "profilerPanel" 
+						-label (localizedPanelLabel("Profiler Tool"))`;
+			}
+
+			// Make sure the time editor exists.
+			$panels = `getPanel -scriptType "timeEditorPanel"`;
+			if (`size($panels)` == 0) {
+				$panelName = `scriptedPanel -mbv $menusOkayInPanels 
+								-unParent -type "timeEditorPanel" -label (localizedPanelLabel("Time Editor"))`;
+			}
+			
+			// Make sure the clip editor exists.
+			$panels = `getPanel -scriptType "clipEditorPanel"`;
+			if (`size($panels)` == 0) {
+				$panelName = `scriptedPanel -mbv $menusOkayInPanels 
+								-unParent -type "clipEditorPanel" -label (localizedPanelLabel("Trax Editor"))`;
+			}
+
+			// Make sure the sequence editor exists.
+			$panels = `getPanel -scriptType "sequenceEditorPanel"`;
+			if (`size($panels)` == 0) {
+				$panelName = `scriptedPanel -mbv $menusOkayInPanels 
+								-unParent -type "sequenceEditorPanel" -label (localizedPanelLabel("Camera Sequencer"))`;
+			}
+
+			// Make sure the Reference Editor panel exists.
+			//
+			$panels = `getPanel -scriptType "referenceEditorPanel"`;
+			if (`size($panels)` == 0) {
+				$panelName = `scriptedPanel -mbv $menusOkayInPanels
+								-unParent -type "referenceEditorPanel"
+								-label (localizedPanelLabel("Reference Editor"))`;
+			}
+
+			// Turn off isolate select in all model panels
+			$panels = `getPanel -type modelPanel`;
+			for ($panel in $panels) {
+				modelEditor -edit -viewSelected false $panel;
+				editor -edit -lck -mainListConnection "activeList" $panel;
+			}
+
+			// Make sure the Script Editor panel exists.
+			//
+			$panels = `getPanel -scriptType "scriptEditorPanel"`;
+			if (`size($panels)` == 0) {
+				$panelName = `scriptedPanel -mbv $menusOkayInPanels
+								-unParent -type "scriptEditorPanel"
+								-l "Script Editor"`;
+			}
+
+
+			if (`exists outlinerPanel`) {
+				// Redraw the toggled outliner
+				// 
+				global string $gToggledOutlinerLabel;
+				string $outlinerPanel = `sceneUIReplacement -getNextPanel "outlinerPanel" $gToggledOutlinerLabel`;
+
+				while((size($outlinerPanel) > 0) && (`outlinerPanel -q -label $outlinerPanel` != $gToggledOutlinerLabel))
+				{
+					$outlinerPanel = `sceneUIReplacement -getNextPanel "outlinerPanel" $gToggledOutlinerLabel`;
+				}
+				
+				if ((size($outlinerPanel) == 0) || !(`outlinerPanel -query -exists $outlinerPanel`)) {
+					global int $gOutlinerPanelNeedsInit;
+					$gOutlinerPanelNeedsInit = true;
+					initOutlinerPanel();
+				} else if ((size($outlinerPanel) != 0) && (`outlinerPanel -query -exists $outlinerPanel`)){
+					attachOutlinerToForm();
+				}
+
+			}
+		}
+        filterUIRestoreAllSavedSettings();
+	}
+
+	// reset playblast optionVars
+	//
+	optionVar -default -category "Animation.Playback.Playblast" -sv playblastFile "playblast";
+	string $filename = basenameEx(`file -q -sn`);
+	if ($filename != "") optionVar -sv playblastFile $filename;
+
+	if (`isTrue MayaCreatorExists` && `scriptedPanelType -exists dynPaintScriptedPanelType`) {
+		//
+		//  Make sure that we have a Creator panel.
+		//
+		string $result[] = `getPanel -scriptType "dynPaintScriptedPanelType"`;
+		if ( size( $result ) == 0 ) {
+			//  
+			//  Need to create a new one.
+			//
+			string $panelName = `scriptedPanel	-unParent -type "dynPaintScriptedPanelType" -label (localizedPanelLabel("Paint Effects")) dynPaintScriptedPanel`;
+			dynPaintPanel $panelName;
+		}
+	}
+}

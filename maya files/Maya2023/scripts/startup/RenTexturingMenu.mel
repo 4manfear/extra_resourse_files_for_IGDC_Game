@@ -1,0 +1,65 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+// Creation Date:  31 January 2001
+//
+//  Procedure Name:
+//      RenTexturingMenu
+//
+//  Description:
+//		Create the RENDERING->Texturing menu
+//
+//  Input Arguments:
+//      parent to parent the menu to.
+//
+//  Return Value:
+//      None.
+//
+
+global proc RenTexturingMenu( string $parent )
+{
+	setParent -menu $parent;
+	if( `menu -q -ni $parent` != 0 ) {
+		//
+		//	Menu is built already - just return
+		//
+		return;
+	}
+
+	// Painting
+	menuItem -d true -dividerLabel (uiRes("m_RenTexturingMenu.kTexturingPainting"));
+	
+	// 3D Paint Tool.
+	string $cmd = "Art3dPaintTool";
+	menuItem -rtc $cmd art3dPaintItem;
+		$cmd = "Art3dPaintToolOptions";
+		menuItem -optionBox true -rtc $cmd art3dPaintDialogItem;
+	
+	// PSD
+	menuItem -d true -dividerLabel (uiRes("m_RenTexturingMenu.kTexturingPSD"));
+	
+	menuItem -rtc "CreatePSDTextureItem" createPsdTextureItem;
+
+	menuItem -rtc "EditPSDTextureItem" editPsdTextureItem;
+
+	menuItem -rtc "UpdatePSDTextureItem" updatePsdTextureItem;
+
+	// Projection
+	menuItem -d true -dividerLabel (uiRes("m_RenTexturingMenu.kTexturingProjection"));
+	
+	//  Reference Objects
+	refObjFeature();
+	
+	// Nurbs
+	menuItem -d true -dividerLabel (uiRes("m_RenTexturingMenu.kTexturingNurbs"));
+
+	menuItem -rtc "NURBSTexturePlacementTool" texturePlacementItem;
+		menuItem -optionBox true -rtc "NURBSTexturePlacementToolOptions" texturePlacementDialogItem;
+
+}

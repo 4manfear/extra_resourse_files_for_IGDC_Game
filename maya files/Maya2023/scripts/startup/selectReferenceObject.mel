@@ -1,0 +1,26 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc selectReferenceObject()
+//
+// Description
+//
+//	Looks at the selection list for the first piece of geometry
+//	and selects the reference object for that piece of geometry,
+//	if it exists.
+//
+//
+{
+	string $selectedObjects[] = `ls -sl -type geometryShape`;
+	string $firstObj = $selectedObjects[0];
+
+	string $connectedNode[] = `listConnections ($firstObj + ".referenceObject")`;
+
+	if( size($connectedNode) >= 1 ) {
+		select $connectedNode[0];
+	} 
+}

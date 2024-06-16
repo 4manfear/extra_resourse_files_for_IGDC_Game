@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<toolclips ui="ui/ToolClipUI.qml" simple="ui/SimpleTooltip.qml" locale="zh_CN">
+  <toolclip key="nexPowerBtn" title="激活建模工具包" help="TC-nexPowerBtn">
+    <text>启用建模工具包的选择和变换工具。</text>
+  </toolclip>
+  <toolclip key="nexbevelBtn" title="倒角工具" help="TC-nexbevelBtn">
+    <text>将选定多边形的组件展开到新面。 
+Shift + 鼠标左键：选项</text>
+    <expanded>
+      <resourcelist>
+        <image location="../Resources/MTK_Bevel.png">倒角边</image>
+        <link location="TC-Bevel-polygon-edges-and-faces">倒角多边形边和面</link>
+      </resourcelist>
+    </expanded>
+  </toolclip>
+  <toolclip key="nexbridgeBtn" title="桥接工具" help="TC-nexbridgeBtn">
+    <text>在选定边或面之间创建桥接面。
+Shift + 鼠标左键：选项</text>
+    <expanded>
+      <resourcelist>
+        <image location="../Resources/MTK_Bridge.png">边之间的桥接</image>
+        <link location="TC-Bridge-between-border-edges">边界边之间的桥接</link>
+      </resourcelist>
+    </expanded>
+  </toolclip>
+  <toolclip key="nexweldBtn" title="目标焊接工具" help="TC-nexweldBtn">
+    <text>将两条边或两个顶点合并为单个组件。</text>
+    <expanded>
+      <resourcelist>
+        <image location="../Resources/MTK_TargetWeld.png">焊接顶点</image>
+        <link location="TC-Merge-polygon-components">合并多边形组件</link>
+      </resourcelist>
+    </expanded>
+  </toolclip>
+  <toolclip key="nexextrudeBtn" title="挤出工具" help="TC-nexextrudeBtn">
+    <text>从现有面、边或顶点拉新多边形。
+Shift + 鼠标左键：选项</text>
+    <expanded>
+      <resourcelist>
+        <image location="../Resources/MTK_Extrude.png">挤出面</image>
+        <link location="TC-Extrude-a-polygon-face-edge-or-vertex">挤出多边形的面、边或顶点</link>
+      </resourcelist>
+    </expanded>
+  </toolclip>
+  <toolclip key="nexquaDrawBtn" title="四边形绘制工具" help="TC-nexquaDrawBtn">
+    <text>基于实时引用网格的功能创建和细化新拓扑。</text>
+    <expanded>
+      <default-resource index="1" />
+      <resourcelist>
+        <video location="QuadDraw_MakeLive.webm">设置引用曲面</video>
+        <video location="QuadDraw_Drop.webm">创建四边形</video>
+        <video location="QuadDraw_ExtendEdges.webm">延伸边</video>
+        <video location="QuadDraw_Weld.webm">自动焊接组件</video>
+        <image location="../Resources/QuadDraw_Relax.png">松弛顶点</image>
+        <link location="TC-Quad-Draw-Tool">四边形绘制工具</link>
+        <link location="TC-Retopologize-a-mesh-with-Quad-Draw">使用四边形绘制重新拓扑网格</link>
+        <link location="TC-Quad-Draw-Tool-hotkeys">四边形绘制工具热键</link>
+      </resourcelist>
+    </expanded>
+  </toolclip>
+  <toolclip key="nexconnectBtn" title="连接工具" help="TC-Connect-Tool">
+    <text>通过在多边形组件之间插入边来连接多边形组件。</text>
+    <expanded>
+      <resourcelist>
+        <image location="../Resources/MTK_Connect.png">连接组件</image>
+        <link location="TC-Add-edges-between-polygon-components">在多边形组件之间添加边</link>
+      </resourcelist>
+    </expanded>
+  </toolclip>
+  <toolclip key="nexcutBtn" title="多切割工具" help="TC-Multi-Cut-Tool">
+    <text>用于在多边形上进行切割、切片和插入边的工具。</text>
+    <expanded>
+      <default-resource index="1" />
+      <resourcelist>
+        <image location="../Resources/MultiCut_Slice.png">对网格进行切片</image>
+        <image location="../Resources/MultiCut_Cut.png">切割面</image>
+        <link location="TC-Slice-a-mesh-with-the-Multi-Cut-Tool">使用多切割工具对网格进行切片</link>
+        <link location="TC-Cut-faces-with-the-Multi-Cut-Tool">使用多切割工具切割面</link>
+      </resourcelist>
+    </expanded>
+  </toolclip>
+  <toolclip key="nexSymLabel" title="对称" help="TC-Symmetry">
+    <text>激活对称。</text>
+    <expanded>
+      <resourcelist>
+        <video location="Symmetry_ActivateTopo.webm">激活拓扑对称</video>
+        <link location="TC-Symmetrical-editing">对称编辑</link>
+        <link location="TC-Activate-or-deactivate-symmetry">激活或取消激活对称</link>
+        <link location="TC-Edit-multiple-shells-with-topological-symmetry">使用拓扑对称编辑多个壳</link>
+        <link location="TC-Edit-a-mesh-with-topological-symmetry">使用拓扑对称编辑网格</link>
+      </resourcelist>
+    </expanded>
+  </toolclip>
+  <toolclip key="nexSymPopupButton" title="对称" help="TC-nexSymPopupButton">
+    <text>激活对称。</text>
+    <expanded>
+      <resourcelist>
+        <video location="Symmetry_ActivateTopo.webm">激活拓扑对称</video>
+        <link location="TC-Symmetrical-editing">对称编辑</link>
+        <link location="TC-Activate-or-deactivate-symmetry">激活或取消激活对称</link>
+        <link location="TC-Edit-multiple-shells-with-topological-symmetry">使用拓扑对称编辑多个壳</link>
+        <link location="TC-Edit-a-mesh-with-topological-symmetry">使用拓扑对称编辑网格</link>
+		</resourcelist>
+    </expanded>
+  </toolclip>
+  <toolclip key="nexSymTextField" title="对称" help="TC-nexSymTextField">
+    <text>激活对称。</text>
+    <expanded>
+      <resourcelist>
+        <video location="Symmetry_ActivateTopo.webm">激活拓扑对称</video>
+        <link location="TC-Symmetrical-editing">对称编辑</link>
+        <link location="TC-Activate-or-deactivate-symmetry">激活或取消激活对称</link>
+        <link location="TC-Edit-multiple-shells-with-topological-symmetry">使用拓扑对称编辑多个壳</link>
+        <link location="TC-Edit-a-mesh-with-topological-symmetry">使用拓扑对称编辑网格</link>
+      </resourcelist>
+    </expanded>
+  </toolclip>
+  <toolclip key="nextranConstLabel" title="变换约束" help="TC-nextranConstLabel">
+    <text>限制选定网格的边或曲面的变换。 </text>
+  </toolclip>
+  <toolclip key="nextranConstPopupButton" title="变换约束" help="TC-nextranConstPopupButton">
+    <text>限制选定网格的边或曲面的变换。 </text>
+  </toolclip>
+  <toolclip key="nextranConstTextField" title="变换约束" help="TC-nextranConstTextField">
+    <text>限制选定网格的边或曲面的变换。 </text>
+  </toolclip>
+  <toolclip key="nexselConstLabel" title="选择约束" help="TC-nexselConstLabel">
+    <text>用于过滤当前选定对象的条件。</text>
+  </toolclip>
+  <toolclip key="nexselConstField" title="选择约束" help="TC-nexselConstField">
+    <text>用于过滤当前选定对象的条件。</text>
+  </toolclip>
+  <toolclip key="nexselConstPopupButton" title="选择约束" help="TC-nexselConstPopupButton">
+    <text>用于过滤当前选定对象的条件。</text>
+  </toolclip>
+  <toolclip key="nexselConstTextField" title="选择约束" help="TC-nexselConstTextField">
+    <text>用于过滤当前选定对象的条件。</text>
+  </toolclip>
+  <toolclip key="transformPivotBtn" title="编辑枢轴(Edit Pivot)">
+    <text>自定义对对象/组件进行旋转/缩放时所围绕的枢轴点。</text>
+    <expanded>
+      <resourcelist>
+        <video location="anim_pivot.webm">更改枢轴</video>
+        <video location="anim_pivot_hotkeys.webm">使用热键放置或对准枢轴</video>
+        <link location="files/GUID-150B390E-840B-4FE3-B8E9-8DEBCE7CEC97">更改枢轴点</link>
+      </resourcelist>
+    </expanded>
+  </toolclip>
+</toolclips>

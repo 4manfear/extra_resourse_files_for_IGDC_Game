@@ -1,0 +1,36 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//  Procedure Name:
+//      nurbsToSubdivCallback
+//
+//  Description:
+//		Update the option values with the current state of the option box UI.
+//
+//  Input Arguments:
+//      parent - Top level parent layout of the option box UI.  Required so
+//               that UI object names can be successfully resolved.
+//
+//		doIt   - Whether the command should execute.
+//
+//  Return Value:
+//      None.
+//
+
+global proc nurbsToSubdivCallback( string $parent, int $doIt )
+{
+    setParent $parent;
+
+	// Right now, no options, so...
+
+	if( $doIt ) {
+		nurbsToSubdivPreset;
+		addToRecentCommandQueue "nurbsToSubdivPreset" "Create Subdiv";
+	}
+}
+

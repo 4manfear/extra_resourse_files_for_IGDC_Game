@@ -1,0 +1,34 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+// Description:  This procedure is called to substitute all the
+//      substring in the $originalString which matches the $pattern,
+//      and replace them using the $replaceString.
+//
+// NOTE: This is not a perfect "substituteAll" procedure.  Currently,
+//       it assumes that the $replaceString does not match the
+//       given $pattern.
+//
+global proc string substituteAll(
+    string $pattern, string $originalString, string $replaceString)
+{
+    int $done = false;
+    string $intermediateString = $originalString;
+    string $newString = $originalString;
+    while (!$done)
+    {
+        $intermediateString = 
+            `substitute $pattern $newString $replaceString`;
+
+        if ($intermediateString == $newString)
+        {
+            $done = true;
+        }
+        $newString = $intermediateString;
+    }
+    return $newString;
+}

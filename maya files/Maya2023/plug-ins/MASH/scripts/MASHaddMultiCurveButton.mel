@@ -1,0 +1,120 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//  Procedure Name:
+//  MASHaddMultiCurveButton
+//
+//  Description;
+//  Adds the curve drag and drop widget.
+//
+
+global proc MASHaddMultiCurveButton ( string $attr )
+{
+    string $nodeName[];
+    tokenize($attr, ".", $nodeName);
+
+    button -label "Add Curve(s)"  -c ("mashCurveButtonCMDS " + $nodeName[0] + " 1")
+    setCurveMASHButton;
+
+
+    separator -w 100 -h 5 -hr 1 -st "none";
+}
+
+global proc MASHaddMultiCurveButtonEdit ( string $attr )
+{
+    string $nodeName[];
+    tokenize($attr, ".", $nodeName);
+
+    button -e -c ("mashCurveButtonCMDS " + $nodeName[0] + " 1")
+    setCurveMASHButton;
+
+}
+
+global proc MASHaimCurveButton ( string $attr )
+{
+    string $nodeName[];
+    tokenize($attr, ".", $nodeName);
+
+    button -label "Add Aim Curve"  -c ("mashCurveButtonCMDS " + $nodeName[0] + " 3")
+    setAimCurveMASHButton;
+
+
+    separator -w 100 -h 5 -hr 1 -st "none";
+}
+
+global proc MASHaimCurveButtonEdit ( string $attr )
+{
+    string $nodeName[];
+    tokenize($attr, ".", $nodeName);
+
+    button -e -c ("mashCurveButtonCMDS " + $nodeName[0] + " 3")
+    setAimCurveMASHButton;
+
+}
+
+global proc mashCurveButtonCMDS (string $nodeName, int $whichCMD) {
+    if ($whichCMD == 1) {
+        string $filter[] = `filterExpand -sm 9`;
+
+
+        if (size($filter) > 0) {
+
+            for ( $i = 0; $i < size($filter); $i++) {
+
+
+                string $shape[] = `listRelatives -s $filter[$i]`;
+
+                int $index = getNextFreeMultiIndex( ($nodeName+".inCurves"), 0 );
+
+                connectAttr -force ($shape[0]+".worldSpace[0]") ($nodeName+".inCurves[" + $index + "]");
+                MASHinViewMessage("Curve connected.", "Info");
+
+            }
+        }
+
+        else {
+
+            MASHinViewMessage("Please select a curve.", "Warning");
+
+        }
+    } else if ($whichCMD == 2) {
+
+    string $filter[] = `filterExpand -sm 9`;
+
+        if (size($filter) > 0) {
+            string $shape[] = `listRelatives -s $filter[0]`;
+
+            connectAttr -force ($shape[0]+".worldSpace[0]") ($nodeName+".inputCurve");
+            MASHinViewMessage("Curve connected.", "Info");
+            }
+        else {
+
+            MASHinViewMessage("Please select a curve.", "Warning");
+
+        }
+
+    } else if ($whichCMD == 3) {
+
+    string $filter[] = `filterExpand -sm 9`;
+
+        if (size($filter) > 0) {
+            string $shape[] = `listRelatives -s $filter[0]`;
+
+            connectAttr -force ($shape[0]+".worldSpace[0]") ($nodeName+".aimCurve");
+            setAttr ($nodeName+".curveRoll") 1.0;
+            MASHinViewMessage("Aim curve connected.", "Info");
+            }
+        else {
+
+            MASHinViewMessage("Please select a curve.", "Warning");
+
+        }
+
+    }
+    evalDeferred("updateAE " + $nodeName);
+}

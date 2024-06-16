@@ -1,0 +1,47 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+// Returns an array of the selected blends
+//
+global proc string [] getSelectedBlends()
+{
+	string $selBlends[] = `ls -sl -type animBlend`;	
+	return $selBlends;
+}
+
+//
+// Returns an array of the selected blends
+//
+global proc string [] getSelectedCacheBlends(string $cacheClip)
+{
+	string $selCacheClips[];
+	if(size($cacheClip)==0)
+		 $selCacheClips = `ls -sl -type cacheFile`;
+	else
+		$selCacheClips[0] = $cacheClip;
+	string $selCacheBlends[];
+	for( $selCacheClip in $selCacheClips)
+	{
+		string $selBlends[] = `listConnections -type cacheBlend $selCacheClip`;
+		for($selBlend in $selBlends){ 
+			int $existInList = false;
+			for($selCacheBlend in $selCacheBlends){
+				if($selBlend == $selCacheBlend){
+				  $existInList = true;
+				  break;
+				}
+			}
+			if(!$existInList)
+				$selCacheBlends[size($selCacheBlends)] = $selBlend;			
+		}
+	}				
+	 
+	return $selCacheBlends;
+}
+
+

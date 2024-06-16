@@ -1,0 +1,65 @@
+#ifndef _SOFTSHADOWS_COMMON_FXH_
+#define _SOFTSHADOWS_COMMON_FXH_
+#ifdef EVSM
+uniform vec2 gExpFactor;
+#endif
+uniform mat4 gWXf : World;
+uniform mat4 gWVPXf : WorldViewProjection;
+uniform int gShadowMapSize = 512;
+attribute VS_INPUT_ScreenQuad
+{
+vec3 Pos : POSITION;
+vec2 UV : TEXCOORD0;
+}
+attribute VS_TO_PS_ScreenQuad
+{
+vec2 VSUV : TEXCOORD0;
+}
+GLSLShader VS_ScreenQuad
+{
+void main ()
+{
+VSUV = UV;
+gl_Position = gWVPXf*vec4(Pos, 1.0);
+}
+}
+#endif // _SOFTSHADOWS_COMMON_FXH_
+uniform texture2D gDepthMapTex;
+uniform sampler2D gDepthMapSamp = sampler_state
+{
+texture = <gDepthMapTex>;
+};
+attribute pixelOut {
+vec4 colorOut:COLOR0;
+}
+GLSLShader PS_ShadowMap
+{
+void main()
+{
+float depth = texture2D(gDepthMapSamp, VSUV).r;
+vec4 oColor=vec4(0.0,0.0,0.0,0.0);
+#ifdef EVSM
+oColor.x =  exp( gExpFactor.x * depth);
+oColor.y = oColor.x * oColor.x;
+oColor.z = -exp(-gExpFactor.y * depth);
+oColor.w = oColor.z * oColor.z;
+#else
+oColor.x = depth;
+oColor.y = oColor.x * oColor.x;
+oColor.zw = vec2( 0.0, 0.0 );
+#endif
+#if GL_ES && SHADER_VERSION == 2
+gl_FragColor = oColor;
+#else
+colorOut = oColor;
+#endif
+}
+}
+technique ShadowMap_Main
+{
+pass p0
+{
+VertexShader (in VS_INPUT_ScreenQuad, out VS_TO_PS_ScreenQuad) = VS_ScreenQuad;
+PixelShader (in VS_TO_PS_ScreenQuad, out pixelOut) = PS_ShadowMap;
+}
+}

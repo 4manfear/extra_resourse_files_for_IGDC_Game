@@ -1,0 +1,141 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+// ===========================================================================
+//
+//  Procedure Name:
+//      texSnapShells
+//
+//  Description:
+//      UV workflow function used for snap UV shells to the default UV range
+//      boundaries (9 $directions - top, bottom left, center, right, etc...)
+//
+//  Input Arguments
+//      direction            - String   - What cardinal direction to snap to.
+//
+//  Return Value:
+//      None.
+//
+//  Notes:
+//  This script is part of the implementation of Nightshade UV Editor into
+//  Autodesk Maya. For testing purposes, keep the source commands at the top
+//  and then just source this entire script.
+//
+// ===========================================================================
+
+
+global proc texSnapShells(string $direction)
+{
+	// Get original selection and retrieve the selected UV shells
+	string $selection[] = `ls -selection`;
+	string $compSelType = `getComponentMask`;
+
+	string $selectedUVs[] = `filterExpand -selectionMask 35`;
+	string $selectedFaces[] = `filterExpand -selectionMask 34`;
+	if (size($selectedUVs) == 0 && size($selectedFaces) == 0)
+	{
+		// If Convert Selection is ON, try to convert the current selection to uvs.
+		int $val = `optionVar -q polyAutoConvertAction`;
+		if ( 1 == $val ) {
+			PolySelectConvert 4;
+			$selectedUVs = `filterExpand -ex false -sm 35`;
+		}
+
+		// Check if the set of uvs is still empty.
+		if (size($selectedUVs) == 0) {
+			error((uiRes("m_texSnapShells.kNoUVsSelected")));
+			return;
+		}
+	}
+
+	polySelectBorderShell(0);
+	float $uvBox[] = `polyEvaluate -boundingBoxComponent2d`;
+
+	int $snapMinU = `optionVar -q polyUVsnapMinU`;
+	int $snapMaxU = `optionVar -q polyUVsnapMaxU`;
+	int $snapMinV = `optionVar -q polyUVsnapMinV`;
+	int $snapMaxV = `optionVar -q polyUVsnapMaxV`;
+
+	// Calc distances
+	float $distRight = ($snapMaxU - $uvBox[1]);
+	float $distLeft = ($snapMinU - $uvBox[0]);
+	float $distBottom = ($snapMinV - $uvBox[2]);
+	float $distTop = ($snapMaxV - $uvBox[3]);
+	float $distCenterU = ($distLeft + $distRight) * 0.5;
+	float $distCenterV = ($distTop + $distBottom) * 0.5;
+
+	// Center
+	if ($direction == "center"){
+		polyEditUV
+			-uValue $distCenterU
+			-vValue $distCenterV
+		;
+
+	// Top left
+	} else if ($direction == "topLeft"){
+		polyEditUV 
+			-uValue $distLeft
+			-vValue $distTop
+		;
+
+	// Top
+	} else if ($direction == "top"){
+		polyEditUV 
+			-uValue $distCenterU
+			-vValue $distTop
+		;
+
+	// Top right
+	} else if ($direction == "topRight"){
+		polyEditUV 
+			-uValue $distRight
+			-vValue $distTop
+		;
+
+	// Left
+	} else if ($direction == "left"){
+		polyEditUV 
+			-uValue $distLeft
+			-vValue $distCenterV
+		;
+
+	// Right
+	} else if ($direction == "right"){
+		polyEditUV 
+			-uValue $distRight
+			-vValue $distCenterV
+		;
+
+	// Bottom left
+	} else if ($direction == "bottomLeft"){
+		polyEditUV 
+			-uValue $distLeft
+			-vValue $distBottom
+		;
+
+	// Bottom
+	} else if ($direction == "bottom"){
+		polyEditUV 
+			-uValue $distCenterU
+			-vValue $distBottom
+		;
+
+	// Bottom right
+	} else if ($direction == "bottomRight"){
+		polyEditUV 
+			-uValue $distRight
+			-vValue $distBottom
+		;
+	}
+
+	//restore the original component mask	
+	setComponentMask($compSelType); 
+
+	//select the original selection
+	select -replace $selection;
+}
+

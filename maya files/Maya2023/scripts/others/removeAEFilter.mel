@@ -1,0 +1,70 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc removeAEFilter( string $nodeType )
+//
+//	Description:
+//		A callback to remove a type based filter for the AE
+//
+{
+	string $badFilterType = (uiRes("m_removeAEFilter.kBadFilterType"));
+	if( !`optionVar -exists activeAEShowFilterTypes` ){
+		warning($badFilterType);
+		return;
+	}
+	if( $nodeType == "" ){
+		// Is user sure she wants to remove all filter types?
+		//
+		string $yes = (uiRes("m_removeAEFilter.kYes"));
+		string $cancel = (uiRes("m_removeAEFilter.kCancel"));
+		string $result =  `confirmDialog -message (uiRes("m_removeAEFilter.kRemoveAll"))
+			-button $yes -button $cancel -defaultButton $yes`;
+		if( $result == $yes ){
+			optionVar -sa activeAEShowFilterTypes;
+			optionVar -ia activeAEShowFilterStates;
+		}
+	} else {
+		string $filterTypes[] = `optionVar -query activeAEShowFilterTypes`;
+		if( !stringArrayContains( $nodeType, $filterTypes ) ){
+			warning($badFilterType);
+			return;
+		}
+		// Remove from filter list
+		//
+		int $numFilterTypes = size($filterTypes);
+		int $numFilterStates = 0;
+		if( `optionVar -exists activeAEShowFilterStates` ){
+			$numFilterStates = `optionVar -arraySize activeAEShowFilterStates`;
+		}
+		int $filterIndex = 1;
+		while( $filterIndex < $numFilterTypes ){
+			if( $filterTypes[$filterIndex] == $nodeType ){
+				optionVar -removeFromArray activeAEShowFilterTypes $filterIndex;
+				if( $filterIndex < $numFilterStates ){
+					optionVar -removeFromArray activeAEShowFilterStates $filterIndex;
+				}
+				if( $numFilterTypes == 2 ){
+					// This is the last remaining filter type, remove "other", aka
+					// entry 0, as well
+					//
+					optionVar -removeFromArray activeAEShowFilterTypes 0;
+					if( $numFilterStates > 0 ){
+						optionVar -removeFromArray activeAEShowFilterStates 0;
+					}
+				}
+				break;
+			}
+			$filterIndex++;
+		}
+	}
+	updateAEshowAllButton();
+	global string $gAEFocusNode;
+	if( $gAEFocusNode != "" ){
+		updateAE $gAEFocusNode;
+	}
+}
+

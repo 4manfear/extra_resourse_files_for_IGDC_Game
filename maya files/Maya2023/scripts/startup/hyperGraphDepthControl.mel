@@ -1,0 +1,51 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc increaseTraversalDepth(string $editor)
+{
+	// get the previous depth
+	int $depth =`hyperGraph -q -limitGraphTraversal $editor`;
+	hyperGraph -e -limitGraphTraversal ($depth + 1) $editor;
+	
+	// refresh the view
+	showDGLevel $editor;
+}
+
+global proc decreaseTraversalDepth(string $editor)
+{
+	// get the previous depth
+	int $depth =`hyperGraph -q -limitGraphTraversal $editor`;
+	
+	$depth -= 1;	
+	hyperGraph -e -limitGraphTraversal $depth $editor;
+	
+	// refresh the view
+	showDGLevel $editor;
+}
+
+global proc hyperGraphDepthControl(int $direction)
+{
+	// determine which panel is in focus
+	string $focusedPanel = `getPanel -withFocus`;
+	if ((`scriptedPanel -exists $focusedPanel`) &&
+		(`scriptedPanel -q -type $focusedPanel` == "hyperGraphPanel"))
+	{
+		// create the editor widget's name
+		string $hyperGraphEditorWidget = $focusedPanel + "HyperGraphEd";
+		
+		if ($direction < 0)
+		{
+			// decrease the traversal depth	
+			decreaseTraversalDepth($hyperGraphEditorWidget);
+		}
+		else
+		{
+			// increase the traversal depth
+			increaseTraversalDepth($hyperGraphEditorWidget);
+		}
+	}
+}

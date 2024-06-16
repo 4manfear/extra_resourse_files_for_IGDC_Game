@@ -1,0 +1,21 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//	Mel expression to convert new rotate order to old rotate order
+//
+global proc int newToOldRotateOrder(int $input)
+{
+	switch ($input) {
+	case 0: return 7895418;
+	case 1: return 7961208;
+	case 2: return 8026233;
+	case 3: return 7895673;
+	case 4: return 7960698;
+	case 5: return 8026488;
+	default: return 7895418;
+	}
+}

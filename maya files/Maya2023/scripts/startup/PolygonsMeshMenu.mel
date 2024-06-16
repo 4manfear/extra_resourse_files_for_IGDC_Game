@@ -1,0 +1,449 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc transferVertexOrderToggleMenuItem()
+{
+	int $enabled = `pluginInfo -q -loaded "meshReorder"`;
+	if(`menuItem -ex transferVertexOrderMenuItem`)
+		menuItem -e -enable $enabled transferVertexOrderMenuItem;
+}
+
+global proc PolygonsMeshMenu(string $parent)
+//
+// Description:
+//		Modeling Mesh menu (which is also the legacy Polygons Mesh menu)
+//
+{
+	if (! `isTrue "PolygonsExists"`) return;
+	
+	setParent -menu $parent; 
+
+	if (`menu -query -numberOfItems $parent` == 0) {
+		menuItem -divider true -dividerLabel (uiRes("m_PolygonsMeshMenu.kCombineDivider1"));
+
+		menuItem -label (uiRes("m_PolygonsMeshMenu.kPolyBuildBooleans")) 
+			-version "2023"
+			-subMenu 1
+			-allowOptionBoxes true 
+			-tearOff 1
+			;
+				
+			string $cmd = "PolygonBooleanUnion";
+			menuItem 
+				-enableCommandRepeat true
+				-dragMenuCommand "polygonsMenuItemToShelf \"PolygonBooleanUnion\""
+				-rtc $cmd
+				;
+					
+				$cmd = "PolygonBooleanUnionOptions";
+				menuItem -optionBox true
+					-ecr false
+					-image "polyBooleansUnion.png"
+					-annotation (getRunTimeCommandAnnotation($cmd))
+					-c $cmd
+					menuItemUnionOptions
+					;
+
+			$cmd = "PolygonBooleanDifference";
+			menuItem 
+				-enableCommandRepeat true
+				-dragMenuCommand "polygonsMenuItemToShelf \"PolygonBooleanDifference\""
+				-rtc $cmd
+				;
+					
+				$cmd = "PolygonBooleanDifferenceOptions";
+				menuItem -optionBox true
+					-ecr false
+					-image "polyBooleansDifference.png"
+					-annotation (getRunTimeCommandAnnotation($cmd))
+					-c $cmd
+					menuItemDifferenceOptions
+					;
+
+
+			$cmd = "PolygonBooleanDifferenceBA";
+			menuItem 
+				-enableCommandRepeat true
+				-dragMenuCommand "polygonsMenuItemToShelf \"PolygonBooleanDifferenceBA\""
+				-rtc $cmd
+				;
+					
+				$cmd = "PolygonBooleanDifferenceBAOptions";
+				menuItem -optionBox true
+					-ecr false
+					-image "polyBooleansIntersection.png"
+					-annotation (getRunTimeCommandAnnotation($cmd))
+					-c $cmd
+					;
+
+			$cmd = "PolygonBooleanIntersection";
+			menuItem 
+				-enableCommandRepeat true
+				-dragMenuCommand "polygonsMenuItemToShelf \"PolygonBooleanIntersection\""
+				-rtc $cmd
+				;
+					
+				$cmd = "PolygonBooleanIntersectionOptions";
+				menuItem -optionBox true
+					-ecr false
+					-image "polyBooleansIntersection.png"
+					-annotation (getRunTimeCommandAnnotation($cmd))
+					-c $cmd
+					menuItemIntersectionOptions
+					;
+
+
+			$cmd = "PolygonBooleanSlice";
+			menuItem 
+				-enableCommandRepeat true
+				-dragMenuCommand "polygonsMenuItemToShelf \"PolygonBooleanSlice\""
+				-rtc $cmd
+				;
+					
+				$cmd = "PolygonBooleanSliceOptions";
+				menuItem -optionBox true
+					-ecr false
+					-image "polyBooleansIntersection.png"
+					-annotation (getRunTimeCommandAnnotation($cmd))
+					-c $cmd
+					;
+
+			$cmd = "PolygonBooleanHolePunch";
+			menuItem 
+				-enableCommandRepeat true
+				-dragMenuCommand "polygonsMenuItemToShelf \"PolygonBooleanHolePunch\""
+				-rtc $cmd
+				;
+					
+				$cmd = "PolygonBooleanHolePunchOptions";
+				menuItem -optionBox true
+					-ecr false
+					-image "polyBooleansIntersection.png"
+					-annotation (getRunTimeCommandAnnotation($cmd))
+					-c $cmd
+					;
+
+			$cmd = "PolygonBooleanCutOut";
+			menuItem 
+				-enableCommandRepeat true
+				-dragMenuCommand "polygonsMenuItemToShelf \"PolygonBooleanCutOut\""
+				-rtc $cmd
+				;
+					
+				$cmd = "PolygonBooleanCutOutOptions";
+				menuItem -optionBox true
+					-ecr false
+					-image "polyBooleansIntersection.png"
+					-annotation (getRunTimeCommandAnnotation($cmd))
+					-c $cmd
+					;		
+			$cmd = "PolygonBooleanSplitEdges";
+			menuItem 
+				-enableCommandRepeat true
+				-dragMenuCommand "polygonsMenuItemToShelf \"PolygonBooleanSplitEdges\""
+				-rtc $cmd
+				;
+					
+				$cmd = "PolygonBooleanSplitEdgesOptions";
+				menuItem -optionBox true
+					-ecr false
+					-image "polyBooleansIntersection.png"
+					-annotation (getRunTimeCommandAnnotation($cmd))
+					-c $cmd
+					;
+
+		setParent -menu ..;
+
+		$cmd = "CombinePolygons";
+		menuItem
+			-enableCommandRepeat true 
+			-dmc "polygonsMenuItemToShelf \"polyPerformAction polyUnite o 0\""
+			-rtc $cmd
+			;
+
+			$cmd = "CombinePolygonsOptions";
+			menuItem -optionBox true
+				-annotation (getRunTimeCommandAnnotation($cmd))
+				-image "polyUnite.png" 
+				-command $cmd
+					;
+	
+		menuItem -rtc "SeparatePolygon";
+
+		menuItem -divider true -dividerLabel (uiRes("m_PolygonsMeshMenu.kRemeshDivider"));
+			menuItem -rtc "ConformPolygon";
+
+				menuItem -optionBox true
+					-annotation (getRunTimeCommandAnnotation("ConformPolygonOptions"))
+					-command "ConformPolygonOptions"
+					;
+	
+			menuItem -rtc "FillHole";
+
+			$cmd = "ReducePolygon";
+			menuItem
+				-version "2014"
+				-enableCommandRepeat true 
+				-dragMenuCommand "performPolyReduce 2"
+				-dragDoubleClickCommand "performPolyReduce 1"
+				-rtc $cmd
+				reductionItem
+				;
+				
+				$cmd = "ReducePolygonOptions";
+				menuItem -optionBox true
+					-image "polyReduce.png"
+					-annotation (getRunTimeCommandAnnotation($cmd))
+					-enableCommandRepeat false
+					-command $cmd
+					reductionOptionItem
+					;
+
+			$cmd = "PolyRemesh";
+			menuItem
+                -version "2020"
+				-enableCommandRepeat true 
+				-dragDoubleClickCommand "performPolyRemesh 1"
+				-dragMenuCommand "performPolyRemesh 2" 
+				-rtc $cmd 
+				remeshItem
+				;
+				
+				$cmd = "PolyRemeshOptions";
+				menuItem -optionBox true 
+					-image "polyTriangulate.png" 
+					-annotation (getRunTimeCommandAnnotation($cmd))
+					-enableCommandRepeat false 
+					-command $cmd 
+					remeshOptionItem;
+
+			$cmd = "PolyRetopo";
+			menuItem
+                -version "2023"
+				-enableCommandRepeat true 
+				-dragDoubleClickCommand "performPolyRetopo 1"
+				-dragMenuCommand "performPolyRetopo 2" 
+				-rtc $cmd 
+				retopoItem
+				;
+				
+				$cmd = "PolyRetopoOptions";
+				menuItem -optionBox true 
+					-image "polyTriangulate.png" 
+					-annotation (getRunTimeCommandAnnotation($cmd))
+					-enableCommandRepeat false 
+					-command $cmd 
+					retopoOptionItem;
+
+			$cmd = "SmoothPolygon";
+			menuItem
+				-enableCommandRepeat true 
+				-dragDoubleClickCommand "performPolySmooth 1"
+				-dragMenuCommand "performPolySmooth 2" 
+				-rtc $cmd
+				; 
+
+				$cmd = "SmoothPolygonOptions";
+				menuItem -optionBox true 
+					-image "polySmooth.png" 
+					-annotation (getRunTimeCommandAnnotation($cmd))
+					-ecr false -c $cmd
+					;
+
+			menuItem -d true -ld false;
+
+			$cmd = "Triangulate";
+			menuItem
+				-enableCommandRepeat true 
+				-dragMenuCommand "polygonsMenuItemToShelf \"polyPerformAction polyTriangulate f 0\""
+				-rtc $cmd
+				triangulateItem
+				;
+
+			$cmd = "Quadrangulate";
+			menuItem
+				-enableCommandRepeat true 
+				-dragDoubleClickCommand "performPolyQuadrangulate 1"
+				-dragMenuCommand "performPolyQuadrangulate 2" 
+				-rtc $cmd 
+				quadrangulateItem
+				;
+				
+				$cmd = "QuadrangulateOptions";
+				menuItem -optionBox true 
+					-image "polyQuad.png" 
+					-annotation (getRunTimeCommandAnnotation($cmd))
+					-enableCommandRepeat false 
+					-command $cmd 
+					quadrangulateOptionItem;
+
+		menuItem -divider true -dividerLabel (uiRes("m_PolygonsMeshMenu.kMirrorDivider1"));
+
+			$cmd = "MirrorPolygonGeometry";
+			menuItem
+				-version "2017"
+				-enableCommandRepeat true
+				-dragMenuCommand "performPolyMirror 2"
+				-dragDoubleClickCommand "performPolyMirror 1"
+				-rtc $cmd
+				mirrorItem
+				;
+				
+				$cmd = "MirrorPolygonGeometryOptions";
+				menuItem -optionBox true
+					-enableCommandRepeat false
+					-image "polyMirrorGeometry.png"
+					-annotation (getRunTimeCommandAnnotation($cmd))
+					-command $cmd
+					mirrorOptionItem
+					;
+
+		menuItem -divider true -dividerLabel (uiRes("m_PolygonsMeshMenu.kTransferDivider1"));
+
+		menuItem -label (uiRes("m_PolygonsMeshMenu.kNewPolyClipBoardMenu")) 
+			-subMenu 1 
+			-tearOff 1 
+			-allowOptionBoxes true
+			;
+
+			menuItem
+				-rtc "PolygonCopy"
+				-dragMenuCommand "performPolyCopyPaste 2 1"
+				-dragDoubleClickCommand "PolygonCopyOptions"
+				;
+				
+				menuItem -optionBox true 
+					-imageOverlayLabel (uiRes("m_PolygonsMeshMenu.kCopyOptionsOverlayLabel")) 
+					-annotation (getRunTimeCommandAnnotation("PolygonCopyOptions"))
+					-image "polyCopyColors.png"
+					-command "PolygonCopyOptions"
+					;			
+
+			menuItem 
+				-rtc "PolygonPaste"
+				-dragMenuCommand "performPolyCopyPaste 2 2"
+				-dragDoubleClickCommand "PolygonPasteOptions"
+				;
+				
+				menuItem -optionBox true 
+					-annotation (getRunTimeCommandAnnotation("PolygonPasteOptions"))
+					-image "polyPasteColors.png"
+					-command "PolygonPasteOptions"
+					;			
+
+			menuItem 
+				-rtc "PolygonClearClipboard"
+				-dragMenuCommand "performPolyCopyPaste 2 3"
+				-dragDoubleClickCommand "PolygonClearClipboardOptions"
+				;
+				
+				menuItem -optionBox true 
+					-imageOverlayLabel (uiRes("m_PolygonsMeshMenu.kClearClipboardOptionsOverlayLabel")) 
+					-image "polyClearColors.png"
+					-annotation (getRunTimeCommandAnnotation("PolygonClearClipboardOptions"))
+					-command "PolygonClearClipboardOptions"
+					;			
+
+		setParent -m ..;
+
+		menuItem -rtc "TransferAttributes" 
+			transferAttributesItem;
+				
+			menuItem -optionBox true
+				-annotation (uiRes("m_PolygonsMeshMenu.kTransferAttributesOptions"))
+				-image "polyTransferAttributes.png"
+				-command "performTransferAttributes 1"
+				transferAttributesItemOption
+				;
+
+		menuItem -rtc "TransferShadingSets"
+			transferShadingSetsItem;
+				
+			menuItem -optionBox true
+				-annotation (uiRes("m_PolygonsMeshMenu.kTransferShadingSetsOptions"))
+				-image "polyTransferShadingSets.png"
+				-command "performTransferShadingSets 1"
+				transferShadingSetsItemOption
+				;
+
+		menuItem
+			-version "2017"
+			-rtc "TransferVertexOrder"
+			transferVertexOrderMenuItem;
+			
+		transferVertexOrderToggleMenuItem;
+
+		menuItem -divider true -dividerLabel (uiRes("m_PolygonsMeshMenu.kOptimizeDivider1"));
+			
+		menuItem 
+			-enableCommandRepeat true 
+			-dragMenuCommand "performPolyCleanup 2"
+			-dragDoubleClickCommand "performPolyCleanup 1"
+			-rtc "CleanupPolygon"
+			cleanupItem;
+
+			menuItem -optionBox true
+				-rtc "CleanupPolygonOptions";
+
+		menuItem -divider true;
+
+			menuItem -label (uiRes("m_PolygonsMeshMenu.kProxyMenu")) 
+				-subMenu 1 
+				-tearOff 1 
+				-allowOptionBoxes true
+				;
+
+				menuItem -ecr true 
+					-rtc "SmoothProxy"
+					-dragMenuCommand "SmoothProxy"
+					-dragDoubleClickCommand "SmoothProxyOptions"; 
+
+					menuItem -optionBox 1 
+						-image "polySmoothProxy.png" 
+						-annotation (getRunTimeCommandAnnotation("SmoothProxyOptions"))
+						-enableCommandRepeat false 
+						-command "SmoothProxyOptions"; 
+
+				$cmd = "UnmirrorSmoothProxy";
+				menuItem -ecr true
+					-dragDoubleClickCommand "performUnmirrorSmoothProxy 1"
+					-dragMenuCommand "performUnmirrorSmoothProxy 0" 
+					-rtc $cmd; 
+
+					$cmd = "UnmirrorSmoothProxyOptions";
+					menuItem -optionBox 1 -i "polyUnmirrorSmoothProxy.png" 
+						-annotation (getRunTimeCommandAnnotation($cmd))
+						-ecr false -c $cmd;
+
+				$cmd = "PolyCreaseTool";
+				menuItem -ecr true
+					-rtc $cmd -dmc $cmd -ddc "PolyCreaseToolOptions";
+			
+					$cmd = "PolyCreaseToolOptions";
+					menuItem -optionBox 1 -ecr false 
+						-i "polyCrease.png" 
+						-annotation (getRunTimeCommandAnnotation($cmd))
+						-c $cmd;
+
+				menuItem -divider true;
+
+				$cmd = "SmoothingDisplayToggle";
+				menuItem -rtc $cmd;
+
+				$cmd = "SmoothingDisplayShowBoth";
+				menuItem -rtc $cmd;
+				
+			setParent -menu ..;
+
+		setParent -menu ..;
+	}
+	else
+	{
+		transferVertexOrderToggleMenuItem;
+	}
+}
+

@@ -1,0 +1,52 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+///////////////////////////////////////////////////////////////////////////////
+//
+//  Description:
+//  Attribute editor template layout for polyAutoProj nodes
+//
+///////////////////////////////////////////////////////////////////////////////
+
+global proc AEpolyAutoProjTemplate(string $nodeName)
+{
+	editorTemplate -beginScrollLayout;
+	editorTemplate -beginLayout (uiRes("m_AEpolyAutoProjTemplate.kTransformAttributes")) -collapse 0;
+
+	editorTemplate -addControl "translate";
+	editorTemplate -addControl "rotate";
+	editorTemplate -addControl "scale";
+	editorTemplate -addControl "pivot";
+
+	editorTemplate -endLayout;
+
+	//**********************************************************************
+
+	editorTemplate -beginLayout (uiRes("m_AEpolyAutoProjTemplate.kPolygonAutomaticProjection")) -collapse 0;
+
+	editorTemplate -addControl "planes";
+	editorTemplate -addControl "optimize";
+	editorTemplate -addControl "layout";
+	editorTemplate -addControl "layoutMethod";	
+	editorTemplate -addControl "scaleMode";
+	editorTemplate -addControl "projectBothDirections";
+
+	editorTemplate -endLayout;
+
+	//**********************************************************************
+
+	// suppressed attributes
+	editorTemplate -suppress "inputComponents";
+	editorTemplate -suppress "skipIntersect";
+	editorTemplate -suppress "percentageSpace";
+	editorTemplate -suppress "worldSpace";
+
+	AEpolyModifierInclude $nodeName;
+
+	editorTemplate -addExtraControls;
+	editorTemplate -endScrollLayout;
+}

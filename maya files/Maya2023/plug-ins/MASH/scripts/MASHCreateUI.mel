@@ -1,0 +1,479 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//  Procedure Name:
+//  MASHCreateUI
+//
+//  Description;
+//  Creates the MASH UI at the bottom of the Create menu.
+//
+global proc MASHCreateUI(string $options)
+{
+    // delete ui if it already exists.
+    global string $gMashMenu;
+    if (`menu -exists $gMashMenu`)
+       deleteUI $gMashMenu;
+
+    // add the MASH menu to Maya
+    global string $gMainWindow;
+    $gMashMenu = `menu -p $gMainWindow -to true -allowOptionBoxes true -version "2017" -vis false -l (getPluginResource("MASH", "kMASH")) mainMashMenu`;
+
+    // it's only to appear in these menu sets
+    string $mashMenuSets[] = {"dynamicsMenuSet", "animationMenuSet"};
+
+    // set visible
+    for ($menuSet in $mashMenuSets) {
+        menuSet -e -addMenu mainMashMenu $menuSet;
+        if( `menuSet -q -currentMenuSet` == $menuSet ) {
+            int $pos = size(`menuSet -q -menuArray commonMenuSet`) + size(`menuSet -q -menuArray $menuSet`);
+            window -e -menuIndex mainMashMenu $pos $gMainWindow;
+            menu -e -vis true mainMashMenu;
+        }
+    }
+
+    menuItem -ver "2017" -rtc "CreateMashNetwork";
+    menuItem -ob yes -rtc "CreateMashNetworkOptions";
+    menuItem -ver "2017" -rtc "OpenMashEditor";
+
+    //utilities sub menu
+    menuItem -subMenu 1 -tearOff 1 -allowOptionBoxes true -p $gMashMenu -l (getPluginResource("MASH", "kUtilities"));
+    menuItem -rtc "CacheMashNetwork";
+    menuItem -divider true;
+    menuItem -rtc "AddMashDeformer";
+    menuItem -rtc "AddMashBlendDeformer";
+    menuItem -rtc "AddMashJiggleDeformer" -label (getPluginResource("MASH", "kAddMashJiggleDeformerLbl"));
+    menuItem -divider true;
+    menuItem -rtc "CreateMeshFromMashPoints";
+    menuItem -divider true;
+    menuItem -rtc "ConnectMashToVector";
+    menuItem -divider true;
+    menuItem -rtc "ConnectMashToParticles";
+    menuItem -rtc "BakeMashToParticles";
+    menuItem -rtc "AddTrailsToParticles";
+    menuItem -divider true;
+    menuItem -rtc "SwitchMashGeometryType";
+    setParent..;
+    menuItem -rtc "BakeInstancerToGeometry";
+    menuItem -rtc "CreateInstancerPivot";
+    menuItem -divider true;
+    setParent..;
+
+    menuItem -subMenu 1 -tearOff 1 -allowOptionBoxes true -p $gMashMenu -l (getPluginResource("MASH", "kDynamics"));
+    menuItem -rtc "AddShellDynamics";
+    menuItem -divider true;
+    menuItem -rtc "AddMashBulletSolver" -label (getPluginResource("MASH", "kAddMashBulletSolverLbl"));
+    menuItem -rtc "AssignMashBulletSolver" -label (getPluginResource("MASH", "kAssignMashBulletSolverLbl"));
+    setParent..;
+
+	// Initialize optionVars
+	if (!`exists MASHsetOptionVars`) source "MASHcreateOptions.mel";
+    MASHsetOptionVars(false);
+
+	// Add the MASH shelf
+	global string $gShelfTopLevel;
+	setParent $gShelfTopLevel;
+	if (!`shelfLayout -exists MASH`) {
+		// remember to restore the current shelf tab to avoid messing with the
+		// Maya shelves
+		$tabIndexPrev = `shelfTabLayout -query -selectTabIndex $gShelfTopLevel`;
+		loadNewShelf("shelf_MASH.mel");
+		if ($tabIndexPrev) {
+			shelfTabLayout -edit -selectTabIndex $tabIndexPrev $gShelfTopLevel;
+			shelfTabChange();
+		}
+ 	}
+	shelfLayout -e -version "2017" MASH;
+
+	// Also add the "Motion Graphics" shelf, since it's controlled by MASH plugin.
+	setParent $gShelfTopLevel;
+	if (!`shelfLayout -exists MotionGraphics`) {
+		// remember to restore the current shelf tab to avoid messing with the
+		// Maya shelves
+		$tabIndexPrev = `shelfTabLayout -query -selectTabIndex $gShelfTopLevel`;
+		loadNewShelf("shelf_MotionGraphics.mel");
+		if ($tabIndexPrev) {
+			shelfTabLayout -edit -selectTabIndex $tabIndexPrev $gShelfTopLevel;
+			shelfTabChange();
+		}
+	}
+	shelfLayout -e -version "2017" MotionGraphics;
+
+    // Dash
+    if( `popupMenu -exists dash_contextual` ) {
+        deleteUI dash_contextual;
+    }
+    popupMenu
+    -alt 1
+    -button 3
+    -mm 0
+    -p mainChannelBox
+    -pmc ("python \"import DashLegacy;DashLegacy.showDash('mainChannelBox')\"")
+    dash_contextual;
+
+    if( `popupMenu -exists dash_sse_contextual` ) {
+        deleteUI dash_sse_contextual;
+    }
+
+    // Spreadsheet editor support disabled as it requires the SSE to be open to add it to DASH
+    /*
+    popupMenu
+    -alt 1
+    -button 3
+    -mm 0
+    -p SSEd
+    -pmc ("python \"import Dash;Dash.showDash('SSEd')\"")
+    dash_sse_contextual;
+    */
+    python("import MASHAET.templates; MASHAET.templates.register();");
+    python("import MASH.dynamicsUtils; MASH.dynamicsUtils.setupAEInjection()");
+    refreshEditorTemplates();
+}
+
+global proc MASHLiveLink() {
+
+    python("import MayaToAE.livelink");
+    python("MayaToAE.livelink.openAELiveLink()");
+
+}
+
+global proc MASHLightRig() {
+
+    python("import lightRigUtils as lru");
+    python("lru.makeNewLightRig()");
+
+}
+
+global proc MASHswitchGeometryType() {
+    python("import MASH.switchGeometryType as sgt");
+    python("sgt.switch()");
+}
+
+global proc MASHConnectToVector() {
+
+    python("import MASHtoVector");
+    python("MASHtoVector.connectToVector()");
+
+}
+
+global proc MASHOutliner() {
+
+    python("import MASH.editor");
+    python("MASH.editor.show()");
+
+}
+
+global proc MASHThreeDFont() {
+    python("import FontDesigner");
+    python("FontDesigner.showFontDesigner()");
+
+}
+
+global proc MASHDeleteSolver() {
+
+    python("import MASH.dynamicsUtils");
+    python("MASH.dynamicsUtils.removeSolverEntry()");
+
+}
+
+global proc MASHAddShellDynamics() {
+
+    python("import MASH.dynamicsUtils as dynamics");
+    python("dynamics.shellDynamicsEntry()");
+
+}
+
+global proc MASHAddSolver() {
+
+    python("import MASH.dynamicsUtils");
+    python("MASH.dynamicsUtils.addSolver()");
+
+}
+
+global proc MASHAssignSolver() {
+
+    python("import MASH.dynamicsUtils");
+    python("MASH.dynamicsUtils.assignSolver()");
+
+}
+
+//
+//  Main entry point for the createMeshFromPoints command.
+//  It constructs the command arguement from a selected waiter, then executes the command
+//
+global proc MASHcreateMeshFromPointsEntry() {
+
+    string $selectedObjects[ ] = `ls -sl`;
+    if (size($selectedObjects) == 0) {
+        MASHinViewMessage((getPluginResource("MASH", "kPleaseSelectAWaiter")), "Error");
+    }
+    if ( nodeType($selectedObjects[0]) == "MASH_Waiter") {
+        string $cmd = "createMeshFromPoints -w \""+$selectedObjects[0]+"\";";
+        evalDeferred($cmd);
+    } else {
+        MASHinViewMessage((getPluginResource("MASH", "kPleaseSelectAWaiter")), "Error");
+    }
+}
+
+global proc MASHBakeGUI()
+{
+    string $warnParentStr = (getPluginResource("MASH", "kNoProbsWithParent"));
+    string $warnOffsetStr = (getPluginResource("MASH", "kNoProbsWithTranslates"));
+    string $warnRotationStr = (getPluginResource("MASH", "kNoProbsWithRotations"));
+    string $summeryRotStr = "";
+    string $summeryPosStr = "";
+    string $summeryParentStr = "";
+    string $summeryStr = "";
+
+    string $selectedObjects[ ] = `ls -sl`;
+
+    if (size($selectedObjects) == 0) {
+        MASHinViewMessage((getPluginResource("MASH", "kPleaseSelectInstancer")), "Error");
+    }
+
+    if ( nodeType($selectedObjects[0]) == "instancer") {
+
+        string $connectionName[] = `listConnections -d off -s on ($selectedObjects[0] +".inputHierarchy")`;
+
+        for ($obj in $connectionName){
+
+            $objPosX = `getAttr ($obj + ".translateX")`;
+            $objPosY = `getAttr ($obj + ".translateY")`;
+            $objPosZ = `getAttr ($obj + ".translateZ")`;
+
+            if ($objPosX + $objPosY + $objPosZ != 0) {
+                $warnOffsetStr = (getPluginResource("MASH", "kObjPositionsNotZero"));
+                $summeryPosStr = (getPluginResource("MASH", "kMoveObjectsToZero"));
+                print ((getPluginResource("MASH", "kPositionNotZero")) + " " + $obj + "\n");
+                $summeryStr = (getPluginResource("MASH", "kSeeScriptEditorForDetails"));
+            }
+
+            $objRotX = `getAttr ($obj + ".rotateX")`;
+            $objRotY = `getAttr ($obj + ".rotateY")`;
+            $objRotZ = `getAttr ($obj + ".rotateZ")`;
+
+            if ($objRotX + $objRotY + $objRotZ != 0) {
+                $warnRotationStr = (getPluginResource("MASH", "kObjectRotationsNotZero"));
+                $summeryRotStr = (getPluginResource("MASH", "kConsiderFreezingRotations"));
+                print ((getPluginResource("MASH", "kRotationNotZero")) + " " + $obj + "\n");
+                $summeryStr = (getPluginResource("MASH", "kSeeScriptEditorForDetails"));
+            }
+
+            string $parent[] = `listRelatives -parent $obj`;
+
+            if (size($parent) > 0) {
+                $pPosX = `getAttr ($parent[0] + ".translateX")`;
+                $pPosY = `getAttr ($parent[0] + ".translateY")`;
+                $pPosZ = `getAttr ($parent[0] + ".translateZ")`;
+
+                if ($pPosX + $pPosY + $pPosZ != 0) {
+                    $warnParentStr = (getPluginResource("MASH", "kParentPosNotZero"));
+                    $summeryParentStr = (getPluginResource("MASH", "kConsiderMoving")) + " " +$parent[0]+ " " + (getPluginResource("MASH", "kToZero"));
+                    print ((getPluginResource("MASH", "kPositionNotZero")) + " " + $parent[0] + "\n");
+                    $summeryStr = (getPluginResource("MASH", "kSeeScriptEditorForDetails"));
+                }
+            }
+
+        }
+
+    } else {
+
+        MASHinViewMessage("Please select an Instancer.", "Error");
+    }
+
+    if(`window -q -ex  mashBakeStill`) deleteUI mashBakeStill;  // check if window is already open & delete it
+    window -t "Bake Instancer Tool" -sizeable 1 -tlb 0 mashBakeStill;
+
+    // controls need a layout
+    columnLayout -cat "left" 45  -w 300 -h 550   coll ;
+
+    text -w 250 -h 20 -vis 1
+    -label (getPluginResource("MASH", "kBakeInstancerTool"))
+    -align "center" -font "boldLabelFont" ;
+
+    text -w 250 -h 20 -vis 1
+    -label (getPluginResource("MASH", "kCheckingForCommonProblems"))
+    -align "center" -font "boldLabelFont" ;
+
+
+    textScrollList -allowMultiSelection true
+    -append $warnOffsetStr
+    -append $summeryPosStr
+    -append ""
+    -append $warnRotationStr
+    -append $summeryRotStr
+    -append ""
+    -append $warnParentStr
+    -append $summeryParentStr
+    -append ""
+    -append $summeryStr
+    myControlObj;
+
+    button    -w 250 -h 30 -label (getPluginResource("MASH", "kBakeThisFrame")) -command "MASHBakeStillMEL";
+    button    -w 250 -h 30 -label (getPluginResource("MASH", "kBakeAnimation")) -command "MASHBake";
+    //separator -height 10;
+    //checkBox -label (getPluginResource("MASH", "kDuplicateSpecial")) -v false bakeCbDuplicateSpecial;
+
+    separator -height 10;
+    checkBox -label (getPluginResource("MASH", "kBakeToInstances")) -v false bakeCbToInstances;
+    separator -height 10;
+
+    text -w 250 -h 20 -vis 1
+    -label "Channels:"
+    -align "center" -font "boldLabelFont" ;
+    checkBox -label (getPluginResource("MASH", "kTranslate")) -v true bakeCbTranslate;
+    checkBox -label (getPluginResource("MASH", "kRotate")) -v true bakeCbRotate;
+    checkBox -label (getPluginResource("MASH", "kScale")) -v true bakeCbScale;
+    checkBox -label (getPluginResource("MASH", "kVisibility")) -v true bakeCbVis;
+    
+    separator -height 10;
+    text -w 250 -h 20 -vis 1
+    -label (getPluginResource("MASH", "kOptimisations"))
+    -align "center" -font "boldLabelFont" ;
+    checkBox -label (getPluginResource("MASH", "kClearMemory")) -v true -ann (getPluginResource("MASH", "kClearMemoryAnn")) bakeCbGarbage;
+    checkBox -label (getPluginResource("MASH", "kClearUndo")) -v false -ann (getPluginResource("MASH", "kClearUndoAnn")) bakeCbUndo;
+    checkBox -label (getPluginResource("MASH", "kCloseScriptEditor")) -v true -ann (getPluginResource("MASH", "kCloseScriptEditorAnn")) bakeCbCloseEditor;
+
+    showWindow mashBakeStill;
+    window -e -w 340-h 460 mashBakeStill;
+
+}
+
+global proc MASHBake()
+{
+    python "import MASHbakeInstancer; MASHbakeInstancer.MASHbakeInstancer(True)";
+}
+
+global proc MASHBakeStillMEL()
+{
+    python "import MASHbakeInstancer; MASHbakeInstancer.MASHbakeInstancer(False)";
+}
+
+global proc MASHaddBlendDeformer()
+{
+
+    string $sel[] = `ls -sl`;
+
+    if (size($sel) > 0) {
+
+        string $deformer[] = `deformer -type "MASH_BlendDeformer"`;
+
+        makePaintable -attrType "multiFloat" -sm "deformer" "blendNode" "weights";
+
+        setAttr  ($deformer[0]+".curveRamp[2].curveRamp_Position") 0;
+        setAttr  ($deformer[0]+".curveRamp[2].curveRamp_FloatValue") 0;
+        setAttr  ($deformer[0]+".curveRamp[1].curveRamp_Position") 1;
+        setAttr  ($deformer[0]+".curveRamp[1].curveRamp_FloatValue") 1;
+        setAttr  ($deformer[0]+".blendRamp[2].blendRamp_Position") 0;
+        setAttr  ($deformer[0]+".blendRamp[2].blendRamp_FloatValue") 0;
+        setAttr  ($deformer[0]+".blendRamp[1].blendRamp_Position") 1;
+        setAttr  ($deformer[0]+".blendRamp[1].blendRamp_FloatValue") 1;
+        setAttr  ($deformer[0]+".inflationRamp[0].inflationRamp_Position") 0;
+        setAttr  ($deformer[0]+".inflationRamp[0].inflationRamp_FloatValue") 1;
+        setAttr  ($deformer[0]+".smoothingRamp[0].smoothingRamp_Position") 0;
+        setAttr  ($deformer[0]+".smoothingRamp[0].smoothingRamp_FloatValue") 1;
+
+        }
+
+     else {
+        MASHinViewMessage((getPluginResource("MASH", "kSelectObjectToDeform")), "Warning");
+
+    }
+}
+
+global proc MASHaddJiggleDeformer()
+{
+
+    string $sel[] = `ls -sl`;
+
+    if (size($sel) > 0) {
+
+        string $deformer[] = `deformer -type "MASH_Jiggle"`;
+        connectAttr ("time1.outTime") ($deformer[0] + ".time");
+        makePaintable -attrType "multiFloat" -sm "deformer" "MASH_Jiggle" "weights";
+        makePaintable -attrType "multiFloat" -sm "deformer" "MASH_Jiggle" "jiggleMap";
+        makePaintable -attrType "multiFloat" -sm "deformer" "MASH_Jiggle" "stiffnessMap";
+        makePaintable -attrType "multiFloat" -sm "deformer" "MASH_Jiggle" "dampingMap";
+
+     } else {
+        MASHinViewMessage((getPluginResource("MASH", "kSelectObjectToDeform")), "Warning");
+
+    }
+}
+
+global proc MASHaddDeformer()
+{
+
+    string $sel[] = `ls -sl`;
+
+    if (size($sel) > 1) {
+
+        string $idWaiter = `nodeType $sel[0]`;
+
+        string $idDeformerObject = `nodeType $sel[1]`;
+
+        if ($idWaiter == "MASH_Waiter") {
+            string $name = $sel[0]+"_Deformer";
+            string $deformer[] = `deformer -type "MASH_Deformer" -n $name`;
+
+            connectAttr ($sel[0] + ".outputPoints") ($deformer[0] + ".inputPoints");
+
+            string $shapes[];
+
+            for ( $i = 1; $i < size($sel); $i++) {
+
+                $shapes = `listRelatives -shapes $sel[$i]`;
+                string $idMesh = `nodeType $sel[$i]`;
+
+                deformer -e -g $sel[$i] $deformer[0];
+
+            }
+
+            } else {
+                MASHinViewMessage((getPluginResource("MASH", "kSelectWaiterThenObject")), "Warning");
+
+            }
+        }
+        else {
+            MASHinViewMessage((getPluginResource("MASH", "kSelectWaiterThenObject")), "Warning");
+
+        }
+
+    }
+
+
+global proc CreateMayaToAESet() {
+    if (`objExists "MayaToAE"`) {
+           MASHinViewMessage((getPluginResource("MASH", "kSetAlreadyFound")), "Error");
+        } else {
+            sets -name "MayaToAE";
+        }
+
+}
+
+global proc MayaToAE() {
+    python "import exportToAE; exportToAE.exportToAE()";
+}
+
+global proc MayaToAEL() {
+    python "import MayaToAE.livelink; MayaToAE.livelink.openAELiveLink()";
+}
+
+global proc MASHsupressLegacyControls() {
+    editorTemplate -suppress "mFalloffInfo";
+    editorTemplate -suppress "enableStrengthX";
+    editorTemplate -suppress "enableStrengthY";
+    editorTemplate -suppress "enableStrengthZ";
+    editorTemplate -suppress "inMapMatrix";
+    editorTemplate -suppress "falloffX";
+    editorTemplate -suppress "falloffY";
+    editorTemplate -suppress "falloffZ";
+    editorTemplate -suppress "falloffMessage";
+    editorTemplate -suppress "falloffObject";
+    editorTemplate -suppress "falloffInfo";
+
+}

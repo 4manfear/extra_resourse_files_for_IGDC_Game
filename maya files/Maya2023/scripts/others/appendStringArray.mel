@@ -1,0 +1,45 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//  Creation Date:  Jan 19, 1999
+//<doc>
+//<name appendStringArray>
+//
+//<synopsis>
+//		appendStringArray(string $copyTo[], string $copyFrom[], int $copySize)
+//
+//<description>
+//		Appends the given number of values from one string array to the end 
+//		of another.
+//
+//<flags>
+//      string[] $copyTo		Append other array to this one
+//		string[] $copyFrom		Array to copy the elements from
+//		string	 $numberToCopy	Number of items in $copyFrom array to append
+//
+//<returns>
+//      void :
+//
+//<examples>
+//  string $to[] = { "a", "b", "c" };
+//  string $from[] = { "d", "e", "f" };
+//  appendStringArray($to, $from, 2);
+//	// $to == { "a", "b", "c", "d", "e" }
+//
+//</doc>
+//
+global proc appendStringArray( 
+	string $copyTo[], 
+	string $copyFrom[], 
+	int $numberToCopy )
+{
+	int $i;
+	int $j = size($copyTo);
+	for( $i = 0; $i < $numberToCopy; $i++, $j++ )
+		$copyTo[$j] = $copyFrom[$i];
+}

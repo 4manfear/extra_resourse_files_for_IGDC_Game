@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<toolclips ui="ui/ToolClipUI.qml" simple="ui/SimpleTooltip.qml" locale="zh_CN">
+  <toolclip key="MASHVisibilityBtn" title="可见性" help="MASH_Visibility">
+    <text>改变实例化对象的可见性。</text>
+    <expanded>
+      <default-resource index="1"/>
+      <resourcelist>
+        <video location="MASH_visibility.webm">可见性</video>
+        <link location="MASH_Visibility">可见性</link>
+      </resourcelist>
+    </expanded>
+  </toolclip>
+  <toolclip key="MASHTrailsBtn" title="轨迹" help="MASH_Trails">
+    <text>在点后面或点之间创建四边形轨迹。</text>
+    <expanded>
+      <default-resource index="1"/>
+      <resourcelist>
+        <video location="MASH_trails.webm">轨迹</video>
+        <link location="MASH_Trails">轨迹</link>
+      </resourcelist>
+    </expanded>
+  </toolclip>
+  <toolclip key="MASHTimeBtn" title="时间" help="MASH_Time">
+    <text>“几何体类型”(Geometry Type)设置为“网格”(Mesh)时，用于偏移所创建网格的组件动画（即：变形）。 </text>
+    <expanded>
+      <default-resource index="1"/>
+      <resourcelist>
+        <video location="MASH_time.webm">时间</video>
+        <link location="MASH_Time">时间</link>
+      </resourcelist>
+    </expanded>
+  </toolclip>
+  <toolclip key="MASHSpringBtn" title="弹簧" help="MASH_Spring">
+    <text>向现有动画添加弹簧。</text>
+    <expanded>
+      <default-resource index="1"/>
+      <resourcelist>
+        <video location="MASH_spring">弹簧</video>
+        <link location="MASH_Spring">弹簧</link>
+      </resourcelist>
+    </expanded>
+  </toolclip>
+  <toolclip key="MASHReplicateBtn" title="复制" help="MASH_Replicator">
+    <text>复制 MASH 网络并允许在复制者上执行变换。</text>
+    <expanded>
+      <default-resource index="1"/>
+      <resourcelist>
+        <video location="MASH_replicate.webm">收缩 UV</video>
+        <link location="MASH_Replicate">复制</link>
+      </resourcelist>
+    </expanded>
+  </toolclip>
+  <toolclip key="MASHOrientBtn" title="方向" help="MASH_Orient">
+    <text>用于将点对准特定方向。</text>
+    <expanded>
+      <default-resource index="1"/>
+      <resourcelist>
+        <video location="MASH_orient.webm">方向</video>
+        <link location="MASH_Orient">方向</link>
+      </resourcelist>
+    </expanded>
+  </toolclip>
+  <toolclip key="MASHSignalBtn" title="信号" help="MASH_Signal">
+    <text>使用 4D 柏林噪波或三角函数为网络中的点设置动画。</text>
+    <expanded>
+      <default-resource index="1"/>
+      <resourcelist>
+        <video location="MASH_Signal.webm">信号</video>
+        <link location="MASH_Signal">信号</link>
+      </resourcelist>
+    </expanded>
+  </toolclip>
+  <toolclip key="MASHStrengthBtn" title="强度" help="MASH_Strength">
+    <text>控制附加节点的强度。</text>
+    <expanded>
+      <default-resource index="1"/>
+      <resourcelist>
+        <video location="MASH_strength.webm">强度</video>
+        <link location="MASH_Strength">强度</link>
+      </resourcelist>
+    </expanded>
+  </toolclip>
+  <toolclip key="MASHSymmetryBtn" title="对称" help="MASH_Symmetry">
+    <text>通过移动、旋转或缩放选定边的一个 UV 壳以匹配另一个 UV 壳，将二者接合起来。</text>
+    <expanded>
+      <default-resource index="1"/>
+      <resourcelist>
+        <video location="MASH_symmetry.webm">对称</video>
+        <link location="MASH_Symmetry">对称</link>
+      </resourcelist>
+    </expanded>
+  </toolclip>
+  <toolclip key="MASHInfluenceBtn" title="影响" help="MASH_Influence">
+    <text>根据连接的影响定位器的缩放和旋转，影响对象实例的缩放和旋转。</text>
+    <expanded>
+      <default-resource index="1"/>
+      <resourcelist>
+        <video location="MASH_influence.webm">影响</video>
+        <link location="MASH_Influence">影响</link>
+      </resourcelist>
+    </expanded>
+  </toolclip>
+  <toolclip key="MASHExplodeBtn" title="炸开" help="MASH_Explode">
+    <text>提取网格的面并根据现有 MASH 点将其进行转换。</text>
+    <expanded>
+      <default-resource index="1"/>
+      <resourcelist>
+        <video location="MASH_explode.webm">炸开</video>
+        <link location="MASH_Explode">炸开</link>
+      </resourcelist>
+    </expanded>
+  </toolclip>
+  <toolclip key="MASHFlightBtn" title="飞行" help="MASH_Flight">
+    <text>通过将对象附加到大量点来模拟群集和群飞行为的多线程模拟节点。</text>
+    <expanded>
+      <default-resource index="1"/>
+      <resourcelist>
+        <video location="MASH_flight.webm">飞行</video>
+        <link location="MASH_Flight">飞行</link>
+      </resourcelist>
+    </expanded>
+  </toolclip>
+  <toolclip key="MASHDelayBtn" title="延迟" help="MASH_Delay">
+    <text>用于继承对象的动画，然后及时偏移。</text>
+    <expanded>
+      <default-resource index="1"/>
+      <resourcelist>
+        <video location="MASH_delay.webm">延迟</video>
+        <link location="MASH_Delay">延迟</link>
+      </resourcelist>
+    </expanded>
+  </toolclip>
+  <toolclip key="MASHCurveBtn" title="曲线" help="MASH_Curve">
+    <text>沿输入曲线分布 MASH 点并设置其动画。</text>
+    <expanded>
+      <default-resource index="1"/>
+      <resourcelist>
+        <video location="MASH_curve.webm">曲线</video>
+        <link location="MASH_Curve">曲线</link>
+      </resourcelist>
+    </expanded>
+  </toolclip>
+  <toolclip key="MASHColorBtn" title="颜色" help="MASH_Color">
+    <text>针对“几何体类型”(Geometry Type)设置为“网格”(Mesh)时创建的网格，自定义 MASH 网络的 CPV 数据在工作区中的显示。</text>
+    <expanded>
+      <default-resource index="1"/>
+      <resourcelist>
+        <video location="MASH_color.webm">颜色</video>
+        <link location="MASH_Color">颜色</link>
+      </resourcelist>
+    </expanded>
+  </toolclip>
+  <toolclip key="MASHAudioBtn" title="音频" help="MASH_Audio">
+    <text>使用音频文件增强点动画。</text>
+    <expanded>
+      <default-resource index="1"/>
+      <resourcelist>
+        <video location="MASH_audio.webm">音频</video>
+        <link location="MASH_Audio">音频</link>
+      </resourcelist>
+    </expanded>
+  </toolclip>
+  <toolclip key="MASHPlacerBtn" title="放置器" help="MASH_Placer"> 
+    <text>通过绘制放置 MASH 点。</text>
+    <expanded>
+      <default-resource index="1"/>
+      <resourcelist>
+        <video location="MASH_Placer.webm">放置器</video>
+        <link location="MASH_Placer">放置器</link>
+      </resourcelist>
+    </expanded>
+  </toolclip>
+  <toolclip key="MASHDynamicsBtn" title="动力学" help="MASH_Dynamics"> 
+    <text>使用 Maya Bullet 动力学化 MASH 点。</text>
+    <expanded>
+      <default-resource index="1"/>
+      <resourcelist>
+        <video location="MASH_Dynamics.webm">动力学</video>
+        <link location="MASH_Dynamics">动力学</link>
+        <link location="MASH_BulletSolver">BulletSolver</link>
+	<link location="MASH_Constraint">约束</link>
+      </resourcelist>
+    </expanded>
+  </toolclip>
+ 
+  
+  
+</toolclips>

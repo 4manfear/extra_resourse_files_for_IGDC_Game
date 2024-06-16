@@ -1,0 +1,49 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+
+//
+//  ================ defaultFireworksColors ================
+//
+//  SYNOPSIS
+//      Set the colors for the particle burst streaks (the cone instances).
+//		This proc will set $numColors of colors into a vector array, ranging
+//		equally along the color spectrum in color spectrum order.
+//		The colors are "rgb".
+//
+//	ARGUMENTS
+//		int $numColors
+//
+//	RETURN
+//		The colors
+//
+global proc vector[] defaultFireworksColors(int $numColors)
+{
+	vector $colors[];
+	clear($colors);
+
+	float $numC = $numColors - 1;
+
+	for ($i = 0; $i < $numColors; $i++)
+	{
+		// Set the hue for hsv.
+		//
+		float $h = $i / $numC;
+
+		// Set the hsv of the color.
+		//
+		vector $hsv = <<$h, 1, 1>>; 
+
+		// Convert from hsv to rgb.
+		//
+		$colors[$i] = hsv_to_rgb($hsv);
+	}
+
+	return $colors;
+}
+
+

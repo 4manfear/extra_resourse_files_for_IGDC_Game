@@ -1,0 +1,47 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  2002
+//
+// Description: See if this object could reasonably be a boat and emit a wake
+//				Fluids(i.e. ponds)  and Oceans are not good boat objects
+//				If you really need to float a fluid, group it and float the parent.
+//	
+
+global proc int isValidBoatObject( string $obj )
+{
+	// This determines what objects if selected will
+	// be given wake and foam emitters.
+	// If the selection is not a fluid wake or ocean
+	// then it is probably OK to make a boat emitter
+	string $type = nodeType( $obj );
+	if( $type == "fluid" || $type == "fluidShape" ){
+		return( false );
+	}
+
+	string $shapes[] = `listRelatives -s $obj`;
+	for( $j = 0; $j < size( $shapes); $j++ ){
+		$type = nodeType( $shapes[$j] );
+		if( $type == "fluid" || $type == "fluidShape" ){
+			return( false );
+		}
+	}
+
+	string $dag[] = `ls -dag $obj`;
+	for( $j = 0; $j < size( $dag ); $j++ ){
+		if(  match("oceanPlane", $dag[$j]) != "" 
+		   ||match("oceanPreviewPlane", $dag[$j]) != "" ){
+			// things with these names are probably oceans
+			// and would not make good boats.
+			return( false );
+		}
+	}
+
+	return( true );
+}

@@ -1,0 +1,38 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  1998
+//  Description:    This creates an expression
+//  				that keeps the texture stationary even though
+//					the flow speed is not zero. This is particularily
+//					useful when simulating plant growth. It keeps the texture
+//					from crawling up the growing plant.
+
+global proc freezeBrushTexture()
+{
+	int	   $i;
+	string $brushes[];
+
+	$brushes = `getBrushes 3`;
+	int $numBrushes = size( $brushes );
+
+	if( $numBrushes == 0 )
+	{
+		warning( uiRes("m_bakeBrushSpringAnim.kNoBrushSelected"));
+		return;
+	}
+
+	for( $i = 0; $i < $numBrushes; $i++ )
+	{
+		string $brush = $brushes[$i];
+		expression -s ( $brush + ".offsetU = time * "+$brush+".repeatU * "+$brush+".flowSpeed;" );
+	}
+	
+}
+

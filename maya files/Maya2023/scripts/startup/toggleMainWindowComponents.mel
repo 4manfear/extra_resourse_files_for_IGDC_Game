@@ -1,0 +1,26 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc toggleMainWindowComponents()
+{
+	int $inExpertMode = `optionVar -q "InExpertUIMode"`;
+	if ($inExpertMode)
+	{
+		restoreMainWindowComponents;
+	}
+	else
+	{
+		updateMainWindowComponentState;
+		HideUIElements;
+	}
+
+	optionVar -iv "InExpertUIMode" (!$inExpertMode);
+	
+	if(!$inExpertMode){
+		inViewMessage -amg (uiRes("m_toggleMainWindowComponents.kIvmExpertModeOn")) -fade -pos topCenter;
+	}
+}

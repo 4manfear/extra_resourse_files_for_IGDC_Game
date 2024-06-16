@@ -1,0 +1,31 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Procedure Name: AErenderLayerManagerTemplate
+//
+//  Description:
+//	Creates the attribute editor controls for the renderLayerManager
+//	node
+//
+//  Input Value:
+//	nodeName
+//
+//  Output Value:
+//	None
+//
+
+
+global proc AErenderLayerManagerTemplate ( string $nodeName ) 
+{
+	editorTemplate -suppress currentRenderLayer;
+	editorTemplate -suppress renderLayerId;
+
+	// include/call base class/node attributes
+	AEdependNodeTemplate $nodeName;
+}

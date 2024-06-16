@@ -1,0 +1,77 @@
+<!--
+===========================================================================
+Copyright 2015 Autodesk, Inc. All rights reserved.
+
+Use of this software is subject to the terms of the Autodesk license
+agreement provided at the time of installation or download, or which
+otherwise accompanies this software in either electronic or hard copy form.
+===========================================================================
+-->
+
+<fragment uiName="premultiply" name="premultiply" type="plumbing" class="ShadeFragment" version="1.0">
+	<description><![CDATA[Constant color texture fragment]]></description>
+	<properties>
+		<float3 name="inColor" />
+		<float name="inAlpha" />
+	</properties>
+	<values>
+		<float3 name="inColor" value="0.3,0.3,0.3" />
+		<float name="inAlpha" value="1.0" />
+	</values>
+	<outputs>
+		<float3 name="outColor" />
+	</outputs>
+	<implementation>
+	<implementation render="OGSRenderer" language="Cg" lang_version="2.1">
+		<function_name val="premultiply" />
+		<source>
+		<![CDATA[
+float3 premultiply(float3 inColor, float inAlpha)
+{
+	float3 resultColor;
+
+	resultColor[0] = inColor[0] * inAlpha;
+	resultColor[1] = inColor[1] * inAlpha;
+	resultColor[2] = inColor[2] * inAlpha;
+
+	return resultColor;
+}
+		]]>
+		</source>
+	</implementation>
+	<implementation render="OGSRenderer" language="HLSL" lang_version="11.0">
+		<function_name val="premultiply" />
+		<source>
+		<![CDATA[
+float3 premultiply(float3 inColor, float inAlpha)
+{
+	float3 resultColor;
+
+	resultColor[0] = inColor[0] * inAlpha;
+	resultColor[1] = inColor[1] * inAlpha;
+	resultColor[2] = inColor[2] * inAlpha;
+
+	return resultColor;
+}
+		]]>
+		</source>
+		</implementation>
+		<implementation render="OGSRenderer" language="GLSL" lang_version="3.0">
+			<function_name val="premultiply" />
+			<source>
+				<![CDATA[
+vec3 premultiply(vec3 inColor, float inAlpha)
+{
+	vec3 resultColor;
+
+	resultColor[0] = inColor[0] * inAlpha;
+	resultColor[1] = inColor[1] * inAlpha;
+	resultColor[2] = inColor[2] * inAlpha;
+
+	return resultColor;
+}
+		]]>
+		</source>
+	</implementation>
+	</implementation>
+</fragment>

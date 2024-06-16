@@ -1,0 +1,273 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc gameVertexUnityInitOptVars( int $forceFactorySettings )
+//
+//	Description:
+//		Initialize the evaluator specific optionVars or reset them
+//		to factory settings.
+//
+{
+	optionVar -init $forceFactorySettings -category "Display.Heads Up Display.Game Vertex Unity"
+		-iv gameVertexUnityTangentMode 4
+		-iv gameVertexUnityNormalMode 1
+		-iv gameVertexUnityNormalCalcMode 4
+		-iv gameVertexUnitySmoothingSource 1
+		-iv gameVertexUnitySmoothingAngle 60
+		-iv gameVertexUnityWeldVertices 1
+		;
+}
+
+global proc string[] gameVertexUnityAssembleCmd()
+//
+//	Description:
+//		Read in the optionVars and return the associated flags
+//		to set those options.
+//
+{
+	int $tmode = `optionVar -q gameVertexUnityTangentMode`;
+	int $nmode = `optionVar -q gameVertexUnityNormalMode`;
+	int $ncmode = `optionVar -q gameVertexUnityNormalCalcMode`;
+	int $smode = `optionVar -q gameVertexUnitySmoothingSource`;
+	int $sangle = `optionVar -q gameVertexUnitySmoothingAngle`;
+	int $wverts = `optionVar -q gameVertexUnityWeldVertices`;
+
+	string $flags[];
+	$flags[0] = ("-tm " + ($tmode-1));
+	$flags[1] = ("-nm " + ($nmode-1));
+	$flags[2] = ("-nmc " + ($ncmode-1));
+	$flags[3] = ("-sm " + ($smode-1));
+	$flags[4] = ("-sa " + ($sangle));
+	$flags[5] = ("-wv " + ($wverts));
+	return $flags;
+}
+
+global proc gameVertexUnitySetup()
+//
+//	Description:
+//		Initialize the UI per the optionVar settings.
+//
+{
+	int $tangentMode = `optionVar -q gameVertexUnityTangentMode`;
+	int $normalMode = `optionVar -q gameVertexUnityNormalMode`;
+	int $normalCalcMode = `optionVar -q gameVertexUnityNormalCalcMode`;
+	int $smoothingSource = `optionVar -q gameVertexUnitySmoothingSource`; 
+	int $smoothingAngle = `optionVar -q gameVertexUnitySmoothingAngle`;
+	int $weldVertices = `optionVar -q gameVertexUnityWeldVertices`;
+
+	int $enableCalc = 0;
+	if ( $normalMode == 2 )
+	{
+		$enableCalc = 1;
+	}
+
+	if ( $tangentMode > 1 && $tangentMode < 5 ) 
+	{
+		optionMenuGrp -e -select $tangentMode gameVertexUnityTangentModeGrp;
+	}
+	else 
+	{
+		optionMenuGrp -e -select 4 gameVertexUnityTangentModeGrp;
+	}
+
+	if ( $normalMode > 1 && $normalMode < 4)
+	{
+		optionMenuGrp -e -select $normalMode gameVertexUnityNormalModeGrp;
+	}
+	else
+	{
+		optionMenuGrp -e -select 1 gameVertexUnityNormalModeGrp;		
+	}
+
+	if ($normalCalcMode > 1 && $normalCalcMode < 5)
+	{
+		optionMenuGrp -e -en $enableCalc -select $normalCalcMode gameVertexUnityNormalCalcModeGrp;
+	}
+	else 
+	{
+		optionMenuGrp -e -en $enableCalc -select 4 gameVertexUnityNormalCalcModeGrp;
+	}
+
+	if ($smoothingSource > 1 && $smoothingSource < 4)
+	{
+		optionMenuGrp -e -en $enableCalc -select $smoothingSource gameVertexUnitySmoothingSourceGrp;
+	}
+	else
+	{
+		optionMenuGrp -e -en $enableCalc -select 1 gameVertexUnitySmoothingSourceGrp;
+	}
+	intSliderGrp -e -en $enableCalc -v $smoothingAngle gameVertexUnitySmoothingAngleSliderGrp;
+
+	if ($weldVertices == 0 )
+	{
+		checkBoxGrp -e  -v1 false gameVertexUnityWeldVerticesChk;
+	}
+	else 
+	{
+		checkBoxGrp -e  -v1 true gameVertexUnityWeldVerticesChk;
+	}
+}
+
+global proc gameVertexUnityCallback()
+//
+//	Description:
+//		Update the option vars based on the current UI settings.
+//
+{
+	int $tmode = `optionMenuGrp -q -select gameVertexUnityTangentModeGrp`;
+	int $nmode = `optionMenuGrp -q -select gameVertexUnityNormalModeGrp`;
+	int $ncmode = `optionMenuGrp -q -select gameVertexUnityNormalCalcModeGrp`;
+	int $smode  = `optionMenuGrp -q -select gameVertexUnitySmoothingSourceGrp`;
+	int $sangle = `intSliderGrp -q -v gameVertexUnitySmoothingAngleSliderGrp`;
+	int $wvert = `checkBoxGrp -q -v1 gameVertexUnityWeldVerticesChk`;
+
+	optionVar -intValue gameVertexUnityTangentMode $tmode;
+	optionVar -intValue gameVertexUnityNormalMode $nmode;
+	optionVar -intValue gameVertexUnityNormalCalcMode $ncmode;
+	optionVar -intValue gameVertexUnitySmoothingSource $smode;
+	optionVar -intValue gameVertexUnitySmoothingAngle $sangle;
+	optionVar -intValue gameVertexUnityWeldVertices $wvert;
+
+}
+
+global proc gameVertexUnityCreateUI()
+//
+//	Description:
+//		Create the evaluator specific UI.
+//
+{
+	string $weldVertStr = getPluginResource("gameVertexCount", "kUnityWeldVertices");
+	checkBoxGrp -numberOfCheckBoxes 1 -label $weldVertStr -en 1 
+		-v1 true
+		-cc gameVertexUnityWeldVerticesChangeCB
+		 gameVertexUnityWeldVerticesChk;
+	
+	string $normalMode = getPluginResource("gameVertexCount", "kUnityNormalMode");
+	string $normalImport = getPluginResource("gameVertexCount", "kUnityNormalImport");
+	string $normalCalculate = getPluginResource("gameVertexCount", "kUnityNormalCalculate");
+	string $normalNone = getPluginResource("gameVertexCount", "kUnityNormalNone");
+	optionMenuGrp -label $normalMode
+		-cc gameVertexUnityNormalModeChangeCB 
+		gameVertexUnityNormalModeGrp;
+		menuItem -label $normalImport $normalImport;
+		menuItem -label $normalCalculate $normalCalculate;
+		menuItem -label $normalNone $normalNone;
+
+	int $nmode = `optionMenuGrp -q -select gameVertexUnityNormalModeGrp`;
+	int $enableCalc = 0;
+	if ( $nmode == 2 )
+	{
+		$enableCalc = 1;
+	}
+	string $normalCalcMode = getPluginResource("gameVertexCount", "kUnityNormalCalcMode");
+	string $normalCalcAreaAndAngleW = getPluginResource("gameVertexCount", "kUnityNormalCalcAreaAndAngleW");
+	string $normalCalcAngleW =  getPluginResource("gameVertexCount", "kUnityNormalCalcAngleW");
+	string $normalCalcAreaW =  getPluginResource("gameVertexCount", "kUnityNormalCalcAreaW");
+	string $normalCalcUnW =  getPluginResource("gameVertexCount", "kUnityNormalCalcUnW");
+	string $normalCalcUnWLegacy =  getPluginResource("gameVertexCount", "kUnityNormalCalcUnWLegacy");
+
+	optionMenuGrp -label $normalCalcMode -en $enableCalc
+		-cc gameVertexUnityNormalCalcModeChangeCB gameVertexUnityNormalCalcModeGrp;
+		menuItem -label $normalCalcUnWLegacy $normalCalcUnWLegacy; 
+		menuItem -label $normalCalcUnW $normalCalcUnW;
+		menuItem -label $normalCalcAreaW $normalCalcAreaW;
+		menuItem -label $normalCalcAngleW $normalCalcAngleW;
+		menuItem -label $normalCalcAreaAndAngleW  $normalCalcAreaAndAngleW;
+
+	string $smMode = getPluginResource("gameVertexCount", "kUnitySmMode");
+	string $smPreferSmoothing = getPluginResource("gameVertexCount", "kUnitySmPreferSmoothing");
+	string $smFromSmoothing = getPluginResource("gameVertexCount", "kUnitySmFromSmoothing");
+	string $smFromAngle = getPluginResource("gameVertexCount", "kUnitySmFromAngle");
+	string $smNone = getPluginResource("gameVertexCount", "kUnitySmNone");
+	string $smToolTip = "How to determine which edge should be smooth and which should be sharp 2018.3 feature";
+	optionMenuGrp -label $smMode -en $enableCalc -ann $smToolTip
+		-cc gameVertexUnitySmModeChangeCB gameVertexUnitySmoothingSourceGrp;
+		menuItem -label $smPreferSmoothing $smPreferSmoothing;
+		menuItem -label $smFromSmoothing $smFromSmoothing;
+		menuItem -label $smFromAngle $smFromAngle;
+		menuItem -label $smNone $smNone;
+
+	string $smAngleString = getPluginResource("gameVertexCount", "kUnitySmAngle");
+	intSliderGrp -label $smAngleString -en $enableCalc -field true
+		-minValue 0 -maxValue 180
+		-value 60
+		gameVertexUnitySmoothingAngleSliderGrp;
+
+	string $tangentMode = getPluginResource("gameVertexCount", "kUnityTangentMode");
+	string $tangentNone = getPluginResource("gameVertexCount", "kUnityTangentNone");
+	string $tangentLegacy = getPluginResource("gameVertexCount", "kUnityTangentLegacy");
+	string $tangentImport = getPluginResource("gameVertexCount", "kUnityTangentImport");
+	string $tangentMikk = getPluginResource("gameVertexCount", "kUnityTangentMikk");
+	optionMenuGrp -label $tangentMode -en 1
+		-cc gameVertexUnityTangentModeChangeCB gameVertexUnityTangentModeGrp;
+		menuItem -label $tangentImport $tangentImport;
+		menuItem -label $tangentLegacy $tangentLegacy;
+		menuItem -label $tangentNone  $tangentNone;
+		menuItem -label $tangentMikk $tangentMikk;
+
+
+}
+
+global proc gameVertexUnityNormalModeChangeCB()
+{
+	int $nmode = `optionMenuGrp -q -select gameVertexUnityNormalModeGrp`;
+	if ($nmode == 2) 
+	{
+		optionMenuGrp -e -en 1 gameVertexUnityNormalCalcModeGrp;
+		optionMenuGrp -e -en 1 gameVertexUnitySmoothingSourceGrp;
+		intSliderGrp -e -en 1 gameVertexUnitySmoothingAngleSliderGrp;
+	}
+	else
+	{
+		optionMenuGrp -e -en 0 gameVertexUnityNormalCalcModeGrp;
+		optionMenuGrp -e -en 0 gameVertexUnitySmoothingSourceGrp;
+		intSliderGrp -e -en 0 gameVertexUnitySmoothingAngleSliderGrp;
+
+
+	}
+	optionVar -intValue gameVertexUnityNormalMode $nmode;
+	gameVertexUnityCallback();
+
+}
+
+global proc gameVertexUnityNormalCalcModeChangeCB()
+{
+	int $ncmode = `optionMenuGrp -q -select gameVertexUnityNormalCalcModeGrp`;
+	optionVar -intValue gameVertexUnityNormalCalcMode $ncmode;
+	gameVertexUnityCallback();
+
+}
+
+global proc gameVertexUnitySmModeChangeCB()
+{
+	int $smMode = `optionMenuGrp -q -select gameVertexUnitySmoothingSourceGrp`;
+	optionVar -intValue gameVertexUnitySmoothingSource $smMode;
+	gameVertexUnityCallback();
+}
+
+global proc gameVertexUnityTangentModeChangeCB()
+{
+	int $tangentMode = `optionMenuGrp -q -select gameVertexUnityTangentModeGrp`;
+	optionVar -intValue gameVertexUnityTangentMode $tangentMode;
+	gameVertexUnityCallback();
+}
+
+global proc gameVertexUnityWeldVerticesChangeCB()
+{
+	int $weldVertices = `checkBoxGrp -q -v1 gameVertexUnityWeldVerticesChk`;
+	optionVar -intValue gameVertexUnityWeldVertices $weldVertices;
+	gameVertexUnityCallback();
+}
+
+global proc gameVertexUnityDeleteUI()
+//
+//	Description:
+//		Delete any evaluator specific UI. Evaluator specific UI is contained in
+//		a parent layout which will be deleted with the option box. This function
+//		is only required to delete UI elements outside the parent layout.
+//
+{}

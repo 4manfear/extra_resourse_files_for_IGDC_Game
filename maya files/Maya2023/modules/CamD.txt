@@ -1,0 +1,11 @@
++ LOCALE:en_US poseInterpolator 0.1 ../plug-ins/camd
++ LOCALE:en_US quickBlend 0.1 ../plug-ins/camd
++ LOCALE:en_US invertShape 0.1 ../plug-ins/camd
+
++ LOCALE:zh_CN poseInterpolator 0.1 ../plug-ins/camd
++ LOCALE:zh_CN quickBlend 0.1 ../plug-ins/camd
++ LOCALE:zh_CN invertShape 0.1 ../plug-ins/camd
+
++ LOCALE:ja_JP poseInterpolator 0.1 ../plug-ins/camd
++ LOCALE:ja_JP quickBlend 0.1 ../plug-ins/camd
++ LOCALE:ja_JP invertShape 0.1 ../plug-ins/camd

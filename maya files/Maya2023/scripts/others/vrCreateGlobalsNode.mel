@@ -1,0 +1,56 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//  Procedure Name:
+//      vrCreateGlobalsNode
+//
+//  Description:
+//      Creates a render globals node for the Maya Vector renderer
+//      if there is no vector render globals node already existing 
+//      in the scene.
+//
+//  Input Arguments:
+//      None.
+//
+//  Return Value:
+//      The name of the vector render globals node.
+//
+global proc string vrCreateGlobalsNode()
+{
+	string	$globals[] = `ls -typ vectorRenderGlobals`;
+	string  $node;
+
+	if (!size($globals)) {
+		//
+		// No globals node exists in the scene.
+		// Create one, using the -shared flag to indicate
+		// that only one node should exist across multiple files.
+		string  $selection[] = `ls -sl`;
+
+		$node = `createNode -shared -n "vectorRenderGlobals"
+			vectorRenderGlobals`;
+        // Load the user defined preferred preset for 
+        // Vector render globals node.
+        loadPreferredPreset("mayaVector", $node);
+
+		// Restore the previous selection.
+		//
+		select -d;
+		select $selection;
+
+	}
+	else {
+		if (size($globals) > 1) {
+			string $fmt = (uiRes("m_vrCreateGlobalsNode.kMoreVectorGlobals"));
+			print `format -s $globals[0] $fmt`;
+		}
+		$node = $globals[0];
+	}
+
+	return $node;
+}

@@ -1,0 +1,65 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  14 April 1998
+//<doc>
+//<name floatArrayEq>
+//
+//<synopsis>
+//		int floatArrayEq(float $lhs[], float $rhs[], float $tolerance)
+//
+//<description>
+//      This script compares two float arrays to determine they are
+//      equal within a hard-coded limit.
+//
+//<flags>
+//      float[]	$lhs	First array to be compared
+//      float[]	$rhs	Second array to be compared
+//      float	$tol	Tolerance for array members to be judged equal
+//
+//<returns>
+//      int : 1 if all members of float arrays are equal within $tol, else 0.
+//
+//<examples>
+//  float $lhs[] = { 1.0, 2.0, 3.0 };
+//  float $rhs[] = { 1.1, 2.1, 2.9 };
+//  floatArrayEq( $lhs, $rhs, 0.01 );
+//  // Result : 0 //
+//  floatArrayEq( $lhs, $rhs, 0.2 );
+//  // Result : 1 //
+//
+//</doc>
+
+//
+//  ========== floatArrayEq ==========
+//
+//  SYNOPSIS
+//              This script checks two float arrays to determine they are equal.
+//     
+global proc int floatArrayEq( float $faLhs[], float $faRhs[], float $tolerance )
+{
+	int $lengthLhs = size( $faLhs );
+	int $lengthRhs = size( $faRhs );
+
+	if ( $lengthLhs != $lengthRhs )
+	{
+	    return false;
+	}
+
+	for ( $i = 0; $i < $lengthLhs; $i++ )
+	{
+	    if ( ! (abs( $faLhs[$i] - $faRhs[$i] ) < $tolerance) )
+		{
+		    return false;
+		}
+	}
+
+	return true;
+
+} // floatArrayEq //

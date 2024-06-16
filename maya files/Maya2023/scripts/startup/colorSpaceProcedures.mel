@@ -1,0 +1,1235 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+// Procedure to retrieve the input color space names
+global proc string[] getInputColorSpaceNames()
+{
+    return `colorManagementPrefs -q -inputSpaceNames`;
+}
+
+proc displayColorSpaceFileRulesDisclaimer ( string $nodeName )
+{
+    string $filePath = "";
+
+    // File texture
+    if ( catchQuiet ( $filePath = `getAttr ($nodeName + ".fileTextureName")` ) )
+    {
+        // Image Plane
+        if ( catchQuiet ( $filePath = `getAttr ($nodeName + ".imageName")` ) )
+        {
+            // Arnold aiImage
+            if ( catchQuiet ( $filePath = `getAttr ($nodeName + ".filename")` ) )
+            {
+                return;
+            }
+        }
+    }
+
+    if ( $filePath != "" && !`getAttr ($nodeName + ".ignoreColorSpaceFileRules")` )
+    {
+        string $expectedColorSpace = `colorManagementFileRules -evaluate $filePath`;
+        string $currentColorSpace = `getAttr ($nodeName + ".colorSpace")`;
+        if ( $expectedColorSpace != $currentColorSpace )
+        {
+            warning -noContext (uiRes("m_colorSpaceProcedures.kIgnoreColorSpaceFileRulesDisclaimer"));
+        }
+    }
+}
+
+// Procedure to update the color space widgets upon a warning
+proc updateColorSpaceWarning(string $menu, string $text, string $selection, string $validItems[], string $nodeName)
+{
+    // Note: The procedure only need to handle UI changes and warning message because the popup menu
+    // is already updated i.e. missing color space added if needed.
+
+    if ( !stringArrayContains($selection, $validItems) )
+    {
+        string $missingFmt = (uiRes("m_colorSpaceProcedures.kColorSpaceNotFound"));
+        string $missingWarningMessage = `format -s $selection $missingFmt`;
+
+        if (`colorManagementPrefs -q -ociov2Enabled` == 1)
+        {
+            // The color space is not in the list of active color spaces. It could be either a
+            // missing color space or an inactive color space.
+
+            string $missingColorSpaceNodeNames[] = `colorManagementPrefs -query -missingColorSpaceNodes`;
+
+            if (size($missingColorSpaceNodeNames) == 0)
+            {
+                // That's an inactive color space.
+
+                string $inactiveFmt = (uiRes("m_colorSpaceProcedures.kColorSpaceInactive"));
+                string $inactiveWarningMessage = `format -s $selection $inactiveFmt`;
+
+                text -e -visible true -label $inactiveWarningMessage $text;
+            }
+            else
+            {
+
+                button -e -backgroundColor 1.0 0.0 0.0 $menu;
+
+                string $menuButton = $menu + "Button";
+                iconTextButton -edit -backgroundColor 1.0 0.0 0.0 $menuButton;
+
+                text -e -visible true -label $missingWarningMessage $text;
+            }
+        }
+        else
+        {
+            optionMenu -e -backgroundColor 1.0 0.0 0.0 $menu;
+
+            text -e -visible true -label $missingWarningMessage $text;
+        }
+    }
+    else
+    {
+        if (`colorManagementPrefs -q -ociov2Enabled` == 1)
+        {
+            button -e -backgroundColor 0.37109375 0.37109375 0.37109375 $menu;
+
+            string $menuButton = $menu + "Button";
+            iconTextButton -edit -backgroundColor 0.37109375 0.37109375 0.37109375 $menuButton;
+        }
+        else
+        {
+            optionMenu -e -backgroundColor 0.37109375 0.37109375 0.37109375 $menu;
+        }
+
+        text -e -visible false $text;
+    }
+
+    displayColorSpaceFileRulesDisclaimer ( $nodeName );
+}
+
+// Procedure to set a given color space attribute
+proc setColorSpaceAttr(string $colorSpaceAttr, string $colorSpace)
+{
+    setAttr $colorSpaceAttr -type "string" $colorSpace ;
+}
+
+proc string getColorSpaceSelection(string $colorSpaceAttr)
+{
+    // Get the color space attribute value; it might be the empty string.
+    string $colorSpace = `getAttr $colorSpaceAttr`;
+
+    return $colorSpace;
+}
+
+// In OCIOv2 mode, the "optionMenu" is replaced by a "button" plus an attached "popupMenu" i.e.
+// two menus to managed instead of one. So, selecting an entry now means to manually update the
+// button label and the attribute.
+global proc updateColorSpaceFromMenuPopup(
+    string $menu, string $warningText, string $selection, string $colorSpaceAttr
+)
+{
+    // Set up the UI color space name.
+    button -edit -label $selection $menu;
+
+    // Update the annotation.
+    string $colorSpaceDesc = `colorManagementPrefs -q -inputSpaceDescription $selection`;
+    button -edit -annotation $colorSpaceDesc $menu;
+
+    // Set up the color space attribute.
+    setColorSpaceAttrCB($menu, $colorSpaceAttr);
+}
+
+// Procedure to update the hierarchical menu
+proc updateHierarchicalMenu(string $menuItem, string $menuButton, string $warningText, string $colorSpaceAttr)
+{
+    if (!`menuItem -query -subMenu $menuItem`)
+    {
+        string $name = `menuItem -query -label $menuItem`;
+        string $cmd = "updateColorSpaceFromMenuPopup(\"" + $menuButton + "\",\"" + $warningText + "\",\"" + $name + "\",\"" + $colorSpaceAttr + "\")";
+        menuItem -edit -command($cmd) $menuItem;
+    }
+    else
+    {
+        // Update the current menu items to attach the command to the right attribute.
+        string $menuItems[] = `menu -query -itemArray $menuItem`;
+        for ($name in $menuItems)
+        {
+            updateHierarchicalMenu($name, $menuButton, $warningText, $colorSpaceAttr);
+        }
+    }
+}
+
+// Procedure to build the hierarchical menu
+proc buildHierarchicalMenu(
+    string $menuButton, string $menuPopup, string $warningText, string $selection, string $colorSpaceAttr, string $colorSpaceNames[], int $rebuildMenu)
+{
+    string $currentMenu = `setParent -query`;
+
+    setParent -m $menuPopup;
+
+    if ($rebuildMenu)
+    {
+        // Clear the current menu items.
+        popupMenu -edit -deleteAllItems $menuPopup;
+
+        // Having a hierarchical menu imposes to use a popup menu (instead of the former option
+        // menu) but it also imposes to regroup all color spaces from the same family under
+        // the same sub-menu. That explains the loop below.
+
+        string $allParents[];
+
+        for($name in $colorSpaceNames)
+        {
+            string $currentParent = $menuPopup;
+            string $colorSpaceFamilies[] = `colorManagementPrefs -q -inputSpaceFamilies $name`;
+
+            for($family in $colorSpaceFamilies)
+            {
+                int $found = 0;
+                for ( $i = 0; $i <  size($allParents); $i++ )
+                {
+                    if ( `menuItem -q -exists $allParents[$i]`
+                         && `menuItem -q -label $allParents[$i]` == $family )
+                    {
+                        $currentParent = $allParents[$i];
+                        $found = 1;
+                    }
+                }
+                if($found == 0)
+                {
+                    $currentParent = `menuItem -subMenu true -label $family -parent $currentParent`;
+                    $allParents[size($allParents)] = $currentParent;
+                }
+            }
+
+            // The callback now needs to update the button label, and the attribute.
+            menuItem -label $name
+                     -parent $currentParent
+                     -command ("updateColorSpaceFromMenuPopup(\"" + $menuButton + "\",\"" + $warningText + "\",\"" + $name + "\",\"" + $colorSpaceAttr + "\")");
+
+            setParent -menu $menuPopup;
+        }
+    }
+    else
+    {
+        // Update the current menu items to attach the command with the right attribute.
+        string $menuItems[] = `popupMenu -query -ia $menuPopup`;
+        for ($menuItem in $menuItems)
+        {
+            updateHierarchicalMenu($menuItem, $menuButton, $warningText, $colorSpaceAttr);
+        }
+    }
+
+    setParent $currentMenu;
+}
+
+// Procedure to update the contents of the option menu containing the color spaces
+proc updateColorSpaceMenu(
+    string $menu, string $warningText, string $selection, string $colorSpaceAttr, int $rebuildMenu
+)
+{
+    if (`colorManagementPrefs -q -ociov2Enabled` == 1)
+    {
+        if (!`button -query -exists $menu`)
+        {
+            return;
+        }
+
+        string $currentMenu = `setParent -query`;
+
+        // If the "colorManagementEnabled" input is not connected, the node is not color managed.
+        string $nodeName[];
+        tokenize $colorSpaceAttr "." $nodeName;
+
+        if (!`objExists $nodeName[0]`)
+        {
+            return;
+        }
+
+        string $enabledAttr = $nodeName[0] + ".colorManagementEnabled";
+        int $isNodeColorManaged =
+            `isConnected "defaultColorMgtGlobals.cmEnabled" $enabledAttr`;
+
+        if ($isNodeColorManaged)
+        {
+            // Get the color space names from OCIO and populate the option menu.
+            string $colorSpaceNames[] = getInputColorSpaceNames();
+
+            // If the colorSpace attribute from the node does not exist in the list of color spaces,
+            // add it to the list at the end i.e. do not sort to preserve the color space order from
+            // the config file.
+            string $newMenuitems[] = $colorSpaceNames;
+            if ( !stringArrayContains($selection, $colorSpaceNames) )
+            {
+                $newMenuitems[size($newMenuitems)] = $selection;
+            }
+
+            // Build the hierarchical menus.    
+
+            string $csPopupMenuLabel = $menu + "|colorSpaceMenuPopupLabel";
+            buildHierarchicalMenu(
+                $menu, $csPopupMenuLabel, $warningText, $selection, $colorSpaceAttr, $newMenuitems, $rebuildMenu);
+
+            string $csPopupMenuButton = $menu + "Button|colorSpaceMenuPopupButton";
+            buildHierarchicalMenu(
+                $menu, $csPopupMenuButton, $warningText, $selection, $colorSpaceAttr, $newMenuitems, $rebuildMenu);
+
+            // Update the UI.
+
+            button -edit -label $selection $menu;
+
+            updateColorSpaceWarning($menu, $warningText, $selection, $colorSpaceNames, $nodeName[0]);
+            
+            // Update the annotation.
+
+            string $colorSpaceDesc = `colorManagementPrefs -q -inputSpaceDescription $selection`;
+            button -edit -annotation $colorSpaceDesc $menu;
+
+            // Update if enabled or not.
+
+            button -edit -enable `colorManagementPrefs -query -cmEnabled` $menu;
+
+            string $menuButton = $menu + "Button";
+            iconTextButton -edit -enable `colorManagementPrefs -query -cmEnabled` $menuButton;
+        }
+        else
+        {
+            // Clear the label popup menu.
+
+            string $csPopupMenuLabel = $menu + "|colorSpaceMenuPopupLabel";
+            setParent -m $csPopupMenuLabel;
+
+            // Clear the current menu items.
+            string $oldMenuLabelItems[] = `popupMenu -query -ia $csPopupMenuLabel`;
+            for ($oldMenuItem in $oldMenuLabelItems)
+            {
+                deleteUI -mi $oldMenuItem;
+            }
+
+            // Clear the icon popup menu.
+
+            string $csPopupMenuButton = $menu + "Button|colorSpaceMenuPopupButton";
+            setParent -m $csPopupMenuButton;
+
+            // Clear the current menu items.
+            string $oldMenuButtonItems[] = `popupMenu -query -ia $csPopupMenuButton`;
+            for ($oldMenuItem in $oldMenuButtonItems)
+            {
+                deleteUI -mi $oldMenuItem;
+            }
+
+            // Update the UI.
+
+            button -edit -label (uiRes("m_colorSpaceProcedures.kNoColorManagement1")) $menu;
+
+            button -edit -enable false $menu;
+
+            string $menuButton = $menu + "Button";
+            iconTextButton -edit -enable false $menuButton;
+        }
+
+        setParent $currentMenu;
+    }
+    else
+    {
+        if ( !`optionMenu -query -exists $menu` )
+        {
+            return;
+        }
+
+        setParent -m $menu;
+
+        // Clear the current menu items
+        string $oldMenuItems[] = `optionMenu -q -ils $menu`;
+        for($oldMenuItem in $oldMenuItems)
+        {
+            deleteUI -mi $oldMenuItem;
+        }
+
+        // If the "colorManagementEnabled" input is not connected, the node is
+        // not color managed.
+        string $nodeName[];
+        tokenize $colorSpaceAttr "." $nodeName;
+        string $enabledAttr = $nodeName[0] + ".colorManagementEnabled";
+        int $isNodeColorManaged =
+            `isConnected "defaultColorMgtGlobals.cmEnabled" $enabledAttr`;
+
+        if ($isNodeColorManaged) {
+
+            // Get the color space names from SynColor and populate the option menu
+            string $colorSpaceNames[] = getInputColorSpaceNames();
+            
+            // If the colorSpace attribute from the node does not exist
+            // in the list of color spaces, add it to the list.
+            string $newMenuitems[] = $colorSpaceNames;
+            if ( !stringArrayContains($selection, $colorSpaceNames) )
+            {
+                $newMenuitems[size($newMenuitems)] = $selection;
+                $newMenuitems = `sort $newMenuitems`;
+            }
+
+            for($newMenuitem in $newMenuitems)
+            {
+                menuItem -label $newMenuitem;
+            }
+            
+            // Make sure the correct color space menu item is selected
+            optionMenu -e -value $selection $menu ;
+
+            updateColorSpaceWarning($menu, $warningText, $selection, $colorSpaceNames, $nodeName[0]);
+            
+            optionMenu -e -enable `colorManagementPrefs -q -cmEnabled` $menu;
+        }
+        else {
+
+            menuItem -label (uiRes("m_colorSpaceProcedures.kNoColorManagement"));
+
+            optionMenu -e -enable false $menu;
+        }
+
+        setParent -m ..;
+    }
+}
+
+// Callback used to set the colorSpace attribute
+global proc setColorSpaceAttrCB(string $menu, string $colorSpaceAttr)
+{
+    if (!`control -exists $menu`)
+    {
+        return;
+    }
+
+    string $nodeName[];
+    tokenize $colorSpaceAttr "." $nodeName;
+
+    if (!`objExists $nodeName[0]`)
+    {
+        return;
+    }
+
+    if (`colorManagementPrefs -q -ociov2Enabled` == 1)
+    {
+        // Step 1 - By default, disable the view name usage.
+
+        string $nodeName[];
+        tokenize $colorSpaceAttr "." $nodeName;
+
+        string $viewNameUsedAttr = $nodeName[0] + ".viewNameUsed";
+        setAttr $viewNameUsedAttr false;
+
+        string $viewNameStrAttr = $nodeName[0] + ".viewNameStr";
+        setAttr $viewNameStrAttr -type "string" "<N/A>";
+
+        // Step 2 - Change to the new color space name.
+
+        string $selectedItemValue = `button -query -label $menu`;
+        setColorSpaceAttr($colorSpaceAttr, $selectedItemValue);
+    }
+    else
+    {
+        string $selectedItemValue = `optionMenu -query -value $menu`;
+        setColorSpaceAttr($colorSpaceAttr, $selectedItemValue);
+    }
+}
+
+global proc onColorSpaceProceduresEnableChange(string $colorSpaceAttr, string $menu)
+{
+    if (!`control -exists $menu`)
+    {
+        return;
+    }
+
+    string $nodeName[];
+    tokenize $colorSpaceAttr "." $nodeName;
+
+    if (!`objExists $nodeName[0]`)
+    {
+        return;
+    }
+
+    // If the "colorManagementEnabled" input is not connected, 
+    //   the node is not color managed.
+
+    string $enabledAttr = $nodeName[0] + ".colorManagementEnabled";
+    int $isMenuEnabled =
+        `isConnected "defaultColorMgtGlobals.cmEnabled" $enabledAttr` &&
+        `colorManagementPrefs -q -cmEnabled`;
+
+    string $rowParent = `control -q -parent $menu`;
+    string $colParent = `control -q -parent $rowParent`;
+
+    control -edit -enable $isMenuEnabled $colParent;
+}
+
+global proc onColorSpaceProceduresConfigChange(string $colorSpaceAttr, string $menu)
+{
+    if (`colorManagementPrefs -q -ociov2Enabled` == 1)
+    {
+        string $menuRowLayout = `button -q -parent $menu`;
+        string $menuColumnLayout = `rowLayout -q -parent $menuRowLayout`;
+        string $warningText = $menuColumnLayout + "|colorSpaceWarningText";
+
+        string $selection = `button -query -label $menu`;
+        updateColorSpaceMenu($menu, $warningText, $selection, $colorSpaceAttr, true);
+    }
+    else
+    {
+        string $menuRowLayout = `optionMenu -q -parent $menu`;
+        string $menuColumnLayout = `rowLayout -q -parent $menuRowLayout`;
+        string $warningText = $menuColumnLayout + "|colorSpaceWarningText";
+
+        string $selection = `optionMenu -q -v $menu`;
+        updateColorSpaceMenu($menu, $warningText, $selection, $colorSpaceAttr, true);
+    }
+}
+
+global proc onColorSpaceProceduresAttributeChange(string $menu, string $warningText, string $colorSpaceAttr)
+{
+    if (!`control -exists $menu`)
+    {
+        return;
+    }
+
+    string $nodeName[];
+    tokenize $colorSpaceAttr "." $nodeName;
+
+    if (!`objExists $nodeName[0]`)
+    {
+        return;
+    }
+
+    // Take care of the order to avoid invalid transient states.
+
+    // Step 1 - If needed, update the view name used & str attributes.
+
+    if (`colorManagementPrefs -q -ociov2Enabled` == 1)
+    {
+        // By default, disable the view name usage.
+
+        string $nodeName[];
+        tokenize $colorSpaceAttr "." $nodeName;
+
+        string $viewNameUsedAttr = $nodeName[0] + ".viewNameUsed";
+        setAttr $viewNameUsedAttr false;
+
+        string $viewNameStrAttr = $nodeName[0] + ".viewNameStr";
+        setAttr $viewNameStrAttr -type "string" "<N/A>";
+    }
+
+    // Step 2 - Update the attribute and the related UIs.
+
+    string $selection = getColorSpaceSelection($colorSpaceAttr);
+    updateColorSpaceMenu($menu, $warningText, $selection, $colorSpaceAttr, true);
+}
+
+proc addScriptJobs(string $colorSpaceAttr, string $menu, string $warningText)
+{
+    // Use the replace previous (rp) flag just once, as it is non-selective
+    // and removes ALL script jobs with the same parent.
+    scriptJob -rp -p $menu -event "colorMgtConfigChanged"
+        ("onColorSpaceProceduresConfigChange " + $colorSpaceAttr + " " + $menu);
+
+    string $cmd = "onColorSpaceProceduresAttributeChange " + $menu + " " + $warningText + " " + $colorSpaceAttr;
+    // Don't use the replace previous flag here, as it would remove the
+    // scriptJob we just added.
+    scriptJob -p $menu -attributeChange $colorSpaceAttr $cmd;
+
+    // Grey out the color Space menu if Color Mgt is off
+    scriptJob -p $menu -event "colorMgtEnabledChanged"
+        ("onColorSpaceProceduresEnableChange " + $colorSpaceAttr + " " + $menu);
+}
+
+// Add a new color space UI element to the attribute editor
+proc AEcolorSpaceControlImp(string $colorSpaceAttr, string $label)
+{
+    if (`colorManagementPrefs -q -ociov2Enabled` == 1)
+    {
+        columnLayout -adjustableColumn true colorSpaceColumnLayout;
+
+            rowLayout -nc 3 colorSpaceRowLayout;
+
+                text -l $label colorSpaceMenuText;
+                string $menuLabel = `button -label "" -height 18 colorSpaceMenu`;
+                string $menuButton = `iconTextButton -image "popupMenuIcon.png" -width 18 -height 18 colorSpaceMenuButton`;
+                iconTextButton -edit -backgroundColor 0.37109375 0.37109375 0.37109375 $menuButton;
+
+                popupMenu -button 1 -parent $menuLabel colorSpaceMenuPopupLabel;
+                popupMenu -button 1 -parent $menuButton colorSpaceMenuPopupButton;
+
+                setParent ..;
+
+            string $warningText = `text -font "boldLabelFont" -al "center" -l "" colorSpaceWarningText`;
+
+            setParent -m ..;
+
+        setParent ..;
+
+        // Update color space option menu items
+        string $selection = getColorSpaceSelection($colorSpaceAttr);
+        updateColorSpaceMenu($menuLabel, $warningText, $selection, $colorSpaceAttr, true);
+
+        addScriptJobs($colorSpaceAttr, $menuLabel, $warningText);
+    }
+    else
+    {
+        columnLayout -adjustableColumn true colorSpaceColumnLayout;
+
+            rowLayout -nc 2 colorSpaceRowLayout;
+
+                text -l $label colorSpaceMenuText;
+                string $menu = `optionMenu -l "" colorSpaceMenu`;
+
+                setParent ..;
+
+            string $warningText = `text -font "boldLabelFont" -al "center" -l "" colorSpaceWarningText`;
+
+            setParent -m ..;
+
+        setParent ..;
+
+        // Set up the color space attribute callback
+        optionMenu -e -cc ("setColorSpaceAttrCB " + $menu + " " + $colorSpaceAttr) $menu;
+
+        // Update color space option menu items
+        string $selection = getColorSpaceSelection($colorSpaceAttr);
+        updateColorSpaceMenu($menu, $warningText, $selection, $colorSpaceAttr, true);
+
+        addScriptJobs($colorSpaceAttr, $menu, $warningText);
+    }
+}
+
+// Add a new color space UI element to the attribute editor
+global proc AEcolorSpaceNew(string $colorSpaceAttr)
+{
+    AEcolorSpaceControlImp($colorSpaceAttr, (uiRes("m_colorSpaceProcedures.kColorSpaceLabel")));
+}
+
+// this function is called to build the color space control when using a custom template in the attribute editor
+global proc PPcolorSpaceControl(string $plug, string $label, string $annot)
+{
+    AEcolorSpaceControlImp($plug, $label);
+}
+
+// Update the color space UI element in the attribute editor
+global proc AEcolorSpaceReplace(string $colorSpaceAttr)
+{
+    string $parent = `setParent -q`;
+    string $menu = $parent + "|colorSpaceColumnLayout|colorSpaceRowLayout|colorSpaceMenu";
+    string $warningText = $parent + "|colorSpaceColumnLayout|colorSpaceWarningText";
+
+    if (!`colorManagementPrefs -q -ociov2Enabled`)
+    {
+        optionMenu -e -cc ("setColorSpaceAttrCB " + $menu + " " + $colorSpaceAttr) $menu;
+    }
+
+    // update the optionMenu
+    string $selection = getColorSpaceSelection($colorSpaceAttr);
+    updateColorSpaceMenu($menu, $warningText, $selection, $colorSpaceAttr, false);
+
+    addScriptJobs($colorSpaceAttr, $menu, $warningText);
+}
+
+
+//
+// Manage the Invert View Name Used attribute & UI.
+//
+
+
+global proc onViewNameUsedAttrEnable(string $viewNameUsedAttr, string $menu)
+{
+    if (!`control -exists $menu`)
+    {
+        return;
+    }
+
+    string $nodeName[];
+    tokenize $viewNameUsedAttr "." $nodeName;
+    if (!`objExists $nodeName[0]`)
+    {
+        return;
+    }
+
+    string $colorSpaceAttr = $nodeName[0] + ".colorSpace";
+    string $colorSpaceName = `getAttr $colorSpaceAttr`;
+    string $viewNames[] = `colorManagementPrefs -q -viewDisplayNames $colorSpaceName`;
+    int $attrEnabled = size($viewNames) > 0;
+
+    string $enabledAttr = $nodeName[0] + ".colorManagementEnabled";
+    int $cmEnabled =
+        `isConnected "defaultColorMgtGlobals.cmEnabled" $enabledAttr` &&
+        `colorManagementPrefs -q -cmEnabled`;
+
+    string $rowParent = `control -q -parent $menu`;
+    string $colParent = `control -q -parent $rowParent`;
+
+    int $menuEnabled = $cmEnabled && $attrEnabled;
+    control -edit -enable $menuEnabled $colParent;
+}
+
+global proc onViewNameUsedAttrChange(string $viewNameUsedAttr, string $menu)
+{
+    if (`control -exists $menu`)
+    {
+        checkBox -edit -value `getAttr $viewNameUsedAttr` $menu;
+    }
+
+    string $nodeName[];
+    tokenize $viewNameUsedAttr "." $nodeName;
+
+    if (`objExists $nodeName[0]`)
+    {
+        string $viewNameStrAttr = $nodeName[0] + ".viewNameStr";
+
+        if (`getAttr $viewNameUsedAttr`)
+        {
+            string $colorSpaceAttr = $nodeName[0] + ".colorSpace";
+            string $colorSpaceName = `getAttr $colorSpaceAttr`;
+            string $viewNames[] = `colorManagementPrefs -q -viewDisplayNames $colorSpaceName`;
+
+            setAttr $viewNameStrAttr -type "string" $viewNames[0];
+        }
+        else
+        {
+            setAttr $viewNameStrAttr -type "string" "<N/A>";
+        }
+    }
+}
+
+global proc onInvertViewNameUsedWhenColorSpaceAttrChange(string $colorSpaceAttr, string $viewNameUsedAttr, string $menu)
+{
+    if (!`control -exists $menu`)
+    {
+        return;
+    }
+
+    string $nodeName[];
+    tokenize $colorSpaceAttr "." $nodeName;
+    if (!`objExists $nodeName[0]`)
+    {
+        return;
+    }
+
+    // When the color space attribute is changed, the attribute values for view name used & str
+    // are already updated. The method only updates the UI part.
+
+    string $colorSpaceName = `getAttr $colorSpaceAttr`;
+    string $viewNames[] = `colorManagementPrefs -q -viewDisplayNames $colorSpaceName`;
+    int $attrEnabled = size($viewNames) > 0;
+
+    string $enabledAttr = $nodeName[0] + ".colorManagementEnabled";
+    int $cmEnabled =
+        `isConnected "defaultColorMgtGlobals.cmEnabled" $enabledAttr` &&
+        `colorManagementPrefs -q -cmEnabled`;
+
+    string $rowParent = `control -q -parent $menu`;
+    string $colParent = `control -q -parent $rowParent`;
+
+    int $menuEnabled = $cmEnabled && $attrEnabled;
+    control -edit -enable $menuEnabled $colParent;
+}
+
+proc addScriptJobsToInvertViewNameUsed(string $viewNameUsedAttr, string $menu)
+{
+    // Use the replace previous (rp) flag just once, as it is non-selective
+    // and removes ALL script jobs with the same parent.
+
+    // Grey out the invert view used checkbox if OCIO config file changed.
+    scriptJob -rp -p $menu -event "colorMgtConfigChanged"
+        ("onViewNameUsedAttrEnable " + $viewNameUsedAttr + " " + $menu);
+
+    // Don't use the replace previous flag here, as it would remove the
+    // scriptJob we just added.
+
+    // Trap changes to the attribute itself.
+    string $cmd1 = "onViewNameUsedAttrChange " + $viewNameUsedAttr + " " + $menu;
+    scriptJob -p $menu -attributeChange $viewNameUsedAttr $cmd1;
+
+    // Grey out the invert view used checkbox if Color Mgt is off.
+    scriptJob -p $menu -event "colorMgtEnabledChanged"
+        ("onViewNameUsedAttrEnable " + $viewNameUsedAttr + " " + $menu);
+
+    // Trap changes to the 'colorSpace' attribute.
+    string $nodeName[];
+    tokenize $viewNameUsedAttr "." $nodeName;
+
+    string $colorSpaceAttr = $nodeName[0] + ".colorSpace";
+    string $cmd2 = "onInvertViewNameUsedWhenColorSpaceAttrChange " + $colorSpaceAttr + " " + $viewNameUsedAttr + " " + $menu;
+    scriptJob -p $menu -attributeChange $colorSpaceAttr $cmd2;
+}
+
+global proc AEinvertViewNameUsedNewImp(string $viewNameUsedAttr, string $label)
+{
+    if (`colorManagementPrefs -q -ociov2Enabled` == 1)
+    {
+        string $parent = `setParent -q`;
+        string $menu = $parent + "|invertViewNameUsedColumnLayout|invertViewNameUsedRowLayout|invertViewNameUsedCheckBox";
+
+        // Create the menus.
+
+        columnLayout -adjustableColumn true -enable `getAttr $viewNameUsedAttr` invertViewNameUsedColumnLayout;
+
+            rowLayout -nc 1 invertViewNameUsedRowLayout;
+
+                checkBox -label $label invertViewNameUsedCheckBox;
+                checkBox -edit -value `getAttr $viewNameUsedAttr` invertViewNameUsedCheckBox;
+                checkBox -edit -changeCommand ("setViewNameUsedAttrCB " + $menu + " " + $viewNameUsedAttr) invertViewNameUsedCheckBox;
+
+            setParent ..;
+
+            string $nameViewAnnot = (uiRes("m_colorSpaceProcedures.kInvertViewNameUsedAnnotation"));
+
+            rowLayout -edit -annotation $nameViewAnnot invertViewNameUsedRowLayout;
+
+        setParent ..;
+
+        addScriptJobsToInvertViewNameUsed($viewNameUsedAttr, $menu);
+
+        onViewNameUsedAttrEnable($viewNameUsedAttr, $menu);
+    }
+}
+
+global proc AEinvertViewNameUsedNew(string $viewNameUsedAttr)
+{
+    AEinvertViewNameUsedNewImp($viewNameUsedAttr, (uiRes("m_colorSpaceProcedures.kInvertViewNameUsedLabel")));
+}
+
+global proc setViewNameUsedAttrCB(string $menu, string $viewNameUsedAttr)
+{
+    if (!`control -exists $menu`)
+    {
+        return;
+    }
+
+    string $nodeName[];
+    tokenize $viewNameUsedAttr "." $nodeName;
+    if (!`objExists $nodeName[0]`)
+    {
+        return;
+    }
+
+    // Note: Take care of the order to avoid inconsistent transtion states.
+
+    int $selectedItemValue = `checkBox -query -value $menu`;
+
+    if ($selectedItemValue == 0)
+    {
+        // Disable the view name use.
+
+        setAttr $viewNameUsedAttr $selectedItemValue;
+
+        // Set to "<N/A>" the view name attribute.
+
+        string $viewNameStrAttr = $nodeName[0] + ".viewNameStr";
+        setAttr $viewNameStrAttr -type "string" "<N/A>";
+    }
+    else
+    {
+        // Look for the default view name.
+
+        string $colorSpaceAttr = $nodeName[0] + ".colorSpace";
+        string $colorSpaceName = `getAttr $colorSpaceAttr`;
+        string $viewNames[] = `colorManagementPrefs -q -viewDisplayNames $colorSpaceName`;
+
+        // Set the view name attribute to its default value.
+
+        string $viewNameStrAttr = $nodeName[0] + ".viewNameStr";
+        setAttr $viewNameStrAttr -type "string" $viewNames[0];
+
+        // Enable the view name use.
+
+        setAttr $viewNameUsedAttr $selectedItemValue;
+    }
+}
+
+global proc AEinvertViewNameUsedReplace(string $viewNameUsedAttr)
+{
+    if (`colorManagementPrefs -q -ociov2Enabled` == 1)
+    {
+        string $parent = `setParent -q`;
+        string $menu = $parent + "|invertViewNameUsedColumnLayout|invertViewNameUsedRowLayout|invertViewNameUsedCheckBox";
+
+        if (`control -exists $menu`)
+        {
+            checkBox -edit -value `getAttr $viewNameUsedAttr` $menu;
+            checkBox -edit -changeCommand ("setViewNameUsedAttrCB " + $menu + " " + $viewNameUsedAttr) $menu;
+
+            addScriptJobsToInvertViewNameUsed($viewNameUsedAttr, $menu);
+
+            onViewNameUsedAttrEnable($viewNameUsedAttr, $menu);
+        }
+    }
+}
+
+// This function is called to build the view name used control when using a custom template in
+// the attribute editor
+global proc PPinvertViewNameUsedControl(string $plug, string $label, string $annot)
+{
+    AEinvertViewNameUsedNewImp($plug, $label);
+}
+
+
+//
+// Manage the Invert View Name attribute & UI.
+//
+
+
+global proc onViewNameStrAttrEnable(string $viewNameStrAttr, string $menu)
+{
+    if (!`control -exists $menu`)
+    {
+        return;
+    }
+
+    string $nodeName[];
+    tokenize $viewNameStrAttr "." $nodeName;
+
+    if (!`objExists $nodeName[0]`)
+    {
+        return;
+    }
+
+    // If the "colorManagementEnabled" input is not connected, the node is not color managed.
+    string $enabledAttr = $nodeName[0] + ".colorManagementEnabled";
+    int $cmEnabled =
+        `isConnected "defaultColorMgtGlobals.cmEnabled" $enabledAttr` &&
+        `colorManagementPrefs -q -cmEnabled`;
+
+    string $viewNameUsedAttr = $nodeName[0] + ".viewNameUsed";
+    int $viewNameUsed = `getAttr $viewNameUsedAttr`;
+
+    string $rowParent = `control -q -parent $menu`;
+    string $colParent = `control -q -parent $rowParent`;
+
+    control -edit -enable $cmEnabled $colParent;
+    control -edit -visible $viewNameUsed $colParent;
+}
+
+global proc onViewNameStrAttrChange(string $viewNameStrAttr, string $menu)
+{
+    updateInvertViewNameStrMenu($viewNameStrAttr, $menu);
+}
+
+global proc updateInvertViewNameStrMenu(string $viewNameStrAttr, string $menu)
+{
+    // The method only updates the UIs as the attributes were already correctly updated.
+
+    if ( !`control -query -exists $menu` )
+    {
+        return;
+    }
+
+    string $nodeName[];
+    tokenize $viewNameStrAttr "." $nodeName;
+
+    if (!`objExists $nodeName[0]`)
+    {
+        return;
+    }
+
+    // Clear the current menu items.
+
+    string $oldMenuItems[] = `optionMenu -q -ils $menu`;
+    for($oldMenuItem in $oldMenuItems)
+    {
+        deleteUI -mi $oldMenuItem;
+    }
+
+    // Find the list of views.
+
+    string $viewNameUsedAttr = $nodeName[0] + ".viewNameUsed";
+    int $viewNameUsed = `getAttr $viewNameUsedAttr`;
+
+    string $viewNames[];
+    if ($viewNameUsed == 1)
+    {
+        // Get the selected color space.
+
+        string $colorSpaceNameAttr = $nodeName[0] + ".colorSpace";
+        string $colorSpaceName = `getAttr $colorSpaceNameAttr`;
+
+        // Find the associated views if any.
+
+        $viewNames = `colorManagementPrefs -q -viewDisplayNames $colorSpaceName`;
+    }
+
+    if (size($viewNames) == 0)
+    {
+        $viewNames[0] = "<N/A>";
+    }
+
+    // Rebuild the menu item list.
+
+    for($view in $viewNames)
+    {
+        menuItem -label $view -parent $menu;
+    }
+
+    string $selection = `getAttr $viewNameStrAttr`;
+    if (stringArrayContains($selection, $viewNames) )
+    {
+        optionMenu -edit -value `getAttr $viewNameStrAttr` $menu;
+    }
+    else
+    {
+        warning -noContext (uiRes("m_colorSpaceProcedures.kInvertViewNameStrDisclaimer"));
+
+        optionMenu -edit -value $viewNames[0] $menu;
+    }
+
+    // Enable or disable the UI.
+
+    onViewNameStrAttrEnable($viewNameStrAttr, $menu);
+}
+
+proc addScriptJobsToInvertViewNameStr(string $viewNameStrAttr, string $menu)
+{
+    // Use the replace previous (rp) flag just once, as it is non-selective
+    // and removes ALL script jobs with the same parent.
+
+    // Grey out the invert view menu if OCIO config file changed.
+    scriptJob -rp -p $menu -event "colorMgtConfigChanged"
+        ("onViewNameStrAttrEnable " + $viewNameStrAttr + " " + $menu);
+
+    // Don't use the replace previous flag here, as it would remove the
+    // scriptJob we just added.
+
+    // Trap changes to the attribute itself.
+    string $cmd1 = "onViewNameStrAttrChange " + $viewNameStrAttr + " " + $menu;
+    scriptJob -p $menu -attributeChange $viewNameStrAttr $cmd1;
+
+    // Grey out the invert view menu if Color Mgt is off.
+    scriptJob -p $menu -event "colorMgtEnabledChanged"
+        ("onViewNameStrAttrEnable " + $viewNameStrAttr + " " + $menu);
+
+    // Trap changes to the 'viewNameUsed' attribute.
+    string $nodeName[];
+    tokenize $viewNameStrAttr "." $nodeName;
+    string $viewNameUsedAttr = $nodeName[0] + ".viewNameUsed";
+
+    string $cmd2 = "updateInvertViewNameStrMenu " + $viewNameStrAttr + " " + $menu;
+    scriptJob -p $menu -attributeChange $viewNameUsedAttr $cmd2;
+}
+
+global proc AEinvertViewNameStrNewImp(string $viewNameStrAttr, string $label)
+{
+    if (`colorManagementPrefs -q -ociov2Enabled` == 1)
+    {
+        string $parent = `setParent -q`;
+        string $menu = $parent + "|invertViewNameStrColumnLayout|invertViewNameStrRowLayout|invertViewNameStrOptionMenu";
+
+        // Check if the menus are enabled or not.
+
+        string $nodeName[];
+        tokenize $viewNameStrAttr "." $nodeName;
+
+        string $viewNameUsedAttr = $nodeName[0] + ".viewNameUsed";
+        int $viewNameUsed = `getAttr $viewNameUsedAttr`;
+
+        // Find the list of views.
+
+        string $viewNames[];
+        if ($viewNameUsed == 1)
+        {
+            // Get the selected color space.
+
+            string $colorSpaceNameAttr = $nodeName[0] + ".colorSpace";
+            string $colorSpaceName = `getAttr $colorSpaceNameAttr`;
+
+            // Find the associated views if any.
+
+            $viewNames = `colorManagementPrefs -q -viewDisplayNames $colorSpaceName`;
+        }
+
+        if (size($viewNames) == 0)
+        {
+            $viewNames[0] = "<N/A>";
+        }
+
+        // Create the menus.
+
+        columnLayout -adjustableColumn true -visible $viewNameUsed invertViewNameStrColumnLayout;
+
+            rowLayout -nc 2 invertViewNameStrRowLayout;
+
+                text -label $label invertViewNameStrOptionMenuText;
+
+                optionMenu -label "" invertViewNameStrOptionMenu;
+
+                for($view in $viewNames)
+                {
+                    menuItem -label $view;
+                }
+
+                optionMenu -edit -value `getAttr $viewNameStrAttr` invertViewNameStrOptionMenu;
+                optionMenu -edit -changeCommand ("setViewNameStrAttrCB " + $viewNameStrAttr + " " + $menu) invertViewNameStrOptionMenu;
+
+            setParent ..;
+
+        setParent ..;
+
+        addScriptJobsToInvertViewNameStr($viewNameStrAttr, $menu);
+    }
+}
+
+global proc AEinvertViewNameStrNew(string $ignoreColorSpaceAttr)
+{
+    AEinvertViewNameStrNewImp($ignoreColorSpaceAttr, (uiRes("m_colorSpaceProcedures.kInvertViewNameStrLabel")));
+}
+
+global proc setViewNameStrAttrCB(string $viewNameStrAttr, string $menu)
+{
+    string $selectedItemValue = `optionMenu -query -value $menu`;
+    setAttr $viewNameStrAttr -type "string" $selectedItemValue;
+}
+
+global proc AEinvertViewNameStrReplace(string $viewNameStrAttr)
+{
+    if (`colorManagementPrefs -q -ociov2Enabled` == 1)
+    {
+        string $parent = `setParent -q`;
+        string $menu = $parent + "|invertViewNameStrColumnLayout|invertViewNameStrRowLayout|invertViewNameStrOptionMenu";
+
+        if (`control -exists $menu`)
+        {
+            updateInvertViewNameStrMenu($viewNameStrAttr, $menu);
+
+            optionMenu -edit -changeCommand ("setViewNameStrAttrCB " + $viewNameStrAttr + " " + $menu) $menu;
+
+            addScriptJobsToInvertViewNameStr($viewNameStrAttr, $menu);
+        }
+    }
+}
+
+// This function is called to build the view name control when using a custom template in
+// the attribute editor
+global proc PPinvertViewNameStrControl(string $plug, string $label, string $annot)
+{
+    AEinvertViewNameStrNewImp($plug, $label);
+}
+
+
+//
+// Manage the Ignore Color Space attribute & UI.
+//
+
+
+global proc onIgnoreColorSpaceAttrEnable(string $ignoreColorSpaceAttr, string $menu)
+{
+    if (!`control -exists $menu`)
+    {
+        return;
+    }
+
+    string $nodeName[];
+    tokenize $ignoreColorSpaceAttr "." $nodeName;
+    if (!`objExists $nodeName[0]`)
+    {
+        return;
+    }
+
+    string $enabledAttr = $nodeName[0] + ".colorManagementEnabled";
+    int $cmEnabled =
+        `isConnected "defaultColorMgtGlobals.cmEnabled" $enabledAttr` &&
+        `colorManagementPrefs -q -cmEnabled`;
+
+    string $rowParent = `control -q -parent $menu`;
+    string $colParent = `control -q -parent $rowParent`;
+
+    control -edit -enable $cmEnabled $colParent;
+}
+
+global proc onIgnoreColorSpaceAttrChange(string $ignoreColorSpaceAttr, string $menu)
+{
+    if (!`control -exists $menu`)
+    {
+        return;
+    }
+
+    checkBox -edit -value `getAttr $ignoreColorSpaceAttr` $menu;
+}
+
+proc addScriptJobsToIgnoreColorSpace(string $ignoreColorSpaceAttr, string $menu)
+{
+    // Use the replace previous (rp) flag just once, as it is non-selective
+    // and removes ALL script jobs with the same parent.
+
+    // Grey out the ignore color space UI if OCIO config file changed.
+    scriptJob -rp -p $menu -event "colorMgtConfigChanged"
+        ("onIgnoreColorSpaceAttrEnable " + $ignoreColorSpaceAttr + " " + $menu);
+
+    // Don't use the replace previous flag here, as it would remove the
+    // scriptJob we just added.
+
+    // Trap changes to the attribute itself.
+    string $cmd = "onIgnoreColorSpaceAttrChange " + $ignoreColorSpaceAttr + " " + $menu;
+    scriptJob -p $menu -attributeChange $ignoreColorSpaceAttr $cmd;
+
+    // Grey out the ignore color space UI if Color Mgt is off.
+    scriptJob -p $menu -event "colorMgtEnabledChanged"
+        ("onIgnoreColorSpaceAttrEnable " + $ignoreColorSpaceAttr + " " + $menu);
+}
+
+global proc setIgnoreColorSpaceAttrCB(string $ignoreColorSpaceAttr, string $menu)
+{
+    if (!`control -exists $menu`)
+    {
+        return;
+    }
+
+    string $nodeName[];
+    tokenize $ignoreColorSpaceAttr "." $nodeName;
+    if (!`objExists $nodeName[0]`)
+    {
+        return;
+    }
+
+    int $selectedItemValue = `checkBox -query -value $menu`;
+    setAttr $ignoreColorSpaceAttr $selectedItemValue;
+}
+
+proc AEignoreColorSpaceNewImp(string $ignoreColorSpaceAttr, string $label)
+{
+    string $parent = `setParent -q`;
+    string $menu = $parent + "|ignoreColorSpaceColumnLayout|ignoreColorSpaceRowLayout|ignoreColorSpaceCheckBox";
+
+    // Create the menus.
+
+    columnLayout -adjustableColumn true ignoreColorSpaceColumnLayout;
+
+        rowLayout -nc 1 ignoreColorSpaceRowLayout;
+
+            checkBox -label $label ignoreColorSpaceCheckBox;
+            checkBox -edit -value `getAttr $ignoreColorSpaceAttr` ignoreColorSpaceCheckBox;
+            checkBox -edit -changeCommand ("setIgnoreColorSpaceAttrCB " + $ignoreColorSpaceAttr + " " + $menu) ignoreColorSpaceCheckBox;
+
+        setParent ..;
+
+    setParent ..;
+
+    addScriptJobsToIgnoreColorSpace($ignoreColorSpaceAttr, $menu);
+}
+
+global proc AEignoreColorSpaceNew(string $ignoreColorSpaceAttr)
+{
+    AEignoreColorSpaceNewImp($ignoreColorSpaceAttr, (uiRes("m_colorSpaceProcedures.kIgnoreColorSpaceLabel")));
+}
+
+global proc AEignoreColorSpaceReplace(string $ignoreColorSpaceAttr)
+{
+    string $parent = `setParent -q`;
+    string $menu = $parent + "|ignoreColorSpaceColumnLayout|ignoreColorSpaceRowLayout|ignoreColorSpaceCheckBox";
+
+    if (`control -query -exists $menu`)
+    {
+        checkBox -edit -changeCommand ("setIgnoreColorSpaceAttrCB " + $ignoreColorSpaceAttr + " " + $menu) $menu;
+
+        checkBox -edit -value `getAttr $ignoreColorSpaceAttr` $menu;
+
+        addScriptJobsToIgnoreColorSpace($ignoreColorSpaceAttr, $menu);
+    }
+}
+
+// This function is called to build the ignore color space control when using a custom template in
+// the attribute editor
+global proc PPignoreColorSpaceControl(string $plug, string $label, string $annot)
+{
+    AEignoreColorSpaceNewImp($plug, $label);
+}

@@ -1,0 +1,216 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//	Procedure Name:
+//	AEleastSquaresModifierTemplate
+//
+//	Description Name;
+//	Creates the attribute editor controls for the leastSquaresModifier node
+//
+//	Input Value:
+//	nodeName
+//
+//	Output Value:
+//	None
+//
+
+global proc AEleastSquaresModifierTemplate ( string $nodeName )
+{
+	editorTemplate -beginScrollLayout;
+		editorTemplate -beginLayout (uiRes("m_AEleastSquaresModifierTemplate.kLeastSquaresModifierAttribute"))  -collapse 0;
+			
+			editorTemplate -callCustom
+				"AELSMInputNurbsObjectNew"
+				"AELSMInputNurbsObjectReplace"
+				"";
+			editorTemplate -callCustom
+				"AELSMPointConstraintNew"
+				"AELSMPointConstraintReplace"
+				"pointConstraint";
+		editorTemplate -endLayout;		
+
+		// suppressed attributes
+		editorTemplate -suppress "updatePointModifier";
+		editorTemplate -suppress "resetModifier";
+		editorTemplate -suppress "objectModifier";
+		editorTemplate -suppress "inputCache";
+		editorTemplate -suppress "pointSymbolicIndex";
+		editorTemplate -suppress "inputNurbsObject";
+		editorTemplate -suppress "worldSpaceToObjectSpace";
+
+		// include/call base class/node attributes
+		AEabstractBaseCreateTemplate $nodeName;
+
+	editorTemplate -addExtraControls;
+	editorTemplate -endScrollLayout;
+}
+
+
+proc AEconnectLSMPointConstraintControls(	string $nodeName,
+											string $pointConstraint )
+{
+	// get the index
+	//
+	string $number[];
+	tokenize($pointConstraint,"[]",$number);
+	string $index = $number[1];
+	if ( $index == "" ) return;
+
+	// build the plugName
+	//
+	string $plugName = $nodeName+"."+$pointConstraint;
+
+	// connect the controls
+	//
+	setParent AELSMPointConstraintLayout;
+	frameLayout -e -l $pointConstraint ("AELSMPointConstraintFrame"+$index);
+	connectControl ("AELSMPointConstraintU"+$index) -index 2 ($plugName+".pointConstraintUVW.pointConstraintU");
+	connectControl ("AELSMPointConstraintWeight"+$index) ($plugName+".pointWeight");
+
+}
+
+
+proc AEcreateNewLSMPointConstraintControls(	string $nodeName,
+											string $pointConstraint )
+{
+	// get the index
+	//
+	string $number[];
+	tokenize($pointConstraint,"[]",$number);
+	string $index = $number[1];
+	if ( $index == "" ) return;
+
+	setUITemplate -pst attributeEditorTemplate;
+	frameLayout -cl false -cll false ("AELSMPointConstraintFrame"+$index);
+		columnLayout -adj true;
+			floatFieldGrp -nf 1 -label (uiRes("m_AEleastSquaresModifierTemplate.kU"))  ("AELSMPointConstraintU"+$index);
+			floatSliderGrp -f true -label (uiRes("m_AEleastSquaresModifierTemplate.kWeight"))  -min 0.1 -max 1.0 ("AELSMPointConstraintWeight"+$index);
+		setParent ..;
+	setParent ..;
+	AEconnectLSMPointConstraintControls( $nodeName, $pointConstraint );
+	setUITemplate -ppt;
+}
+
+
+global proc AELSMPointConstraintNew ( string $plug )
+{
+	// get the nodeName
+	//
+	string $buffer[];
+	tokenize($plug,".",$buffer);
+	string $nodeName = $buffer[0];
+
+    // get all of the elements of the array
+    //
+    string $tmpPoints[] = `listAttr -m $plug`;
+    string $pointConstraints[];
+    for ($tmp in $tmpPoints) {
+        string $tmpBuffer[];
+        tokenize($tmp,".",$tmpBuffer);
+        if (size($tmpBuffer) == 1) {
+            $pointConstraints[size($pointConstraints)] = $tmp;
+        }
+    }
+    int $numPointConstraints = size($pointConstraints);
+
+    setUITemplate -pst attributeEditorTemplate;
+    frameLayout -label (uiRes("m_AEleastSquaresModifierTemplate.kPointConstraints"))  -cl false -cll true;
+		columnLayout -adj true AELSMPointConstraintLayout;
+		    for ( $pointConstraint in $pointConstraints ) {
+				AEcreateNewLSMPointConstraintControls($nodeName, $pointConstraint);
+			}
+		setParent ..;
+    setParent ..;
+    setUITemplate -ppt;
+}
+
+
+global proc AELSMPointConstraintReplace ( string $plug )
+{
+	// get the nodeName
+	//
+	string $buffer[];
+	tokenize($plug,".",$buffer);
+	string $nodeName = $buffer[0];
+
+	string $tmpPoints[] = `listAttr -m $plug`;
+	string $newPointConstraints[];
+	for ($tmp in $tmpPoints) {
+		string $tmpBuffer[];
+		tokenize($tmp,".",$tmpBuffer);
+		if (size($tmpBuffer) == 1) {
+			clear $tmpBuffer;
+			tokenize($tmp,"[]",$tmpBuffer);
+			if ( size($tmpBuffer) > 1 ) {
+				$newPointConstraints[size($newPointConstraints)] = $tmp;
+			}
+		}
+	}
+	int $newNumPointConstraints = size($newPointConstraints);
+	string $oldPointConstraintLayouts[] = `columnLayout -q -ca AELSMPointConstraintLayout`;
+	int $oldNumPointConstraints = size ($oldPointConstraintLayouts);
+
+	setParent AELSMPointConstraintLayout;
+	columnLayout -e -vis false AELSMPointConstraintLayout;
+
+	if ( $newNumPointConstraints >= $oldNumPointConstraints ) {
+
+		// replace what we can
+		//
+		for ( $i = 0; $i < $oldNumPointConstraints; $i++ ) {
+			setParent $oldPointConstraintLayouts[$i];
+			AEconnectLSMPointConstraintControls($nodeName, $newPointConstraints[$i]);
+		}
+
+		// and build what we need
+		//
+		setParent AELSMPointConstraintLayout;
+		for ($i = $oldNumPointConstraints; $i < $newNumPointConstraints; $i++) {
+			AEcreateNewLSMPointConstraintControls($nodeName, $newPointConstraints[$i]);
+		}
+
+	} else {
+
+		// replace what we need
+		//
+		for ( $i = 0; $i < $newNumPointConstraints; $i++ ) {
+			setParent $oldPointConstraintLayouts[$i];
+			AEconnectLSMPointConstraintControls($nodeName, $newPointConstraints[$i]);
+		}
+
+		// delete old rowLayouts
+		//
+		setParent AELSMPointConstraintLayout;
+		for ($i = $newNumPointConstraints; $i < $oldNumPointConstraints; $i++) {
+			deleteUI -layout $oldPointConstraintLayouts[$i];
+		}
+	}
+	columnLayout -e -vis true AELSMPointConstraintLayout;
+}
+
+
+global proc AELSMInputNurbsObjectNew ( string $node )
+{
+	setUITemplate -pst attributeEditorTemplate;
+	columnLayout -adj true;
+		textFieldGrp -label (uiRes("m_AEleastSquaresModifierTemplate.kInputNurbsObject"))  -ed false LSMInputNurbsObject;
+	setParent ..;
+	AELSMInputNurbsObjectReplace( $node );
+	setUITemplate -ppt;
+}
+
+
+global proc AELSMInputNurbsObjectReplace ( string $node )
+{
+	// get the input nurbs object
+	//
+	string $inputAttr = ($node + "inputNurbsObject");
+	string $inputNode[] = `listConnections -d false -sh true $inputAttr`;
+
+    textFieldGrp -e -tx $inputNode[0] LSMInputNurbsObject;
+}

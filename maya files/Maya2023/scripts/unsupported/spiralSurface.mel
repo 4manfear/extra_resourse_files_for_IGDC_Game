@@ -1,0 +1,23 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc string spiralSurface( float $ht, float $radius, float $numRounds,
+								  float $tubeRadius)
+//
+//	Description:
+//		This proc creates a spiral centred about the origin, with a specific
+//		height, radius and number of rounds/turns/cycles.  Then it extrudes
+//      a circle of "tubeRadius" along it.
+{
+	string $path = `spiral $ht $radius $numRounds`;
+	string $circle[] = `circle -ch off -r $tubeRadius`;
+
+	string $result[] = `extrude -n "spiral" -ch off -rn false -po 0 -et 2 -ucp 1 -fpt 1 -upn 1 $circle[0] $path`;
+
+	delete $path $circle[0];
+	return $result[0];
+}

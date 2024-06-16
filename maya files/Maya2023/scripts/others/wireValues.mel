@@ -1,0 +1,86 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//
+//  Creation Date:  April 12 1996
+//
+//  Description:
+//		These procs sets the state of controls in the property sheet.
+//		See also wireProperties.mel which constructs the property
+//		sheet.
+//
+//  Input Arguments:
+//      $toolName		- this is the name of the instance of the tool
+//						  that the property sheet is modifying.
+//
+//  Return Value:
+//      None.
+//
+
+global proc wireValues ( string $toolName ) {
+//
+//  Description:
+//		Sets the state of the property sheet based on the values
+//		in the tool context.
+//
+
+	// set my top layout to be the current parent
+	//
+    	string $parent = (`toolPropertyWindow -q -location` + "|wire");
+	setParent $parent;
+
+	// set property sheet label and icon
+	//
+	string $icon= "wire.png";
+	string $helpTag= "WireTool";
+
+	toolPropertySetCommon $toolName $icon $helpTag;
+
+
+	// Set wire attribute values
+	//
+	checkBoxGrp -e -v1 `wireContext -q -ho $toolName` holderBox;
+   	floatSliderGrp -e -v `wireContext -q -en $toolName` envelopeSlider;
+   	floatSliderGrp -e -v `wireContext -q -ce $toolName` conSlider;
+	floatSliderGrp -e -v `wireContext -q -li $toolName` locSlider;	
+   	floatSliderGrp -e -v `wireContext -q -dds $toolName` ddSlider;
+	checkBoxGrp -e -v1 `wireContext -q -gw $toolName` groupWireBox;
+	
+		string $positioning=`wireContext -q -do $toolName`;
+		if ($positioning == "Default") {
+			optionMenuGrp -edit -select 1 wirePositioningWidget;
+		}
+		else if ($positioning == "Before") {
+			optionMenuGrp -edit -select 2 wirePositioningWidget;
+		}
+		else if ($positioning == "After") {
+			optionMenuGrp -edit -select 3 wirePositioningWidget;
+		}
+		else if ($positioning == "Split") {
+			optionMenuGrp -edit -select 4 wirePositioningWidget;
+		}	
+		else if ($positioning == "Parallel") {
+			optionMenuGrp -edit -select 5 wirePositioningWidget;
+		}
+		else {
+			optionMenuGrp -edit -select 1 wirePositioningWidget;
+		}
+		
+
+	int $excl=`wireContext -q -exc $toolName`;
+
+    checkBoxGrp -e -v1 $excl exclWidget;
+   	textFieldGrp -e -tx `wireContext -q -ep $toolName` -enable $excl 
+		partitionNameWidget;
+	
+	optionMenuGrp -e -enable $excl 
+		partitionListWidget;
+
+	toolPropertySelect wire;
+}

@@ -1,0 +1,59 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  Mar. 14, 1997
+//
+//  Description:
+//      Produce a lofted surface through the curves, but have it so that
+//      the resulting surface's CVs go through the original curves' CVs,
+//      rather than having the surface going through the curves.
+
+global proc string alternativeLoft()
+{
+	int $hist = `constructionHistory -q -tgl`;
+
+	global int $gSelectNurbsCurvesBit;
+	global int $gSelectIsoparmsBit;
+	global int $gSelectCurvesOnSurfacesBit;
+	global int $gSelectSurfaceEdgeBit;
+
+	string $curves[] = `filterExpand -ex true -sm $gSelectNurbsCurvesBit -sm $gSelectIsoparmsBit -sm $gSelectCurvesOnSurfacesBit -sm $gSelectSurfaceEdgeBit`;
+
+	string $surface = "";
+
+	int $n = size($curves);
+	int $i;
+
+	if( $n < 2 ) return $surface;
+
+	string $cmd = "loft -ch " + $hist + " ";
+
+	// Rebuild them into linears (keep cvs):
+	for( $i=0; $i<$n; $i+=1 ) {
+		string $now[] = `rebuildCurve -ch $hist -rpo false -kcp on -d 1 -rt 0 $curves[$i]`;
+		$curves[$i] = $now[0];
+		$cmd = $cmd + $curves[$i] + " ";
+	}
+
+	// Convert back into cubic:
+	string $res[] = eval($cmd);
+	if( size($res) > 0 ) {
+		$surface = $res[0];
+		rebuildSurface -ch $hist -rpo true -kcp on -du 3 -dv 3 -rt 0 $surface;
+	}
+
+	if( !$hist ) {
+		for( $i=0; $i<$n; $i+=1 ) {
+			delete $curves[$i];
+		}
+	}
+
+	select -r $surface;
+	return $surface;
+}

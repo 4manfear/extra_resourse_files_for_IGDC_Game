@@ -1,0 +1,33 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc AEMASH_InitialStateTemplate( string $nodeName )
+{
+
+
+    editorTemplate -beginScrollLayout;
+    python("import MASH.nodeHeaders; MASH.nodeHeaders.addHeader('" + $nodeName + "', 'kInitStateNode')")
+    editorTemplate -endLayout;
+    
+	editorTemplate -beginLayout (getPluginResource("MASH", "kInitStateNode")) -collapse 0;
+
+    editorTemplate  -label (getPluginResource("MASH", "kEnablePos")) -addControl "enablePosition";
+    editorTemplate  -label (getPluginResource("MASH", "kEnableRot")) -addControl "enableRotation";
+    editorTemplate  -label (getPluginResource("MASH", "kEnableScale")) -addControl "enableScale";
+    editorTemplate -addSeparator;
+
+    editorTemplate  -label (getPluginResource("MASH", "kStrength")) -addControl "Envelope";
+    editorTemplate  -label (getPluginResource("MASH", "kRandStrength")) -addControl "randEnvelope";
+    editorTemplate  -label (getPluginResource("MASH", "kStepStrength")) -addControl "StepEnvelope";
+
+	editorTemplate -endLayout;
+
+	AEdependNodeTemplate $nodeName;
+    editorTemplate -addExtraControls;
+    editorTemplate -endScrollLayout;
+
+}

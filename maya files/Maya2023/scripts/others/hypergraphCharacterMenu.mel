@@ -1,0 +1,54 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//
+//
+
+
+//
+//  Create context sensitive Hypergraph menu for clip nodes
+//  This is displayed with RMB on clip nodes
+//
+proc createCharacterMenuItems( string $editor, string $menu )
+{
+	setParent -m $menu;
+	
+	menuItem CharacterMenuTitleItem;
+	menuItem -divider true;	
+	menuItem -divider true;
+	menuItem -l "Attribute Editor..." CharacterAttrEditorItem;
+	menuItem -l "Rename" CharacterRenameItem;
+}
+
+//
+// Define context sensitive Hypergraph menu for shader nodes
+//
+proc defineCharacterMenuCommands(string $editor, string $menu, string $node)
+{
+	// The visor uses a hyper graph panel, so the only way to tell
+	// that we are in the visor is by the name
+	//
+	int $isVisor = gmatch( $editor, "*VisorEd" );
+
+	menuItem -edit
+		-l ("Character: " + $node)
+		CharacterMenuTitleItem;
+	menuItem -edit -c 
+		("hyperGraph -e -rename -useFeedbackList " + $editor) 
+		CharacterRenameItem;
+	menuItem -edit -c 
+		("hyperGraph -e -attributeEditor single -useFeedbackList " + $editor)
+		CharacterAttrEditorItem;
+}
+
+global proc hypergraphCharacterMenu(string $editor, string $menu, string $node)
+{
+	createCharacterMenuItems($editor, $menu);
+	defineCharacterMenuCommands($editor, $menu, $node);
+}

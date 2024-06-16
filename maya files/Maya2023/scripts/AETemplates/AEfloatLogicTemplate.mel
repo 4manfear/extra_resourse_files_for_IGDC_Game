@@ -1,0 +1,54 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc AEfloatLogicOperationNew(string $attr)
+{
+    columnLayout;
+
+    attrEnumOptionMenuGrp -l (uiRes("m_AEfloatLogicTemplate.kOperation"))
+        -enumeratedItem 0 "=="
+        -enumeratedItem 1 "!="
+        -enumeratedItem 2 "<"
+        -enumeratedItem 3 ">"
+        -enumeratedItem 4 "<="
+        -enumeratedItem 5 ">="
+        operation;
+
+    setParent ..;
+
+    AEfloatLogicOperationReplace($attr);
+}
+
+global proc AEfloatLogicOperationReplace(string $attr)
+{
+    attrEnumOptionMenuGrp -e -at $attr operation;
+}
+
+global proc AEfloatLogicTemplate(string $node)
+{
+    AEswatchDisplay $node;
+    editorTemplate -beginScrollLayout;
+    editorTemplate -beginNoOptimize;
+
+    editorTemplate -beginLayout (uiRes("m_AEfloatLogicTemplate.kInputs")) -collapse 0;
+    editorTemplate -label (uiRes("m_AEfloatLogicTemplate.kFloatA")) -addControl "floatA";
+    editorTemplate -label (uiRes("m_AEfloatLogicTemplate.kFloatB")) -addControl "floatB";
+    editorTemplate -addSeparator;
+    editorTemplate -ccu
+        "AEfloatLogicOperationNew"
+        "AEfloatLogicOperationReplace"
+        "operation";
+    editorTemplate -endLayout;
+
+    editorTemplate -addExtraControls;
+
+    editorTemplate -suppress "caching";
+    editorTemplate -suppress "nodeState";
+
+    editorTemplate -endNoOptimize;
+    editorTemplate -endScrollLayout;
+}

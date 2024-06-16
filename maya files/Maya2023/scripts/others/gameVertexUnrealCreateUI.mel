@@ -1,0 +1,77 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc gameVertexUnrealInitOptVars( int $forceFactorySettings )
+//
+//	Description:
+//		Initialize the evaluator specific optionVars or reset them
+//		to factory settings.
+//
+{
+	optionVar -init $forceFactorySettings -category "Display.Heads Up Display.Game Vertex Unreal"
+		-iv gameVertexUnrealTangentMode 3
+		;
+}
+
+global proc string[] gameVertexUnrealAssembleCmd()
+//
+//	Description:
+//		Read in the optionVars and return the associated flags
+//		to set those options.
+//
+{
+	int $mode = `optionVar -q gameVertexUnrealTangentMode`;
+	string $flags[];
+	$flags[0] = ("-utm " + ($mode-1));
+	return $flags;
+}
+
+global proc gameVertexUnrealSetup()
+//
+//	Description:
+//		Initialize the UI per the optionVar settings.
+//
+{
+	int $mode = `optionVar -q gameVertexUnrealTangentMode`;
+	radioButtonGrp -e -sl $mode gameVertexUnrealTangentMode;
+}
+
+global proc gameVertexUnrealCallback()
+//
+//	Description:
+//		Update the option vars based on the current UI settings.
+//
+{
+	int $mode = `radioButtonGrp -q -sl gameVertexUnrealTangentMode`;
+	optionVar -intValue gameVertexUnrealTangentMode $mode;
+}
+
+global proc gameVertexUnrealCreateUI()
+//
+//	Description:
+//		Create the evaluator specific UI.
+//
+{
+	string $tangentMode = getPluginResource("gameVertexCount", "kUnrealTangentMode");
+	string $tangentNone = getPluginResource("gameVertexCount", "kUnrealTangentNone");
+	string $tangentMaya = getPluginResource("gameVertexCount", "kUnrealTangentMaya");
+	string $tangentMikk = getPluginResource("gameVertexCount", "kUnrealTangentMikk");
+	radioButtonGrp -label $tangentMode
+		-nrb 3
+		-la3 $tangentNone $tangentMaya $tangentMikk
+		-select 3
+		gameVertexUnrealTangentMode;
+}
+
+global proc gameVertexUnrealDeleteUI()
+//
+//	Description:
+//		Delete any evaluator specific UI. Evaluator specific UI is contained in
+//		a parent layout which will be deleted with the option box. This function
+//		is only required to delete UI elements outside the parent layout.
+//
+{}

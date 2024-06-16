@@ -1,0 +1,54 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+// Creation Date:  31 May 1997
+//
+//
+//  Procedure Name:
+//      HotboxRecentMenu
+//
+//  Description:
+//		Create the user customizable Hotbox Recent Menu for hotbox
+//
+//  Input Arguments:
+//      parent to parent the menu to.
+//
+//  Return Value:
+//      None.
+//
+
+global proc HotboxRecentMenu( string $parent )
+{
+	string $itemName;
+	string $historyList[];
+	int $i;
+	
+	setParent -m $parent;
+	if( `menu -q -ni $parent` != 0 ) {
+		//
+		//	Menu is built already - just clear it.
+		//
+		menu -e -deleteAllItems $parent; 
+	}
+	
+	$historyList = `repeatLast -q -cnl`;
+	$i = 1;
+	for ($itemName in $historyList) {
+		$itemName = makeStringSingleLine( $itemName );
+        // Limit the length of each menu item label
+        int $sz = size($itemName);
+        if ($sz > 256) {
+            $itemName = startString($itemName, 256);
+        }
+		menuItem -ecr false -l $itemName -c ("repeatLast -item " + $i);
+		++$i;
+	}
+	
+}
+

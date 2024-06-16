@@ -1,0 +1,216 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc string shelf_Rigging() {
+
+	string $label;
+	string $annot;
+	string $format = "^1s: ^2s";
+	string $runtimeCommand;
+	string $image;
+
+	$label = (uiRes("m_shelf_Rigging.kLocator"));
+	$runtimeCommand = "CreateLocator";
+	$annot = getRunTimeCommandAnnotation($runtimeCommand);
+	$image = "locator.png";
+	shelfButton
+		-label      $label
+		-annotation `format -s $label -s $annot $format`
+		-image1     $image
+		-command    $runtimeCommand;
+
+	$label = (uiRes("m_shelf_Rigging.kJointTool")) ;
+	$runtimeCommand = "JointTool" ;
+	$annot = getRunTimeCommandAnnotation($runtimeCommand) ;
+	$image = "kinJoint.png";
+	shelfButton
+		-label      $label
+		-annotation `format -s $label -s $annot $format`
+		-image1     $image
+		-command    $runtimeCommand
+		-doubleClickCommand ($runtimeCommand + "Options");
+
+	$label = (uiRes("m_shelf_Rigging.kIKHandleTool")) ;
+	$runtimeCommand = "IKHandleTool";
+	$annot = getRunTimeCommandAnnotation($runtimeCommand) ;
+	$image = "kinHandle.png" ;
+	shelfButton
+		-label      $label
+		-annotation `format -s $label -s $annot $format`
+		-image1     $image
+		-command    $runtimeCommand
+		-doubleClickCommand ($runtimeCommand + "Options");
+
+	$label = (uiRes("m_shelf_Rigging.kBindSkin")) ;
+	$runtimeCommand = "SmoothBindSkin";
+	$annot = getRunTimeCommandAnnotation($runtimeCommand) ;
+	$image = "smoothSkin.png" ;
+	shelfButton
+		-label      $label
+		-annotation `format -s $label -s $annot $format`
+		-image1     $image
+		-command    $runtimeCommand
+		-doubleClickCommand ($runtimeCommand + "Options");
+
+	$label = (uiRes("m_shelf_Rigging.kQuickRig")) ;
+	$runtimeCommand = "QuickRigEditor";
+	$annot = getRunTimeCommandAnnotation($runtimeCommand) ;
+	$image = "QR_QuickRigTool.png" ;
+	shelfButton
+		-version	2017
+		-label      $label
+		-annotation `format -s $label -s $annot $format`
+		-image1     $image
+		-command    $runtimeCommand;
+
+	$label = (uiRes("m_shelf_Rigging.kHumanIK")) ;
+	$runtimeCommand = "HIKCharacterControlsTool";
+	$annot = getRunTimeCommandAnnotation($runtimeCommand) ;
+	$image = "humanIK_CharCtrl.png" ;
+	shelfButton
+		-version	2016
+		-label      $label
+		-annotation `format -s $label -s $annot $format`
+		-image1     $image
+		-command    $runtimeCommand;
+
+	addShelfSeparator();
+
+	$label = (uiRes("m_shelf_Rigging.kPaintSkinWeights")) ;
+	$runtimeCommand = "ArtPaintSkinWeightsTool";
+	$annot = getRunTimeCommandAnnotation($runtimeCommand) ;
+	$image = "paintSkinWeights.png" ;
+	shelfButton
+		-label      $label
+		-annotation `format -s $label -s $annot $format`
+		-image1     $image
+		-command    $runtimeCommand 
+		-doubleClickCommand ($runtimeCommand + "Options");
+
+	$label = (uiRes("m_shelf_Rigging.kBlendShapes")) ;
+	$runtimeCommand = "CreateBlendShape";
+	$annot = getRunTimeCommandAnnotation($runtimeCommand) ;
+	$image = "blendShape.png";
+	shelfButton
+		-version	2016
+		-label      $label
+		-annotation `format -s $label -s $annot $format`
+		-image1     $image
+		-command    $runtimeCommand 
+		-doubleClickCommand ($runtimeCommand + "Options");
+
+	$label = (uiRes("m_shelf_Rigging.kLattice")) ;
+	$runtimeCommand = "CreateLattice";
+	$annot = getRunTimeCommandAnnotation($runtimeCommand) ;
+	$image = "lattice.png";
+	shelfButton
+		-version	2016
+		-label      $label
+		-annotation `format -s $label -s $annot $format`
+		-image1     $image
+		-command    $runtimeCommand 
+		-doubleClickCommand ($runtimeCommand + "Options");
+
+	$label = (uiRes("m_shelf_Rigging.kCluster"));
+	$runtimeCommand = "CreateCluster";
+	$annot = getRunTimeCommandAnnotation($runtimeCommand) ;
+	$image = "cluster.png" ;
+	shelfButton
+		-version	2016
+		-label      $label
+		-annotation `format -s $label -s $annot $format`
+		-image1     $image
+		-command    $runtimeCommand
+		-doubleClickCommand ($runtimeCommand + "Options");
+
+	addShelfSeparator();
+
+	$label = (uiRes("m_shelf_Rigging.kParentConstraint")) ;
+	$annot = getRunTimeCommandAnnotation("ParentConstraint") ;
+	shelfButton
+		-label      $label
+		-annotation `format -s $label -s $annot $format`
+		-image1     "parentConstraint.png"
+		-command    ("ParentConstraint")
+		-doubleClickCommand ("ParentConstraintOptions");
+
+	$label = (uiRes("m_shelf_Rigging.kPointConstraint")) ;
+	$annot = getRunTimeCommandAnnotation("PointConstraint") ;
+	shelfButton
+		-label      $label
+		-annotation `format -s $label -s $annot $format`
+		-image1     "posConstraint.png"
+		-command    ("PointConstraint")
+		-doubleClickCommand ("PointConstraintOptions");
+
+	$label = (uiRes("m_shelf_Rigging.kOrientConstraint")) ;
+	$annot = getRunTimeCommandAnnotation("OrientConstraint") ;
+	shelfButton
+		-label      $label
+		-annotation `format -s $label -s $annot $format`
+		-image1     "orientConstraint.png"
+		-command    ("OrientConstraint")
+		-doubleClickCommand ("OrientConstraintOptions");
+
+	$label = (uiRes("m_shelf_Rigging.kScaleConstraint")) ;
+	$annot = getRunTimeCommandAnnotation("ScaleConstraint") ;
+	shelfButton
+		-label      $label
+		-annotation `format -s $label -s $annot $format`
+		-image1     "scaleConstraint.png"
+		-command    ("ScaleConstraint")
+		-doubleClickCommand ("ScaleConstraintOptions");
+
+	$label = (uiRes("m_shelf_Rigging.kAimConstraint")) ;
+	$annot = getRunTimeCommandAnnotation("AimConstraint") ;
+	shelfButton
+		-label      $label
+		-annotation `format -s $label -s $annot $format`
+		-image1     "aimConstraint.png"
+		-command    ("AimConstraint")
+		-doubleClickCommand ("AimConstraintOptions");
+
+	$label = (uiRes("m_shelf_Rigging.kPoleVectorConstraint")) ;
+	$runtimeCommand = "PoleVectorConstraint";
+	$annot = getRunTimeCommandAnnotation($runtimeCommand) ;
+	$image = "poleVectorConstraint.png";
+	shelfButton
+		-label      $label
+		-annotation `format -s $label -s $annot $format`
+		-image1     $image
+		-command    $runtimeCommand
+		-doubleClickCommand ($runtimeCommand + "Options");
+
+	addShelfSeparator();
+
+	$label = (uiRes("m_shelf_Rigging.kSetKey"));
+	$runtimeCommand = "SetKey";
+	$annot = getRunTimeCommandAnnotation($runtimeCommand) ;
+	$image = "setKeyframe.png" ;
+	shelfButton
+		-label      $label
+		-annotation `format -s $label -s $annot $format`
+		-image1     $image
+		-command    $runtimeCommand
+		-doubleClickCommand ($runtimeCommand + "Options");
+
+	$label = (uiRes("m_shelf_Rigging.kSetDrivenKey"));
+	$runtimeCommand = "SetDrivenKey";
+	$annot = getRunTimeCommandAnnotation($runtimeCommand) ;
+	$image = "setDrivenKeyframe.png" ;
+	shelfButton
+		-version	2016
+		-label      $label
+		-annotation `format -s $label -s $annot $format`
+		-image1     $image
+		-command    $runtimeCommand
+		-doubleClickCommand $runtimeCommand;
+	
+	// This shelf was introduced in Maya 2016 using buttons from the old
+	// animation shelf.
+	return "2016";
+}

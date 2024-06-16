@@ -1,0 +1,43 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  Nov 9 98
+//
+//  Description:
+//      Stub-procs to make performSound proc obolete 
+//
+//  Return Value:
+//      None.
+//
+
+global proc soundSetup (string $parent, 
+						int $forceFactorySettings, 
+						string $node)
+{
+	obsoleteProc( "soundSetup", "performSound.mel" );           
+}
+
+global proc soundCallback (string $parent, 
+						   string $node)
+{
+	obsoleteProc( "soundCallback", "performSound.mel" );           
+}
+
+global proc int soundUpdateFilename(string $filename, 
+					string $fileType)
+{
+	obsoleteProc( "soundUpdateFilename", "performSound.mel" );           
+	return 0;
+}
+
+global proc performSound (int $showOptionBox, 
+						  string $node)
+{
+	obsoleteProc( "performSound", "performSound.mel" );           
+}

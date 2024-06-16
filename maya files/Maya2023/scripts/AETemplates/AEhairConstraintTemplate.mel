@@ -1,0 +1,69 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date: 2003 
+//
+//  Procedure Name:
+//  AEhairConstraintTemplate
+//
+//  Description Name;
+//  Creates the attribute editor controls for the hairConstraint node
+//
+//
+
+
+global proc AEhairConstraintUpdateConstraintMethod( string $nodeName )
+{
+		int $constraintMethod = getAttr($nodeName + ".constraintMethod" );
+		int $collide = ($constraintMethod == 6 || $constraintMethod == 7);
+		int $pointMethod = getAttr($nodeName + ".pointMethod" );
+		
+		// editorTemplate -dimControl $nodeName "stiffness" ($collide);
+		editorTemplate -dimControl $nodeName "glueStrength" ($collide);
+		editorTemplate -dimControl $nodeName "pointMethod" ($collide);
+		editorTemplate -dimControl $nodeName "uParameter" ($pointMethod != 1 || $collide);
+		editorTemplate -dimControl $nodeName "uDistance" ($pointMethod != 2 || $collide);
+}
+
+global proc AEhairConstraintUpdatePointMethod( string $nodeName )
+{
+		int $constraintMethod = getAttr($nodeName + ".constraintMethod" );
+		int $collide = ($constraintMethod == 6 || $constraintMethod == 7);
+		int $pointMethod = getAttr($nodeName + ".pointMethod" );
+		editorTemplate -dimControl $nodeName "uParameter" ($pointMethod != 1 || $collide);
+		editorTemplate -dimControl $nodeName "uDistance" ($pointMethod != 2 || $collide);
+}
+
+
+global proc AEhairConstraintTemplate( string $nodeName )
+{
+
+    editorTemplate -beginScrollLayout;
+
+        editorTemplate -beginLayout (uiRes("m_AEhairConstraintTemplate.kHairConstraintAttributes"))  -collapse 0;
+			editorTemplate -addControl "constraintMethod" "AEhairConstraintUpdateConstraintMethod";
+			editorTemplate -addControl "stiffness";
+			editorTemplate -addControl "glueStrength";
+			editorTemplate -addSeparator;
+			editorTemplate -addControl "pointMethod" "AEhairConstraintUpdatePointMethod";
+			editorTemplate -addControl "uParameter";
+			editorTemplate -addControl "uDistance";
+			editorTemplate -addSeparator;
+            AElocatorCommon $nodeName;
+			editorTemplate -addControl "curveIndices";
+        editorTemplate -endLayout;
+
+        AElocatorInclude $nodeName;
+
+    editorTemplate -addExtraControls;
+    editorTemplate -endScrollLayout;
+
+}
+
+

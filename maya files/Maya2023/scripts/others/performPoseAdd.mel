@@ -1,0 +1,662 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//  Description:
+//	  This script provides an option box dialog for the add pose command.
+//
+//
+//  Procedure Name:
+//      setOptionVars
+//
+//  Description:
+//		Initialize the option values.
+//
+//  Input Arguments:
+//		Whether to set the options to default values.
+//
+//  Return Value:
+//      None.
+//
+proc setOptionVars(int $forceFactorySettings)
+{
+	optionVar -init $forceFactorySettings -category "Pose Editor.Add Pose"
+		-iv createPoseShapeOptVar 1
+		-iv poseTypeOptVar 1
+		;
+}
+
+//
+//  Procedure Name:
+//      poseAddSetup
+//
+//  Description:
+//		Update the state of the option box UI to reflect the option values.
+//
+//  Input Arguments:
+//      parent               - Top level parent layout of the option box UI.
+//                             Required so that UI object names can be 
+//                             successfully resolved.
+//
+//	forceFactorySettings - Whether the option values should be set to
+//                             default values.
+//
+//  Return Value:
+//      None.
+//
+global proc poseAddSetup(string $parent, int $forceFactorySettings)
+{
+	setOptionVars($forceFactorySettings);
+	setParent $parent;
+	
+	$val = `optionVar -query createPoseShapeOptVar`;
+	checkBoxGrp -edit -v1 $val createPoseShapeCheckBoxWidget;
+	
+	$val = `optionVar -query poseTypeOptVar`;
+	optionMenuGrp -edit -select $val poseTypeListWidget;	
+}
+
+//
+//  Procedure Name:
+//      poseAddCallback
+//
+//  Description:
+//		Update the option values with the current state of the option box UI.
+//
+//  Input Arguments:
+//      parent - Top level parent layout of the option box UI.  Required so
+//               that UI object names can be successfully resolved.
+//	    doIt   - Whether the command should execute.
+//
+//  Return Value:
+//      None.
+//
+global proc poseAddCallback(string $parent, int $doIt)
+{
+	setParent $parent;
+
+	$val= `checkBoxGrp -q -v1 createPoseShapeCheckBoxWidget`;
+	optionVar -intValue createPoseShapeOptVar $val;
+	
+	$val = `optionMenuGrp -q -sl poseTypeListWidget`;
+	optionVar -intValue poseTypeOptVar $val;
+
+	if ($doIt)
+	{	
+		// to predict if we need to CreatePoseShape optionbox window
+		int $needCPSOptionBox = 0;	
+		
+		string $tplSelected[] = getPoseEditorTreeviewSelection(1);
+		if (size($tplSelected))
+		{
+			string $tpl = $tplSelected[0];
+			// Check if the poseInterpolator node is already attached to a blendShape
+			string $blendShapes[] = poseInterpolatorConnectedShapeDeformers($tpl);
+			if (size($blendShapes))
+				$needCPSOptionBox = 0;
+			else
+				$needCPSOptionBox = 1;
+		}
+		
+		// the CreatePoseShape optionbox will not show up if we hideOptionBox here,
+		// for no known reason. 
+		if ($needCPSOptionBox == 0)
+			hideOptionBox;
+				
+		performPoseAdd (0);
+		addToRecentCommandQueue "performPoseAdd 0" "InterpolatorPoseAdd";
+	}
+}
+
+//
+//  Procedure Name:
+//      poseAddOptions
+//
+//  Description:
+//		Construct the option box UI.  Involves accessing the standard option
+//		box and customizing the UI accordingly.
+//
+//  Return Value:
+//      None.
+//
+proc poseAddOptions()
+{ 
+	string $callback = "poseAddCallback";
+	string $setup = "poseAddSetup";
+
+	global string $gOptionBoxOptions;
+	$gOptionBoxOptions = "noApplyAndClose"; 
+	
+	string $layout = getOptionBox();
+	setParent $layout;
+	setUITemplate -pushTemplate DefaultTemplate;
+	waitCursor -state 1;
+
+	tabLayout -tabsVisible 0 -scrollable 1;
+
+	string $parent = `columnLayout -adjustableColumn 1`;
+
+	separator;
+
+	optionMenuGrp -label (uiRes("m_performPoseAdd.kPostType"))
+		poseTypeListWidget;
+		menuItem -label (uiRes("m_performPoseAdd.kPTSwing")) ;
+		menuItem -label (uiRes("m_performPoseAdd.kPTSwingTwist")) ;
+		menuItem -label (uiRes("m_performPoseAdd.kPTTwist")) ;
+
+	checkBoxGrp
+		-label (uiRes("m_performPoseAdd.kCreatePoseShape1")) 
+		-label1  ""
+		-numberOfCheckBoxes 1
+		-v1 1
+		createPoseShapeCheckBoxWidget;
+	waitCursor -state 0;
+
+	setUITemplate -popTemplate;
+	
+	string $applyBtn = getOptionBoxApplyBtn();
+	int $execCmd = 1; 
+	button -edit -label (uiRes("m_performPoseAdd.kAddPoseButton"))
+		-command ($callback + " " + $parent + " " + $execCmd)
+		$applyBtn;
+	
+	string $saveBtn = getOptionBoxSaveBtn();
+	$execCmd = 0;
+	button -edit -command ($callback + " " + $parent + " " + $execCmd) $saveBtn;
+		
+	string $resetBtn = getOptionBoxResetBtn();
+	button -edit -command ($setup + " " + $parent + " " + 1) $resetBtn;
+		
+	setOptionBoxTitle (uiRes("m_performPoseAdd.kAddPoseOptions"));
+	setOptionBoxHelpTag( "EditPoseAdd" );  
+	eval (($setup + " " + $parent + " " + 0));	
+	showOptionBox(); 
+}
+
+
+proc addShapePose(string $tpl, string $poseName, int $poseTypeIdx, string $blendShapes[])
+{
+	string $poseType = "swing";
+	if ($poseTypeIdx == 1)
+		$poseType = "swing";
+	else if ($poseTypeIdx == 2)
+		$poseType = "swingandtwist";
+	else if ($poseTypeIdx == 3)
+		$poseType = "twist";
+
+	poseInterpolatorAddShapePose($tpl, $poseName, $poseType, $blendShapes, 1);
+} 
+
+global proc createPoseShapeCheckBoxCallback(int $onOff)
+{
+	if ( `columnLayout -exists createPoseShapeLayout` )
+	{
+		if ($onOff == 0)
+		{
+			columnLayout -edit -enable 0 createPoseShapeLayout;
+		} 
+		if ($onOff)
+		{
+			columnLayout -edit -enable 1 createPoseShapeLayout;
+			
+			blendShapeListWidgetCallback();
+		} 
+	} 
+} 
+
+global proc blendShapeListWidgetCallback()
+{
+	if ( `optionMenuGrp -exists blendShapeListWidget` )
+	{
+		int $bsIndex = `optionMenuGrp -query -select blendShapeListWidget`;
+		if ( `columnLayout -exists blendShapeNewNodeLayout` )
+		{
+			if ($bsIndex == 1)
+			{
+				columnLayout -edit -enable 1 blendShapeNewNodeLayout;
+			} 
+			else 
+			{
+				columnLayout -edit -enable 0 blendShapeNewNodeLayout;
+			} 
+		} 
+	} 
+} 
+
+global proc string[] meshesAssociatedWithJoints( string $drivers[] )
+{
+	string $meshes[]; 
+
+	for ( $driver in $drivers )
+	{
+		string $nType =	nodeType( $driver );
+		if ( $nType == "joint" )
+		{
+			string $skinClusterNodes[] = `listConnections -type skinCluster $driver`;
+			$skinClusterNodes = stringArrayRemoveDuplicates($skinClusterNodes);
+			for ($node in $skinClusterNodes)
+			{
+				string $geo[] = `deformer -q -g $node`;
+				for ($g in $geo)
+				{
+					if(`getAttr ($g + ".intermediateObject")` == false)
+						$meshes[size($meshes)]= $g;
+				}
+			} 
+		}
+		else if ( $nType == "transform" )
+		{
+			int $idx = size($meshes);
+			$meshes[$idx] = $driver;
+		}  	
+	} 
+
+	$meshes = stringArrayRemoveDuplicates($meshes);
+	return $meshes;
+} 
+
+proc createPoseShapeDialogOptVars(int $forceFactorySettings)
+{
+	optionVar -init $forceFactorySettings -category "Pose Editor.Add Pose"
+		-iv createPoseShapeOptVar2 1
+		-sv blendShapeListOptVar "New"
+		-sv blendShapeNameOptVar "blendShape#"
+		-iv baseMeshOptVar 1
+		-iv deformationOrderOptVar 1
+		;
+}
+
+global proc createPoseShapeDialogSetup(string $parent, int $forceFactorySettings)
+{
+	// to setup the ui controls according to the saved settings.
+	
+	createPoseShapeDialogOptVars($forceFactorySettings);
+	setParent $parent;	
+	
+	$val = `optionVar -query createPoseShapeOptVar2`;
+	checkBoxGrp -edit -v1 $val createPoseShapeCheckBoxWidget2;
+	createPoseShapeCheckBoxCallback($val); // to update the layout based on this checkbox value.
+		
+	string $valStr = `optionVar -query blendShapeListOptVar`;
+	if ($valStr == "New") {
+		optionMenuGrp -edit -select 1 blendShapeListWidget;
+	} else {  		 
+		if ( objExists($valStr) && nodeType($valStr)=="blendShape") {
+			optionMenuGrp -edit -value $valStr blendShapeListWidget;
+		} else 
+			optionMenuGrp -edit -select 1 blendShapeListWidget;
+	} 
+	blendShapeListWidgetCallback(); // to update the layout based on creating a new blendShape node or not.
+	
+	$valStr = `optionVar -query blendShapeNameOptVar`; 
+	textFieldGrp -edit -tx $valStr bsNewNodeNameWidget; 
+	
+	$val = `optionVar -query baseMeshOptVar`;
+	radioButtonGrp -edit -select $val blendShapeBaseMeshWidget ;
+	
+	$val = `optionVar -query deformationOrderOptVar`;
+	optionMenuGrp -edit -select $val blendShapePositioningWidget;
+}
+
+global proc createPoseShapeDialogCallback(string $parent, int $doIt, string $tpl, string $poseName, int $poseType)
+{ 
+	// to save the settings according to the ui control values.
+
+	// in case the opt vars not exist
+	createPoseShapeDialogOptVars(false);
+	
+	setParent $parent;
+	
+	optionVar -intValue createPoseShapeOptVar2 
+	`checkBoxGrp -query -v1 createPoseShapeCheckBoxWidget2`;
+	
+	optionVar -stringValue blendShapeListOptVar 
+	`optionMenuGrp -query -value blendShapeListWidget`;  
+	
+	optionVar -stringValue blendShapeNameOptVar
+	`textFieldGrp -query -tx bsNewNodeNameWidget`;
+	
+	optionVar -intValue baseMeshOptVar
+	`radioButtonGrp -query -select blendShapeBaseMeshWidget`;
+	
+	optionVar -intValue deformationOrderOptVar
+	`optionMenuGrp -query -select blendShapePositioningWidget`;
+			
+	if ( $doIt )
+	{
+		hideOptionBox;
+	
+		int $createOrNot = `optionVar -query createPoseShapeOptVar2`;;
+		string $blendShapeName = "";
+
+		if ( $createOrNot )
+		{
+			if (`optionMenuGrp -exists blendShapeListWidget`)
+			{
+				int $idx = `optionMenuGrp -query -select blendShapeListWidget`;
+				if ($idx > 1)
+				{
+					// use the selected blendShape node
+					$blendShapeName = `optionMenuGrp -query -value blendShapeListWidget`;
+				}	
+				else 
+					$blendShapeName = ""; // going to new  a blendShape node.
+			}
+			
+			// to new one, if no blendShape node selected. 
+			if ($blendShapeName == "")
+			{		
+				// to get the name given by user input
+				string $inputName = `textFieldGrp -query -tx bsNewNodeNameWidget`;
+				
+				// to get the meshes as bases.		
+				string $selection[];
+				if (`optionVar -exists baseMeshOptVar`)
+				{
+					int $idx = `optionVar -query baseMeshOptVar`;
+					if ($idx != `radioButtonGrp -query -select blendShapeBaseMeshWidget`)
+						warning (uiRes("m_performPoseAdd.kBaseMeshSyncError"));
+					if ($idx == 1)
+					{						
+						string $drivers[] = poseInterpolatorDrivers($tpl);
+						$selection = meshesAssociatedWithJoints( $drivers );
+					}
+					else
+					{
+						$selection = `ls -sl`;
+					}
+
+					// Make sure the selection has a shape node
+					int $numMesh = 0; 
+					for ($s in $selection)
+					{
+						if ( nodeType($s) == "mesh" )
+							++$numMesh;
+						else
+						{
+							string $relatives[] = `listRelatives -ad -ni -type "mesh" -path $s`;
+							if (size($relatives))
+								++$numMesh;
+						} 
+					}  
+					if ($numMesh == 0)
+					{
+						if ($idx == 1)
+							error ( (uiRes("m_performPoseAdd.kNoMeshAssociated")) ); 
+						else
+							error ( (uiRes("m_performPoseAdd.kNoMeshSelected")) );
+					}
+				}
+				
+				// to get the deformation order
+				string $posFlag = ""; 
+
+				if ( `optionVar -exists deformationOrderOptVar` )
+				{
+					int $idx = `optionVar -query deformationOrderOptVar`;;
+					if ($idx != `optionMenuGrp -query -select blendShapePositioningWidget`)
+						warning (uiRes("m_performPoseAdd.kDeformationOrderSyncError"));
+					string $positions[] = {"-automatic", "-frontOfChain", "-before", "-after", "-split", "-parallel"};
+					$posFlag = $positions[$idx-1];
+				}
+				
+				// to create a new blendShape node  
+				string $cmd = "";
+				if ($posFlag == "") {
+					$cmd = "blendShape " + " -name \"" + $inputName + "\" " + $selection[0]; 
+				} else {
+					$cmd = "blendShape " + " -name \"" + $inputName + "\" " + $posFlag + " " + $selection[0]; 
+				} 
+				string $temp[] = evalEcho($cmd); 
+				if (size($temp))
+				{
+					$blendShapeName = $temp[0]; 
+					
+					// to support multi-bases
+					int $baseIndex = 1;
+					for (; $baseIndex < size($selection); ++$baseIndex)
+					{
+						$cmd = "blendShape -edit " + $posFlag + " -g " + $selection[$baseIndex] + " " + $blendShapeName;
+						evalEcho($cmd);
+					}
+				} else {
+					warning (uiRes("m_performPoseAdd.kCreateBlendShapeFail"));
+					$blendShapeName = "";
+				}
+				 
+			}			
+		}
+		else
+		{  
+			// create pose shape is set to false.
+			// do not create pose shape, and no blendShape connected. 
+			$blendShapeName = "";
+		}
+		
+		string $blendShapes[];
+		if ($blendShapeName != "")
+			$blendShapes[0] = $blendShapeName;
+		addShapePose($tpl, $poseName, $poseType, $blendShapes);  
+	} 
+}
+
+
+global proc createPoseShapeDialog(string $tpl, string $poseName, int $poseType)
+{
+	global string $gOptionBoxOptions;
+	$gOptionBoxOptions = "noApplyAndClose";
+    $gOptionBoxOptions += " noToolAndAction";
+	
+	string $layout = getOptionBox();
+	setParent $layout;
+	setUITemplate -pushTemplate DefaultTemplate;
+	waitCursor -state 1;
+
+	tabLayout -tabsVisible 0 -scrollable 1;
+
+	string $parent = `columnLayout -adjustableColumn 1`;
+
+	frameLayout -label (uiRes("m_performPoseAdd.kSettings"))
+		-labelVisible true
+		-borderVisible false
+		-collapsable false
+		-marginWidth 10
+		-marginHeight 5
+		settingFrame;
+		
+		columnLayout -adjustableColumn true;	
+			checkBoxGrp
+				-label (uiRes("m_performPoseAdd.kCreatePoseShape2")) 
+				-label1  ""
+				-numberOfCheckBoxes 1
+				-v1 1
+				-on1 "createPoseShapeCheckBoxCallback 1"
+				-ofc "createPoseShapeCheckBoxCallback 0"
+				createPoseShapeCheckBoxWidget2;
+			setParent ..;
+
+		setParent ..;
+	
+	frameLayout -label (uiRes("m_performPoseAdd.kShapeSettings"))
+		-labelVisible true
+		-borderVisible false
+		-collapsable false
+		-marginWidth 10
+		-marginHeight 5
+		shapeSettingsFrame;
+		
+		columnLayout -enable 1 createPoseShapeLayout;
+		
+			optionMenuGrp -label (uiRes("m_performPoseAdd.kExistingNodes")) 
+				-cc "blendShapeListWidgetCallback" 
+				blendShapeListWidget;
+			menuItem -label (uiRes("m_performPoseAdd.kMenuItemBlendShapeNew")); 
+			// add all the blendShapes to the menu
+			//
+			string $bnArray[];
+			$bnArray = `ls -type blendShape`;
+			int $bnCount = size($bnArray);
+			if ($bnCount > 0) {
+				int $pp;
+				for ($pp = 0; $pp < $bnCount; $pp++)
+				{
+					menuItem -label $bnArray[$pp];
+				}
+			}
+
+			columnLayout -enable 1 blendShapeNewNodeLayout;
+				textFieldGrp -label (uiRes("m_performPoseAdd.kBlendShapeNewNodeName"))  -tx "blendShape#" bsNewNodeNameWidget;
+
+				radioButtonGrp -label (uiRes("m_performPoseAdd.kBlendShapeBaseMesh")) 
+							-numberOfRadioButtons 2
+							-vertical
+							-label1 (uiRes("m_performPoseAdd.kJointBindedMesh")) 
+							-label2 (uiRes("m_performPoseAdd.kSelectedMesh")) 
+							-select 1
+							blendShapeBaseMeshWidget ;
+
+				optionMenuGrp -label (uiRes("m_performPoseAdd.kDeformationOrder"))  blendShapePositioningWidget;
+						menuItem -label (uiRes("m_performPoseAdd.kAutomatic"))                blendShapePosItem1;
+						menuItem -label (uiRes("m_performPoseAdd.kPreDeform"))          blendShapePosItem2;
+						menuItem -label (uiRes("m_performPoseAdd.kPostDeform"))        blendShapePosItem3;
+						menuItem -label (uiRes("m_performPoseAdd.kAfter"))                        blendShapePosItem4;
+						menuItem -label (uiRes("m_performPoseAdd.kSplit"))                        blendShapePosItem5;
+						menuItem -label (uiRes("m_performPoseAdd.kParallel"))                  blendShapePosItem6;
+				setParent ..; // out from blendShapeNewNodeLayout and back to createPoseShapeLayout.
+			setParent ..; // out from createPoseShapeLayout and back to the window layout.	
+		setParent ..;
+	
+	waitCursor -state 0;
+
+	setUITemplate -popTemplate;
+
+	string $applyBtn = getOptionBoxApplyBtn();
+	int $execCmd = 1; 
+	button -edit -label (uiRes("m_performPoseAdd.kCreatePoseShapeButton"))
+		-command ("createPoseShapeDialogCallback " + $parent + " " + $execCmd + " " + $tpl + " " + $poseName + " " + $poseType)
+		$applyBtn;
+	
+	string $saveBtn = getOptionBoxSaveBtn();
+	$execCmd = 0;
+	button -edit 
+		-command ("createPoseShapeDialogCallback " + $parent + " " + $execCmd + " " + $tpl + " " + $poseName + " " + $poseType)
+		$saveBtn;
+	
+	string $resetBtn = getOptionBoxResetBtn();
+	button -edit
+		-command ("createPoseShapeDialogSetup " + $parent + " " + 1)
+		$resetBtn; 
+	
+	string $titleStr = (uiRes("m_performPoseAdd.kCreatePoseShape3")) + " " + $poseName;
+	setOptionBoxTitle $titleStr;  
+	// setOptionBoxHelpTag( "CreatePoseShape" ) uses the window title,
+	// the title like "Create Pose Shape: pose name", while we need "Create Pose Shape" only. 
+	string $helpItem = getOptionBoxHelpItem(); 
+	if ($helpItem != "") {
+		string $helpTag = "CreatePoseShape"; 
+		menuItem -edit 
+			-label (uiRes("m_performPoseAdd.kHelpOn"))
+			-command ("showHelp " + $helpTag)
+			$helpItem;
+	}	 
+	eval("createPoseShapeDialogSetup " + $parent + " " + 0); 
+	showOptionBox(); 
+}
+
+//
+//  Procedure Name:
+//      assemblePoseAddCmd
+//
+//  Description:
+//		Construct the command that will apply the option box values
+//
+//  Return Value:
+//      None.
+//
+global proc string assemblePoseAddCmd()
+{
+	// Retrieve the option settings
+	setOptionVars(false);
+	
+	string $cmd;
+	$cmd = "";
+	
+	string $tplSelected[] = getPoseEditorTreeviewSelection(1);
+	if (size($tplSelected) == 0)
+		error (uiRes("m_performPoseAdd.kNoTplSelected"));
+	string $tpl = $tplSelected[0];
+
+	string $poseName = poseInterpolatorPoseDefaultName($tpl); 
+	
+	// prevent to recreate pose (and blendShape target shape)
+	// with the same settings of drivers.
+	if (poseInterpolatorPoseIndex($tpl, $poseName) != -1)
+	{	
+		error (uiRes("m_performPoseAdd.kPoseAlreadyExists"));
+		return $cmd;
+	}
+		
+	int $poseType=`optionVar -q poseTypeOptVar`;
+	int $createPoseShape = `optionVar -q createPoseShapeOptVar`;
+		
+	// Check if the poseInterpolator node is already attached to a blendShape
+	string $blendShapes[] = poseInterpolatorConnectedShapeDeformers($tpl);
+	if (size($blendShapes))
+	{
+		if ($createPoseShape == 0)
+			clear($blendShapes);
+		addShapePose($tpl, $poseName, $poseType, $blendShapes);
+	}
+	else
+	{
+		if ($createPoseShape)
+		{
+			// No blendShape attached, ask if the user wants to create or
+			// use an existing blendShape.
+			createPoseShapeDialog($tpl, $poseName, $poseType);
+		}
+		else
+		{
+			clear($blendShapes);
+			addShapePose($tpl, $poseName, $poseType, $blendShapes);
+		} 	
+	}
+
+	return $cmd;
+}
+
+//
+//  Procedure Name:
+//      performPoseAdd
+//
+//  Description:
+//		Perform the command using the corresponding 
+//		option values.  This procedure will also show the option box
+//		window if necessary as well as construct the command string
+//		that will invoke the command with the current
+//		option box values.
+//
+//  Input Arguments:
+//      0 - Execute add target command.
+//      1 - Show editor add option box dialog. 
+//
+global proc string performPoseAdd(int $action)
+{
+	string $cmd = "";
+
+	switch ($action) {
+	case 0:
+		$cmd = `assemblePoseAddCmd`; 
+		eval($cmd);
+		break;
+	case 1:
+		poseAddOptions;
+		break;
+	}
+	return $cmd;
+}
+

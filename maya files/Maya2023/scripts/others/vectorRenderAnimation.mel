@@ -1,0 +1,123 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//  Creation Date:  23 December 2002
+//
+//  Procedure Name:
+//		vectorRenderAnimation
+//
+//  Description:
+//		This script renders an animation into Render View.
+//
+//  Input Arguments:
+//		None
+//  Return Value:
+//		None
+//
+
+proc string getRenderWindowPanel()
+{
+    string $renderPanel;
+    string $renderPanels[] = `getPanel -scriptType "renderWindowPanel"`;
+
+    if( size($renderPanels) == 0 ) {
+        $renderPanel = `scriptedPanel -type "renderWindowPanel" -unParent`;
+        scriptedPanel -e -label `interToUI $renderPanel` $renderPanel;
+    }
+    else {
+        $renderPanel = $renderPanels[0];
+    }
+    return $renderPanel;
+}
+
+
+proc int raiseRenderViewWindow()
+{
+	// Raise the render view window if exists, 
+	// then return 1. Otherwise return 0.
+
+    //  Look for the renderViewWindow.
+    for( $i in `lsUI -windows` ) {
+		// Pop it up if it exists.
+        if( $i == "renderViewWindow" ) {
+            showWindow $i;
+            return 1;
+        }
+    }
+
+	// No render view.
+    return 0;
+}
+
+
+proc string showRenderView()
+{
+    // Ensures that the Render View is displayed.
+    // If the Render View is currently torn-off in 
+	/// a window, the window is brought forward. If 
+	// the Render View does not exist in a torn-off window
+    // nor in a panel, it is created in a torn-off window.
+    //
+    // Returns the name of the render view.
+
+    string $editor = `getRenderWindowPanel`;
+    if( `raiseRenderViewWindow` == 1 )
+    {
+        // The Render View exists and is in a torn-off window. 
+		// It has been brought to the front.
+        return $editor;
+    }
+
+    // If we get to here, the Render View is not in a torn-off window
+    for( $i in `getPanel -vis` ) {
+        if( $i == $editor ) {
+            // The Render View exists and is in a panel.
+            return $editor;
+        }
+    }
+
+    // If we get to here, the Render View is not currently in 
+	// a panel nor is it in a torn-off window.
+    scriptedPanel
+        -edit
+        -tearOff
+        $editor;
+
+    return $editor;
+}
+
+
+/////////////////////////////////////////////////////////////////////
+//  Renders the current animation into a render view. 
+/////////////////////////////////////////////////////////////////////
+
+global proc vectorRenderAnimation()
+{
+	// Make sure that the render view is up and running.
+	string $renderView = `showRenderView`;
+
+	// Determine which camera to use.
+	string $cameraShape = vrFirstRenderableCamera();
+	string $camera;
+
+	string $cameraTransformName[] = `listTransforms $cameraShape`;
+	if (size($cameraTransformName)>0) {
+		$camera = $cameraTransformName[0];
+	}
+
+	// Get the width and height
+	int $width = `getAttr defaultResolution.width`;
+	int $height = `getAttr defaultResolution.height`;
+
+	// Build the vector render command.
+	string $renderCmd = vrVectorBuildCommand( false, $width, $height, $camera, "" );
+
+	// Add the flag to display the animation into the render view
+	$renderCmd = $renderCmd + " -rv " ;
+	evalEcho( $renderCmd );
+}

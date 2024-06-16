@@ -1,0 +1,25 @@
+<!--
+Copyright 2016 Autodesk, Inc. All rights reserved. 
+
+Use of this software is subject to the terms of the Autodesk 
+license agreement provided at the time of installation or download, 
+or which otherwise accompanies this software in either electronic 
+or hard copy form.
+-->
+<fragment_graph  name="DrawPreUIOption" ref="DrawPreUIOption" class="FragmentGraph" version="1.0" feature_level="0" >
+    <fragments>
+            <fragment_ref name="Operator_And" ref="Operator_And" />
+    </fragments>
+    <connections>
+    </connections>
+    <properties>
+        <bool  name="drawPreUI" ref="Operator_And.a" />
+        <bool  name="b" ref="Operator_And.b" />
+    </properties>
+    <values>
+<bool name="drawPreUI" value="true"  />
+    </values>
+    <outputs>
+        <bool  name="res" ref="Operator_And.res" />
+    </outputs>
+</fragment_graph>

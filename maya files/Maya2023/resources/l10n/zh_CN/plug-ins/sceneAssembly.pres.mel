@@ -1,0 +1,62 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+// Resources for Plug-in: sceneAssembly
+// 
+// ----------------------------
+// Registered string resources:
+// ----------------------------
+setPluginResource( "sceneAssembly", "rAssemblyDefnImportError", "无法将集合定义文件 ^1s 导入集合引用 ^2s。");
+setPluginResource( "sceneAssembly", "rAssemblyDefnNotFoundError", "没有在文件 ^1s 中找到集合引用 ^2s 的集合定义节点。");
+setPluginResource( "sceneAssembly", "rCreateGPUCacheNodeError", "无法创建 gpuCache 节点，未加载 gpuCache 插件。");
+setPluginResource( "sceneAssembly", "rDeregisterNodeError", "注销 ^1s 节点失败: ^2s。");
+setPluginResource( "sceneAssembly", "rDeregisterRepFactoryError", "无法为表示类型 ^1s 取消注册工厂。");
+setPluginResource( "sceneAssembly", "rEditQueryError", "不能同时指定 -edit 和 -query 标志。");
+setPluginResource( "sceneAssembly", "rListRepTypesFlagError", "-listRepTypes 标志只能在查询模式下使用。");
+setPluginResource( "sceneAssembly", "rMultAssemblyDefnFoundError", "在文件 ^1s 中找到集合引用 ^2s 的多个集合定义节点。");
+setPluginResource( "sceneAssembly", "rRegisterAssembliesError", "注册集合失败: ^1s。");
+setPluginResource( "sceneAssembly", "rRegisterCmdError", "无法注册 ^1s 命令: ^2s。");
+setPluginResource( "sceneAssembly", "rRegisterNodeError", "注册 ^1s 节点失败: ^2s。");
+setPluginResource( "sceneAssembly", "rRegisterRepFactoryError", "为表示类型 ^1s 注册工厂失败。");
+setPluginResource( "sceneAssembly", "rRegisterRepresentationsError", "注册表示失败: ^1s。");
+setPluginResource( "sceneAssembly", "rRegisterUIStringError", "注册 ^1s 失败。");
+setPluginResource( "sceneAssembly", "rRepTypeObjArgError", "缺少作为表示类型的对象字符串。");
+// 
+// --------------------------
+// Registered node resources:
+// --------------------------
+// 
+// Node: assemblyDefinition
+// 
+setNodeNiceNameResource( "assemblyDefinition", "集合定义" );
+setAttrNiceNameResource( "assemblyDefinition", "rep", "表示" );
+setAttrNiceNameResource( "assemblyDefinition", "rna", "表示名称" );
+setAttrNiceNameResource( "assemblyDefinition", "rla", "表示标签" );
+setAttrNiceNameResource( "assemblyDefinition", "rty", "表示类型" );
+setAttrNiceNameResource( "assemblyDefinition", "rda", "表示数据" );
+// 
+// Node: assemblyReference
+// 
+setNodeNiceNameResource( "assemblyReference", "集合引用" );
+setAttrNiceNameResource( "assemblyReference", "rep", "表示" );
+setAttrNiceNameResource( "assemblyReference", "rna", "表示名称" );
+setAttrNiceNameResource( "assemblyReference", "rla", "表示标签" );
+setAttrNiceNameResource( "assemblyReference", "rty", "表示类型" );
+setAttrNiceNameResource( "assemblyReference", "rda", "表示数据" );
+setAttrNiceNameResource( "assemblyReference", "def", "定义" );
+setAttrNiceNameResource( "assemblyReference", "rns", "表示名称空间" );
+setAttrNiceNameResource( "assemblyReference", "irp", "初始表示" );
+// 
+// Node: adskPrepareRenderGlobals
+// 
+setNodeNiceNameResource( "adskPrepareRenderGlobals", "Adsk 准备渲染全局" );
+setAttrNiceNameResource( "adskPrepareRenderGlobals", "fzn", "冻结" );
+setAttrNiceNameResource( "adskPrepareRenderGlobals", "rna", "表示名称" );
+setAttrNiceNameResource( "adskPrepareRenderGlobals", "rla", "表示标签" );
+setAttrNiceNameResource( "adskPrepareRenderGlobals", "rty", "表示类型" );
+setAttrNiceNameResource( "adskPrepareRenderGlobals", "urx", "使用正则表达式" );
+setAttrNiceNameResource( "adskPrepareRenderGlobals", "fza", "已冻结受影响对象" );

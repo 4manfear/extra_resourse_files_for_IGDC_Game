@@ -1,0 +1,59 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+// ===========================================================================
+//
+//  Procedure Name:
+//      texGetShellAreas
+//
+//  Description:
+//      UV workflow function used for getting UV shell area sizes.
+//      Used by texMultiStitch.
+//
+//  Input Arguments
+//      shellList            - String[] - Empty list or a list of UV shells
+//      progressBar          - Int      - Update the progressBar
+//
+//  Return Value:
+//      String[]             - The UV shell list sorted by face area size.
+//                             Each element in the list start with a size
+//                             prefix and is separated by % (see notes below).
+//
+//  Notes:
+//  This script is part of the implementation of Nightshade UV Editor into
+//  Autodesk Maya. This script is sourced by other scripts. Do not run it 
+//  directly. Example of returned list:
+//  0.3125%pCube1.map[6] pCube1.map[8] pCube1.map[9] pCube1.map[15]
+//
+// ===========================================================================
+
+global proc string[] texGetShellAreas(string $shellList[], int $progressBar)
+{
+    // MEL has no dictionaries so we will use the face area as a prefix to
+    // the shell string in order to perform sorting.
+    global string $gMainProgressBar;
+    string $prefixList[];
+    for ($i = 0; $i < `size($shellList)`; $i++)
+    {
+        // The following is absolutely necessary in order to avoid "Invalid attribute name"
+        // I tried eval("select " + $shellList[$i]); and it did not work.
+        string $temp[] = stringToStringArray($shellList[$i], " ");
+
+        // Calculate shell UV area
+        string $faceList[] = `polyListComponentConversion -fromUV -toFace $temp`;
+        $faceAreas = `polyEvaluate -uvFaceArea $faceList`; // polyEvaluate returns a float[]
+        float $area;
+        for ($faceArea in $faceAreas)
+            $area += $faceArea;
+        $prefixList[$i] = ($area + "%" + $shellList[$i]);
+
+        if ($progressBar)
+            progressBar -edit -step 1 $gMainProgressBar;
+    }
+
+    return $prefixList;
+}

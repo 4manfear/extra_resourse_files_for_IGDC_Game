@@ -1,0 +1,37 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  19.Dec.2001
+//
+//  Description:
+//		Save the current visibility state of the main window UI
+//		components. Used in conjuction with restoreMainWindowComponents
+//		To return the visibility of the components to this state.
+//
+//  Input Arguments:
+//      None.
+//
+//  Return Value:
+//      None.
+//
+global proc updateMainWindowComponentState()
+{
+	//	Save the current visibility state of the UI components.
+	//
+	//	A call to restoreMainWindowComponents will restore the
+	//	saved state.
+	//
+	optionVar -iv LastStateStatusLineVisibility		`isUIComponentVisible("Status Line")`;
+	optionVar -iv LastStateShelfVisibility			`isUIComponentVisible("Shelf")`;
+	optionVar -iv LastStateTimeSliderVisibility		`isUIComponentVisible("Time Slider")`;
+	optionVar -iv LastStatePlaybackRangeVisibility	`isUIComponentVisible("Range Slider")`;
+	optionVar -iv LastStateCommandLineVisibility	`isUIComponentVisible("Command Line")`;
+	optionVar -iv LastStateHelpLineVisibility		`isUIComponentVisible("Help Line")`;
+	optionVar -iv LastStateToolboxVisibility		`isUIComponentVisible("Tool Box")`;
+}

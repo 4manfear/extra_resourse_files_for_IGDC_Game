@@ -1,0 +1,33 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date: June 1998
+//
+//  Description:
+//      These procs create the controls for a two point arc
+//      property sheet.  
+//
+//  Input Arguments:
+//      None.
+//
+//  Return Value:
+//      None.
+//
+
+global proc twoPointArcProperties() 
+//
+//  Description:
+//      This procedure builds the property sheet and assigns callbacks to
+//      its controls.  The state of the controls are set in threePointArcValues().
+//
+//
+{
+    arcProperties( "twoPointArc", "twoPointArcCtx");
+}
+

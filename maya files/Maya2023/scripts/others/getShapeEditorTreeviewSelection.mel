@@ -1,0 +1,192 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc string[] getShapeEditorTreeviewSelection(int $scope)
+//
+//  Description:
+//		Get selections from shape editor tree view
+//
+//  Input Arguments:
+//	    int $scope - Scope of tree view selection:
+//
+//        Simple Scopes:
+//          0: Selected blend shape deformer group indices.				    e.g. {"-1", "-2", "-3"}
+//          1: Selected blend shape deformers.						        e.g. {"blendShape1", "blendShape2", "blendShape3", "blendShape4"}
+//          2: Blend shape deformers in selected groups.				    e.g. {"blendShape1", "blendShape2"}
+//          3: Selected target group indices with blend shape name prefix.  e.g. {"blendShape1.-1", "blendShape1.-2", "blendShape2.-1", "blendShape2.-2"}
+//          4: Selected target indices with blend shape name prefix.	    e.g. {"blendShape1.0", "blendShape1.1", "blendShape1.2"}
+//          5: Targets in selected groups with blend shape name prefix.	    e.g. {"blendShape2.0", "blendShape2.1"}
+//          6: Inbetween targets.										    e.g. {"blendShape2.0.5500", "blendShape2.1.5800"}
+//          7: Purely selected blend shape deformer (groups).               e.g. {"-1", "2", "blendshape1", "blendshap2", "-3"}
+//          8: Purely selected target (groups).                             e.g. {"blendshape1.1", "blendshape1.-1", "blendshape2.2", "blendshape2.-2"}
+//          9: Purely selected target (groups) within one BSD.              e.g. {"blendshape1.1", "blendshape1.-1"}
+//
+//        Only one type of item is selected:
+//          10: Purely selected blend shape deformer group indices:, return {} for mixed selection
+//          11: Purely selected blend shape deformers:, return {} for mixed selection
+//          12: Blend shape deformers in purely selected of groups:, return {} for mixed selection
+//          13: Purely selected target group indices:, return {} for mixed selection
+//          14: Purely selected targets:, return {} for mixed selection
+//          15: Target in purely selected of groups, return {} for mixed selection
+//          16: Purely selected in-between targets. return {} for mixed selection
+//
+//        Last Selected Item
+//          20: Last selection
+//
+//        Only one type and its group type of item are selected:
+//          21: Purely selected blend shape deformers and the ones in group without duplicates, return {} for mixed selection.
+//          24: Purely selected target and the ones in group without duplicates, return {} for mixed selection.
+//
+//        Flags:
+//          30: If selection contains reference item. return {"1"} if true; {"0"} if false;
+//          31: First selection item 
+// 
+//  Return Value:
+//      String array of given scope
+//
+{
+	$TypeRoof = 6; //NOTE: Update roof when new tree item type added
+	int $TypeArray[];
+	for ($i = 0; $i < $TypeRoof; ++ $i)
+		$TypeArray[$i] = $i; // initialize type arrary
+	if(!`optionVar -exists blendShapeEditorTreeViewSelection`)
+		return{};
+	string $ov[] = `optionVar -q blendShapeEditorTreeViewSelection`;
+	if($scope > -1 && $scope < $TypeRoof + 3) //Scope 0 ~ 8
+        return stringToStringArray($ov[$scope], "/");
+	if($scope == 9) //Scope 9
+        return filterSingleBSD(stringToStringArray($ov[8], "/"));
+	else if($scope > 9 && $scope < $TypeRoof + 11) //Scope 10 ~ 16
+	{
+		$selection = stringToStringArray($ov[$scope-10], "/");
+		if(size($selection) == 0)
+			return {};
+		int $newTypeArray[] = intArrayRemove({$scope-10, 2, 5}, $TypeArray); // Skip checking scope related types
+		if($scope == 12 || $scope == 15)
+			$newTypeArray = intArrayRemove({$scope-12}, $newTypeArray); // Skip checking bsd/target group types
+		for ($i in $newTypeArray)
+			if(size(stringToStringArray($ov[$i], "/")) != 0) 
+				return {}; // If mixed selection
+		return $selection;
+	}
+	else if($scope == 20) //Scope 20
+		return stringToStringArray($ov[9], "/");
+	else if ($scope == 21 || $scope == 24) //Scope 21, 24
+	{
+		$selectionOutG = stringToStringArray($ov[$scope-20], "/");
+		$selectionInG = stringToStringArray($ov[$scope-19], "/");
+		$selection = stringArrayRemoveDuplicates(stringArrayCatenate($selectionOutG, $selectionInG));
+		if(size($selection) == 0)
+			return {};
+		int $newTypeArray[] = intArrayRemove({$scope-20, $scope-19, $scope-21}, $TypeArray); // Skip checking scope related types
+		for ($i in $newTypeArray)
+			if(size(stringToStringArray($ov[$i], "/")) != 0) 
+				return {}; // If mixed selection
+		return $selection;
+	}
+	else if ($scope == 30) //Scope 30
+		return stringToStringArray($ov[10], "/");
+	else if ($scope == 31) 
+		return stringToStringArray($ov[11], "/");
+	else // Invalid scope 
+		return {};
+}
+
+global proc string[] filterSingleBSD(string $items[])
+//
+//  Description:
+// 		Return selected target(group) from single blend shape deformer. return empty for more multi-BSD
+//
+{
+	string $result[];
+	string $oneBsd = "";
+	for($item in $items)
+	{
+		string $subStrings[] = stringToStringArray($item, ".");
+		if($oneBsd == "")
+			$oneBsd = $subStrings[0];
+		if($oneBsd != $subStrings[0])
+		{
+			return {};
+		}
+		$result = stringArrayCatenate($result, {$item});
+	}
+	return $result;
+}
+
+global proc int isShapeEditorRefItemSelected()
+//
+//  Description:
+// 		Return 1 if reference item selected in shape editor tree view
+//
+{
+	$ResultL = getShapeEditorTreeviewSelection(30);
+	if(size($ResultL) == 1)
+	{
+		if($ResultL[0] == "1")
+			return 1;
+		else
+			return 0;
+	}
+	return 0;
+}
+
+global proc int blendShapeEditorSelectedAncestor(string $bsdName, int $tgtIndex, string $selectedTargets[])
+// 
+// Description:
+//   Get the selected ancestor if there is, otherwise return 0.
+//   In the blendShape target/directory hierarchy, there is always a highest directory 
+//   with index=0 and cannot be selected, if going up to this highest directory, stop and return 0. 
+//   Since this directory 0 cannot be selected, so return 0 means fail to find.
+//   
+//   This function dest not care whether the $tgtIndex is selected or not.
+// 
+// Input:
+//   $tgtIndex    >= 0, target,
+//                < 0, target directory.
+// 
+// Return:
+//   0 if ancestors are not selected.
+//     if there is a highest ancestor is selected, which must be a directory,
+//     since target's parent and directory's parent are directory.
+//  
+{
+	int $highestParentDirectory = 0;
+	int $parentDir = -1;	
+	if ($tgtIndex >= 0)
+	{
+		// this is a target,  
+		// go to parent directory. 
+		$tempAttr = $bsdName + ".parentDirectory[" + $tgtIndex + "]";
+		$parentDir = `getAttr $tempAttr`;
+		
+		if ($parentDir <= -1)
+			return 0; // default value 
+		if ($parentDir == 0)
+			return 0; // target item directly under blendShape node
+	}
+	else
+	{
+		// this is a target directory.
+		// go to parent directory
+		$tempAttr = $bsdName + ".targetDirectory[" + -$tgtIndex + "].parentIndex";
+		$parentDir = `getAttr $tempAttr`; 
+	}	
+	
+	while ($parentDir > 0)
+	{
+		// check if this directory is selected or not 
+		string $dirNameEncoded = $bsdName + "." + -$parentDir;
+		if ( stringArrayFind($dirNameEncoded, 0, $selectedTargets) != -1 )
+			$highestParentDirectory = $parentDir;
+			
+		// go to parent directory, parent of a directory is always a directory.
+		$tempAttr = $bsdName + ".targetDirectory[" + $parentDir + "].parentIndex";
+		$parentDir = `getAttr $tempAttr`;			
+	}
+	return $highestParentDirectory;
+}

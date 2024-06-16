@@ -1,0 +1,123 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//  Description:
+//      Invert the selection of dag nodes and dag components.
+//
+//  Return Value:
+//      None.
+//
+proc string getComponentSelType() {
+  int $isObjectMode = `selectMode -q -o`;
+  string $ocm = ($isObjectMode ? "-ocm " : "");
+  string $selQuery = "selectType -q " + $ocm;
+  
+  if (size(`ls -selection`) != 0) { 
+  
+  if (eval($selQuery + "-vertex")) {
+   return "vtx";
+  } else if (eval($selQuery +"-polymeshEdge")) {
+   return "e";
+  } else if (eval($selQuery + "-facet") || eval($selQuery + "-meshUVShell")) {
+   return "f";
+  } else if (eval($selQuery + "-polymeshUV")) {
+   return "map";
+    } else if (eval($selQuery + "-controlVertex")) {
+        return "cv";
+    } else if (eval($selQuery + "-editPoint")) {
+        return "ep";
+    }
+  }
+  return "";
+ }
+ 
+ global proc invertSelection(){
+	
+	// determine if anything is selected
+	string $selection[] = `ls -selection`;
+	string $components_selection[] = `ls -dagObjects -hilite`;
+    string $nonMayaObjsSel[] = `python("import maya.internal.ufeSupport.utils as ufeUtils; ufeUtils.getNonMayaSelectedItems()")`;
+
+    if ( `size($selection)` != 0 || `size($components_selection)` != 0 || `size($nonMayaObjsSel)` != 0) {
+		// something is selected
+		// now determine if any objects are selected
+		string $objects[] = `ls -dagObjects -visible -selection`;
+	    string $nonMayaObjs[] = `python("import maya.internal.ufeSupport.utils as ufeUtils; ufeUtils.listUFEUnselected()")`;
+
+		//note that this gives preference to objects if both objects and
+		//components are selected
+		//there is no user case where the user wants to invert a mixed
+		//selection of objects and components
+
+		if (`size($objects)` != 0 || `size($nonMayaObjsSel)` != 0){
+			select -toggle -allDagObjects -visible;
+			
+			//check if selection is in a hierarchy
+			string $parents[] = `listRelatives -parent -path $components_selection`;
+			if (`size ($parents)` > 0){
+				//object is in a hierarchy
+
+				//deselect all parents
+				select -deselect $parents;
+				//iterate through parents
+				for ($parent in $parents){
+					//find the children with the full path
+					string $children[] = `listRelatives -children -path $parent`;
+					//select the children
+					select -add $children;
+				}
+				//make sure the original objects are not selected
+				select -deselect $components_selection;
+			}
+
+			if(`size($nonMayaObjsSel)` != 0){
+
+				string $nonMayaObjToSelect[];
+				for ($obj in $nonMayaObjs){
+					int $result = python("import maya.internal.ufeSupport.utils as ufeUtils; ufeUtils.isPathStringValidNonMayaObject('" + $obj + "')");
+					if($result){
+						$nonMayaObjToSelect[size($nonMayaObjToSelect)] = $obj;
+					}
+				}
+				select -add $nonMayaObjToSelect;
+				select -deselect $nonMayaObjsSel;
+
+  				string $nonMayaPath = python("import maya.internal.ufeSupport.utils as ufeUtils; ufeUtils.getGatewayPathFromPathString('" + $nonMayaObjsSel[0] + "')");
+				string $nonMayaRoot[];
+				tokenize $nonMayaPath "|" $nonMayaRoot;
+                //deselect the scene root
+				select -deselect $nonMayaRoot[0];
+			}
+		} else {
+			// must be a component selected
+			
+			string $newComponents[], $componentID[];
+			string $selType = getComponentSelType();
+
+			for ($component in $selection) {
+				int $size = `tokenize $component "[]" $componentID`;
+				if ($size > 1) {
+					int $newCompSize = `size $newComponents`;
+					$newComponents[$newCompSize] = $componentID[0] + "[*] ";
+				}
+				else if ($size == 1 && $selType != "")
+				{
+					int $newCompSize = `size $newComponents`;
+					$newComponents[$newCompSize] = $componentID[0] + "." + $selType + "[*]";
+				}
+			}
+			
+			select -replace $newComponents;
+			select -deselect $selection;
+			
+		}
+	} else {
+		// nothing is selected
+		error( (uiRes("m_invertSelection.kNoSelection")) );
+	}
+	
+}

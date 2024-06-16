@@ -1,0 +1,50 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+// Resources for Plug-in: studioImport
+// 
+// ----------------------------
+// Registered string resources:
+// ----------------------------
+// 
+//  (Plugin has no registered string resources)
+// 
+// 
+// --------------------------
+// Registered node resources:
+// --------------------------
+// 
+// Node: studioClearCoat
+// 
+setNodeNiceNameResource( "studioClearCoat", "スタジオ クリア コート" );
+setAttrNiceNameResource( "studioClearCoat", "fzn", "フリーズ" );
+setAttrNiceNameResource( "studioClearCoat", "ix", "インデックス" );
+setAttrNiceNameResource( "studioClearCoat", "s", "スケール" );
+setAttrNiceNameResource( "studioClearCoat", "b", "バイアス" );
+setAttrNiceNameResource( "studioClearCoat", "n", "法線カメラ" );
+setAttrNiceNameResource( "studioClearCoat", "nx", "法線カメラ X" );
+setAttrNiceNameResource( "studioClearCoat", "ny", "法線カメラ Y" );
+setAttrNiceNameResource( "studioClearCoat", "nz", "法線カメラ Z" );
+setAttrNiceNameResource( "studioClearCoat", "r", "レイの方向" );
+setAttrNiceNameResource( "studioClearCoat", "rx", "レイの方向 X" );
+setAttrNiceNameResource( "studioClearCoat", "ry", "レイの方向 Y" );
+setAttrNiceNameResource( "studioClearCoat", "rz", "レイの方向 Z" );
+setAttrNiceNameResource( "studioClearCoat", "outp", "出力値" );
+setAttrNiceNameResource( "studioClearCoat", "fza", "フリーズの影響を受ける" );
+// 
+// Node: smear
+// 
+setNodeNiceNameResource( "smear", "塗り付け" );
+setAttrNiceNameResource( "smear", "fzn", "フリーズ" );
+setAttrNiceNameResource( "smear", "i", "RGB 入力値" );
+setAttrNiceNameResource( "smear", "ir", "入力カラー R" );
+setAttrNiceNameResource( "smear", "ig", "入力カラー G" );
+setAttrNiceNameResource( "smear", "ib", "入力カラー B" );
+setAttrNiceNameResource( "smear", "o", "出力 UV" );
+setAttrNiceNameResource( "smear", "ou", "出力 U" );
+setAttrNiceNameResource( "smear", "ov", "出力 V" );
+setAttrNiceNameResource( "smear", "fza", "フリーズの影響を受ける" );

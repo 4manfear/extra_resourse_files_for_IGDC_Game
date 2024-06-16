@@ -1,0 +1,256 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc xgmToggleWidthInvertFrozenEffect()
+{
+	int $newInvertFrozenValue = !`xgmWidthBrushContext -q -freezeMode xgmWidthBrushTool`;
+	xgmWidthBrushContext -e -freezeMode $newInvertFrozenValue xgmWidthBrushTool;
+}
+global proc xgmToggleWidthFalloffColor()
+{
+	int $newFalloffColorValue = !`xgmWidthBrushContext -q -fc xgmWidthBrushTool`;
+	xgmWidthBrushContext -e -fc $newFalloffColorValue xgmWidthBrushTool;
+}
+
+global proc xgmToggleWidthPreselectionHighlight()
+{
+	int $newPreselectionHighlight = !`xgmWidthBrushContext -q -ps xgmWidthBrushTool`;
+	xgmWidthBrushContext -e -ps $newPreselectionHighlight xgmWidthBrushTool;
+}
+
+global proc xgmToggleWidthShowFrozen()
+{
+	int $newShowFrozen = !`xgmWidthBrushContext -q -sf xgmWidthBrushTool`;
+	xgmWidthBrushContext -e -sf $newShowFrozen xgmWidthBrushTool;
+}
+
+global proc xgmSwitchWidthBrushMode(int $widthBrushMode)
+{
+	xgmWidthBrushContext -e -globalSelection $widthBrushMode xgmWidthBrushTool;
+}
+
+global proc xgmToggleWidthEnableRootToTipFalloff()
+{
+	int $newEnableRootToTip = !`xgmWidthBrushContext -q -ert xgmWidthBrushTool`;
+	xgmWidthBrushContext -e -ert $newEnableRootToTip xgmWidthBrushTool;
+}
+
+global proc xgmToggleWidthFilterBackfaces()
+{
+	int $newFilterBackfaces = !`xgmWidthBrushContext -q -fb xgmWidthBrushTool`;
+	xgmWidthBrushContext -e -fb $newFilterBackfaces xgmWidthBrushTool;
+}
+
+global proc xgmSwitchWidthFallOffType(string $falloffType) 
+{
+	xgmWidthBrushContext -e -brushFalloffType $falloffType xgmWidthBrushTool;
+}
+
+
+global proc contextXGenWidthToolMM()
+{
+	int $currentInvertFrozen = !`xgmWidthBrushContext -q -freezeMode xgmWidthBrushTool`;
+	menuItem
+		-label (uiRes("m_contextXGenWidthToolMM.kInvertFrozenEffect"))
+		-command xgmToggleWidthInvertFrozenEffect
+		-checkBox $currentInvertFrozen
+		-radialPosition "N" 
+		-enableCommandRepeat 1
+		;
+
+	int $currentFalloffColor = `xgmWidthBrushContext -q -fc xgmWidthBrushTool`;
+	menuItem
+		-label (uiRes("m_contextXGenWidthToolMM.kBrushFalloffColor"))
+		-command xgmToggleWidthFalloffColor
+		-checkBox $currentFalloffColor
+		-radialPosition "NE" 
+		-enableCommandRepeat 1
+		;
+
+	int $currentPreselectionHighlight = `xgmWidthBrushContext -q -ps xgmWidthBrushTool`;
+	menuItem
+		-label (uiRes("m_contextXGenWidthToolMM.kPreselectionHighlight"))
+		-command xgmToggleWidthPreselectionHighlight 
+		-checkBox $currentPreselectionHighlight
+		-radialPosition "E"
+		-enableCommandRepeat 1
+		;
+
+	int $currentShowFrozen = `xgmWidthBrushContext -q -sf xgmWidthBrushTool`;
+	menuItem
+		-label (uiRes("m_contextXGenWidthToolMM.kShowFrozen"))
+		-command xgmToggleWidthShowFrozen 
+		-checkBox $currentShowFrozen
+		-radialPosition "SE" 
+		-enableCommandRepeat 1
+		;
+		
+	menuItem
+		-label (uiRes("m_contextXGenWidthToolMM.kFlood"))
+		-command "xgmWidthBrushContext -e -flood xgmWidthBrushTool"
+		-radialPosition "S"
+		-enableCommandRepeat 1
+		;
+		
+	menuItem
+		-label (uiRes("m_contextXGenWidthToolMM.kWidthBrushMode"))
+		-radialPosition "SW"
+		-subMenu 1
+		-enableCommandRepeat 1
+		;
+		
+		radioMenuItemCollection;
+		int $currentBrushMode = `xgmWidthBrushContext -q -globalSelection xgmWidthBrushTool`;
+		menuItem
+			-label (uiRes("m_contextXGenWidthToolMM.kWidthGlobal"))
+			-command "xgmSwitchWidthBrushMode(1)"
+			-radialPosition "W"
+			-radioButton ($currentBrushMode == 1)
+			-enableCommandRepeat 1
+			;
+			
+		menuItem
+			-label (uiRes("m_contextXGenWidthToolMM.kWidthLocal"))
+			-command "xgmSwitchWidthBrushMode(0)"
+			-radioButton ($currentBrushMode == 0)
+			-radialPosition "S"
+			-enableCommandRepeat 1
+			;
+			
+		setParent -m ..;
+
+	int $currentRootToTipFalloff = `xgmWidthBrushContext -q -ert xgmWidthBrushTool`;
+	menuItem
+		-label (uiRes("m_contextXGenWidthToolMM.kRootToTipFalloff"))
+		-command xgmToggleWidthEnableRootToTipFalloff
+		-checkBox $currentRootToTipFalloff
+		-radialPosition "W" 
+		-enableCommandRepeat 1
+		;
+
+	int $currentFilterBackFaces = `xgmWidthBrushContext -q -fb xgmWidthBrushTool`;
+	menuItem
+		-label (uiRes("m_contextXGenWidthToolMM.kFilterBackFaces"))
+		-command xgmToggleWidthFilterBackfaces
+		-checkBox $currentFilterBackFaces
+		-radialPosition "NW" 
+		-enableCommandRepeat 1
+		;
+		
+	menuItem
+		-label (uiRes("m_contextXGenWidthToolMM.kFalloffType"))
+		-subMenu 1
+		-enableCommandRepeat 1
+		;
+		
+		radioMenuItemCollection;
+		string $currentFallOffType = `xgmWidthBrushContext -q -bft xgmWidthBrushTool`;
+		menuItem
+			-label (uiRes("m_contextXGenWidthToolMM.kScreen"))
+			-command "xgmSwitchWidthFallOffType(\"screen\")"
+			-radioButton ($currentFallOffType == "screen")
+			-enableCommandRepeat 1
+			;
+			
+		menuItem
+			-label (uiRes("m_contextXGenWidthToolMM.kVolume"))
+			-command "xgmSwitchWidthFallOffType(\"volume\")"
+			-radioButton ($currentFallOffType == "volume")
+			-enableCommandRepeat 1
+			;
+			
+		menuItem
+			-label (uiRes("m_contextXGenWidthToolMM.kSurface"))
+			-command "xgmSwitchWidthFallOffType(\"surface\")"
+			-radioButton ($currentFallOffType == "surface")
+			-enableCommandRepeat 1
+			;
+			
+		setParent -m ..;
+	
+	string $brushCmd = "xgmWidthBrushContext";
+	string $tool = "xgmWidthBrushTool";
+	string $flag = "-brushFalloffCurve";
+	string $defaultValFlag = "-defaultBrushFalloffCurve";
+	string $param = $brushCmd + "\", \"" + $tool + "\", \"" + $flag + "\", \"" + $defaultValFlag;
+	menuItem
+		-label (uiRes("m_contextXGenWidthToolMM.kAdjustBrushFalloffCurve"))
+		-command ("xgmMarkingMenuAdjustFalloffCurve( \"" + $param + "\" )")
+		-enableCommandRepeat 1
+		;
+
+	$flag = "-rootToTipCurve";
+	$defaultValFlag = "-defaultRootToTipCurve";
+	$param = $brushCmd + "\", \"" + $tool + "\", \"" + $flag + "\", \"" + $defaultValFlag;
+	menuItem
+		-label (uiRes("m_contextXGenWidthToolMM.kAdjustRootToTipFalloffCurve"))
+		-command ("xgmMarkingMenuAdjustFalloffCurve( \"" + $param + "\" )")
+		-enableCommandRepeat 1
+		;
+		
+	
+	menuItem
+		-label (uiRes("m_contextXGenWidthToolMM.kSymmetry"))
+		-subMenu 1
+		-enableCommandRepeat 1
+		;
+		
+		radioMenuItemCollection;
+		string $currentSymmetryType = `xgmWidthBrushContext -q -brushSymmetryType xgmWidthBrushTool`;
+		menuItem
+			-label (uiRes("m_contextXGenWidthToolMM.kOff"))
+			-command "xgmSwitchSymmetryType(\"xgmWidthBrushContext\", \"xgmWidthBrushTool\", 0)"
+			-radioButton ($currentSymmetryType == 0)
+			-enableCommandRepeat 1
+			;
+			
+		menuItem
+			-label (uiRes("m_contextXGenWidthToolMM.kObjectX"))
+			-command "xgmSwitchSymmetryType(\"xgmWidthBrushContext\", \"xgmWidthBrushTool\", 1)"
+			-radioButton ($currentSymmetryType == 1)
+			-enableCommandRepeat 1
+			;
+
+		menuItem
+			-label (uiRes("m_contextXGenWidthToolMM.kObjectY"))
+			-command "xgmSwitchSymmetryType(\"xgmWidthBrushContext\", \"xgmWidthBrushTool\", 2)"
+			-radioButton ($currentSymmetryType == 2)
+			-enableCommandRepeat 1
+			;
+			
+		menuItem
+			-label (uiRes("m_contextXGenWidthToolMM.kObjectZ"))
+			-command "xgmSwitchSymmetryType(\"xgmWidthBrushContext\", \"xgmWidthBrushTool\", 3)"
+			-radioButton ($currentSymmetryType == 3)
+			-enableCommandRepeat 1
+			;
+			
+		menuItem
+			-label (uiRes("m_contextXGenWidthToolMM.kWorldX"))
+			-command "xgmSwitchSymmetryType(\"xgmWidthBrushContext\", \"xgmWidthBrushTool\", 4)"
+			-radioButton ($currentSymmetryType == 4)
+			-enableCommandRepeat 1
+			;
+
+		menuItem
+			-label (uiRes("m_contextXGenWidthToolMM.kWorldY"))
+			-command "xgmSwitchSymmetryType(\"xgmWidthBrushContext\", \"xgmWidthBrushTool\", 5)"
+			-radioButton ($currentSymmetryType == 5)
+			-enableCommandRepeat 1
+			;
+			
+		menuItem
+			-label (uiRes("m_contextXGenWidthToolMM.kWorldZ"))
+			-command "xgmSwitchSymmetryType(\"xgmWidthBrushContext\", \"xgmWidthBrushTool\", 6)"
+			-radioButton ($currentSymmetryType == 6)
+			-enableCommandRepeat 1
+			;
+
+	setParent -m ..;
+	
+	setParent -menu ..;
+}

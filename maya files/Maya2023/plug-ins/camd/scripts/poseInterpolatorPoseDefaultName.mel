@@ -1,0 +1,32 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+
+proc int roundFlt(float $value)
+{
+	float $newValue = floor($value + 0.5);
+	return $newValue;
+}
+
+// to build a pose name according to 
+// the current status of the poseInterpolator node's drivers.
+global proc string poseInterpolatorPoseDefaultName(string $tpl)
+{
+	string $drivers[] = poseInterpolatorDrivers( $tpl );
+	
+	string $name = "";
+	for ($d in $drivers)
+	{
+		string $rAttr = $d + ".r";
+		float $rv[] = `getAttr $rAttr`;		
+		$name = $name + $d + "_" + roundFlt($rv[0]) + "_" + roundFlt($rv[1]) + "_" + roundFlt($rv[2]);
+	}
+	$name = substituteAllString($name, "-", "n");
+	$name = substituteAllString($name, "|", "_");
+	$name = substituteAllString($name, ":", "_");
+	return $name; 
+} 

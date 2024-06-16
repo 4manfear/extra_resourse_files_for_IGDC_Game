@@ -1,0 +1,68 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  2003
+//
+// Description: return list of follicle nodes that are selected directly or 
+// indirectly through connected nurbsCurves.
+//	
+global proc string[] getSelectedHairCurves()
+{
+	string $out[] = `ls -sl -dag -type follicle`;
+	int $len = size( $out ); 
+	string $curves[] = `ls -sl -o -dag -type nurbsCurve`;
+	int $numCurves = size( $curves );
+	int $i, $j;
+	for( $i = 0; $i < $numCurves; $i++ ){
+		string $curve = $curves[$i];
+		string $hairCurve = "";
+		string $create[] = `listConnections -sh 1 ($curve + ".create")`;
+		for( $j = 0; $j < size( $create); $j++ ){
+			string $nType = `nodeType $create[$j]`;
+			if( $nType == "follicle"){
+				$hairCurve = $create[$j];
+				break;
+			}
+		}
+		if( $hairCurve == "" ){
+			string $world[] = `listConnections -sh 1 ($curve + ".worldSpace[0]")`;
+			for( $j = 0; $j < size( $world); $j++ ){
+				string $nType = `nodeType $world[$j]`;
+				if( $nType == "follicle"){
+					$hairCurve = $world[$j];
+					break;	
+				}
+			}
+		}
+		if( $hairCurve == "" ){
+			string $local[] = `listConnections -sh 1 ($curve + ".local")`;
+			for( $j = 0; $j < size( $local); $j++ ){
+				string $nType = `nodeType $local[$j]`;
+				if( $nType == "follicle"){
+					$hairCurve = $local[$j];
+					break;
+				}
+			}
+		}
+		if( $hairCurve != "" ){
+			// add this to the list if it is not already included
+			for( $j = 0; $j < $len; $j++ ){
+				if( $hairCurve == $out[$j] ){
+					$hairCurve = "";
+					break;
+				}
+			}
+			if( $hairCurve != "" ){
+				$out[$len] = $hairCurve;
+				$len++;
+			}
+		}
+	}
+	return $out;
+}

@@ -1,0 +1,40 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Procedure Name:
+//	AEhistorySwitchTemplate 
+//
+//  Description Name;
+//	Creates the attribute editor controls for the historySwitch Node
+//
+//  Input Value:
+//	nodeName 
+//
+//  Output Value:
+//	None
+// 
+
+
+global proc AEhistorySwitchTemplate ( string $nodeName )
+{
+	editorTemplate -beginScrollLayout;
+
+	editorTemplate -addControl "playFromCache";
+	
+		// include/call base class/node attributes
+		AEgeometryFilterCommon $nodeName;
+		AEgeometryFilterInclude $nodeName;		
+
+		editorTemplate -suppress "undeformedGeometry";
+		editorTemplate -suppress "outPositions";
+		editorTemplate -suppress "inPositions";
+		
+	editorTemplate -addExtraControls;
+	editorTemplate -endScrollLayout;
+}

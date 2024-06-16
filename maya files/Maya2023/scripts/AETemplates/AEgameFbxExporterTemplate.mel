@@ -1,0 +1,95 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//	Procedure Name:
+//	AEgameFbxExporterTemplate
+//
+//	Description Name;
+//	Creates the attribute editor controls for the gameFbxExporter node.
+//  The values should only be modified via the Game Exporter Window.
+//
+//	Input Value:
+//	nodeName
+//
+//	Output Value:
+//	None
+//
+
+global proc AEgameFbxExporterTemplate(string $nodeName)
+{
+    // Remove gameFbxExporter attributes shown in the attribute editor
+
+    editorTemplate -suppress "presetName";
+    editorTemplate -suppress "overridePresetValue";  
+    editorTemplate -suppress "isTheLastOneSelected";     
+    editorTemplate -suppress "isTheLastOneUsed";  
+    editorTemplate -suppress "useFilenameAsPrefix";  
+    editorTemplate -suppress "viewInFBXReview";  
+    editorTemplate -suppress "exportTypeIndex";  
+    editorTemplate -suppress "exportSetIndex";  
+    editorTemplate -suppress "selectionSetName";
+    editorTemplate -suppress "smoothingGroups";  
+    editorTemplate -suppress "splitVertexNormals";  
+    editorTemplate -suppress "tangentsBinormals";  
+    editorTemplate -suppress "smoothMesh";  
+    editorTemplate -suppress "selectionSets";  
+    editorTemplate -suppress "convertToNullObj";  
+    editorTemplate -suppress "preserveInstances";  
+    editorTemplate -suppress "referencedAssetsContent";  
+    editorTemplate -suppress "triangulate";  
+    editorTemplate -suppress "convertNurbsSurfaceTo";
+    editorTemplate -suppress "exportAnimation";  
+    editorTemplate -suppress "useSceneName";
+    editorTemplate -suppress "removeSingleKey"; 
+    editorTemplate -suppress "quarternionInterpMode";
+    editorTemplate -suppress "animClipName";
+    editorTemplate -suppress "animClipStart";  
+    editorTemplate -suppress "animClipEnd";
+    editorTemplate -suppress "exportAnimClip";
+    editorTemplate -suppress "animClips"; 
+    editorTemplate -suppress "fileSplitType";
+    editorTemplate -suppress "includeCombinedClips"; 
+    editorTemplate -suppress "bakeAnimation";
+    editorTemplate -suppress "bakeAnimStart";
+    editorTemplate -suppress "bakeAnimEnd";
+    editorTemplate -suppress "bakeAnimStep";
+    editorTemplate -suppress "resampleAll";
+    editorTemplate -suppress "deformedModels";
+    editorTemplate -suppress "skinning";
+    editorTemplate -suppress "blendshapes";
+    editorTemplate -suppress "curveFilters";
+    editorTemplate -suppress "constantKeyReducer";
+    editorTemplate -suppress "ckrTranslationPrecision";
+    editorTemplate -suppress "ckrRotationPrecision";
+    editorTemplate -suppress "ckrScalingPrecision";
+    editorTemplate -suppress "ckrOtherPrecision";
+    editorTemplate -suppress "ckrAutoTangentOnly";
+    editorTemplate -suppress "constraints";
+    editorTemplate -suppress "skeletonDefinitions";
+    editorTemplate -suppress "includeCameras";
+    editorTemplate -suppress "includeLights";
+    editorTemplate -suppress "upAxis";
+    editorTemplate -suppress "embedMedia";
+    editorTemplate -suppress "includeChildren";
+    editorTemplate -suppress "inputConnections";
+    editorTemplate -suppress "autoScaleFactor";
+    editorTemplate -suppress "unitConversion";
+    editorTemplate -suppress "showWarningManager";  
+    editorTemplate -suppress "generateLogData";
+    editorTemplate -suppress "fileType";
+    editorTemplate -suppress "fileVersion";
+    editorTemplate -suppress "exportPath";
+    editorTemplate -suppress "exportFilename";      
+    editorTemplate -suppress "caching";
+    editorTemplate -suppress "frozen";
+    editorTemplate -suppress "nodeState";
+    editorTemplate -suppress "animClipSrcNode";      
+    editorTemplate -suppress "animClipId";      
+    editorTemplate -suppress "modelFileMode";
+    editorTemplate -suppress "moveToOrigin";
+}

@@ -1,0 +1,28 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+// Resources for Plug-in: gameInputDevice
+// 
+// ----------------------------
+// Registered string resources:
+// ----------------------------
+// 
+//  (Plugin has no registered string resources)
+// 
+// 
+// --------------------------
+// Registered node resources:
+// --------------------------
+// 
+// Node: gameInputDevice
+// 
+setNodeNiceNameResource( "gameInputDevice", "游戏输入设备" );
+setAttrNiceNameResource( "gameInputDevice", "ot", "输出平移" );
+setAttrNiceNameResource( "gameInputDevice", "otx", "输出平移 X" );
+setAttrNiceNameResource( "gameInputDevice", "oty", "输出平移 Y" );
+setAttrNiceNameResource( "gameInputDevice", "otz", "输出平移 Z" );
+setAttrNiceNameResource( "gameInputDevice", "uxz", "更新平移 XZ" );

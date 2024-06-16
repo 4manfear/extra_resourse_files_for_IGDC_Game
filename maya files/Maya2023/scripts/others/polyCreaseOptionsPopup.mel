@@ -1,0 +1,60 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+// Create popup menu for polyCrease tool options
+//
+
+global proc polyCreaseOptionsPopup()
+{
+	string $toolName = `currentCtx`;
+
+	// Parent menu already set when this function is called,
+	// so just add a menu items
+	int $relativeMode = `polyCreaseCtx -q -relative $toolName`;
+	int $extendSelection = `polyCreaseCtx -q -extendSelection $toolName`;
+	
+	menuItem 
+		-label (uiRes("m_polyCreaseOptionsPopup.kRelativeModeLBL"))
+		-rp	"W"
+		-cb	$relativeMode
+		-c	("polyCreaseCtx -e -relative " + !$relativeMode + " " + $toolName);
+
+	menuItem 
+		-label (uiRes("m_polyCreaseOptionsPopup.kExtendSelectionLBL"))
+		-rp	"E"
+		-cb	$extendSelection
+		-c	("polyCreaseCtx -e -extendSelection " + !$extendSelection + " " + $toolName);
+
+	menuItem
+		-label (uiRes("m_polyCreaseOptionsPopup.kCreateSetTopMenuLBL"))
+		-subMenu 1
+		-radialPosition "N" ;
+
+		menuItem 
+			-label (uiRes("m_polyCreaseOptionsPopup.kCreateSetLBL"))
+			-rp	"N"
+			-command "CreateCreaseSet";
+
+		menuItem 
+			-label (uiRes("m_polyCreaseOptionsPopup.kCreateSetProvideNameLBL"))
+			-rp	"E"
+			-command "CreateCreaseSetOptions";
+
+		setParent -m ..;
+
+	if (`objExists defaultCreaseDataSet`)
+	{
+		string $sets[] = `sets -query defaultCreaseDataSet`;
+		$sets = `sort $sets`;
+		for ($set in $sets)
+		{
+			string $cmd = ("select \"" + $set + "\"");
+			menuItem -label $set -command $cmd;
+		}
+	}
+}

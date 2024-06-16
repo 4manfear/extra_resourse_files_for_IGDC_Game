@@ -1,0 +1,24 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc string blendShapeTargetGetCombinationShape(string $blendShapeNode, int $targetID)
+//
+//  Description:
+// 		Get source combination shape node from given blend shape target
+//
+//  Return Value:
+//      Return combination shape node if there is any
+//
+{
+	$source = eval("connectionInfo -sourceFromDestination \""+$blendShapeNode+".w["+$targetID+"]\"");
+	$sourceStrings = stringToStringArray($source, ".");
+	if(size($sourceStrings) != 2)
+		return ""; //Source is a not combination shape
+	if(nodeType($sourceStrings[0]) != "combinationShape" || $sourceStrings[1] != "outputWeight")
+		return ""; //Source is a not combination shape
+	return $sourceStrings[0];
+}

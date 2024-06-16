@@ -1,0 +1,181 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc int isPoseEditorAddPoseEnabled()
+//
+//  Description:
+//		Check if add pose could be performed at the moment 
+//
+//  Return Value:
+//      Return 1 if enabled; otherwise return 0;
+//
+{
+	string $tplSelected[] = getPoseEditorTreeviewSelection(1);
+	if(size($tplSelected) == 0)
+		return 0;	// no pose interpolator nodes selected
+
+	return 1;
+}
+
+global proc int isPoseEditorAddNeutralPosesEnabled()
+//
+//  Description:
+//		Check if add neutral poses could be performed at the moment 
+//
+//  Return Value:
+//      Return 1 if enabled; otherwise return 0;
+//
+{
+	string $tplSelected[] = getPoseEditorTreeviewSelection(1);
+	if(size($tplSelected) != 1)
+		return 0;	// no or more than one pose interpolator nodes selected
+		
+	for($tpl in $tplSelected)
+	{
+		string $poses[] = poseInterpolatorPoseNames($tpl);
+
+		int $foundNeutral = stringArrayContains("neutral", $poses);
+		int $foundNeutralSwing = stringArrayContains("neutralSwing", $poses);
+		int $foundNeutralTwist = stringArrayContains("neutralTwist", $poses);
+		
+		if( $foundNeutral == 0 || $foundNeutralSwing == 0 || $foundNeutralTwist == 0)
+			return 1;	// some neutral poses missing
+	}
+	
+	return 0;
+}
+
+global proc int isPoseEditorPIorPoseMirrorEnabled()
+// 
+//  Description:
+//      Check if mirror pose interpolator or pose could be performed at the moment.
+// 
+//  Return Value:
+//      Return 1 if enabled; otherwise return 0;
+//
+{
+	if(isPoseEditorPIMirrorEnabled() || isPoseEditorPoseMirrorEnabled())
+		return 1;
+	return 0;
+}
+
+global proc int isPoseEditorPIMirrorEnabled()
+// 
+//  Description:
+//      Check if mirror pose interpolator could be performed at the moment.
+//      Mirror pose interpolator should be disabled if no poses but neutral poses exist
+// 
+//  Return Value:
+//      Return 1 if enabled; otherwise return 0;
+//
+{
+	if(isPoseEditorPIRefItemSelected())
+		return 0;   // Doesn't support reference items
+	string $tplSelected[] = getPoseEditorTreeviewSelection(1);
+	if(size($tplSelected) == 0)
+		return 0;	// no pose interpolator nodes selected
+		 
+	return 1;
+}
+
+global proc int isPoseEditorPoseMirrorEnabled()
+// 
+//  Description:
+//      Check if mirror pose could be performed at the moment.
+//      Mirror pose doesn't work with reference items
+//
+//  Return Value:
+//      Return 1 if enabled; otherwise return 0;
+//
+{
+	if(isPoseEditorPoseRefItemSelected())
+		return 0;   // Doesn't support reference items
+	string $poseSelected[] = getPoseEditorTreeviewSelection(2);
+	if(size($poseSelected) == 0)
+		return 0;	// no pose selected
+	return 1;
+}
+
+global proc int isPoseEditorPIExportEnabled()
+// 
+//  Description:
+//      Check if export pose interpolator could be performed at the moment.
+//      Export pose interpolator doesn't work with reference items
+//
+//  Return Value:
+//      Return 1 if enabled; otherwise return 0;
+//
+{
+	if(isPoseEditorPIRefItemSelected())
+		return 0;  // Doesn't support reference items
+	return 1;
+}
+
+global proc int isPoseEditorPoseExportEnabled()
+// 
+//  Description:
+//      Check if export pose could be performed at the moment.
+//      Export pose doesn't work with reference items
+// 
+//  Return Value:
+//      Return 1 if enabled; otherwise return 0;
+//
+{
+	if(isPoseEditorPoseRefItemSelected())
+		return 0;  // Doesn't support reference items
+	return 1;
+}
+
+global proc int isPoseEditorExportSelectionEnabled()
+// 
+//  Description:
+//      Check if export selection could be performed at the moment.
+//      Export selection should be disable if there is nothing (pose interpolator or pose) selected.
+//
+//  Return Value:
+//      Return 1 if enabled; otherwise return 0;
+//
+{
+	if(isPoseEditorPoseRefItemSelected())
+		return 0;  // Doesn't support reference items
+		
+	// do not care what type is selectd here.
+	// if a pose is selected, the corresponding pose interpolator must be selected too.
+	string $selectionItems[] = getPoseEditorTreeviewSelection(3);
+	if (size($selectionItems))
+		return 1;
+	
+	return 0;
+}
+
+global proc int isPoseEditorGroupSelectedPIEnabled()
+// 
+//  Description:
+//      Check if group selected pose interpolator could be performed at the moment
+//
+//  Return Value:
+//      Return 1 if enabled; otherwise return 0;
+//
+{
+	if(isPoseEditorPIRefItemSelected())
+		return 0;  // Doesn't support reference items		
+	return 1;
+}
+
+global proc int isPoseEditorUpdatePosesEnabled()
+// 
+//  Description:
+//      Check if update pose could be performed at the moment 
+//
+//  Return Value:
+//      Return 1 if enabled; otherwise return 0;
+//
+{
+	if(isPoseEditorPIRefItemSelected() || size(getPoseEditorTreeviewSelection(2)) != 1)
+		return 0; 
+	return 1;
+}

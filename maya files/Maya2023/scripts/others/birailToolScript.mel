@@ -1,0 +1,213 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+// Creation Date:  14 January 1999
+//
+//
+//  Procedure Name:
+//      birail1ToolScript
+//
+//  Input Arguments:
+//      what is going to happen when this script is called
+//		$setToTool = 0 ==> do the command
+//		$setToTool = 1 ==> show option box
+//		$setToTool = 2 ==> return the command
+//		$setToTool = 3 ==> show tool option box
+//		$setToTool = 4 ==> enter the tool
+//
+//  Return Value:
+//      None.
+//
+
+global proc birailToolSetup( int $forceFactorySettings, string $goToTool )
+{
+	optionVar -init $forceFactorySettings -category "Modeling.Surfaces.Birail"
+		-iv birailEuc 1
+		-iv birailLac 1
+		;
+
+	if( "" != $goToTool ) {
+		scriptCtx -e -euc `optionVar -q birailEuc` $goToTool;
+		scriptCtx -e -lac `optionVar -q birailLac` $goToTool;
+	}
+}
+
+proc createBirailContext( int $whichOne, string $tool )
+{
+	birailToolSetup( 0, "" );
+	switch ($whichOne) {
+	  case 1:
+		if( ! `scriptCtx -exists $tool` ) {
+		  string $startRailSelection = (uiRes("m_birailToolScript.kStartRailSelection"));
+		  scriptCtx
+			-i1 "birail1Gen.png"
+			-bcn "birail1"
+
+			-title (uiRes("m_birailToolScript.kBirailTool1"))
+			-toolCursorType "edit" 
+			-totalSelectionSets 2
+			-cumulativeLists true
+			-expandSelectionList true
+			-exitUponCompletion `optionVar -q birailEuc`
+			-fcs ("performBirail 0 1 \`currentCtx\`")
+
+			-setNoSelectionPrompt (uiRes("m_birailToolScript.kSelectProfileCurve"))
+			-setSelectionPrompt $startRailSelection
+			-setDoneSelectionPrompt $startRailSelection
+
+            -setAutoToggleSelection true
+            -setAutoComplete true
+            -setSelectionCount 1
+            -nurbsCurve true
+            -isoparm true
+            -curveOnSurface true
+            -surfaceEdge true
+            -polymeshEdge true
+
+			-setNoSelectionPrompt (uiRes("m_birailToolScript.kSelectRailCurves"))
+			-setSelectionPrompt (uiRes("m_birailToolScript.kSelectSecondRailCurve"))
+			-setDoneSelectionPrompt (uiRes("m_birailToolScript.kComputeBirail"))
+            -setAutoToggleSelection true
+            -setAutoComplete `optionVar -q birailLac`
+            -setSelectionCount 2
+			-nurbsCurve true
+            -isoparm true
+            -curveOnSurface true
+            -surfaceEdge true
+			-polymeshEdge true
+
+			$tool;
+		}
+		break;
+	  case 2:
+		if( ! `scriptCtx -exists $tool` ) {
+		  scriptCtx
+			-i1 "birail2Gen.png"
+			-bcn "birail2"
+
+			-title (uiRes("m_birailToolScript.kBirailTool2"))
+			-toolCursorType "edit" 
+			-totalSelectionSets 2
+			-cumulativeLists true
+			-expandSelectionList true
+			-exitUponCompletion `optionVar -q birailEuc`
+			-fcs ("performBirail 0 2 \`currentCtx\`")
+
+			-setNoSelectionPrompt (uiRes("m_birailToolScript.kSelectTwoProfileCurves"))
+			-setSelectionPrompt (uiRes("m_birailToolScript.kSelectSecondProfileCurve"))
+			-setDoneSelectionPrompt (uiRes("m_birailToolScript.kStartRailSelectionTool2"))
+            -setAutoToggleSelection true
+			-setAutoComplete true
+			-setSelectionCount 2
+			-nurbsCurve true
+            -isoparm true
+            -curveOnSurface true
+            -surfaceEdge true
+			-polymeshEdge true
+
+			-setNoSelectionPrompt (uiRes("m_birailToolScript.kSelectTwoRailCurves"))
+			-setSelectionPrompt (uiRes("m_birailToolScript.kSelectSecondRailCurveTool2"))
+			-setDoneSelectionPrompt (uiRes("m_birailToolScript.kComputeBirailTool2"))
+            -setAutoToggleSelection true
+            -setAutoComplete `optionVar -q birailLac`
+            -setSelectionCount 2
+			-nurbsCurve true
+            -isoparm true
+            -curveOnSurface true
+            -surfaceEdge true
+			-polymeshEdge true
+
+			$tool;
+		}
+		break;
+	  case 3:
+	  default:
+		if( ! `scriptCtx -exists $tool` ) {
+		  string $selectAdditionalProfiles = (uiRes("m_birailToolScript.kSelectAdditionalProfiles"));
+		  scriptCtx
+			-i1 "birail3Gen.png"
+			-bcn "birail3"
+
+			-title (uiRes("m_birailToolScript.kBirailTool3"))
+			-toolCursorType "edit"		
+			-totalSelectionSets 2
+			-cumulativeLists true
+			-expandSelectionList true
+			-exitUponCompletion `optionVar -q birailEuc`
+			-fcs ("performBirail 0 3 \`currentCtx`")
+
+			-setNoSelectionPrompt (uiRes("m_birailToolScript.kSelectManyProfileCurves"))
+			-setSelectionPrompt $selectAdditionalProfiles
+			-setDoneSelectionPrompt $selectAdditionalProfiles
+
+            -setAutoToggleSelection true
+			-setAutoComplete false
+			-setSelectionCount 0
+			-nurbsCurve true
+            -isoparm true
+            -curveOnSurface true
+            -surfaceEdge true
+			-polymeshEdge true
+
+			-setNoSelectionPrompt (uiRes("m_birailToolScript.kSelectTwoRailCurvesTool3"))
+			-setSelectionPrompt (uiRes("m_birailToolScript.kSelectSecondRailCurveTool3"))
+			-setDoneSelectionPrompt (uiRes("m_birailToolScript.kComputeBirailTool3"))
+            -setAutoToggleSelection true
+            -setAutoComplete `optionVar -q birailLac`
+            -setSelectionCount 2
+			-nurbsCurve true
+            -isoparm true
+            -curveOnSurface true
+            -surfaceEdge true
+			-polymeshEdge true
+
+			$tool;
+		}
+		break;
+	}
+}
+
+global proc string birailToolScript( int $setToTool, int $whichOne )
+//
+//	Description :
+//		$setToTool = 0 ==> do the command
+//		$setToTool = 1 ==> show option box
+//		$setToTool = 2 ==> return the command
+//		$setToTool = 3 ==> show tool option box
+//		$setToTool = 4 ==> enter the tool
+{
+	string $tool = "";
+	if( $setToTool > 2 ) {
+		switch( $whichOne ) {
+		  case 1:
+			$tool = "birailOneProfileContext";
+			break;
+		  case 2:
+			$tool = "birailTwoProfileContext";
+			break;
+		  case 3:
+		  default:
+			$tool = "birailThreePlusProfileContext";
+			break;
+		}
+		createBirailContext( $whichOne, $tool );
+	}
+
+	string $result = "";
+	switch ($setToTool) {
+	  case 4:
+		setToolTo $tool;
+		break;
+	  default:
+		$result = eval( "performBirail " + $setToTool + " " +
+						$whichOne + " \"" + $tool + "\"" );
+		break;
+	}
+	return $result;
+}

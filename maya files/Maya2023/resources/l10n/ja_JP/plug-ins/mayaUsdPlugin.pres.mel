@@ -1,0 +1,79 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+// Resources for Plug-in: mayaUsdPlugin
+// 
+// ----------------------------
+// Registered string resources:
+// ----------------------------
+// 
+//  (Plugin has no registered string resources)
+// 
+// 
+// --------------------------
+// Registered node resources:
+// --------------------------
+// 
+// Node: mayaUsdProxyShapeBase
+// 
+setNodeNiceNameResource( "mayaUsdProxyShapeBase", "Maya で使用されるプロキシ シェイプ ベース" );
+setAttrNiceNameResource( "mayaUsdProxyShapeBase", "fp", "ファイル パス" );
+setAttrNiceNameResource( "mayaUsdProxyShapeBase", "pp", "プリミティブ パス" );
+setAttrNiceNameResource( "mayaUsdProxyShapeBase", "epp", "プリミティブ パスを除外" );
+setAttrNiceNameResource( "mayaUsdProxyShapeBase", "lpl", "ペイロードをロード" );
+setAttrNiceNameResource( "mayaUsdProxyShapeBase", "tm", "時間" );
+setAttrNiceNameResource( "mayaUsdProxyShapeBase", "cplx", "複雑度" );
+setAttrNiceNameResource( "mayaUsdProxyShapeBase", "id", "ステージ内データ" );
+setAttrNiceNameResource( "mayaUsdProxyShapeBase", "idc", "キャッシュされたステージ内データ" );
+setAttrNiceNameResource( "mayaUsdProxyShapeBase", "drp", "レンダリングの描画の目的" );
+setAttrNiceNameResource( "mayaUsdProxyShapeBase", "dpp", "プロキシの描画の目的" );
+setAttrNiceNameResource( "mayaUsdProxyShapeBase", "dgp", "ガイドの描画の目的" );
+setAttrNiceNameResource( "mayaUsdProxyShapeBase", "otm", "出力時間" );
+setAttrNiceNameResource( "mayaUsdProxyShapeBase", "od", "ステージ外データ" );
+// 
+// Node: mayaUsdProxyShape
+// 
+setNodeNiceNameResource( "mayaUsdProxyShape", "Maya で使用されるプロキシ シェイプ" );
+// 
+// Node: pxrUsdPreviewSurface
+// 
+setNodeNiceNameResource( "pxrUsdPreviewSurface", "PXR で使用されるプレビュー サーフェス" );
+setAttrNiceNameResource( "pxrUsdPreviewSurface", "fzn", "フリーズ" );
+setAttrNiceNameResource( "pxrUsdPreviewSurface", "cc", "クリアコート" );
+setAttrNiceNameResource( "pxrUsdPreviewSurface", "ccr", "クリアコートの粗さ" );
+setAttrNiceNameResource( "pxrUsdPreviewSurface", "dc", "拡散反射光カラー" );
+setAttrNiceNameResource( "pxrUsdPreviewSurface", "dcr", "拡散反射光カラー R" );
+setAttrNiceNameResource( "pxrUsdPreviewSurface", "dcg", "拡散反射光カラー G" );
+setAttrNiceNameResource( "pxrUsdPreviewSurface", "dcb", "拡散反射光カラー B" );
+setAttrNiceNameResource( "pxrUsdPreviewSurface", "dsp", "ディスプレイスメント" );
+setAttrNiceNameResource( "pxrUsdPreviewSurface", "ec", "放射カラー" );
+setAttrNiceNameResource( "pxrUsdPreviewSurface", "ecr", "放射カラー R" );
+setAttrNiceNameResource( "pxrUsdPreviewSurface", "ecg", "放射カラー G" );
+setAttrNiceNameResource( "pxrUsdPreviewSurface", "ecb", "放射カラー B" );
+setAttrNiceNameResource( "pxrUsdPreviewSurface", "ior", "IOR" );
+setAttrNiceNameResource( "pxrUsdPreviewSurface", "mtl", "メタリック" );
+setAttrNiceNameResource( "pxrUsdPreviewSurface", "nrm", "法線" );
+setAttrNiceNameResource( "pxrUsdPreviewSurface", "nrm0", "法線 0" );
+setAttrNiceNameResource( "pxrUsdPreviewSurface", "nrm1", "法線 1" );
+setAttrNiceNameResource( "pxrUsdPreviewSurface", "nrm2", "法線 2" );
+setAttrNiceNameResource( "pxrUsdPreviewSurface", "ocl", "オクルージョン" );
+setAttrNiceNameResource( "pxrUsdPreviewSurface", "opc", "不透明度" );
+setAttrNiceNameResource( "pxrUsdPreviewSurface", "rgh", "粗さ" );
+setAttrNiceNameResource( "pxrUsdPreviewSurface", "spc", "スペキュラ カラー" );
+setAttrNiceNameResource( "pxrUsdPreviewSurface", "spcr", "スペキュラ カラー R" );
+setAttrNiceNameResource( "pxrUsdPreviewSurface", "spcg", "スペキュラ カラー G" );
+setAttrNiceNameResource( "pxrUsdPreviewSurface", "spcb", "スペキュラ カラー B" );
+setAttrNiceNameResource( "pxrUsdPreviewSurface", "usw", "スペキュラの使用ワークフロー" );
+setAttrNiceNameResource( "pxrUsdPreviewSurface", "oc", "出力カラー" );
+setAttrNiceNameResource( "pxrUsdPreviewSurface", "ocr", "出力カラー R" );
+setAttrNiceNameResource( "pxrUsdPreviewSurface", "ocg", "出力カラー G" );
+setAttrNiceNameResource( "pxrUsdPreviewSurface", "ocb", "出力カラー B" );
+setAttrNiceNameResource( "pxrUsdPreviewSurface", "ot", "出力透明度" );
+setAttrNiceNameResource( "pxrUsdPreviewSurface", "otr", "出力透明度 R" );
+setAttrNiceNameResource( "pxrUsdPreviewSurface", "otg", "出力透明度 G" );
+setAttrNiceNameResource( "pxrUsdPreviewSurface", "otb", "出力透明度 B" );
+setAttrNiceNameResource( "pxrUsdPreviewSurface", "fza", "フリーズの影響を受ける" );

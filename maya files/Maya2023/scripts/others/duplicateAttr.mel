@@ -1,0 +1,85 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+
+//
+//  Procedure Name:
+//      duplicateAttrMain
+//
+//  Description:
+//      This procedure duplicates attrs from the source node to the destination
+//		node.
+//
+//  Input Arguments:
+//      string $objList[]: list of objects - source first, destination second
+//		string $attrList[]: list of attrs to copy
+//
+//  Return Value:
+//      None.
+//
+global proc duplicateAttrMain( string $objList[], string $attrList[] ){
+	string $objSource = $objList[0];
+	string $objDest = $objList[1];
+	
+	for ($attr in $attrList){
+		
+		//get attr setting
+		float $default = `addAttr -q -defaultValue ($objSource + "." + $attr)`;
+		float $min = `addAttr -q -minValue ($objSource + "." + $attr)`;
+		float $max = `addAttr -q -maxValue ($objSource + "." + $attr)`;
+		string $nice = `addAttr -q -niceName ($objSource + "." + $attr)`;
+
+		//create new attr on destination
+		addAttr -longName $attr
+			-niceName $nice
+			-defaultValue $default
+			$objDest;
+
+                // MAYA-86978
+                // only set minValue and maxValue if they were set in objSource
+                if (`addAttr -q -hasMinValue ($objSource + "." + $attr)`) {
+                        addAttr -e -minValue $min ($objDest + "." + $attr);
+                }
+		
+                if (`addAttr -q -hasMaxValue ($objSource + "." + $attr)`) {
+                        addAttr -e -maxValue $max ($objDest + "." + $attr);
+                }
+
+		//make it keyable
+		//*** should query original attr to see if it is keyable and set accordingly
+		setAttr -k 1 ($objDest + "." + $attr);
+	}
+}
+
+
+//  Procedure Name:
+//      copyAttrValues
+//
+//  Description:
+//      This procedure gets the selected channels from the channelBox. It then 
+//		sends those lists to duplicateAttrMain for copying the selected
+//		attributes between nodes.
+//
+//  Input Arguments:
+//      None
+//
+//  Return Value:
+//      None.
+//
+global proc duplicateAttr(){
+	// process selected objects
+	string $objList[] = `channelBox -q -mainObjectList mainChannelBox`;
+	string $attrList[] = `channelBox -q -selectedMainAttributes mainChannelBox`;
+	duplicateAttrMain $objList $attrList; 
+	
+	// now process history nodes
+	$attrList = `channelBox -q -selectedHistoryAttributes mainChannelBox`;
+	$objList = `channelBox -q -historyObjectList mainChannelBox`;
+	duplicateAttrMain $objList $attrList; 
+}
+
+

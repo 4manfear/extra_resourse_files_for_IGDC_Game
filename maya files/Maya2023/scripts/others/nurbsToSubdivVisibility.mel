@@ -1,0 +1,32 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//  Procedure Name:
+//      nurbsToSubdivVisibility
+//
+//  Description:
+//		Control the visibility of controls
+//
+//  Input Arguments:
+//      parent               - Top level parent layout of the option box UI.
+//                             Required so that UI object names can be 
+//                             successfully resolved.
+//
+//		format				 - which one is pressed
+//
+//  Return Value:
+//      None.
+//
+
+global proc nurbsToSubdivVisibility( string $parent )
+{
+	setParent $parent;
+
+	// Currently, no options
+}
+

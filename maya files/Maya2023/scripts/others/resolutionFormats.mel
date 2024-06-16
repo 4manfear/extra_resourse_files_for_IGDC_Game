@@ -1,0 +1,67 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+// The following tables list the options for document size
+// and pixel density (DPI)
+//
+global string $gMeasurementUnitsNames[] = {
+	"pixels",
+	"inches",
+	"cm",
+	"mm",
+	"points",
+	"picas"
+};
+
+global string $gResolutionUnitsNames[] = {
+	"pixels/inch",
+	"pixels/cm"
+};
+
+global proc string resolutionFormats_melToUI(string $mel)
+{
+    string $pixels        = (uiRes("m_resolutionFormats.kPixels"));
+    string $inches        = (uiRes("m_resolutionFormats.kInches"));
+    string $cm            = (uiRes("m_resolutionFormats.kCm"));
+    string $mm            = (uiRes("m_resolutionFormats.kMm"));
+    string $points        = (uiRes("m_resolutionFormats.kPoints"));
+    string $picas         = (uiRes("m_resolutionFormats.kPicas"));
+    string $pixelsPerInch = (uiRes("m_resolutionFormats.kPixelsPerInch"));
+    string $pixelsPerCm   = (uiRes("m_resolutionFormats.kPixelsPerCm"));
+
+    string $result        = $mel;
+
+	if ( $mel == "pixels") {
+	    $result = $pixels;
+	}
+	else if( $mel == "inches"){
+	    $result = $inches;
+	}
+	else if( $mel == "cm"){
+	    $result = $cm;
+	}
+	else if ( $mel == "mm") {
+	    $result = $mm;
+	}
+	else if( $mel == "points"){
+	    $result = $points;
+	}
+	else if( $mel == "picas"){
+	    $result = $picas;
+	}
+	else if( $mel == "pixels/inch"){
+	    $result = $pixelsPerInch;
+	}
+	else if( $mel == "pixels/cm"){
+	    $result = $pixelsPerCm;
+	}
+	else {
+		uiToMelMsg( "resolutionFormats_melToUI", $mel, 0 );
+	}
+
+	return $result;
+}

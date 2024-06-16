@@ -1,0 +1,51 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//  Creation Date:  11/2010
+//
+// Description:
+//
+//		This file contains the procedures which create and manipulate a
+//		Create Node window.
+//			 									
+
+global proc string createNodeWindow()
+//
+// Description:
+//	This procedure creates a new create node window
+//
+// Return:
+//  Name of the embedded nodeTreeLister control.
+//
+{
+    string $panelLabel = localizedPanelLabel("Create Node");
+    string $whichPanel = `scriptedPanel -label $panelLabel -type createNodePanel -unParent`;
+    scriptedPanel -e -to $whichPanel;
+    string $ed = editorNameFromPanel($whichPanel);
+    string $ctl = `scriptedPanel -q -ctl $whichPanel`;
+    string $win = match("^[^|]*",$ctl);
+    if (`window -q -ex $win`) {
+        window -e -w 400 -h 450 $win;
+        scriptJob -runOnce true -uiDeleted $win ("createNodeWindowClosed \""+$whichPanel+"\"");
+    }
+    return $ed;
+}
+
+// Description:  This procedure is called when a Create Node window
+//      is deleted.
+//
+global proc createNodeWindowClosed(string $whichPanel)
+{
+    if ($whichPanel != "createNodePanel1")
+    {
+        if (`scriptedPanel -exists $whichPanel`)
+        {
+            deleteUI -panel $whichPanel;
+        }
+    }
+}

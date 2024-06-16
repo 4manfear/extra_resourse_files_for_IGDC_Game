@@ -1,0 +1,273 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+// Creation Date:  13 April 1997
+//
+//
+//  Procedure Name:
+//      AniConstraintsMenu
+//
+//  Description:
+//		Create the ANIMATION->Constraints menu
+//
+//  Input Arguments:
+//      parent to parent the menu to.
+//
+//  Return Value:
+//      None.
+//
+
+global proc AniConstraintsMenuAddPoleVector( string $parent )
+//
+//	Description:
+//		A proc to add the poleVectorConstraint to the AniConstraints menu.
+//		This does not check for the existance of the poleVectorConstraint
+//		menu item.
+//
+//		This proc will only get called after AniConstraintsMenu, therefore
+//		this proc will exist when it is needed.
+//
+//		initialKinUI.mel depends on the menu item having poleVectorConstraint
+//		in its name.
+{
+	setParent -menu $parent;
+
+	if (`exists ikSystem` != 0) {
+		string $cmd = "PoleVectorConstraint";
+		menuItem 
+			-dmc "performPoleVectorConstraint 2" 
+			-rtc $cmd
+			poleVectorConstraintItem;
+
+			$cmd = "PoleVectorConstraintOptions";
+			menuItem -optionBox true
+				-annotation (getRunTimeCommandAnnotation($cmd))
+				-c $cmd
+				-i "poleVectorConstraint.png" 
+				poleVectorConstraintOptionItem;
+	}
+}
+
+global proc AniConstraintsMenu( string $parent )
+{
+	setParent -menu $parent;
+	if( `menu -q -ni $parent` != 0 ) {
+		//
+		//	Menu is built already - just return
+		//
+		return;
+	}
+
+	// Create
+	menuItem -divider true -dividerLabel (uiRes("m_AniConstraintsMenu.kConstrainCreate"));
+
+	string $cmd = "ParentConstraint";
+	menuItem
+		-dmc "performParentConstraint 2"
+		-rtc $cmd
+		parentConstraintItem;
+		$cmd = "ParentConstraintOptions";
+		menuItem -optionBox true
+			-annotation (getRunTimeCommandAnnotation($cmd))
+			-c $cmd
+			-i "parentConstraint.png"
+			parentConstraintOptionItem;
+
+	$cmd = "PointConstraint";
+	menuItem  
+		-dmc "performPointConstraint 2"
+		-rtc $cmd
+		pointConstraintItem;
+		$cmd = "PointConstraintOptions";
+		menuItem -optionBox true
+			-annotation (getRunTimeCommandAnnotation($cmd))
+			-i "posConstraint.png"
+			-c $cmd
+			pointConstraintOptionItem;
+
+	$cmd = "OrientConstraint";
+	menuItem
+		-dmc "performOrientConstraint 2"
+		-rtc $cmd
+		orientConstraintItem;
+		$cmd = "OrientConstraintOptions";
+		menuItem -optionBox true
+			-annotation (getRunTimeCommandAnnotation($cmd))
+			-c $cmd
+			-i "orientConstraint.png"
+			orientConstraintOptionItem;
+
+	$cmd = "ScaleConstraint";
+	menuItem 
+		-dmc "performScaleConstraint 2"
+		-rtc $cmd
+		scaleConstraintItem;
+		$cmd = "ScaleConstraintOptions";
+		menuItem -optionBox true
+			-annotation (getRunTimeCommandAnnotation($cmd))
+			-c $cmd
+			-i "scaleConstraint.png"
+			scaleConstraintOptionItem;
+
+	$cmd = "AimConstraint";
+	menuItem
+		-dmc "performAimConstraint 2"
+		-rtc $cmd
+		aimConstraintItem;
+		$cmd = "AimConstraintOptions";
+		menuItem -optionBox true
+			-annotation (getRunTimeCommandAnnotation($cmd))
+			-c $cmd
+			-i "aimConstraint.png"
+			aimConstraintOptionItem;
+
+	// Pole Vector MenuItem
+	AniConstraintsMenuAddPoleVector($parent);
+
+	menuItem -version 2020 -rtc "Rivet";
+
+	menuItem -divider true -longDivider false;
+
+	menuItem -subMenu true -label (uiRes("m_AniConstraintsMenu.kMotionPaths"))
+		-tearOff true
+		-allowOptionBoxes true
+		-familyImage "menuIconPaths.png";
+
+		$cmd = "AttachToPath";
+		string $attachPathItem = `menuItem 
+			-rtc $cmd
+			-dragMenuCommand "performPathAnimation 2" attachPathItem`;
+			$cmd = "AttachToPathOptions";
+			menuItem -optionBox true
+				-command $cmd
+				-annotation (getRunTimeCommandAnnotation($cmd))
+				-image "motionPath.png"
+				attachPathDialogItem;
+
+		// 	Flow Path Object
+		//
+		$cmd = "FlowPathObject";
+		string $flowItem = `menuItem   
+			-rtc $cmd
+			-dragMenuCommand "performFlow 2" flowItem`;
+			$cmd = "FlowPathObjectOptions";
+			menuItem -optionBox true 
+				-command $cmd
+				-annotation (getRunTimeCommandAnnotation($cmd))
+				flowDialogItem;
+
+		// 	Set Path Key
+		//
+		$cmd = "SetKeyPath" ;
+		menuItem 
+			-rtc $cmd
+			setKeyPathItem;
+		setParent -m ..;
+
+	menuItem
+		-rtc ("ClosestPointOn");
+		$cmd = "ClosestPointOnOptions";
+		menuItem -optionBox true
+			-annotation (getRunTimeCommandAnnotation($cmd))
+			-c $cmd;
+
+	$cmd = "PointOnPolyConstraint";
+	menuItem 
+		-dmc "performPointOnPolyConstraint 2"
+		-rtc $cmd
+		
+		pointOnPolyConstraintItem;
+		$cmd = "PointOnPolyConstraintOptions";
+		menuItem -optionBox true
+			-annotation (getRunTimeCommandAnnotation($cmd))
+			-i "pointOnPolyConstraint.png"
+			-c $cmd
+			pointOnPolyConstraintOptionItem;
+
+	$cmd = "GeometryConstraint";
+	menuItem
+		-dmc "performGeometryConstraint 2"
+		-rtc $cmd
+		
+		geometryConstraintItem;
+		$cmd = "GeometryConstraintOptions";
+		menuItem -optionBox true
+			-annotation (getRunTimeCommandAnnotation($cmd))
+			-i "geometryConstraint.png"
+			-c $cmd
+			geometryConstraintOptionItem;
+
+	$cmd = "NormalConstraint";
+	menuItem
+		-dmc "performNormalConstraint 2"
+		-rtc $cmd
+		normalConstraintItem;
+		$cmd = "NormalConstraintOptions";
+		menuItem -optionBox true
+			-annotation (getRunTimeCommandAnnotation($cmd))
+			-i "normalConstraint.png"
+			-c $cmd
+			normalConstraintOptionItem;
+
+	$cmd = "TangentConstraint";
+	menuItem
+		-dmc "performTangentConstraint 2"
+		-rtc $cmd
+		tangentConstraintItem;
+		$cmd = "TangentConstraintOptions";
+		menuItem -optionBox true
+			-annotation (getRunTimeCommandAnnotation($cmd))
+			-i "tangentConstraint.png"
+			-c $cmd
+			tangentConstraintOptionItem;
+
+    menuItem -divider true -dividerLabel (uiRes("m_AniConstraintsMenu.kMatrixConstraints"));
+
+    $cmd = "UVPin";
+    menuItem -version 2020 -rtc $cmd;
+        $cmd = "UVPinOptions";
+        menuItem -optionBox true
+            -annotation (getRunTimeCommandAnnotation($cmd))
+            -command $cmd;
+
+    $cmd = "ProximityPin";
+    menuItem  -version 2020 -rtc $cmd;
+        $cmd = "ProximityPinOptions";
+        menuItem -optionBox true
+            -version 2020
+            -annotation (getRunTimeCommandAnnotation($cmd))
+            -command $cmd;
+
+
+	menuItem -divider true -dividerLabel (uiRes("m_AniConstraintsMenu.kConstrainModify"));
+
+		$cmd = "RemoveConstraintTarget";
+		menuItem
+			-dmc "performRemoveConstraintTarget 2"
+			-rtc $cmd
+			removeConstraintTargetItem;
+			$cmd = "RemoveConstraintTargetOptions";
+			menuItem -optionBox true
+				-annotation (getRunTimeCommandAnnotation($cmd))
+				-c $cmd
+				removeConstraintTargetOptionItem;
+
+		menuItem -rtc "SetRestPosition"
+			setRestPositionItem;
+
+		$cmd = "ModifyConstraintAxis";
+		menuItem -rtc $cmd
+			-dmc "performModifyConstraintAxes 2"
+			modifyConstraintAxisItem;
+			
+			$cmd = "ModifyConstraintAxisOptions";
+			menuItem -optionBox true
+				-annotation (getRunTimeCommandAnnotation($cmd))
+				-c $cmd;
+}

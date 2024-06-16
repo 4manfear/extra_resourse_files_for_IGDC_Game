@@ -1,0 +1,377 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    The QML used to display the toolclip is found in a path relative to this file. If not set. then the system default UI
+    is used. If present, the following variables will be interpolated into the string:
+    %(language)s      - the language i.e. en, ja, etc.
+    %(country)s       - the country code i.e. us, jp, etc.
+    %(localecode)s          - the locale code i.e. en-us, ja-jp, etc
+
+    If a qml file cannot be loaded from the given path, the built-in path is used instead.
+ 
+    The ui attribute may be specified in the toolclips or toolclip elements. If specified in both, the toolclip version is used.
+ -->
+<toolclips ui="ui/ToolClipUI.qml" simple="ui/SimpleTooltip.qml" locale="ja_JP">
+  <toolclip key="selectTool" title="選択ツール">
+    <text>シーン内およびエディタ ウィンドウ内のオブジェクトとコンポーネントを選択します。</text>
+    <expanded>
+      <resourcelist>
+        <image location="../Resources/SelectionModes.png">選択モードを切り替える</image>
+        <link location="TC-Select-Tool">選択ツール</link>
+        <link location="TC-Selection-Modes">選択モード</link>
+        <link location="TC-Select-object-or-components">オブジェクトまたはコンポーネントを選択</link>
+        <link location="TC-Selection-hotkeys">選択ホットキー</link>
+      </resourcelist>
+    </expanded>
+  </toolclip>
+
+  <toolclip key="lassoTool" title="投げ縄ツール">
+    <text>シーン内のオブジェクトとコンポーネントを、自由な形状で囲むように描画して選択します。</text>
+  </toolclip>
+  <toolclip key="paintSelectTool" title="選択範囲ペイント ツール">
+    <text>ペイントによりシーン内のコンポーネントを選択します。</text>
+  </toolclip>
+
+  <toolclip key="moveTool" title="移動ツール">
+    <text>変換マニピュレータをドラッグすることにより、選択したオブジェクトまたはコンポーネントを移動します。</text>
+    <expanded>
+      <resourcelist>
+        <video location="MoveTool.webm">オブジェクトを移動する</video>
+        <video location="MoveComponents.webm">コンポーネントを移動する</video>
+        <link location="TC-Move-Tool">移動ツール</link>
+        <link location="TC-Move-rotate-or-scale-objects-and-components">オブジェクトとコンポーネントを移動、回転、スケールする</link>
+        <link location="TC-Transformations">トランスフォーム(変換)</link>
+      </resourcelist>
+    </expanded>
+  </toolclip>
+
+  <toolclip key="editPivotButton" title="ピボットを編集">
+    <text>オブジェクトやコンポーネントを回転したりスケールしたりする場合に、回転の中心となるピボット ポイントをカスタマイズします。</text>
+    <expanded>
+      <resourcelist>
+        <video location="anim_pivot.webm">ピボットを変更する</video>
+        <video location="anim_pivot_hotkeys.webm">ホットキーを使用してピボットを配置またはエイム</video>
+        <link location="files/GUID-150B390E-840B-4FE3-B8E9-8DEBCE7CEC97">ピボット ポイントを変更する</link>
+      </resourcelist>
+    </expanded>
+  </toolclip>
+
+  <toolclip key="rotateTool" title="回転ツール">
+    <text>回転マニピュレータをドラッグすることにより、選択したオブジェクトまたはコンポーネントを回転します。</text>
+    <expanded>
+      <default-resource index="1"/>
+      <resourcelist>
+        <video location="RotateTool.webm">オブジェクトを回転する</video>
+        <video location="RotateComponents.webm">コンポーネントを回転する</video>
+        <link location="TC-Rotate-Tool">回転ツール</link>
+        <link location="TC-Move-rotate-or-scale-objects-and-components">オブジェクトとコンポーネントを移動、回転、スケールする</link>
+        <link location="TC-The-pivot-point">ピボット ポイント</link>
+      </resourcelist>
+    </expanded>
+  </toolclip>
+
+  <toolclip key="scaleTool" title="スケール ツール">
+    <text>スケール マニピュレータをドラッグすることにより、選択したオブジェクトまたはコンポーネントをスケールします。</text>
+    <expanded>
+      <default-resource index="1"/>
+      <resourcelist>
+        <video location="ScaleTool.webm">オブジェクトをスケールする</video>
+        <video location="ScaleUniformly.webm">オブジェクトを均等にスケールする</video>
+        <video location="ScaleNonUniformly.webm">オブジェクトを不均等にスケールする</video>
+        <video location="ScaleComponents.webm">コンポーネントをスケールする</video>
+        <link location="TC-Scale-Tool">スケール ツール</link>
+        <link location="TC-Move-rotate-or-scale-objects-and-components">オブジェクトとコンポーネントを移動、回転、スケールする</link>
+        <link location="TC-The-pivot-point">ピボット ポイント</link>
+      </resourcelist>
+    </expanded>
+  </toolclip>
+  <toolclip key="quickLayout" title="パネル レイアウト" help="TC-Panel-Layout">
+    <text>ビュー パネルに異なるレイアウトを選択します。</text>
+  </toolclip>
+
+  <toolclip key="panelContentButton" title="パネル レイアウト"
+      help="TC-panelContentButton">
+    <text>ドロップダウン メニューからカスタム パネル レイアウトを作成します。 </text>
+  </toolclip>
+
+  <toolclip key="mayaWebButton" title="Maya Web サイト">
+    <text>Maya Web サイトへのリンクです。</text>
+  </toolclip>
+
+  <toolclip key="mayaLTWebButton" title="Maya LT Web サイト">
+    <text>Maya LT Web サイトへのリンクです。</text>
+  </toolclip>
+
+  <toolclip key="menuMode" title="メニュー セットのメニュー" help="TC-menuMode">
+    <text>メニュー セットを切り替えます。</text>
+  </toolclip>
+  <toolclip key="newSceneButton" title="新規シーン" help="TC-newSceneButton">
+    <text>現在のシーンをクリアし、新しいシーンを作成します。</text>
+  </toolclip>
+  <toolclip key="openSceneButton" title="シーンを開く..." help="TC-openSceneButton">
+    <text>保存されたシーンを開きます。</text>
+  </toolclip>
+  <toolclip key="saveSceneButton" title="シーンを保存する" help="TC-saveSceneButton">
+    <text>シーンを現在の名前で保存します。</text>
+  </toolclip>
+  <toolclip key="maskMenuIcon" title="選択モード メニュー"
+          help="TC-maskMenuIcon">
+    <text>選択ツールを使用して選択できるコンポーネント タイプを設定します。</text>
+  </toolclip>
+  <toolclip key="maskField" title="選択モード メニュー"
+          help="TC-maskField">
+    <text>選択ツールを使用して選択できるコンポーネント タイプを設定します。</text>
+  </toolclip>
+  <toolclip key="selectBtnHierComb" title="階層と組み合わせによって選択"
+          help="TC-selectBtnHierComb">
+    <text>選択マスクを使用することによって、ノード階層のトップ レベルにある項目または他の一部の組み合わせを選択するには、選択モードを変更します。</text>
+  </toolclip>
+  <toolclip key="selectBtnObject" title="オブジェクト タイプ別に選択" help="TC-selectBtnObject">
+    <text>選択モードを変更してオブジェクトを選択します。</text>
+    <expanded>
+      <resourcelist>
+        <image location="../Resources/SelectionModes.png">選択モードを切り替える</image>
+        <link location="TC-Select-Tool">選択ツール</link>
+        <link location="TC-Selection-modes">選択モード</link>
+        <link location="TC-Masking-object-and-component-selections">マスキング オブジェクトとコンポーネントの選択</link>
+        <link location="TC-Select-object-or-components">オブジェクトまたはコンポーネントを選択</link>
+        <link location="TC-Selection-hotkeys">選択ホットキー</link>
+      </resourcelist>
+    </expanded>
+  </toolclip>
+  <toolclip key="selectBtnComponent" title="コンポーネント タイプ別に選択" help="TC-selectBtnComponent">
+    <text>選択モードを変更してオブジェクトのコンポーネントを選択します。</text>
+    <expanded>
+      <resourcelist>
+        <image location="../Resources/SelectionModes.png">選択モードを切り替える</image>
+        <link location="TC-Select-Tool">選択ツール</link>
+        <link location="TC-Selection-modes">選択モード</link>
+        <link location="TC-Masking-object-and-component-selections">マスキング オブジェクトとコンポーネントの選択</link>
+        <link location="TC-Select-object-or-components">オブジェクトまたはコンポーネントを選択</link>
+        <link location="TC-Selection-hotkeys">選択ホットキー</link>
+      </resourcelist>
+    </expanded>
+  </toolclip>
+  <!-- <toolclip key="hierRootButton" title="Hierarchy Root">
+        <text>Set the selection mask to only select top level (root) nodes.</text>
+    </toolclip>
+    <toolclip key="hierLeafButton" title="Hierarchy Leaf">
+        <text>Set the selection mask to only select nodes without children (leaves).</text>
+    </toolclip>
+    <toolclip key="hierTemplateButton" title="Hierarchy Template">
+        <text>Set the selection mask to only select templated objects</text>
+    </toolclip>
+    
+    <toolclip key="objSelHandleBtn" title="Select Handle Objects">
+        <text>Select Handle Objects (RMB for more options)</text>
+    </toolclip>
+    <toolclip key="objSelJointBtn" title="Select Joint Objects">
+        <text>Select Joint Objects (RMB for more options)</text>
+    </toolclip>
+    <toolclip key="objSelCurveBtn" title="Select Curve Objects">
+        <text>Select Curve Objects (RMB for more options)</text>
+    </toolclip>
+    <toolclip key="objSelSurfaceBtn" title="Select Surface Objects">
+        <text>Select Surface Objects (RMB for more options)</text>
+    </toolclip>
+    <toolclip key="objSelDeformBtn" title="Select Deformation Objects">
+        <text>Select Deformation Objects (RMB for more options)</text>
+    </toolclip>
+    <toolclip key="objSelDynamicBtn" title="Select Dynamics Objects">
+        <text>Select Dynamics Objects (RMB for more options)</text>
+    </toolclip>
+    <toolclip key="objSelRenderBtn" title="Select Rendering Objects">
+        <text>Select Rendering objects (RMB for more options)</text>
+    </toolclip>
+    
+    <toolclip key="objSelMiscBtn" title="Select Miscellaneous Objects">
+        <text>Select Miscellaneous Objects (RMB for more options)</text>
+    </toolclip>
+
+    <toolclip key="compSelPointBtn" title="Select Point Components">
+        <text>Select Point Components (RMB for more options)</text>
+    </toolclip>
+    <toolclip key="compSelParmPointBtn" title="Select Parametric Point Components">
+        <text>Select Parametric Point Components (RMB for more options)</text>
+    </toolclip>
+    <toolclip key="compSelLineBtn" title="Select Line Components">
+        <text>Select Line Components (RMB for more options)</text>
+    </toolclip>
+    <toolclip key="compSelFaceBtn" title="Select Face Components">
+        <text>Select Face Components (RMB for more options)</text>
+    </toolclip>
+    <toolclip key="compSelHullBtn" title="Select Hull Components">
+        <text>Select Hull Components (RMB for more options)</text>
+    </toolclip>
+    <toolclip key="compSelPivotBtn" title="Select Pivot Compontents">
+        <text>Select Pivot Components (RMB for more options)</text>
+    </toolclip>
+    <toolclip key="compSelHandleBtn" title="Select Handle Components">
+        <text>Select Handle Components (RMB for more options)</text>
+    </toolclip>
+    <toolclip key="compSelMiscBtn" title="Select Miscellaneous Components">
+        <text>Select Miscellaneous Components (RMB for more options)</text>
+    </toolclip> -->
+  <toolclip key="lockSelectionIcon" title="現在の選択項目のロック/ロック解除を切り替える" help="TC-lockSelectionIcon">
+    <text>選択する代わりに左クリックでマニピュレータを操作できるように、選択したオブジェクトにツール マニピュレータをロックします。</text>
+  </toolclip>
+  <toolclip key="highlightSelectIcon" title="ハイライト選択モード" help="TC-highlightSelectIcon">
+    <text>コンポーネント選択モードをロックし、オブジェクト選択モードへの切り替えを防ぎます。</text>
+  </toolclip>
+  <toolclip key="snapGridButton" title="グリッド スナップ" help="TC-snapGridButton">
+    <text>選択した項目を最も近いグリッド交点に移動します。</text>
+  </toolclip>
+  <toolclip key="snapCurveButton" title="カーブ スナップ" help="TC-snapCurveButton">
+    <text>選択した項目を最も近いカーブに移動します。</text>
+  </toolclip>
+  <toolclip key="snapPointButton" title="ポイント スナップ" help="TC-snapPointButton">
+    <text>選択した項目を最も近いコントロール頂点(CV)またはピボット ポイントに移動します。</text>
+  </toolclip>
+  <toolclip key="meshCenterSnapButton" title="投影された中心にスナップ" help="TC-meshCenterSnapButton">
+    <text>選択したオブジェクトの中心にスナップします。</text>
+  </toolclip>
+  <toolclip key="snapViewPlaneButton" title="ビュー プレーン スナップ" help="TC-snapViewPlaneButton">
+    <text>選択した項目を最も近いビュー プレーンに移動します。</text>
+  </toolclip>
+  <toolclip key="makeLiveButton" title="選択したオブジェクトをライブにします" help="TC-makeLiveButton">
+    <text>選択したサーフェスをライブ サーフェスに変換します(以前使用したライブ サーフェスから選択するには右マウス ボタンを押す)。</text>
+    <expanded>
+      <resourcelist>
+        <video location="QuadDraw_MakeLive.webm">オブジェクトをライブにする</video>
+        <link location="TC-Set-a-live-surface">ライブ サーフェスを設定する</link>
+      </resourcelist>
+    </expanded>
+  </toolclip>
+  <toolclip key="historyIcon" title="選択したオブジェクトへの入力" help="TC-historyIcon">
+    <text>選択したオブジェクトの上流のノード接続をコントロールします。</text>
+  </toolclip>
+  <toolclip key="futureIcon" title="選択したオブジェクトからの出力" help="TC-futureIcon">
+    <text>選択したオブジェクトの下流のノード接続をコントロールします。</text>
+  </toolclip>
+  <toolclip key="constructionHistoryButton" title="コンストラクション ヒストリのオン/オフの切り替え" help="TC-constructionHistoryButton">
+    <text>シーン内のすべての項目におけるコンストラクション ヒストリのオン/オフを切り替えます。</text>
+  </toolclip>
+  <toolclip key="statusFieldButton" title="操作の入力ライン メニュー" help="TC-statusFieldButton">
+    <text>入力ラインの入力タイプを指定します。</text>
+  </toolclip>
+
+  <toolclip key="numericalInputXField" title="絶対トランスフォーム" help="TC-numericalInputXField">
+    <text>X、Y、Zの原点を基準にオブジェクトまたはコンポーネントを移動、回転、スケールします。</text>
+  </toolclip>
+  <toolclip key="numericalInputYField" title="絶対トランスフォーム" help="TC-numericalInputYField">
+    <text>X、Y、Zの原点を基準にオブジェクトまたはコンポーネントを移動、回転、スケールします。</text>
+  </toolclip>
+  <toolclip key="numericalInputZField" title="絶対トランスフォーム" help="TC-numericalInputZField">
+    <text>X、Y、Zの原点を基準にオブジェクトまたはコンポーネントを移動、回転、スケールします。</text>
+  </toolclip>
+
+  <toolclip key="relativeNumericalInputXField" title="相対トランスフォーム" help="TC-relativeNumericalInputXField">
+    <text>現在の位置を基準にオブジェクトまたはコンポーネントを移動、回転、スケールします。</text>
+  </toolclip>
+  <toolclip key="relativeNumericalInputYField" title="相対トランスフォーム" help="TC-relativeNumericalInputYField">
+    <text>現在の位置を基準にオブジェクトまたはコンポーネントを移動、回転、スケールします。</text>
+  </toolclip>
+  <toolclip key="relativeNumericalInputZField" title="相対トランスフォーム" help="TC-relativeNumericalInputZField">
+    <text>現在の位置を基準にオブジェクトまたはコンポーネントを移動、回転、スケールします。</text>
+  </toolclip>
+  <toolclip key="statusLineTextualInputField" title="選択したオブジェクトの名前を変更" help="TC-statusLineTextualInputField">
+    <text>選択したオブジェクトの名前を編集します。</text>
+  </toolclip>
+  <toolclip key="statusLineTextualInputFieldSelect" title="名前別に選択(ワイルドカード)" help="TC-statusLineTextualInputFieldSelect">
+    <text>オブジェクトを名前により選択し、ワイルドカードによる複数オブジェクトの選択をサポートします。</text>
+  </toolclip>
+
+
+
+  <toolclip key="attributeEditorButton" title="アトリビュート エディタの表示/非表示を切り替える" help="TC-attributeEditorButton">
+    <text>選択したオブジェクトまたはノードのプロパティをリストするアトリビュート エディタの表示/非表示を切り替えます。</text>
+  </toolclip>
+
+  <toolclip key="modelingToolkitButton" title="モデリング ツールキットを表示/非表示" help="TC-modelingToolkitButton">
+  <text>モデリング ツールキットの表示/非表示を切り替えます。</text>
+  </toolclip>
+
+  <toolclip key="channelLayerBoxButton" title="チャネル ボックスの表示/非表示を切り替える" help="TC-channelLayerBoxButton">
+    <text>チャネル ボックスとレイヤ エディタの表示/非表示を切り替えます。</text>
+  </toolclip>
+
+  <toolclip key="toolSettingsButton" title="ツール設定の表示/非表示を切り替える" help="TC-toolSettingsButton">
+    <text>ツール設定ウィンドウで現在のツールのオプションの表示/非表示を切り替えます。</text>
+  </toolclip>
+
+  <toolclip key="lastNonSacredTool" title="最後に使用したツール %(lastNonSacredTool)s" help="TC-Tool-Box">
+    <text>現在アクティブなツールまたは以前に選択したツールを表示します。</text>
+  </toolclip>
+  <toolclip key="CommonReflectionOptionsLabel" title="シンメトリ" help="TC-CommonReflectionOptionsLabel">
+    <text>シンメトリをアクティブ化します。</text>
+    <expanded>
+      <resourcelist>
+        <video location="Symmetry_ActivateTopo.webm">トポロジ シンメトリをアクティブ化する</video>
+        <link location="TC-Symmetrical-editing">シンメトリ編集</link>
+        <link location="TC-Activate-or-deactivate-symmetry">シンメトリをアクティブ化/非アクティブ化</link>
+        <link location="TC-Edit-multiple-shells-with-topological-symmetry">トポロジ シンメトリで複数のシェルを編集する</link>
+        <link location="TC-Edit-a-mesh-with-topological-symmetry">トポロジ シンメトリでメッシュを編集する</link>
+      </resourcelist>
+    </expanded>
+  </toolclip>
+  <toolclip key="sculptMeshMirrorMode_OMG" title="シンメトリ" help="TC-CommonReflectionOptionsLabel">
+    <text>シンメトリをアクティブ化します。</text>
+    <expanded>
+      <resourcelist>
+        <video location="Symmetry_ActivateTopo.webm">トポロジ シンメトリをアクティブ化する</video>
+        <link location="TC-Symmetrical-editing">シンメトリ編集</link>
+        <link location="TC-Activate-or-deactivate-symmetry">シンメトリをアクティブ化/非アクティブ化</link>
+        <link location="TC-Edit-multiple-shells-with-topological-symmetry">トポロジ シンメトリで複数のシェルを編集する</link>
+        <link location="TC-Edit-a-mesh-with-topological-symmetry">トポロジ シンメトリでメッシュを編集する</link>
+      </resourcelist>
+    </expanded>
+  </toolclip>
+  <toolclip key="CommonReflectionOptionsButton" title="シンメトリ" help="TC-CommonReflectionOptionsButton">
+    <text>シンメトリをアクティブ化します。</text>
+    <expanded>
+      <resourcelist>
+        <video location="Symmetry_ActivateTopo.webm">トポロジ シンメトリをアクティブ化する</video>
+        <link location="TC-Symmetrical-editing">シンメトリ編集</link>
+        <link location="TC-Activate-or-deactivate-symmetry">シンメトリをアクティブ化/非アクティブ化</link>
+        <link location="TC-Edit-multiple-shells-with-topological-symmetry">トポロジ シンメトリで複数のシェルを編集する</link>
+        <link location="TC-Edit-a-mesh-with-topological-symmetry">トポロジ シンメトリでメッシュを編集する</link>
+      </resourcelist>
+    </expanded>
+  </toolclip>
+  <toolclip key="CommonReflectionOptionsText" title="シンメトリ" help="TC-CommonReflectionOptionsText">
+    <text>シンメトリをアクティブ化します。</text>
+    <expanded>
+      <resourcelist>
+        <video location="Symmetry_ActivateTopo.webm">トポロジ シンメトリをアクティブ化する</video>
+        <link location="TC-Symmetrical-editing">シンメトリ編集</link>
+        <link location="TC-Activate-or-deactivate-symmetry">シンメトリをアクティブ化/非アクティブ化</link>
+        <link location="TC-Edit-multiple-shells-with-topological-symmetry">トポロジ シンメトリで複数のシェルを編集する</link>
+        <link location="TC-Edit-a-mesh-with-topological-symmetry">トポロジ シンメトリでメッシュを編集する</link>
+      </resourcelist>
+    </expanded>
+  </toolclip>
+  <toolclip key="symModelingText" title="シンメトリ" help="TC-symModelingText">
+    <text>シンメトリをアクティブ化します。</text>
+    <expanded>
+      <resourcelist>
+        <video location="Symmetry_ActivateTopo.webm">トポロジ シンメトリをアクティブ化する</video>
+        <link location="TC-Symmetrical-editing">シンメトリ編集</link>
+        <link location="TC-Activate-or-deactivate-symmetry">シンメトリをアクティブ化/非アクティブ化</link>
+        <link location="TC-Edit-multiple-shells-with-topological-symmetry">トポロジ シンメトリで複数のシェルを編集する</link>
+        <link location="TC-Edit-a-mesh-with-topological-symmetry">トポロジ シンメトリでメッシュを編集する</link>
+      </resourcelist>
+    </expanded>
+  </toolclip>
+  <toolclip key="symModelingBtn" title="シンメトリ" help="TC-symModelingBtn">
+    <text>シンメトリをアクティブ化します。</text>
+    <expanded>
+      <resourcelist>
+        <video location="Symmetry_ActivateTopo.webm">トポロジ シンメトリをアクティブ化する</video>
+        <link location="TC-Symmetrical-editing">シンメトリ編集</link>
+        <link location="TC-Activate-or-deactivate-symmetry">シンメトリをアクティブ化/非アクティブ化</link>
+        <link location="TC-Edit-multiple-shells-with-topological-symmetry">トポロジ シンメトリで複数のシェルを編集する</link>
+        <link location="TC-Edit-a-mesh-with-topological-symmetry">トポロジ シンメトリでメッシュを編集する</link>
+      </resourcelist>
+    </expanded>
+  </toolclip>
+</toolclips>
+

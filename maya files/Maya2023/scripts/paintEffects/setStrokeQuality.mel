@@ -1,0 +1,45 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date: 98
+//
+//
+//  Description:
+//		This sets the quality of all selected strokes
+//
+
+
+global proc setStrokeQuality(  float $quality )
+{
+	string	$strokes[] = `ls -sl -dag`;
+	for( $i = 0; $i < size( $strokes ); $i++ )
+	{
+		if( nodeType( $strokes[$i] ) == "stroke" )
+		{
+			setAttr  ($strokes[$i]+".displayPercent") $quality;
+		}
+		else if( nodeType( $strokes[$i] ) == "nurbsCurve" )
+		{
+			string $nstrokes[] = `listConnections -t stroke ($strokes[$i] + ".ws[0]")`;
+			for( $j = 0; $j < size ($nstrokes); $j++ )
+			{
+				setAttr  ($nstrokes[$i]+".displayPercent") $quality;
+			}
+			string $cos[] = `listConnections -t curveFromSurfaceCoS ($strokes[$i] + ".ws[0]")`;
+			for( $j = 0; $j < size ($cos); $j++ )
+			{
+				$nstrokes = `listConnections -t stroke ($cos[$j] + ".oc")`;
+				for( $k = 0; $k < size( $nstrokes ); $k++ )
+				{
+					setAttr  ($nstrokes[$k]+".displayPercent") $quality;
+				}
+			}
+		}
+	}
+}

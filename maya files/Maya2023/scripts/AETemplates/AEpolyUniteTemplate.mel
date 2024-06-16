@@ -1,0 +1,56 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:	June 5, 1997
+//
+//  Procedure Name:
+//	AEpolyUniteTemplate
+//
+//  Description Name;
+//	Creates the attribute editor controls for the polyUnite Node
+//
+//  Input Value:
+//	nodeName 
+//
+//  Output Value:
+//	None
+// 
+
+global proc AEpolyUniteTemplateNew( string $attr )
+{
+	AEpolyUniteTemplateReplace( $attr );
+}
+
+global proc AEpolyUniteTemplateReplace( string $attr )
+{
+	string $buffer[];
+	tokenize( $attr, ".", $buffer );
+	editorTemplate -dimControl $buffer[0] $buffer[1] true;
+}
+
+global proc AEpolyUniteTemplate ( string $nodeName )
+{
+	editorTemplate -beginScrollLayout;
+		editorTemplate -beginLayout (uiRes("m_AEpolyUniteTemplate.kPolyUniteAttributes")) -collapse 0;
+		
+			editorTemplate -addControl "mergeUVSets";
+			editorTemplate -addControl "componentTagName";
+			editorTemplate -callCustom AEpolyUniteTemplateNew AEpolyUniteTemplateReplace "mergeUVSets";
+
+		editorTemplate -endLayout;		
+
+		//include/call base class/node attributes		
+		AEpolyCreatorTemplate $nodeName;
+
+		editorTemplate -suppress "inputPoly";
+		editorTemplate -suppress "inputMat";
+
+	editorTemplate -addExtraControls;
+	editorTemplate -endScrollLayout;
+}

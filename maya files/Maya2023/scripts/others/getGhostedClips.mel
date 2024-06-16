@@ -1,0 +1,22 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+// Determine all the clips connected to the clipToGhostNode that are ghosted
+global proc string [] getGhostedClips( string $clipToGhostNode )
+{
+	string $clips[] = {};
+
+	string $ghosts[] = `listConnections -type clipGhostShape -d 1 -s 0 $clipToGhostNode`;
+	for ( $g in $ghosts )
+	{
+		string $clip[] = `listConnections -type animClip -d 1 -s 0 $g`;
+		if ( size($clip) )
+			$clips[ size($clips) ] = $clip[0];
+	}
+
+	return $clips;
+}

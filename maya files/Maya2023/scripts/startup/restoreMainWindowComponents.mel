@@ -1,0 +1,45 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  19.Dec.2001
+//
+//  Description:
+//      Restore the visibility of the main window UI components.
+//
+//  Input Arguments:
+//      None.
+//
+//  Return Value:
+//      None.
+//
+global proc restoreMainWindowComponents()
+{
+	global int    $gUIElementsRestored;
+
+
+	global string $gMainPane;
+
+	paneLayout -edit -manage false $gMainPane;
+
+	// Restore to last saved state
+	//
+	setToolboxVisible         (`optionVar -q LastStateToolboxVisibility`);
+	setStatusLineVisible      (`optionVar -q LastStateStatusLineVisibility`);
+	setShelfVisible           (`optionVar -q LastStateShelfVisibility`);
+	setTimeSliderVisible      (`optionVar -q LastStateTimeSliderVisibility`);
+	setPlaybackRangeVisible   (`optionVar -q LastStatePlaybackRangeVisibility`);
+	setCommandLineVisible     (`optionVar -q LastStateCommandLineVisibility`);
+	setHelpLineVisible        (`optionVar -q LastStateHelpLineVisibility`);
+
+	paneLayout -edit -manage true $gMainPane;
+
+	restoreLastPanelWithFocus();
+	updatePrefsMenu();
+	$gUIElementsRestored = true;
+}

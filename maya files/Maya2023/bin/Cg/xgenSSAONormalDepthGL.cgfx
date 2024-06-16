@@ -1,0 +1,150 @@
+//**************************************************************************/
+// Copyright (c) 2008 Autodesk, Inc.
+// All rights reserved.
+// 
+// These coded instructions, statements, and computer programs contain
+// unpublished proprietary information written by Autodesk, Inc., and are
+// protected by Federal copyright law. They may not be disclosed to third
+// parties or copied or duplicated in any form, in whole or in part, without
+// the prior written consent of Autodesk, Inc.
+//**************************************************************************/
+// DESCRIPTION: Screen space ambient occlusion - normal-depth buffer pass.
+// AUTHOR: Mauricio Vives
+// CREATED: October 2008
+//**************************************************************************/
+
+#include "SSAO_Common.cgh"
+#ifdef CLIPPING
+#include "ClippingGL.cgh"
+#endif
+// Whether the projection matrix flips Z: -1.0 if so, otherwise 1.0.
+#ifdef FX_COMPOSER
+	float gProjZSense < string UIWidget = "None"; > = -1.0f;
+#else
+	float gProjZSense : ProjectionZSense < string UIWidget = "None"; >;
+#endif
+
+// Vertex shader input structure.
+struct VS_INPUT_NormalDepth
+{
+    float3 Pos : POSITION;
+    float width : TEXCOORD0; 
+    float3 curveVec : TEXCOORD1; 
+    float offsetFlag : TEXCOORD2; 
+};
+
+// Vertex shader output structure.
+struct VS_TO_PS_NormalDepth
+{
+    float4 HPos : POSITION;
+    float4 NormalDepth : TEXCOORD0;
+
+#ifdef CLIPPING
+    // Clip distances, for six clipping planes. 
+    float Clip0 : CLP0;
+    float Clip1 : CLP1;
+    float Clip2 : CLP2;
+    float Clip3 : CLP3;
+    float Clip4 : CLP4;
+    float Clip5 : CLP5;
+#endif
+};
+
+//  Globals 
+uniform float4x4 World : world; 
+uniform float3 cameraDirection : viewdirection; 
+uniform float3 cameraPosition : worldcameraposition; 
+uniform bool camIsOrtho : isorthographic; 
+
+float3 xgenVSWidthVec(float3 Pm, float width, float3 curveVec, float4x4 world, float3 viewDirection, float3 worldCameraPosition, bool camIsOrtho)
+{
+    float3 viewVec = viewDirection;
+    if (!camIsOrtho) {
+    float3 pw = mul(world, float4(Pm, 1.0f)).xyz;
+        viewVec = pw - worldCameraPosition;
+    }
+
+    return normalize(cross(viewVec, curveVec)) * width;
+}
+
+float3 xgenVSOffset(float3 Pm, float offsetFlag, float3 widthVecFinal)
+{
+    return Pm + offsetFlag * (widthVecFinal);
+}
+
+float3 xgenVSNw(float3 widthVecFinal, float3 curveVec)
+{
+    return normalize(cross(widthVecFinal, curveVec));
+}
+
+// Vertex shader.
+VS_TO_PS_NormalDepth VS_NormalDepth(VS_INPUT_NormalDepth In)
+{
+    VS_TO_PS_NormalDepth Out;
+    float3 widthVecFinal = xgenVSWidthVec( In.Pos, In.width, In.curveVec, World, cameraDirection, cameraPosition, camIsOrtho ); 
+    float4 pm4 = float4(xgenVSOffset( In.Pos, In.offsetFlag, widthVecFinal ), 1.0f); 
+    float3 nw3 = xgenVSNw(widthVecFinal, In.curveVec);
+    float3 nn = nw3;
+    
+    // Transform the vertex from object space to clip space.
+    Out.HPos = mul(pm4, gWVPXf); // * float4( 1, -1, 1, 1);
+    //Out.HPos = mul(gWVPXf, pm4);
+    
+    // Record the normal and depth components for the pixel shader.
+    // NOTE: This depends on whether the view direction is along +Z or -Z.  The projection matrix
+    // "Z sense" determines this.
+    Out.NormalDepth.xyz = mul(nn, float3x3(gWVITXf[0].xyz,
+												  gWVITXf[1].xyz,
+												  gWVITXf[2].xyz));
+	//Out.NormalDepth.xyz = mul( float3x3(gWVITXf[0].xyz,
+	//								    gWVITXf[1].xyz,
+	//									gWVITXf[2].xyz), nn );
+
+    Out.NormalDepth.z = gProjZSense * Out.NormalDepth.z;
+    Out.NormalDepth.w = gProjZSense * mul(pm4, gWVXf).z;
+    //Out.NormalDepth.w = gProjZSense * mul( gWVXf, pm4).z;
+
+#ifdef CLIPPING
+    // Compute the six clip distances.
+    float4 HPw = mul(pm4, gWXf);
+    //float4 HPw = mul(gWXf, pm4);
+    ComputeClipDistances(HPw, Out.Clip0, Out.Clip1, Out.Clip2, Out.Clip3,
+        Out.Clip4, Out.Clip5);
+#endif
+
+    return Out;
+}
+
+// Pixel shader output structure.
+struct PS_OUT
+{
+    float4 Normal : COLOR0;
+    float4 Depth : COLOR1;
+};
+
+// Pixel shader.
+PS_OUT PS_NormalDepth(VS_TO_PS_NormalDepth In)
+{
+    PS_OUT Out;
+
+    // Set the normal for an unsigned normalized integer target, and depth for a floating-point
+    // target.
+    Out.Normal = float4((normalize(In.NormalDepth.xyz) + 1.0f) * 0.5f, 0.0f);
+    Out.Depth  = In.NormalDepth.wwww;
+
+    return Out;
+}
+
+#ifndef FX_COMPOSER
+
+// Technique.
+technique NormalDepth
+{
+    pass p0
+    {
+        VertexShader = compile glslv VS_NormalDepth();
+        PixelShader = compile glslf PS_NormalDepth();
+    }
+}
+
+#endif

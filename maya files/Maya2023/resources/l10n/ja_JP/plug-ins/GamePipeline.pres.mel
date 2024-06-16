@@ -1,0 +1,36 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+// Resources for Plug-in: GamePipeline
+// 
+// ----------------------------
+// Registered string resources:
+// ----------------------------
+setPluginResource( "GamePipeline", "kFlagsMutuallyExclusive", "これらのフラグは相互に排他的です: ^1s ^2s");
+setPluginResource( "GamePipeline", "kOk", "OK");
+setPluginResource( "GamePipeline", "kSelect", "選択");
+setPluginResource( "GamePipeline", "kSelectUnityProject", "Unity プロジェクトを選択して FBX アセットを送る");
+setPluginResource( "GamePipeline", "kSelectUnrealProject", "Unreal プロジェクトを選択して FBX アセットを送る");
+setPluginResource( "GamePipeline", "kSendAll", "すべて");
+setPluginResource( "GamePipeline", "kSendSelection", "選択対象");
+setPluginResource( "GamePipeline", "kSendToUnity", "Unity に送信");
+setPluginResource( "GamePipeline", "kSendToUnityError", "Unity に送信のエラー");
+setPluginResource( "GamePipeline", "kSendToUnityErrorMsgForProjectPath", "有効な Unity プロジェクトを選択してください。");
+setPluginResource( "GamePipeline", "kSendToUnityInvalidProjectWarning", "「%s」は有効な Unity プロジェクトはありません。");
+setPluginResource( "GamePipeline", "kSendToUnreal", "Unreal に送信");
+setPluginResource( "GamePipeline", "kSendToUnrealError", "Unreal に送信のエラー");
+setPluginResource( "GamePipeline", "kSendToUnrealErrorMsgForProjectPath", "有効な Unreal プロジェクトを選択してください。");
+setPluginResource( "GamePipeline", "kSendToUnrealInvalidProjectWarning", "「%s」は有効な Unreal プロジェクトはありません。");
+setPluginResource( "GamePipeline", "kSetUnityProject", "Unity プロジェクトの設定");
+setPluginResource( "GamePipeline", "kSetUnrealProject", "Unreal プロジェクトの設定");
+// 
+// --------------------------
+// Registered node resources:
+// --------------------------
+// 
+//  (Plugin has no registered nodes)
+// 

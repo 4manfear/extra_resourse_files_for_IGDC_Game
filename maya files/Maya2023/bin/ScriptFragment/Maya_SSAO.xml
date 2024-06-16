@@ -1,0 +1,56 @@
+<!--
+Copyright 2016 Autodesk, Inc. All rights reserved. 
+
+Use of this software is subject to the terms of the Autodesk 
+license agreement provided at the time of installation or download, 
+or which otherwise accompanies this software in either electronic 
+or hard copy form.
+-->
+<fragment_graph  name="Maya_SSAO" ref="Maya_SSAO" class="FragmentGraph" version="1.0" feature_level="0" >
+    <fragments>
+        <fragment_ref name="Maya_ScreenSpaceAmbientOcclusion" ref="Maya_ScreenSpaceAmbientOcclusion" />
+        <fragment_ref name="EnableSSAO" ref="EnableSSAO" />
+    </fragments>
+    <connections>
+        <connect from="Maya_ScreenSpaceAmbientOcclusion.output" to="EnableSSAO.a" name="a" />
+    </connections>
+    <properties>
+        <bool  name="ssaoEnabled" ref="EnableSSAO.value" />
+        <target  name="Maya_SSAO_Beauty_final" ref="Maya_ScreenSpaceAmbientOcclusion.final" />
+        <target  name="finalDesc" ref="Maya_ScreenSpaceAmbientOcclusion.finalDesc" />
+        <float4  name="viewport" ref="Maya_ScreenSpaceAmbientOcclusion.viewport" />
+        <camera  name="camera" ref="Maya_ScreenSpaceAmbientOcclusion.camera" />
+        <target  name="sceneBuffer" ref="Maya_ScreenSpaceAmbientOcclusion.sceneBuffer" />
+        <float4  name="scissorRect" ref="Maya_ScreenSpaceAmbientOcclusion.scissorRect" />
+        <countedObject  name="holdOutList" ref="Maya_ScreenSpaceAmbientOcclusion.holdOutList" />
+        <countedObject  name="postEffectList" ref="Maya_ScreenSpaceAmbientOcclusion.postEffectList" />
+        <countedObject  name="advancedEffectList" ref="Maya_ScreenSpaceAmbientOcclusion.advancedEffectList" />
+        <bool  name="Maya_NDRenderer_Front_FrontFaces" ref="Maya_ScreenSpaceAmbientOcclusion.FrontFaces" />
+        <bool  name="EnableSSAO" ref="Maya_ScreenSpaceAmbientOcclusion.EnableNormalDepth32" />
+        <bool  name="SupportsClipping" ref="Maya_ScreenSpaceAmbientOcclusion.SupportsClipping" />
+        <target  name="backFaceDepth" ref="Maya_ScreenSpaceAmbientOcclusion.backFaceDepth" />
+        <int  name="SampleCount" ref="Maya_ScreenSpaceAmbientOcclusion.SampleCount" />
+        <float  name="SampleRadius" ref="Maya_ScreenSpaceAmbientOcclusion.SampleRadius" />
+        <int  name="BlurAmount" ref="Maya_ScreenSpaceAmbientOcclusion.BlurAmount" />
+        <bool  name="BlurDouble" ref="Maya_ScreenSpaceAmbientOcclusion.BlurDouble" />
+        <float  name="CompositeFactor" ref="Maya_ScreenSpaceAmbientOcclusion.CompositeFactor" />
+        <float3  name="CompositeColor" ref="Maya_ScreenSpaceAmbientOcclusion.CompositeColor" />
+        <bool  name="evaluateAll" ref="EnableSSAO.evaluateAll" />
+    </properties>
+    <values>
+        <float4 name="viewport" value="0.000000,0.000000,1.000000,1.000000"  />
+        <float4 name="scissorRect" value="0.000000,0.000000,1.000000,1.000000"  />
+        <bool name="Maya_NDRenderer_Front_FrontFaces" value="true"  />
+        <bool name="EnableSSAO" value="true"  />
+        <bool name="SupportsClipping" value="false"  />
+        <int name="SampleCount" value="16"  />
+        <float name="SampleRadius" value="0.028107"  />
+        <int name="BlurAmount" value="8"  />
+        <bool name="BlurDouble" value="true"  />
+        <float name="CompositeFactor" value="0.940000"  />
+        <float3 name="CompositeColor" value="0.000000,0.000000,0.000000"  />
+    </values>
+    <outputs>
+        <target  name="res" ref="EnableSSAO.res" />
+    </outputs>
+</fragment_graph>

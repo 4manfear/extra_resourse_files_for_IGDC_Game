@@ -1,0 +1,44 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//
+//
+//
+// Creation Date:  Dec 2000
+//
+//
+//  Procedure Name:
+//      createSubdCylinder
+//
+//  Description:
+//		Create a subd cylinder
+//
+//  Input Arguments:
+//      None
+//
+//  Return Value:
+//      None.
+//
+global proc createSubdCylinderProc(){
+	string $polyName[];
+	string $subdName[];   
+	$polyName = `polyCylinder -r 1.2 -h 2.2 -sx 6 -sy 2 -sz 1 -ax 0 1 0 -cuv 2 -ch 1`;
+
+	$subdName = `polyToSubdiv -ap 0 -ch off -aut off  -maxPolyCount 1000  -maxEdgesPerVert 32 -name "subdivCylinder#" $polyName[0]`;
+	delete $polyName;
+	select -r $subdName;
+}
+
+global proc createSubdCylinder(){
+	string $cmd;
+	
+	$cmd = "createSubdCylinderProc()";
+	
+	evalEcho($cmd);
+}

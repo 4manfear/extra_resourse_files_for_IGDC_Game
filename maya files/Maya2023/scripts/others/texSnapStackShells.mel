@@ -1,0 +1,108 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+// ===========================================================================
+//
+//  Procedure Name:
+//      texSnapStackShells
+//
+//  Description:
+//      UV workflow function used for snapping UV shells to each other by 
+//      moving them in a way so that the selected UV coordinates are stacked
+//      on top of each other.
+//
+//  Input Arguments
+//      None.
+//
+//  Return Value:
+//      None.
+//
+//  Notes:
+//  This script is part of the implementation of Nightshade UV Editor into
+//  Autodesk Maya. For testing purposes, keep the source commands at the top
+//  and then just source this entire script.
+//
+// ===========================================================================
+
+
+global proc texSnapStackShells()
+{
+	// Get original selection
+	string $selection[] = `ls -selection`;
+	string $compSelType = `getComponentMask`;
+
+	string $selectedItems[] = `filterExpand -ex false -sm 35`;
+	if (size($selectedItems) == 0)
+	{
+		// If Convert Selection is ON, try to convert the current selection to uvs.
+		int $val = `optionVar -q polyAutoConvertAction`;
+		if ( 1 == $val ) {
+			PolySelectConvert 4;
+			$selectedItems = `filterExpand -ex false -sm 35`;
+		}
+
+		// Check if the set of uvs is still empty.
+		if (size($selectedItems) == 0) {
+			error((uiRes("m_texSnapStackShells.kNoUVsSelected")));
+			return;
+		}
+	}
+
+	string $selectedUVs[] = `ls -selection -flatten`;
+	int $totalUVs = size($selectedUVs);
+
+	// Calculate U and V centers - use as snapping point
+	float $uvBox[] = `polyEvaluate -boundingBoxComponent2d`;
+	float $centerU = 0.5 * ( $uvBox[0] + $uvBox[1] );
+	float $centerV = 0.5 * ( $uvBox[2] + $uvBox[3] );
+
+	// Progress window
+	global string $gMainProgressBar;
+	progressBar -e
+		-beginProgress
+		-isInterruptable true
+		-minValue 0
+		-maxValue $totalUVs
+		-status (uiRes("m_texSnapStackShells.kUvEditorSnapStackShellsMsg"))
+		$gMainProgressBar;
+
+	// Go through each UV
+	for ($uv in $selectedUVs)
+	{
+		// Break if cancelled by user
+		if (`progressBar -q -isCancelled $gMainProgressBar`)
+		{
+			warning((uiRes("m_texSnapStackShells.kUvEditorSnapStackShellsInteruptMsg")));
+			break;
+		}
+
+		// Calculate distance to snapping point
+		float $position[] = `polyEditUV $uv -q`;
+		float $distanceU = $centerU - $position[0];
+		float $distanceV = $centerV - $position[1];
+
+		// Move the shell
+		select -replace $uv;
+		polyEditUVShell
+			-relative true
+			-uValue $distanceU
+			-vValue $distanceV
+		;
+
+		// Update the progress window
+		progressBar -edit -step 1 $gMainProgressBar;
+	}
+
+	// Close the progress window and reselect the original selection
+	progressBar -e -endProgress $gMainProgressBar;
+
+	//restore the original component mask	
+	setComponentMask($compSelType); 
+
+	//select the original selection
+	select -replace $selection;
+}

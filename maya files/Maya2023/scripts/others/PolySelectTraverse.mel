@@ -1,0 +1,75 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  1 April 1997
+//
+//  Description:
+//      polygon selection traversal utility
+//
+
+//////////////////////////////////////////////////////////////////////
+
+global proc PolySelectTraverse(int $traversal)
+{
+	string $result[] = `filterExpand -ex false -sm 31 -sm 32 -sm 34 -sm 35`;
+
+	// Check for any poly components first.
+	if ( 0 < size($result) )
+	{
+		// Vertex first
+		string $compResult[] = `polyListComponentConversion -fv -tv $result`;
+		if (size($compResult) > 0)
+		{
+			polySelectConstraint -pp $traversal -t 0x0001;	
+			return;
+		}
+
+		// Then edges
+		$compResult = `polyListComponentConversion -fe -te $result`;
+		if (size($compResult) > 0)
+		{
+			polySelectConstraint -pp $traversal -t 0x8000;
+			return;
+		}
+	
+		// Then faces
+		$compResult = `polyListComponentConversion -ff -tf $result`;
+		if (size($compResult) > 0)
+		{
+			polySelectConstraint -pp $traversal -t 0x0008;
+			return;
+		}
+
+		// Then uvs
+		$compResult = `polyListComponentConversion -fuv -tuv $result`;
+		if (size($compResult) > 0)
+		{
+			polySelectConstraint -pp $traversal -t 0x0010;
+			return;
+		}
+	}
+
+	// Now try Nurbs cv's.
+	$result = `filterExpand -ex false -sm 28`;
+	if (size($result) > 0)
+	{
+		if ( 1 == $traversal)
+		{
+			nurbsSelect -growSelection 1;
+		}
+		else if ( 2 == $traversal)
+		{
+			nurbsSelect -shrinkSelection 1;
+		}
+		else if ( 3 == $traversal)
+		{
+			nurbsSelect -borderSelection;
+		}
+	}
+}

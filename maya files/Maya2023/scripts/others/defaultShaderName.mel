@@ -1,0 +1,51 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+
+//
+//  Procedure Name:
+//      defaultShaderName
+//
+//  Description:
+//		Returns the name of the default shader, that is, the shader associated
+//	with the "initialShadingGroup", if possible, otherwise the hard-coded name
+//			lambert1 or standardSurface1
+//
+//  Input Arguments:
+//      None.
+//
+//  Return Value:
+//      None.
+//
+global proc string defaultShaderName()
+{
+	global string $gDefaultShaderName = "";
+	if( $gDefaultShaderName == "" ){
+		// Examine initialShadingGroup to get shader name.
+		//
+		if( `objExists "initialShadingGroup"` ){
+			string $sources[] = ` listConnections -s 1 -type lambert "initialShadingGroup"`;
+			if( size($sources) == 1 ){
+				// Use the only shader
+				//
+				$gDefaultShaderName = $sources[0];
+			}
+		}
+		if( $gDefaultShaderName == "" ){
+			// Couldn't find it by examining initialShadingGroup; use
+			// hard-coded name instead 
+			//
+			string $defaultSurfaceShaderEnvVar = getenv("MAYA_DEFAULT_SURFACE_SHADER");
+			if( $defaultSurfaceShaderEnvVar == "standardSurface" ){
+			    $gDefaultShaderName = "standardSurface1";
+			} else {
+			    $gDefaultShaderName = "lambert1";
+			}
+		}
+	}
+	return $gDefaultShaderName;
+}

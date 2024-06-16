@@ -1,0 +1,283 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+// Description:
+// 
+// Execute interactive sequence rendering using the current renderer.
+//
+
+source renderSequenceOptionsWindow.mel;
+
+proc doRenderSequence()
+{
+	string $currRenderer = currentRenderer();
+	string $rendererUIName = `renderer -query -rendererUIName $currRenderer`;
+
+	// Get the render command for current renderer
+	string $seqRenderCmd = `renderer -query -renderSequenceProcedure $currRenderer`;
+	if ($seqRenderCmd == "")
+	{
+		string $msg = (uiRes("m_renderSequence.kNoRenderSequenceProc"));
+		warning (`format -stringArg $rendererUIName $msg`);
+		return;
+	}
+
+	string $options = "";
+
+	// Make sure the option vars exists
+	createRenderSequenceOptionVars();
+
+	int $useRegion  = `optionVar -q "renderSequenceRegion"`;
+	int $allLayers  = `optionVar -q "renderSequenceAllLayers"`;
+	int $allCameras = `optionVar -q "renderSequenceAllCameras"`;
+	int $addToRV = `optionVar -q "renderSequenceAddToRenderView"`;
+	int $addAllLayers  = `optionVar -q "renderSequenceAddAllLayers"`;
+	int $addAllCameras = `optionVar -q "renderSequenceAddAllCameras"`;
+    int $ignoreLocalOverrides = `optionVar -q "renderSequenceIgnoreLocalOverrides"`;
+
+	string $editor = showRenderView();
+
+	// Cancel the Hypershade snapshot if it is still going
+	if (`renderWindowEditor -query -snapshotMode $editor`)
+	{
+		renderWindowMenuCommand("grabSwatch", $editor);
+	}
+
+	// If the current renderer was in IPR mode, then stop previous IPR.
+	if (isRunningIpr())
+	{
+		// Stop previous IPR.
+		stopIprRendering($editor);
+	}
+
+	// Get current layer and frame time
+	string $currentLayer = `editRenderLayerGlobals -q -currentRenderLayer`;
+	float $currentTime = `currentTime -q`;
+
+	// Disable render view blending
+	renderWindowEditor -e -blendMode -1 $editor;
+	renderWindowEditor -e -compDisplay 0 $editor;
+
+	// Setup render preparation (including saving the assembly
+	// configuration, if required by default render traversal set).
+	prepareRender -setup;
+
+	// Run preRender traversal of default render traversal set.
+	prepareRender -invokePreRender;
+
+	// Execute pre mel script
+	string $melScript = `getAttr defaultRenderGlobals.preMel`;
+	if($melScript != "") {
+		eval $melScript;
+	}
+
+	// Find render layers to render
+	string $renderLayers[]; 
+	clear($renderLayers);
+	if($allLayers == 0)
+	{
+		// Render current layer only
+		$renderLayers[0] = $currentLayer;
+	}
+	else
+	{
+		// Get list of renderable render layers
+		string $allLayers[] = `listConnections renderLayerManager.renderLayerId`;
+		for ($layer in $allLayers)
+		{
+			if(`getAttr ($layer + ".renderable")`) {
+				$renderLayers[size($renderLayers)] = $layer;
+			}
+		}
+	}
+
+	// Make sure we found any layer
+	int $numLayers = size($renderLayers);
+	if ($numLayers == 0)
+	{
+		string $msg = (uiRes("m_renderSequence.kNoRenderableLayer"));
+		error($msg);
+		return;
+	}
+
+	// Set animation frame range
+	int $animation = `getAttr defaultRenderGlobals.animation`;
+	float $startFrame = `getAttr defaultRenderGlobals.startFrame`;
+	float $endFrame = `getAttr defaultRenderGlobals.endFrame`;
+	float $byFrame = `getAttr defaultRenderGlobals.byFrameStep`;
+	if (!$animation)
+	{
+		$startFrame = $currentTime;
+		$endFrame = $currentTime;
+		$byFrame = 1;
+	}
+
+	// Sanity check on frame range
+	if($byFrame <= 0)
+	{
+		error((uiRes("m_renderSequence.kByFrameNegative")));
+		return;
+	}
+	if($startFrame > $endFrame)
+	{
+		error((uiRes("m_renderSequence.kEndFrameLessThanStart")));
+		return;
+	}
+
+	// Find current camera
+	string $currentCamera = getCurrentCamera();
+	string $camera = "";
+	if (!$allCameras)
+	{
+		$camera = $currentCamera;
+	}
+
+	// Setup region rendering if requested
+	int $prevUseRenderRegion = `getAttr defaultRenderGlobals.useRenderRegion`;
+	setAttr defaultRenderGlobals.useRenderRegion $useRegion;
+
+	// Suspend material view renderer while rendering is running,
+	// but make sure to resume it again after render completion
+	renderer -materialViewRendererSuspend true;
+	evalDeferred -lp "renderer -materialViewRendererSuspend false";
+
+    if($ignoreLocalOverrides && mayaHasRenderSetup())
+    {
+        renderSetupLocalOverride -st off;
+    }
+	// Feedback
+	print (`format -s $rendererUIName (uiRes("m_renderSequence.kBeginRenderSeq"))`);
+
+	int $completed = 1;
+	for($i=0; $i<$numLayers; $i++)
+	{
+		string $layer = $renderLayers[$i];
+		string $layerDisplayName = `renderLayerDisplayName $layer`;
+
+		// Switch to this layer
+		if(catch(`editRenderLayerGlobals -currentRenderLayer $layer`)) {
+			string $msg = (uiRes("m_renderSequence.kCannotRenderLayer"));
+			warning(`format -s $layer $msg`);
+			continue;
+		}
+
+		// Run preRenderLayer traversal of default render traversal set.
+		prepareRender -invokePreRenderLayer;
+
+		// Execute pre render layer mel script
+		$melScript = `getAttr defaultRenderGlobals.preRenderLayerMel`;
+		if( $melScript != "" ) {
+			eval $melScript;
+		}
+
+		// Dynamics runup
+		dynRunupForBatchRender();
+
+		// Get the render resolution
+		string $cameraPanel = `getCameraPanel($currentCamera)`;
+		int $resolution[] = `getTestResolution($cameraPanel)`;
+
+		// Get save option for this layer
+		string $saveToRenderView = "";
+		if ($addToRV && ($addAllLayers || $layer == $currentLayer))
+		{
+			if ($addAllCameras) {
+				$saveToRenderView = "all";
+			} else {
+				$saveToRenderView = $currentCamera;
+			}
+		}
+
+		// Display the region if that is used
+		if ($useRegion)
+		{
+			renderWindowEditor -edit -showRegion $resolution[0] $resolution[1] $editor;
+		}
+
+		string $args = `format -s $resolution[0] -s $resolution[1] -s $camera -s $saveToRenderView "(^1s, ^2s, \"^3s\", \"^4s\")"`;
+		string $cmd = $seqRenderCmd + $args;
+
+		// Feedback
+		print (`format -s $layerDisplayName -s $startFrame -s $endFrame 
+			(uiRes("m_renderSequence.kRenderFrameToFrame"))`);
+
+		// Do the rendering
+		int $status = catch( `eval $cmd` );
+
+		// Execute post render layer mel script
+		$melScript = `getAttr defaultRenderGlobals.postRenderLayerMel`;
+		if( $melScript != "" ) {
+			eval $melScript;
+		}
+
+		// Run postRenderLayer traversal of default render traversal set.
+		prepareRender -invokePostRenderLayer;
+
+		// A return status other than zero indicates
+		// the rendering faild or was aborted by user
+		if ($status != 0)
+		{
+			$completed = 0;
+			break;
+		}
+	}
+
+	// Feedback
+	if ($completed) {
+		print ((uiRes("m_renderSequence.kRenderSeqCompleted")));
+	} else {
+		print ((uiRes("m_renderSequence.kRenderSeqCancelled")));
+	}
+
+    if($ignoreLocalOverrides && mayaHasRenderSetup())
+    {
+        renderSetupLocalOverride -st on;
+    }
+
+	// Execute post mel script
+	$melScript = `getAttr defaultRenderGlobals.postMel`;
+	if( $melScript != "" ) {
+		eval $melScript;
+	}
+
+	// Run postRender traversal of default render traversal set.
+	prepareRender -invokePostRender;
+
+	// Clean up after rendering, including restoring the assembly
+	// configuration, if required by default render traversal set.
+	prepareRender -restore;
+
+	// Switch back to original time
+	currentTime $currentTime;
+
+	// Switch back to original layer
+	editRenderLayerGlobals -currentRenderLayer $currentLayer;
+
+	// Switch back to original region setting
+	setAttr defaultRenderGlobals.useRenderRegion $prevUseRenderRegion;
+}
+
+global proc renderSequence()
+{
+    // Get the render sequence alternate output file location
+    string $renderSequenceAlternateOutputFileLocation = "";
+    if(`optionVar -exists "RenderSequenceAlternateOutputFileLocation"`)
+    {
+        $renderSequenceAlternateOutputFileLocation =
+            `optionVar -q "RenderSequenceAlternateOutputFileLocation"`;
+    }
+    if($renderSequenceAlternateOutputFileLocation == "")
+    {
+        $renderSequenceAlternateOutputFileLocation = renderSequenceDefaultAlternateOutputFileLocation();
+    }
+
+    // temporarily override the file output directory
+    optionVar -sv "OverrideFileOutputDirectory" $renderSequenceAlternateOutputFileLocation;
+    catch(doRenderSequence());
+    optionVar -remove "OverrideFileOutputDirectory";
+}

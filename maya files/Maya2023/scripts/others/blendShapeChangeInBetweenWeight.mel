@@ -1,0 +1,211 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//  Procedure Name:
+//      blendShapeChangeInBetweenWeight
+//
+//  Description:
+//		change the weight of an in-between target
+//
+//  Input Arguments:
+//		bs				- Blend shape name;
+//		targetIndex		- Hero target index of the in-between target;
+//		oldIbWeight		- Current weight of the in-between target;
+//		$newIbWeight	- New weight of the in-between target;
+//
+global proc int blendShapeChangeInBetweenWeight(string $bs, int $targetIndex, float $oldIbWeight, float $newIbWeight)
+{
+	int $newIbIndex = $newIbWeight * 1000 + 5000;
+	int $oldIbIndex = $oldIbWeight * 1000 + 5000;
+	if($newIbIndex == 6000)
+	{
+		error( (uiRes("m_blendShapeChangeInBetweenWeight.kInBetweenErrorWeightEqualsToOne")));
+		return 0;
+	}
+
+	string $baseGeomNames[]=`blendShape -q -g $bs`;
+	int $baseGeomIndices[]=`blendShape -q -gi $bs`;
+	if( size($baseGeomNames) == 0 || size($baseGeomNames) != size($baseGeomIndices) )
+		return 0;
+	
+	string $targetGeomNames[];
+
+	for ($baseIndex in $baseGeomIndices)
+	{
+		string $attr = $bs + ".inputTarget[" + $baseIndex + "].inputTargetGroup[" + $targetIndex + "].inputTargetItem";
+		int $ibIndices[] = `getAttr -mi $attr`;
+		
+		if (intArrayContains($newIbIndex, $ibIndices))
+		{
+			//IB already exist, revert
+			error( (uiRes("m_blendShapeChangeInBetweenWeight.kInBetweenErrorWeightDuplicate")));
+			return 0;
+		}
+
+		$attr += "[" + $oldIbIndex + "].inputGeomTarget";
+		string $targetGeomName[] = `listConnections -sh 1 $attr`;
+		// Get the physical geom shape if the in-between has target shape connected.
+		if (size($targetGeomName))
+			$targetGeomNames[size($targetGeomNames)] = $targetGeomName[0];
+		else
+			$targetGeomNames[size($targetGeomNames)] = "";
+
+		// Currently when add inbetweens by UI it will always be added for every base geom
+		// if there are multiple bases. So no need to loop them all.
+		// If this changes in the future, we may need to adjust this logic too.
+	}
+	
+	string $ibTypeAttr = $bs + ".inbetweenInfoGroup[" + $targetIndex + "].inbetweenInfo[" + $oldIbIndex + "].inbetweenTargetType";
+	int $ibType = `getAttr $ibTypeAttr`; 
+
+	// Re-add the in-between targets to each base geom with the new weight.
+	string $addCmd = "doBlendShapeAddInBetweenTargetWithSpecifiedBaseAndTarget " + $bs + " on " + $targetIndex + " " + $newIbWeight + " " + $ibType;
+
+	// Construct the base and target geoms string.
+	$addCmd += " {";
+	for ($i = 0; $i<size($baseGeomNames); ++$i)
+	{
+		if ($i != 0)
+			$addCmd += ", ";
+		$addCmd += "\"" + $baseGeomNames[$i] + "\"";
+	}
+	$addCmd += "} {";
+	for ($i = 0; $i<size($targetGeomNames); ++$i)
+	{
+		if ($i != 0)
+			$addCmd += ", ";
+		$addCmd += "\"" + $targetGeomNames[$i] + "\"";
+	}
+	$addCmd += "}";
+
+	evalEcho $addCmd;
+
+	// If the physical geom shape doesn't exist, copy the delta to the new in-between target.
+	for ($i = 0; $i<size($baseGeomIndices); ++$i)
+	{
+		if ($targetGeomNames[$i] == "")
+			blendShape -e -copyInBetweenDelta $baseGeomIndices[$i] $targetIndex $oldIbIndex $newIbIndex $bs;		
+	}
+
+	string $oldAttr = $bs + ".inbetweenInfoGroup[" + $targetIndex + "].inbetweenInfo[" + $oldIbIndex + "]";
+	string $newAttr = $bs + ".inbetweenInfoGroup[" + $targetIndex + "].inbetweenInfo[" + $newIbIndex + "]";
+
+	// Set the in-between target name as the same as before.
+	string $ibName = `getAttr ($oldAttr + ".inbetweenTargetName")`;
+	setAttr ($newAttr + ".inbetweenTargetName") -type "string" $ibName;
+
+	// Set the in-between target interpolation info as the same as before.
+	int $ibInterpolation = `getAttr ($oldAttr + ".interpolation")`;
+	setAttr ($newAttr + ".interpolation") $ibInterpolation;
+	
+	int $cIdx[] = `getAttr -mi ($oldAttr + ".interpolationCurve")`; 
+	for ($c in $cIdx)
+	{
+		float $pos[] = `getAttr ($oldAttr + ".interpolationCurve[" + $c + "]")`;
+		setAttr ($newAttr + ".interpolationCurve[" + $c + "]") -type float2 $pos[0] $pos[1];
+	} 
+	
+	// Set the in-between target visibility as the same as before.
+	int $ibVisibility = `getAttr ($oldAttr + ".inbetweenVisibility")`;
+	setAttr ($newAttr + ".inbetweenVisibility") $ibVisibility;
+
+	// Re-enable the edit status if the in-between target is currently sculpted.
+	for ($baseIndex in $baseGeomIndices)
+	{
+		string $attr = $bs + ".inputTarget[" + $baseIndex + "].sculptTargetIndex";
+		int $sculptTargetIdx = `getAttr $attr`;
+
+		string $attrIbWeight = $bs + ".inputTarget[" + $baseIndex + "].sculptInbetweenWeight";
+		float $sculptIbWeight = `getAttr $attrIbWeight`;
+
+		if( $sculptTargetIdx == $targetIndex && abs($sculptIbWeight-$oldIbWeight) < 1e-5 )
+		{
+			setAttr $attrIbWeight $newIbWeight;
+		}
+	}
+
+	// Remove the old in-between.
+	blendShapeDeleteInBetweenTarget($bs, $targetIndex, $oldIbIndex);
+
+	return 1;
+}
+
+global proc doBlendShapeAddInBetweenTargetWithSpecifiedBaseAndTarget(
+	string	$bsNodeName, 
+	string	$checkTopo,
+	int 	$heroTargetIndex,
+	float	$inBetweenWeight,
+	int		$inBetweenType, 
+	string	$baseGeoms[],
+	string	$targetGeoms[]
+	)
+{
+	int $baseNum = size($baseGeoms);
+	int $targetNum = size($targetGeoms);
+	if($baseNum != $targetNum)
+	{
+		error( (uiRes("m_blendShapeChangeInBetweenWeight.kBaseNumNoMatchTargetNum")));
+		return;
+	}
+	
+	int $inBetweenIndex = 5000 + $inBetweenWeight * 1000;
+		
+	// Get the target type of the hero target to add In-between.
+	// 0 for object space;
+	// 1 for tangent space;
+	// 2 for transform space;
+	string $heroTargetTypePlug = $bsNodeName + ".inputTarget[0].inputTargetGroup[" + $heroTargetIndex + "].pdm";
+	int $targetType = `getAttr $heroTargetTypePlug`;
+	string $typePara = "";
+	if ($targetType == 1) //tangent space
+		$typePara = " -tangentSpace";
+	if ($targetType == 2) //transform space
+	{
+		//Get the joint the hero target is using if the hero target is transform space type.
+		string $tmxPlug = $bsNodeName + ".inputTarget[0].inputTargetGroup[" + $heroTargetIndex + "].tmx";
+		$cmd = "listConnections " + $tmxPlug;
+		string $connections[] = evalEcho($cmd);
+		string $transformName = $connections[0];
+		
+		$typePara = " -transform " + $transformName;
+	}
+
+	string $inbetweenTypeString = "absolute";
+	if($inBetweenType == 1)
+	{
+		$inbetweenTypeString = "relative";
+	}
+	
+	for($i = 0; $i<$baseNum; ++$i)
+	{
+		int $deleteClonedBaseMesh = 0;
+		
+		string $baseGeom = longNameOf($baseGeoms[$i]);
+		
+		string $targetGeom = $targetGeoms[$i];
+		if(size($targetGeoms[$i]) == 0)
+		{
+			string $copyMesh[] = `duplicate $baseGeom`;
+			$targetGeom = $copyMesh[0];
+			$deleteClonedBaseMesh = 1;
+		}
+	
+		string $cmd =  "blendShape -e -ib -tc " + $checkTopo + " -ibt " + $inbetweenTypeString 
+				+ " -t " + $baseGeom + " " + $heroTargetIndex + " " + $targetGeom + " " + $inBetweenWeight + " "
+				+ $typePara + " " +$bsNodeName;
+		evalEcho $cmd;
+
+		if($deleteClonedBaseMesh)
+		{
+			delete $targetGeom;
+			$cmd = "blendShape -e -rtd " + $i + " " + $heroTargetIndex + " -ibi " + $inBetweenIndex + " " + $bsNodeName; 
+			evalEcho $cmd;
+		}
+	}
+	return;
+ }

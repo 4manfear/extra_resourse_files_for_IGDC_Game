@@ -1,0 +1,40 @@
+<!--
+===========================================================================
+Copyright 2015 Autodesk, Inc. All rights reserved.
+
+Use of this software is subject to the terms of the Autodesk license
+agreement provided at the time of installation or download, or which
+otherwise accompanies this software in either electronic or hard copy form.
+===========================================================================
+
+Top level fragment graph for constant shader plugin
+-->
+
+<fragment_graph name="channels" ref="channels" class="FragmentGraph" version="1.0">
+	<fragments>
+        <fragment_ref name="mayaTextureOutput" ref="mayaTextureOutput" />
+		<fragment_ref name="channelsBase" ref="channelsBase" />
+	</fragments>
+	<connections>
+        <connect from="channelsBase.output" to="mayaTextureOutput.mayaTextureOutput" name="mayaTextureOutput" />
+	</connections>
+	<properties>
+		<float3 name="inColor" ref="channelsBase.inColor" />
+		<float name="inAlpha" ref="channelsBase.inAlpha" />
+		<int name="channelR" ref="channelsBase.channelR" />
+		<int name="channelG" ref="channelsBase.channelG" />
+		<int name="channelB" ref="channelsBase.channelB" />
+		<int name="channelA" ref="channelsBase.channelA" />
+	</properties>
+	<values>
+		<float3 name="inColor" value="0.3,0.3,0.3" />
+		<float name="inAlpha" value="0.0" />
+		<int name="channelR" value="0" />
+		<int name="channelG" value="1" />
+		<int name="channelB" value="2" />
+		<int name="channelA" value="3" />
+	</values>
+	<outputs>
+        <struct name="mayaTextureOutput" ref="mayaTextureOutput.mayaTextureOutput" />
+	</outputs>
+</fragment_graph>

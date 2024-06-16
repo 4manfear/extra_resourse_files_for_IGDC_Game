@@ -1,0 +1,104 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+// Script:    textureWindowShelf.mel
+//
+//		Create texture window shelf.
+//
+
+global proc int hasDefaultShelfFile(string $fileName) 
+{ 
+	// get a list of files in the shelves directory 
+	string $shelfDirs = `internalVar -userShelfDir`; 
+		string $shelfArray[]; 
+	string $PATH_SEPARATOR = `about -win`? ";" : ":"; 
+	tokenize($shelfDirs, $PATH_SEPARATOR, $shelfArray); 
+	int $i; 
+	$fileName = $fileName + ".mel"; 
+	for ($i = 0; $i < size($shelfArray); $i++) 
+	{ 
+		string $shelfDir = $shelfArray[$i]; 
+		string $shelfFile[] = `getFileList -folder $shelfDir -fs $fileName`; 
+			int $nUVShelves = size($shelfFile); 
+		if ($nUVShelves) 
+			return true; 
+	} 
+	return false; 
+}
+
+global proc string getShelfDir()
+{
+	string $PATH_SEPARATOR = `about -win`? ";" : ":";
+	string $shelfDir[] = stringToStringArray(`internalVar -userShelfDir`, $PATH_SEPARATOR);
+	// Make sure we are using the shelves directory. 
+	int $position = 0; 
+	for ($position = 0; $position < size($shelfDir); $position++) { 
+		if ((startsWith($shelfDir[$position], (`internalVar -userPrefDir`))) && (endsWith($shelfDir[$position], "/prefs/shelves/"))) { 
+			// We have found the shelves directory. 
+			break; 
+		} 
+	}
+	return $shelfDir[$position];
+}
+
+// create "Remove Divider" popup menu
+global proc createRemoveDividerPopupMenu(string $parent)
+{
+	popupMenu -button 3 -parent $parent;
+			menuItem -label (uiRes("m_textureWindowShelf.kRemoveSeperator")) 
+					 -command ( "evalDeferred(\"deleteUI -control " + $parent + "\")");
+}
+
+global proc addUVShelfSeparator(string $parent) 
+{ 
+	// The actual shelf separator will be drawn as 2px (any scaling factor) wide line. 
+	// It will have 5px (at 100%) padding on each side. 
+	// Shelf icons are normally 20x20 (at 100%). 
+	string $uvShelfSeperator = `separator -parent $parent -width 12 -height 22 -style "shelf" -hr false`; 
+	createRemoveDividerPopupMenu($uvShelfSeperator); 
+}
+	
+global proc textureWindowShelf(string $shelfBar)
+{
+	if (!`shelfLayout -exists textureCustomShelf`)
+	{
+		string $texCustomShelfName = "textureCustomShelf";
+		string $fileName = "uvShelf_Custom";
+		shelfLayout 
+			-parent $shelfBar 
+			-cellWidth 22
+			-cellHeight 22
+			-height 28
+			-width 28
+			-spacing 4
+			$texCustomShelfName;
+		// Add popup menu "Add divider" for shelf
+		popupMenu -button 3 -parent $texCustomShelfName;
+			menuItem -label (uiRes("m_textureWindowShelf.kAddSeperator")) 
+					-command ( "addUVShelfSeparator " + $texCustomShelfName);
+		if (hasDefaultShelfFile($fileName))
+		{
+			string $fileWithPath = getShelfDir() + $fileName;
+			eval("source \"" + $fileWithPath + "\"");
+			eval($fileName);
+			string $shelfItems[] = `shelfLayout -q -childArray $texCustomShelfName`;
+			if(size($shelfItems))
+			{
+				// create popup menu "Remove Divider" for separator.
+				for($item in $shelfItems)
+				{
+					if (startString($item, 9) == "separator")
+					{
+						createRemoveDividerPopupMenu($item);
+					}
+				}
+			}
+		}
+		setParent ..;
+	}		
+}

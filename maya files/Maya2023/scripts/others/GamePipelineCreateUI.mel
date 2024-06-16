@@ -1,0 +1,88 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//  Description:
+//      Create UI components for gamepipeline plugin
+//
+
+global proc GamePipelineCreateUI()
+{
+    global string $gMainWindow;  // defined by Maya
+     
+    setParent $gMainWindow;
+    if (`menu -q -exists mainFileMenu`) 
+    {
+        setParent -menu mainFileMenu;
+        if (!`menuItem -q -exists ($gMainWindow+"|mainFileMenu|sendToUnityMenu")`)
+        {
+            // Insert Send To (Game Engines) menus
+            string $menuSendToUnity = getPluginResource( "GamePipeline", "kSendToUnity" );
+            
+            // Unity
+            menuItem -divider true -insertAfter exportActiveFileOptions sendToDivider;
+            menuItem -subMenu true -version "2016" -label $menuSendToUnity -insertAfter sendToDivider sendToUnityMenu;
+
+			menuItem -version "2016" -rtc "SendToUnityAll";
+            menuItem -version "2016" -rtc "SendToUnitySelection";
+            menuItem -version "2016" -rtc "SendToUnitySetProject";
+
+            // Unreal
+            string $menuSendToUnreal = getPluginResource( "GamePipeline", "kSendToUnreal" );
+            setParent -menu mainFileMenu;
+            menuItem -subMenu true -version "2016" -label $menuSendToUnreal -insertAfter sendToUnityMenu sendToUnrealMenu;
+
+			menuItem -version "2016" -rtc "SendToUnrealAll";
+            menuItem -version "2016" -rtc "SendToUnrealSelection";
+            menuItem -version "2016" -rtc "SendToUnrealSetProject";
+        }
+    }
+}
+
+global proc GamePipelineSetUnityProject()
+{
+    string $selectProject = getPluginResource( "GamePipeline", "kSelectUnityProject" );
+    string $select = getPluginResource( "GamePipeline", "kSelect" );
+
+    $dir = `workspace -q -rd`;
+    string $unityProjectName[]  = `fileDialog2 -fileMode 3 -okCaption $select -caption $selectProject -startingDirectory $dir`;
+    
+    int $len = size($unityProjectName);
+    if( $len > 0 && $unityProjectName[0] != "" )
+    {
+        optionVar -stringValue "UnityProject" $unityProjectName[0];
+    }
+}
+
+
+global proc GamePipelineSetUnrealProject()
+{
+    string $selectProject = getPluginResource( "GamePipeline", "kSelectUnrealProject" );
+    string $select = getPluginResource( "GamePipeline", "kSelect" );
+
+    $dir = `workspace -q -rd`;
+    string $UnrealProjectName[]  = `fileDialog2 -fileMode 3 -okCaption $select -caption $selectProject -startingDirectory $dir`;
+    
+    int $len = size($UnrealProjectName);
+    if( $len > 0 && $UnrealProjectName[0] != "" )
+    {
+        optionVar -stringValue "UnrealProject" $UnrealProjectName[0];
+    }
+}
+
+global proc GamePipelineDeleteUI()
+{
+    global string $gMainWindow;  // defined by Maya
+    // Delete GamePipeline menu
+    if (!`pluginInfo -q -loaded GamePipelineCmd`) {
+        if (`menuItem -q -exists sendToUnityMenu`) {
+            deleteUI -menuItem sendToDivider;
+            deleteUI -menuItem sendToUnityMenu;
+            deleteUI -menuItem sendToUnrealMenu;
+        }
+    }
+}

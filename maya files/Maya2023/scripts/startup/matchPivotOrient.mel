@@ -1,0 +1,20 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc matchPivotOrient()
+{
+	string $sel[] = `ls -sl`;
+	int $count = size($sel);
+	if ($count > 1) {
+		string $target = $sel[$count-1];
+		string $sources[] = stringArrayRemove({$target}, $sel);
+		float $ori[] = `xform -q -ws -ro $target`;
+		rotate -a -pcp -pgp -ws -fo $ori[0] $ori[1] $ori[2] $sources;
+	} else {
+		error (uiRes("m_matchPivotOrient.kNotEnoughObjects"));
+	}
+}

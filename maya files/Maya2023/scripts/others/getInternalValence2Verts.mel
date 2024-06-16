@@ -1,0 +1,41 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc string[] getInternalValence2Verts(string $inPoly)
+{
+	string $oldSel[] = `ls -sl`;
+    select -cl;  
+
+    select -add ($inPoly+".vtx[*]");
+
+	int $type[] = `polySelectConstraint -q -t`;
+
+    polySelectConstraint -t 0x0001;
+
+	// Query and remember the current settings of selection Constraints
+	//
+	int $iv[]=`polySelectConstraint -q -orb`;
+	int $or[]=`polySelectConstraint -q -or`;
+	int $mm[]=`polySelectConstraint -q -m`;
+	int $ww[]=`polySelectConstraint -q -w`;
+
+	polySelectConstraint -orb 2 2 -or true -w 2 -m 2;
+
+	string $res[] = `ls -sl`;
+
+	// Restore the earlier settings of selection Constraints
+	//
+	polySelectConstraint -orb $iv[0] $iv[1] -or $or[0];
+	polySelectConstraint -m $mm[0];
+	polySelectConstraint -w $ww[0];
+    polySelectConstraint -t $type[0];
+
+	select -cl;
+	select $oldSel;
+	return $res;
+}
+

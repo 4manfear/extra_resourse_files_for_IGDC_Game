@@ -1,0 +1,67 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//  Procedure Name:
+//  MASHconnectToType
+//
+//  Description;
+//  Connects the selected MASH network to the selected Type's animation deformer.
+//
+global proc MASHconnectToType() {
+
+    string $sel[] = `ls -sl`;
+    int $sucsess = 0;
+
+    string $waiter;
+    string $type;
+    //go through the selected objects
+    for ($obj in $sel) {
+        string $id = `nodeType $obj`;
+        if ($id == "MASH_Waiter") {
+            $waiter = $obj;
+        } else if ($id == "transform") {
+            string $messageConns[] = `listConnections -d on -s off -p off ($obj + ".message")`;
+            for ($conn in $messageConns) {
+                if (`nodeType $conn` == "type") {
+                    $type = $conn;
+                }
+            }
+        }
+    }
+    if (size($waiter) > 0 && size($type) > 0) {
+
+        $sucsess = 1;
+        string $shellDeformer[] = `listConnections -d on -s off -p off ($type + ".animationMessage")`;
+        if (size($shellDeformer) > 0) {
+            if (`objExists ($shellDeformer[0]+".inputPoints")`) {
+                string $distMessage[] = `listConnections -d off -s on -p off ($waiter + ".waiterMessage")`;
+                string $adjustMessage[] = `listConnections -d on -s off -p off ($type + ".alignmentMode")`;
+                if (size($distMessage) && size($adjustMessage)) {
+                    connectAttr -force ($adjustMessage[0]+".shellPositions") ($distMessage[0]+".inPositionPP");
+                    setAttr ($distMessage[0]+".arrangement") 5;
+                    connectAttr -force ($adjustMessage[0]+".shellPositions") ($waiter+".shellPositions");
+                }
+                connectAttr -force ($waiter+".outputPoints") ($shellDeformer[0]+".inputPoints");
+            } else {
+                connectAttr -force ($waiter+".inPositionPP") ($shellDeformer[0]+".positionInPP");
+                connectAttr -force ($waiter+".inScalePP") ($shellDeformer[0]+".scaleInPP");
+                connectAttr -force ($waiter+".inRotationPP") ($shellDeformer[0]+".rotationInPP");
+            }
+            setAttr ($shellDeformer[0]+".enableAnimation") 1;
+            setAttr ($type+".animationScaleX") 0;
+            setAttr ($type+".animationScaleY") 0;
+            setAttr ($type+".animationScaleZ") 0;
+        } else {
+            MASHinViewMessage((getPluginResource("MASH", "kNoShellDeformer")), "Error");
+        }
+    }
+
+    if (!$sucsess) {
+        MASHinViewMessage((getPluginResource("MASH", "kConnectToTypeWarning")), "Warning");
+    }
+}

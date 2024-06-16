@@ -1,0 +1,267 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//
+//  Creation Date:  Jan, 2004
+//
+//  Description:
+//	This method is called when a deformer is added to a shape in "after" 
+//  mode. It transfers shaders and any other sets from the original shape onto the deformed shape.
+//	For shaders, it removes the deformed shape from any shading groups it belongs to and copies
+// 	the shading from the original shape.
+//
+//  Input Arguments:
+//	  	$origShape: the original, undeformed shape
+//  	$newShape:  the deformed shape
+//
+proc int checkIsTransform(string $obj)
+{
+	string $nt[] = `ls -type transform $obj`;
+	return size($nt);
+}
+
+global proc
+deformerAfterObjectSetMod(string $origShape, string $newShape)
+{
+	// Create a do-nothing command that sets a value to its original value.
+	// We execute this command to ensure that this script does something and gets
+	// placed as a chunk on the undo queue. Otherwise the calling method in C++
+	// confused and thinks something went wrong because the undo queue was empty
+	// even after executing the command.
+	//
+	int $ihi = `getAttr time1.ihi`;
+	setAttr time1.ihi $ihi;
+
+	
+	if (nodeType($newShape) == "particle") {
+		return;
+	}
+	
+	string $setsOrigAll[] = `listConnections -type objectSet $origShape`;
+	string $setsCurrentAll[] = `listConnections -type objectSet $newShape`;
+	string $setsOrig[] = stringArrayRemoveDuplicates($setsOrigAll);
+	string $setsCurrent[] = stringArrayRemoveDuplicates($setsCurrentAll);	
+	if (size($setsOrig) == 1 && size($setsCurrent) == 1) {
+		if ($setsCurrent[0] == $setsOrig[0]) {
+			// They already have the same set.
+			//
+			return;
+		}
+	}
+
+	string $set;
+	for ($set in $setsCurrent) {
+		// only remove newShape from its current shading engines
+		// (some deformers like sculpt will use sets on the deformed
+		// shape, so we shouldn't remove it from those)
+		//
+		if( `objectType -isa shadingEngine $set` ) {
+			sets -rm $set $newShape;
+		}
+	}
+
+	// Share the object groups instead of copying them when we add the
+	// deformer after a referenced shape. We are able to edit the object
+	// groups from the referenced shape by inserting groupParts nodes.
+	//
+	catch(shareSetsAfterReferencedObjectSet($origShape, $newShape));
+
+	string $origParent[] = `listRelatives -path -parent $origShape`;
+	string $uniqueName[] = `ls $origShape`;
+	
+	for ($set in $setsOrig) {
+		string $mems[] = `sets -q $set`;
+		for ($mem in $mems) {
+			string $buff[];
+			tokenize($mem,".",$buff);
+
+			string $toMatch = checkIsTransform($buff[0]) ? $origParent[0] : $uniqueName[0];
+			string $matching = `match $toMatch $mem`;
+			if (size($matching) == size($toMatch)) {
+				// Do not move deformer sets
+				//
+				string $dfmCnx[] = `listConnections -type geometryFilter $set`;
+				if ( 0 == size( $dfmCnx ) ) {
+					string $subst = `substitute $toMatch $mem $newShape`;
+					string $setsCmd = ("sets -forceElement "+$set+" \""+$subst+"\"");
+					catch(`eval $setsCmd`);
+				}
+			}
+		}
+	}
+}
+
+proc int getInstanceNumber(string $uniqueName)
+{
+	// Return the instance number as instanced plug index.
+	// We don't have a MEL equivalent to MDagPath::instanceNumber() now.
+	//
+	python("def _internal_get_instance_number(uniqueName): \n"
+		+  "    import maya.OpenMaya as om \n"
+		+  "    try: \n"
+		+  "        path = om.MDagPath() \n"
+		+  "        sl = om.MSelectionList() \n"
+		+  "        sl.add(uniqueName) \n"
+		+  "        sl.getDagPath(0, path) \n"
+		+  "        return path.instanceNumber() \n"
+		+  "    except: \n"
+		+  "        return 0 \n"
+		);
+	int $which = python("_internal_get_instance_number('" + $uniqueName + "')");
+	python("del _internal_get_instance_number");
+	return $which;
+}
+
+// Share the object groups and sets from the referenced shape with the
+// deformed shape. shareSetsAfterReferencedObjectSet copies the object
+// groups. We want to reference the set membership instead of having a
+// copy in the referencing scene. Before shareSetsAfterReferencedObjectSet,
+// we wire the groupId and objectSet nodes to the deformed shape. By
+// doing this, the deformed shape will have the same object groups from
+// the referenced shape. The changes in the reference file will reflect
+// in the referencing scene.
+//
+global proc
+shareSetsAfterReferencedObjectSet(string $origShape, string $destShape)
+{
+	// Source must be a referenced shape. Otherwise, we use the default
+	// behavior. (Copy instead of sharing)
+	//
+	if (!`referenceQuery -isNodeReferenced $origShape`) {
+		return;
+	}
+
+	// Only works with meshes now.
+	if (nodeType($destShape) != "mesh") {
+		return;
+	}
+
+	// Make sure the source shape exists in the construction history
+	//
+	string $origHistory[] = `listHistory $origShape`;
+	string $destHistory[] = `listHistory $destShape`;
+	if (!stringArrayContains($origHistory[0], $destHistory)) {
+		return;
+	}
+
+	// Make sure source is an intermediate object
+	//
+	if (!`getAttr ($origShape + ".io")`) {
+		return;
+	}
+
+	// Instance number is used for instance attribute such as .iog
+	//
+	int $origInstId = getInstanceNumber($origShape);
+	int $destInstId = getInstanceNumber($destShape);
+
+	// iog[which] is the root plug of set assignments for the
+	// specific instance. We examine the sets starting from it.
+	//
+	string $origIog = $origShape + ".iog[" + $origInstId + "]";
+	string $destIog = $destShape + ".iog[" + $destInstId + "]";
+
+	// Get the multi-indices of the object group plugs. Arrays are sparse.
+	// Each .iog.og element plug is connected to an object set.
+	//
+	int $origOgIds[] = `getAttr -multiIndices ($origIog + ".og")`;
+	int $destOgIds[] = `getAttr -multiIndices ($destIog + ".og")`;
+
+	// The last index to the .iog.og element plug. The index doesn't
+	// matter but the groupId node that connects to .iog.og.gid matter.
+	// We add new elements after the last one.
+	//
+	int $destOgLastId = (size($destOgIds) > 0) ? $destOgIds[size($destOgIds)-1] : 0;
+
+	// Get a list of existing object sets. We only share new sets but we NEVER
+	// edit group members for any existing sets.
+	//
+	string $setsCurrentAll[] = `listConnections -type objectSet -source off $destShape`;
+	string $setsCurrent[] = stringArrayRemoveDuplicates($setsCurrentAll);	
+
+	// Loop through the object groups and let the dest shape share the
+	// same object groups and sets.
+	//
+	for ($origOgId in $origOgIds) {
+		string $origOg = $origIog + ".og[" + $origOgId + "]";
+
+		// We need to find the objectSet and groupId nodes.
+		//
+		int $setOk = 1, $groupIdOk = 1, $compsOk = 1;
+		string $set[], $groupId[];
+
+		// Find the objectSet node, which is connected to .iog.og. We only deal
+		// with referenced sets now.
+		//
+		$set = `listConnections -type objectSet -source off $origOg`;
+		$setOk = (size($set) == 1 && `referenceQuery -isNodeReferenced $set[0]`);
+
+		// Find the groupId node, which is connected to .iog.og.gid. We only deal
+		// with referenced id nodes now.
+		//
+		if ($setOk) {
+			$groupId = `listConnections -type groupId -destination off ($origOg + ".gid")`;
+			$groupIdOk = (size($groupId) == 1 && `referenceQuery -isNodeReferenced $groupId[0]`);
+		}
+
+		// Only share new sets.
+		//
+		if ($setOk && stringArrayContains($set[0], $setsCurrent)) {
+			$setOk = 0;
+		}
+
+		// Test if the components in the object groups are the same
+		//
+		if ($setOk && $groupIdOk) {
+			// Get the components from the destination shape
+			//
+			string $destOg = $destIog + ".og[" + (++$destOgLastId) + "]";
+			connectAttr -f ($groupId[0] + ".id") ($destOg + ".gid");
+			string $destComps[] = `getAttr ($destOg + ".gcl")`;
+			removeMultiInstance -break on $destOg; --$destOgLastId;
+
+			// Get the components from the source shape
+			//
+			string $origComps[] = `getAttr ($origOg + ".gcl")`;
+
+			// Only share if the components are the same. This should not
+			// fail when adding a new deformer. Just in case.
+			//
+			if (stringArrayToString($origComps, " ") !=
+					stringArrayToString($destComps, " ")) {
+				$compsOk = 0;
+			}
+		}
+
+		// Share the object group and sets by establish the following
+		// connections.
+		//	           .iog.og     -> set
+		//	groupId -> .iog.og.gid
+		//
+		if ($setOk && $groupIdOk && $compsOk) {
+			string $destOg = $destIog + ".og[" + (++$destOgLastId) + "]";
+
+			// Find the next available id for the dag set members
+			//
+			int $dsmIds[] = `getAttr -multiIndices ($set[0] + ".dsm")`;
+			int $grpIds[] = `getAttr -multiIndices ($set[0] + ".gn")`;
+			int $dsmLastId = (size($dsmIds) > 0) ? $dsmIds[size($dsmIds)-1] : 0;
+			int $grpLastId = (size($grpIds) > 0) ? $grpIds[size($grpIds)-1] : 0;
+			int $setLastId = ($dsmLastId >= $grpLastId) ? $dsmLastId : $grpLastId;
+
+			// Wire the object group and set connections
+			//
+			connectAttr -f ($set[0] + ".mwc") ($destOg + ".gco");
+			connectAttr -f ($groupId[0] + ".id") ($destOg + ".gid");
+			connectAttr -f ($groupId[0] + ".msg") ($set[0] + ".gn[" + ($setLastId+1) + "]");
+			connectAttr -f $destOg ($set[0] + ".dsm[" + ($setLastId+1) + "]");
+		}
+	}
+}
+

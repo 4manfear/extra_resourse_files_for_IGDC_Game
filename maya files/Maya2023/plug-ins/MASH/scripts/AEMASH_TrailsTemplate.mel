@@ -1,0 +1,232 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+
+global proc MASHcheckTrailMode ( string $nodeName )
+{
+    if ( `objExists $nodeName` == 0 )
+        return;
+
+    string $nodeAttr = $nodeName + ".frontCapMode";
+    int $frontBevelMode = `getAttr $nodeAttr`;
+    $nodeAttr = $nodeName + ".rearCapMode";
+    int $rearBevelMode = `getAttr $nodeAttr`;
+    $nodeAttr = $nodeName + ".trailsMode";
+    int $trailsMode = `getAttr $nodeAttr`;
+    $nodeAttr = $nodeName + ".autoUpVector";
+    int $autoNormals = `getAttr $nodeAttr`;
+
+    // by count // 2. join the dots // radius search // connect to point
+    if ($trailsMode == 4 || $trailsMode == 2 || $trailsMode == 5 || $trailsMode == 3) {
+
+        if ($trailsMode == 3 || $trailsMode == 4 || $trailsMode == 5) {
+            editorTemplate  -dimControl $nodeName "maxTrails" false;
+            editorTemplate  -dimControl $nodeName "trailTaperCurve" true;
+        } else {
+            editorTemplate  -dimControl $nodeName "maxTrails" true;
+            editorTemplate  -dimControl $nodeName "trailTaperCurve" false;
+        }
+
+        editorTemplate  -dimControl $nodeName "trailCount" false;
+
+        if ($trailsMode == 5) {
+            editorTemplate  -dimControl $nodeName "trailCount" true;
+            editorTemplate  -dimControl $nodeName "searchRadius" false;
+        } else {
+            editorTemplate  -dimControl $nodeName "searchRadius" true;
+        }
+
+        if ($trailsMode == 3) {
+            editorTemplate  -dimControl $nodeName "maxTrails" false;
+            editorTemplate  -dimControl $nodeName "connectionPoint" false;
+            editorTemplate  -dimControl $nodeName "trailCount" true;
+        } else {
+            editorTemplate  -dimControl $nodeName "connectionPoint" true;
+        }
+
+        editorTemplate  -dimControl $nodeName "trailLength" true;
+        editorTemplate  -dimControl $nodeName "outputTrailPoints" true;
+        editorTemplate  -dimControl $nodeName "decay" true;
+        editorTemplate  -dimControl $nodeName "frontCapMode" true;
+        editorTemplate  -dimControl $nodeName "rearCapMode" true;
+        editorTemplate  -dimControl $nodeName "bevelCapDivisions" true;
+        editorTemplate  -dimControl $nodeName "bevelCapDistance" true;
+        editorTemplate  -dimControl $nodeName "quadraticSpacing" true;
+        editorTemplate  -dimControl $nodeName "inheritScale" true;
+
+    } else {
+        editorTemplate  -dimControl $nodeName "connectionPoint" true;
+        editorTemplate  -dimControl $nodeName "searchRadius" true;
+        editorTemplate  -dimControl $nodeName "maxTrails" false;
+        editorTemplate  -dimControl $nodeName "trailCount" true;
+        editorTemplate  -dimControl $nodeName "trailLength" false;
+        editorTemplate  -dimControl $nodeName "outputTrailPoints" false;
+        editorTemplate  -dimControl $nodeName "decay" false;
+        editorTemplate  -dimControl $nodeName "frontCapMode" false;
+        editorTemplate  -dimControl $nodeName "rearCapMode" false;
+        editorTemplate  -dimControl $nodeName "bevelCapDivisions" false;
+        editorTemplate  -dimControl $nodeName "bevelCapDistance" false;
+        editorTemplate  -dimControl $nodeName "quadraticSpacing" false;
+        editorTemplate  -dimControl $nodeName "trailTaperCurve" false;
+        editorTemplate  -dimControl $nodeName "inheritScale" false;
+    }
+
+        //bevel caps
+    if ($frontBevelMode == 3 || $rearBevelMode == 3) {
+        editorTemplate  -dimControl $nodeName "bevelCapDivisions" false;
+        editorTemplate  -dimControl $nodeName "bevelCapDistance" false;
+        editorTemplate  -dimControl $nodeName "quadraticSpacing" false;
+    } else {
+        editorTemplate  -dimControl $nodeName "bevelCapDivisions" true;
+        editorTemplate  -dimControl $nodeName "bevelCapDistance" true;
+        editorTemplate  -dimControl $nodeName "quadraticSpacing" true;
+    }
+
+    if ($autoNormals) {
+        editorTemplate  -dimControl $nodeName "upVector" true;
+    } else {
+        editorTemplate  -dimControl $nodeName "upVector" false;
+    }
+
+}
+
+global proc AEMASH_TrailsTemplate( string $nodeName )
+{
+    // Put our attributes into a scrolled layout field
+
+    editorTemplate -beginScrollLayout;
+    python("import MASH.nodeHeaders; MASH.nodeHeaders.addHeader('" + $nodeName + "', 'Trails')")
+    editorTemplate -endLayout;
+
+    editorTemplate -addControl -label (getPluginResource("MASH", "kTrailsMode")) "trailsMode" "MASHcheckTrailMode";
+    editorTemplate -addControl -label (getPluginResource("MASH", "kMaxTrails")) "maxTrails";
+    editorTemplate -addControl -label (getPluginResource("MASH", "kTrailLength")) "trailLength";
+    editorTemplate -addControl -label (getPluginResource("MASH", "kTrailScale")) "trailWidth";
+    editorTemplate -addControl -label (getPluginResource("MASH", "kDecayTrails")) "decay";
+    editorTemplate  -addSeparator;
+    editorTemplate -addControl -label (getPluginResource("MASH", "kCount")) "trailCount";
+    editorTemplate -addControl -label (getPluginResource("MASH", "kSearchRadius")) "searchRadius";
+    editorTemplate -addControl -label (getPluginResource("MASH", "kConnectionPoint")) "connectionPoint";
+    editorTemplate -callCustom "MASHConnectionNetworkBuildQt" "MASHConnectionNetworkUpdateQt" "";
+    editorTemplate -callCustom "MASHtrailsProfileSingleInputBuildQt" "MASHtrailsProfileSingleInputUpdateQt" "";
+
+    editorTemplate -addControl "curveSamples";
+    editorTemplate -beginLayout (getPluginResource("MASH", "kCapSettings")) -collapse 0;
+    editorTemplate -addControl -label (getPluginResource("MASH", "kFrontCap")) "frontCapMode" "MASHcheckTrailMode";
+    editorTemplate -addControl -label (getPluginResource("MASH", "kRearCap")) "rearCapMode" "MASHcheckTrailMode";
+    editorTemplate -addControl -label (getPluginResource("MASH", "kCapDiv")) "bevelCapDivisions";
+    editorTemplate -addControl -label (getPluginResource("MASH", "kCapDist")) "bevelCapDistance";
+    editorTemplate -addControl -label (getPluginResource("MASH", "kQuadSpacing")) "quadraticSpacing";
+    editorTemplate -endLayout;
+
+    editorTemplate -beginLayout (getPluginResource("MASH", "kCurves")) -collapse 1;
+    AEaddCurveControl ($nodeName+".trailTaperCurve", "0, 0, 0.333, 0.333, 0.667, 0.667, 1, 1");
+    AEaddCurveControl ($nodeName+".bevelCapCurve", "0, 1, 0.375, 1, 0.667, 0.333, 1, 0");
+    editorTemplate -endLayout;
+    editorTemplate -bn;
+    editorTemplate -addControl -label (getPluginResource("MASH", "kInheritMashScales")) "inheritScale";
+    editorTemplate -addControl -label (getPluginResource("MASH", "kAutoUpVector")) "autoUpVector" "MASHcheckTrailMode";
+    editorTemplate -en;
+    editorTemplate  -label (getPluginResource("MASH", "kUpVector")) -addControl "upVector";
+    editorTemplate -addControl -ann (getPluginResource("MASH", "kOutTrailPointsAnn")) -label (getPluginResource("MASH", "kOutTrailPoints")) "outputTrailPoints";
+    editorTemplate -callCustom "MASHoutputPointsListWidgetBuildQt" "MASHoutputPointsListWidgetUpdateQt" "";
+    editorTemplate -addControl -label (getPluginResource("MASH", "kTime")) "time";
+    editorTemplate -endLayout;
+
+    // Create an "Extras" section and also add controls for any
+    // attributes we have not explicitly mentioned.
+    editorTemplate -addExtraControls;
+    editorTemplate -endScrollLayout;
+
+    // Tell the attribute editor not to display the attributes we
+    // don't care about.
+    editorTemplate -suppress "caching";
+    editorTemplate -suppress "nodeState";
+    editorTemplate -suppress "randomLength";
+    editorTemplate -suppress "inputCurve";
+    editorTemplate -suppress "inputPoints";
+    editorTemplate -suppress "translateInPP";
+    editorTemplate -suppress "translateOutPP";
+    editorTemplate -suppress "outputMesh";
+}
+
+global proc MASHtrailsProfileSingleInputBuildQt(string $nodeName)
+{
+    string $buffer[];
+    tokenize($nodeName, ".", $buffer);
+    $nodeName = $buffer[0];
+
+    python("import MASHsingleInputQtWidget");
+    rowLayout -numberOfColumns 2 -columnWidth2 139 250 trailsProfile;
+    text -w 105 -h 20 -vis 1
+    -label (getPluginResource("MASH", "kDDProfileCurve"))
+    -align "right" -font "plainLabelFont" ;
+    //get python to create the widget, include the desired nodeType as an arguement
+    python("MASHsingleInputQtWidget.build_qt_widget('trailsProfile', '" + $nodeName + "', 'nurbsCurve', 'inputCurve', 'worldSpace', '')");
+    setParent..;
+
+}
+
+global proc MASHtrailsProfileSingleInputUpdateQt(string $nodeName )
+{
+    string $buffer[];
+    tokenize($nodeName, ".", $buffer);
+    $nodeName = $buffer[0];
+    python("import MASHsingleInputQtWidget");
+    python("MASHsingleInputQtWidget.update_qt_widget('trailsProfile', '" + $nodeName + "', 'nurbsCurve', 'inputCurve', 'worldSpace', '')");
+}
+
+global proc MASHoutputPointsListWidgetBuildQt(string $nodeName)
+{
+    string $buffer[];
+    tokenize($nodeName, ".", $buffer);
+    $nodeName = $buffer[0];
+
+    python("import MASHlistQtWidget");
+    string $parent = `setParent -q`;
+    //get python to create the widget, include the desired nodeType as an arguement
+    python("MASHlistQtWidget.build_qt_widget('" + $parent + "', '" + $nodeName + "', 'MASH_Waiter', 'outputPoints', '', 'ConnectTrailsToWaiter', 'kOutToNodes')");
+    setParent..;
+
+}
+
+global proc MASHoutputPointsListWidgetUpdateQt(string $nodeName )
+{
+    string $buffer[];
+    tokenize($nodeName, ".", $buffer);
+    $nodeName = $buffer[0];
+    string $parent = `setParent -q`;
+    python("import MASHlistQtWidget");
+    python("MASHlistQtWidget.update_qt_widget('" + $parent + "', '" + $nodeName + "', 'MASH_Waiter', 'outputPoints', '', 'ConnectTrailsToWaiter', 'kOutToNodes')");
+}
+
+global proc MASHConnectionNetworkBuildQt(string $nodeName)
+{
+    string $buffer[];
+    tokenize($nodeName, ".", $buffer);
+    $nodeName = $buffer[0];
+
+    python("import MASHsingleInputQtWidget");
+    rowLayout -numberOfColumns 2 -columnWidth2 139 250 connectionNetworkLayout;
+    text -w 105 -h 20 -vis 1
+    -label (getPluginResource("MASH", "kConnectionNetwork"))
+    -align "right" -font "plainLabelFont" ;
+    //get python to create the widget, include the desired nodeType as an arguement
+    python("MASHsingleInputQtWidget.build_qt_widget('connectionNetworkLayout', '" + $nodeName + "', 'MASH_Waiter', 'connectionNetwork', 'outputPoints', 'TrailsSwitchToPointMode')");
+    setParent..;
+
+}
+
+global proc MASHConnectionNetworkUpdateQt(string $nodeName )
+{
+    string $buffer[];
+    tokenize($nodeName, ".", $buffer);
+    $nodeName = $buffer[0];
+    python("import MASHsingleInputQtWidget");
+    python("MASHsingleInputQtWidget.update_qt_widget('connectionNetworkLayout', '" + $nodeName + "', 'MASH_Waiter', 'connectionNetwork', 'outputPoints', 'TrailsSwitchToPointMode')");
+}
+

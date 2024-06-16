@@ -1,0 +1,111 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+// Creation Date:  14 January 1999
+//
+//
+//  Procedure Name:
+//      alignCurveToolScript
+//
+//  Description:
+//	create wrapper around the alignCurve command
+//
+//  Input Arguments:
+//		0 ==> do the command.
+//		1 ==> show the action option box
+//		2 ==> return the command
+//		3 ==> show tool option box
+//		4 ==> enter the tool
+//
+//  Return Value:
+//      None.
+//
+
+global proc alignCurveToolSetup( int $forceFactorySettings, string $goToTool )
+{
+	global int $gStartWithAutoComplete;
+
+	optionVar -init $forceFactorySettings -category "Modeling.Curves.Align"
+		-iv alignCurveEuc 0
+		-iv alignCurveLac $gStartWithAutoComplete
+		;
+
+	if( "" != $goToTool ) {
+		scriptCtx -e -euc `optionVar -q alignCurveEuc` $goToTool;
+		scriptCtx -e -lac `optionVar -q alignCurveLac` $goToTool;
+	}
+}
+
+global proc alignCurveValues ( string $toolName ) 
+{
+	performAlign 3 "Curve" $toolName;
+	scriptCtxCommonValues( $toolName );
+}
+
+global proc alignCurveProperties()
+{
+	scriptCtxCommonProperties;
+}
+
+proc createAlignCurveContext( string $tool )
+{
+	if( ! `scriptCtx -exists $tool` ) {
+		alignCurveToolSetup( 0, "" );
+		scriptCtx -i1 "alignCurve.png"
+			-title (uiRes("m_alignCurveToolScript.kAlignCurvesTool"))
+			-bcn "alignCurve"
+
+			-exitUponCompletion `optionVar -q alignCurveEuc`
+			-totalSelectionSets 1
+			-expandSelectionList true
+			-fcs ("alignCurveToolScript 0")
+
+			-setNoSelectionPrompt (uiRes("m_alignCurveToolScript.kSelectTwoCurves"))
+			-setSelectionPrompt (uiRes("m_alignCurveToolScript.kSelectSecondCurves"))
+
+			-setAutoToggleSelection true
+			-setAutoComplete `optionVar -q alignCurveLac`
+			-showManipulators true
+			-setSelectionCount 2
+
+			-nurbsCurve true
+			-curveOnSurface true
+			-curveParameterPoint true
+			-editPoint true
+		$tool;
+	}
+}
+
+global proc string performAlignCurve( int $action,
+									 string $goToTool )
+{
+	return performAlign( $action, "Curve", $goToTool );
+}
+
+global proc string alignCurveToolScript( int $setToTool )
+//
+//	Description :
+//		0 ==> do the command.
+//		1 ==> show the action option box
+//		2 ==> return the command
+//		3 ==> show tool/action option box
+//		4 ==> enter the tool/do the command
+{
+	string $tool = "";
+	if( $setToTool > 2 ) {
+		if( !`optionVar -q modelWithToolAlignCurve` ) {
+			$setToTool = 4 - $setToTool;
+		}
+		else {
+			$tool = "alignCurveContext";
+			createAlignCurveContext $tool;
+		}
+	}
+	return scriptToolScript( "performAlignCurve", $setToTool, $tool );
+}

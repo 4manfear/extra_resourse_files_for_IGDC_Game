@@ -1,0 +1,114 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+
+global proc MASHcheckIdType ( string $nodeName )
+{
+        if ( `objExists $nodeName` == 0 )
+            return;
+
+        string $nodeAttr = $nodeName + ".idtype";
+        int $value = `getAttr $nodeAttr`;
+
+        //fixed
+        if ($value == 5) {
+            editorTemplate  -dimControl $nodeName "fixed" false;
+            editorTemplate  -dimControl $nodeName "numObjects" true;
+        } else {
+            editorTemplate  -dimControl $nodeName "fixed" true;
+            editorTemplate  -dimControl $nodeName "numObjects" false;
+        }
+
+        //random seed
+        if ($value == 2 || $value == 4) {
+            editorTemplate  -dimControl $nodeName "seed" false;
+        } else {
+            editorTemplate  -dimControl $nodeName "seed" true;
+        }
+
+        // Random Id mode
+        if ($value == 2) {
+            editorTemplate  -dimControl $nodeName "probabilityRamp" false;
+            editorTemplate  -dimControl $nodeName "useProbability" false;
+        } else {
+            editorTemplate  -dimControl $nodeName "probabilityRamp" true;
+            editorTemplate  -dimControl $nodeName "useProbability" true;
+        }
+
+        //cycle
+        if ( $value == 4) {
+            editorTemplate  -dimControl $nodeName "loopType" false;
+            editorTemplate  -dimControl $nodeName "stopCycleEnd" false;
+            editorTemplate  -dimControl $nodeName "randomCycle" false;
+            editorTemplate  -dimControl $nodeName "indexAnimateGap" false;
+            editorTemplate  -dimControl $nodeName "randomCycleLimit" false;
+            editorTemplate  -dimControl $nodeName "timeScale" false;
+        } else {
+            editorTemplate  -dimControl $nodeName "loopType" true;
+            editorTemplate  -dimControl $nodeName "stopCycleEnd" true;
+            editorTemplate  -dimControl $nodeName "randomCycle" true;
+            editorTemplate  -dimControl $nodeName "indexAnimateGap" true;
+            editorTemplate  -dimControl $nodeName "randomCycleLimit" true;
+            editorTemplate  -dimControl $nodeName "timeScale" true;
+        }
+
+}
+
+global proc AEMASH_IdTemplate( string $nodeName )
+    {
+
+    editorTemplate -beginScrollLayout;
+    python("import MASH.nodeHeaders; MASH.nodeHeaders.addHeader('" + $nodeName + "', 'ID')")
+    editorTemplate -endLayout;
+
+    editorTemplate  -label (getPluginResource("MASH", "kIDType")) -addControl "idtype" "MASHcheckIdType";
+    editorTemplate  -label (getPluginResource("MASH", "kInstanceNum")) -ann (getPluginResource("MASH", "kInstanceNumAnn")) -addControl "numObjects";
+    editorTemplate  -label (getPluginResource("MASH", "kRandSeed")) -addControl "seed";
+    editorTemplate  -label (getPluginResource("MASH", "kFixID")) -addControl "fixed";
+
+    editorTemplate -beginLayout (getPluginResource("MASH", "kCycleOptions")) -collapse 0;
+    editorTemplate  -label (getPluginResource("MASH", "kLoopType")) -addControl "loopType";
+    editorTemplate -suppress "stopCycleEnd";
+    editorTemplate  -label (getPluginResource("MASH", "kRandomPoint")) -addControl "randomCycle";
+    editorTemplate  -label (getPluginResource("MASH", "kCycleGap")) -addControl "indexAnimateGap";
+    editorTemplate  -label (getPluginResource("MASH", "kRandStartLimit")) -addControl "randomCycleLimit";
+    editorTemplate -endLayout;
+
+    editorTemplate -label (getPluginResource("MASH", "kUseProbability")) -addControl "useProbability";
+    AEaddRampControl ($nodeName+".probabilityRamp");
+
+    editorTemplate -label (getPluginResource("MASH", "kTimeScale")) -addControl "timeScale";
+    editorTemplate -label (getPluginResource("MASH", "kTime")) -addControl "time";
+
+    editorTemplate -beginLayout (getPluginResource("MASH", "kStrength")) -collapse 1;
+    editorTemplate  -label (getPluginResource("MASH", "kStrength")) -addControl "Envelope";
+    editorTemplate  -label (getPluginResource("MASH", "kRandStrength")) -addControl "randEnvelope";
+    editorTemplate  -label (getPluginResource("MASH", "kStepStrength")) -addControl "StepEnvelope";
+    editorTemplate -addSeparator;
+    editorTemplate  -label (getPluginResource("MASH", "kStrengthMap")) -addControl "mColour";
+    editorTemplate  -label (getPluginResource("MASH", "kMapProjAxis")) -addControl "mapDirection";
+    editorTemplate -callCustom "MASHmapHelperButton" "MASHmapHelperButtonEdit" "";
+    editorTemplate -endLayout;
+
+    editorTemplate -beginLayout (getPluginResource("MASH", "kFalloffObject")) -collapse 1;
+    editorTemplate -callCustom "MASHfalloffButtons" "MASHfalloffButtonsEdit" "";
+    editorTemplate -endLayout;
+
+    AEdependNodeTemplate $nodeName;
+    editorTemplate -addExtraControls;
+    editorTemplate -endScrollLayout;
+
+    editorTemplate -suppress "grpsize";
+    editorTemplate -suppress "Envelope";
+    editorTemplate -suppress "Envelope";
+    editorTemplate -suppress "randEnvelope";
+    editorTemplate -suppress "StepEnvelope";
+    editorTemplate -suppress "falloffX";
+    editorTemplate -suppress "falloffY";
+    editorTemplate -suppress "falloffZ";
+    }
+

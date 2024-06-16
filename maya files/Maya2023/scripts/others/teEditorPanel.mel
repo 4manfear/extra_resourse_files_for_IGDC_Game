@@ -1,0 +1,656 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+source teKeyingFunctions.mel;
+source teMainMenus.mel;
+
+proc string tePanelName( string $whichPanel )
+{
+    return ( $whichPanel + "TimeEd" );
+}
+
+proc teSetupPrefs()
+{
+	optionVar -init false -category "Time Editor"
+		-iv cteEditorSnapToFrame 1
+		-iv cteEditorSnapToClip 1
+		//	NOTE:
+		//		When you change this value, please also remember to change the value in 
+		//		teSnapOptions.mel | teResetSnapTolerance()
+		//
+		-iv cteEditorSnapTolerance 10
+		;
+}
+
+proc teSavePrefs(string $cteEd)
+{
+	$var = `timeEditorPanel -q -snapToFrame $cteEd`;
+	optionVar -intValue cteEditorSnapToFrame $var;
+	
+	$var = `timeEditorPanel -q -snapToClip $cteEd`;
+	optionVar -intValue cteEditorSnapToClip $var;
+	
+	$var = `timeEditorPanel -q -snapTolerance $cteEd`;
+	optionVar -intValue cteEditorSnapTolerance $var;
+}
+
+///////////////// SNAPPING /////////////////
+global proc onTESnapToClipChanged()
+{
+	int $snapToClip = `timeEditorPanel -q -snapToClip timeEditorPanel1TimeEd`;
+	teRefreshSnappingBtn($snapToClip);
+}
+
+global proc teRefreshSnappingBtn(int $snapToClip)
+{
+	if(`iconTextCheckBox -exists teToggleSnappingButton`)
+	{
+		iconTextCheckBox -edit -value $snapToClip teToggleSnappingButton;
+	}
+}
+
+global proc teToggleSnapping(int $snap)
+{
+	timeEditorPanel -edit -snapToClip $snap timeEditorPanel1TimeEd;
+	onTESnapToClipChanged;
+}
+
+
+global proc teToggleRealTimeRefresh(int $realTimeRefresh)
+{	
+	optionVar -iv cteRealTimeRefresh $realTimeRefresh;
+}
+
+
+global proc int teIseRealTimeRefreshing()
+{	
+	optionVar -init false -category "Time Editor" -iv cteRealTimeRefresh 1;
+	return `optionVar -q cteRealTimeRefresh`;
+}
+
+
+
+///////////////// SCENE AUTHORING /////////////////
+global proc teRefreshEditorMuteButton(int $mute)
+{
+	if (`iconTextCheckBox -exists teMuteTimeEditorButton`)
+	{
+		iconTextCheckBox -e -value $mute teMuteTimeEditorButton;
+	}
+}
+
+global proc teToggleEditorMute(int $mute)
+{
+	timeEditor -mute $mute;
+	onTEMutedChanged;
+}
+
+global proc onTEMutedChanged()
+{
+	int $isCteMuted = `timeEditor -q -mute`;
+	teRefreshEditorMuteButton($isCteMuted);
+}
+
+///////////////// RIPPLE MODE /////////////////
+global proc teRefreshRippleBtn(int $ripple)
+{
+	if (`iconTextCheckBox -exists teToggleRippleButton`)
+	{
+		iconTextCheckBox -e -value $ripple teToggleRippleButton;
+	}
+}
+
+global proc teToggleRipple(int $ripple)
+{	
+	optionVar -iv cteRippleEditModeEnabled $ripple;
+	teRefreshRippleBtn($ripple);
+}
+
+global proc onTERippleChanged()
+{
+	int $isCteRipple = `optionVar -q cteRippleEditModeEnabled`;
+	teRefreshRippleBtn($isCteRipple);
+}
+
+global proc int teGetRippleStatus()
+{
+	int $ripple = 0;
+	if (`optionVar -exists cteRippleEditModeEnabled`)
+	{
+		$ripple = `optionVar -q cteRippleEditModeEnabled`;
+	}
+	else
+	{
+		optionVar -iv cteRippleEditModeEnabled $ripple;
+	}
+
+	return $ripple;
+}
+
+global proc int teGetRootClipId()
+{
+	return `timeEditorPanel -query -activeTabRootClipId timeEditorPanel1TimeEd`;
+}
+
+///////////////// KEEP TRANSITION /////////////////
+global proc teRefreshKeepTransitionsBtn(int $keepTransitions)
+{
+	if (`iconTextCheckBox -exists teToggleKeepTransitionsButton`)
+	{
+		iconTextCheckBox -edit -value $keepTransitions teToggleKeepTransitionsButton;
+	}
+}
+
+global proc teSetKeepTransitionsMode(int $keepTransitions)
+{	
+	optionVar -iv cteKeepTransitionsModeEnabled $keepTransitions;
+	teRefreshKeepTransitionsBtn($keepTransitions);
+}
+
+global proc int teGetKeepTransitionsMode()
+{
+	int $keepTransitions = 0;
+	if (`optionVar -exists cteKeepTransitionsModeEnabled`)
+	{
+		$keepTransitions = `optionVar -q cteKeepTransitionsModeEnabled`;
+	}
+	else
+	{
+		optionVar -iv cteKeepTransitionsModeEnabled $keepTransitions;
+	}
+
+	return $keepTransitions;
+}
+//////////////////////////////////////////////////
+
+global proc teClearGlobalVariables()
+{
+	global string $gCTERootOffsetLastMatchingObject;
+	global int $gCTERootOffsetLastClipId;
+
+	$gCTERootOffsetLastMatchingObject = "";
+	$gCTERootOffsetLastClipId = -1;
+}
+
+global proc teFramePlaybackRange(string $cteEd) {
+	$start = `playbackOptions -query -minTime`;
+	$end = `playbackOptions -query -maxTime`;
+	$buffer = ($end - $start) * 0.025;
+	animView -startTime ($start - $buffer) -endTime ($end + $buffer) $cteEd;
+}
+
+global proc teClipEditModeChanged() {
+	int $mode = `timeEditorPanel -q -activeClipEditMode timeEditorPanel1TimeEd`;
+	
+	if ($mode == 1) iconTextRadioButton -e -select teClipEditModeTrimButton;	else
+	if ($mode == 2) iconTextRadioButton -e -select teClipEditModeScaleButton;	else
+	if ($mode == 3) iconTextRadioButton -e -select teClipEditModeLoopButton;	else
+	if ($mode == 4) iconTextRadioButton -e -select teClipEditModeHoldButton;
+}
+
+global proc teChangeClipEditMode(string $mode) {
+	int $modeValue = 0;
+	
+	if($mode == "Trim") {
+		$modeValue = 1;
+	} else if($mode == "Scale") {
+		$modeValue = 2;
+	} else if($mode == "Loop") {
+		$modeValue = 3;
+	} else if($mode == "Hold") {
+		$modeValue = 4;
+	}
+	
+	evalEcho("timeEditorPanel -e -activeClipEditMode " + $modeValue + " timeEditorPanel1TimeEd");
+}
+
+global proc teCreateToolBar(string $toolBarLayout, int $iconSize)
+{
+	setParent $toolBarLayout;
+	
+	// mute CTE button
+	int $isCteMuted = `timeEditor -q -mute`;
+	
+	iconTextCheckBox
+		-i1 "teMuteTimeEditor.png"
+		-width $iconSize -height $iconSize
+		-onCommand( "TimeEditorSceneAuthoringToggle" )
+		-offCommand( "TimeEditorSceneAuthoringToggle" )
+		-value $isCteMuted
+		-annotation (uiRes("m_teEditorPanel.kMuteCTEAnnot"))
+		teMuteTimeEditorButton;
+		
+	separator
+		-style single
+		-height $iconSize
+		-horizontal false
+		-width 20;
+	
+	iconTextButton
+		-i1 "teCreateClip.png"
+		-width $iconSize -height $iconSize
+		-annotation (getRunTimeCommandAnnotation("TimeEditorCreateClip"))
+		-command("TimeEditorCreateClip")
+		teCreateClipButton;
+	
+	iconTextButton
+		-i1 "teCreatePose.png"
+		-width $iconSize -height $iconSize
+		-annotation (getRunTimeCommandAnnotation("TimeEditorCreatePoseClip"))
+		-command("TimeEditorCreatePoseClip")
+		teCreatePoseButton;
+	
+	iconTextButton
+		-i1 "teCreateCompound.png"
+		-width $iconSize -height $iconSize
+		-annotation (getRunTimeCommandAnnotation("TimeEditorCreateGroupFromSelection"))
+		-command("TimeEditorCreateGroupFromSelection")
+		teCreateGroupButton;
+		
+	iconTextButton
+		-i1 "teExplodeCompound.png"
+		-width $iconSize -height $iconSize
+		-annotation (getRunTimeCommandAnnotation("TimeEditorExplodeGroup"))
+		-command("TimeEditorExplodeGroup")
+		teExplodeGroupButton;
+	
+	separator
+		-style single
+		-height $iconSize
+		-horizontal false
+		-width 20;
+	
+	// ---- Clip Edit Mode Buttons ----
+	iconTextRadioCollection  teClipEditModeButtons;
+	
+	iconTextRadioButton
+			-i1 "teTrimTool.png"
+			-style "iconOnly"
+			-width $iconSize -height $iconSize
+			-annotation (uiRes("m_teEditorPanel.kCTEClipEditTrimAnnot"))
+			-onCommand("TimeEditorClipTrimToggle")
+			teClipEditModeTrimButton;
+	
+	iconTextRadioButton
+		-i1 "teScaleTool.png"
+		-style "iconOnly"
+		-width $iconSize -height $iconSize
+		-annotation (uiRes("m_teEditorPanel.kCTEClipEditScaleAnnot"))
+		-onCommand("TimeEditorClipScaleToggle")
+		teClipEditModeScaleButton;
+
+	iconTextRadioButton
+		-i1 "teLoopTool.png"
+		-style "iconOnly"
+		-width $iconSize -height $iconSize
+		-annotation (uiRes("m_teEditorPanel.kCTEClipEditLoopAnnot"))
+		-onCommand("TimeEditorClipLoopToggle")
+		teClipEditModeLoopButton;
+
+	iconTextRadioButton
+		-i1 "teHoldTool.png"
+		-style "iconOnly"
+		-width $iconSize -height $iconSize
+		-annotation (uiRes("m_teEditorPanel.kCTEClipEditHoldAnnot"))
+		-onCommand("TimeEditorClipHoldToggle")
+		teClipEditModeHoldButton;
+	
+	teClipEditModeChanged(); // update optionMenu to existing mode
+	scriptJob -parent $toolBarLayout -event cteEventClipEditModeChanged("teClipEditModeChanged()");
+	// ---- Clip Edit Mode Dropdown ----
+	
+	separator
+		-style single
+		-height $iconSize
+		-horizontal false
+		-width 20;
+		
+	iconTextButton
+		-i1 "teSplit.png"
+		-width $iconSize -height $iconSize
+		-annotation (uiRes("m_teEditorPanel.kCTESplitClipAnnot"))
+		-command("tePerformClipEditOnSelectedClips(-1, 0)")
+		teSplitClipButton;
+		
+	iconTextButton
+		-i1 "teTrimBefore.png"
+		-width $iconSize -height $iconSize
+		-annotation (uiRes("m_teEditorPanel.kCTETrimBeforeAnnot"))
+		-command("tePerformClipEditOnSelectedClips(-1, 1)")
+		teTrimBeforeClipButton;
+		
+	iconTextButton
+		-i1 "teTrimAfter.png"
+		-width $iconSize -height $iconSize
+		-annotation (uiRes("m_teEditorPanel.kCTETrimAfterAnnot"))
+		-command("tePerformClipEditOnSelectedClips(-1, 2)")
+		teTrimAfterClipButton;
+	
+	separator
+		-style single
+		-height $iconSize
+		-horizontal false
+		-width 20;
+	
+	// --- ripple button ---
+	int $ripple = teGetRippleStatus();
+	
+	iconTextCheckBox
+		-i1 "teToggleRipple.png"
+		-width $iconSize -height $iconSize
+		-annotation (uiRes("m_teEditorPanel.kCTEToggleRippleAnnot"))
+		-onCommand ( "teToggleRipple(1)" )
+		-offCommand ( "teToggleRipple(0)" )
+		teToggleRippleButton;
+	
+	teRefreshRippleBtn($ripple);
+	
+	// --- keepTransitions Button ---
+	int $keepTransitions = teGetKeepTransitionsMode();
+	
+	iconTextCheckBox
+		-i1 "teKeepTransitions.png"
+		-width $iconSize -height $iconSize
+		-annotation (uiRes("m_teEditorPanel.kCTEToggleKeepTransitionAnnot"))
+		-onCommand ( "teSetKeepTransitionsMode(1)" )
+		-offCommand ( "teSetKeepTransitionsMode(0)" )
+		teToggleKeepTransitionsButton;
+		
+	teRefreshKeepTransitionsBtn($keepTransitions);
+	
+	// --- snapping button ---
+	int $snapToClip = `timeEditorPanel -q -snapToClip timeEditorPanel1TimeEd`;
+	
+	iconTextCheckBox
+		-i1 "teToggleSnapping.png"
+		-width $iconSize -height $iconSize
+		-annotation (uiRes("m_teEditorPanel.kCTEToggleSnappingAnnot"))
+		-onCommand ( "teToggleSnapping(1)" )
+		-offCommand ( "teToggleSnapping(0)" )
+		teToggleSnappingButton;
+	
+	teRefreshSnappingBtn($snapToClip);
+	
+	separator
+		-style single
+		-height $iconSize
+		-horizontal false
+		-width 20;
+		
+	iconTextButton
+		-i1 "teGraphWeighCurves.png"
+		-width $iconSize -height $iconSize
+		-annotation (uiRes("m_teEditorPanel.kCTEGraphWeightCurveAnnot"))
+		-command( "teEditWeightCurve(-1, \"clipWeight\")")
+		teGraphWeightCurveButton;	
+		
+	iconTextButton
+		-i1 "tePoseOffset.png"
+		-width $iconSize -height $iconSize
+		-annotation (uiRes("m_teEditorPanel.kCTERelocatorAnnot"))
+		-command( "teCreateRelocator(-1)" );
+
+	iconTextButton
+		-i1 "teMatchPoses.png"
+		-width $iconSize -height $iconSize
+		-annotation (uiRes("m_teEditorPanel.kCTEMatchPosesAnnot"))
+		-command( "teRootOffsetOptions(2, -1)")
+		teMatchPosesButton;
+	
+	separator
+		-style single
+		-height $iconSize
+		-horizontal false
+		-width 20;
+	
+	// ---- authoring layer ----
+
+	iconTextButton
+		-i1 "teAdditive.png"
+		-width $iconSize -height $iconSize 
+		-annotation (uiRes("m_teEditorPanel.kCTEAddAdditiveLayerAnnot")) 
+		-command ("teCreateClipLayerBySelection(-1, 0)")
+		teAddAdditiveLayerButton;
+
+	iconTextButton
+		-i1 "teOverride.png"
+		-width $iconSize -height $iconSize 
+		-annotation (uiRes("m_teEditorPanel.kCTEAddOverrideLayerAnnot")) 
+		-command ("teCreateClipLayerBySelection(-1, 2)")
+		teAddOverrideLayerButton;
+		
+	textField
+		-editable false 
+		-width 100 -height 25
+		-backgroundColor 0.15 0.15 0.15
+		teActiveLayerDisplayName;
+	
+	iconTextButton
+		-i1 "teSetKeyframe.png"
+		-width $iconSize -height $iconSize 
+		-annotation (uiRes("m_teEditorPanel.kCTESetKeyIconAnnot")) 
+		-command ("teSetKeyFrameOnActiveLayerOrClip 0")
+		teSetKeyframeButton;
+
+	// set zero key offset on selected keying clip/layer
+	iconTextButton
+		-i1 "teZeroKey.png"
+		-width $iconSize -height $iconSize 
+		-annotation (uiRes("m_teEditorPanel.kCTESetZeroKeyIconAnnot")) 
+		-command ("teSetKeyFrameOnActiveLayerOrClip 1")
+		teSetZeroKeyButton;	
+	
+
+		
+	// setup trigger to refresh UI
+	scriptJob -parent $toolBarLayout -event cteEventKeyingTargetForClipChanged("teRefreshKeyingTargetDisplayForClip()");
+	scriptJob -parent $toolBarLayout -event cteEventKeyingTargetForLayerChanged("teRefreshKeyingTargetDisplayForLayer()");
+	scriptJob -parent $toolBarLayout -event cteEventKeyingTargetForInvalidChanged("teRefreshKeyingTargetDisplayForInvalid()");
+	scriptJob -parent $toolBarLayout -event NewSceneOpened("teRefreshKeyingTargetDisplayForInvalid()");
+	
+	// invalidate both name at the start
+	teInvalidateActiveClipAndLayerDisplayName();
+}
+
+global proc teBuildEdHelpMenuItem(string $nameRoot, string $menuParent)
+//
+//  Description:
+//		Build context sensitive menu items
+//		
+//  Input Arguments:
+//		$nameRoot - name to use as the root of all item names
+//		$menuParent - the name of the parent of this menu
+//
+//  Return Value:
+//      None
+//
+{
+	menuItem -label (uiRes("m_teEditorPanel.kTimeEditorHelp")) 
+		-annotation (uiRes("m_teEditorPanel.kTimeEditorHelpAnnot"))
+		-enableCommandRepeat false
+		-command "showHelp TimeEditor_Overview";
+}
+
+global proc createTimeEditor (string $whichPanel)
+{
+	//  create unique names for editors based on panel name
+	//
+	string $cteEd = tePanelName( $whichPanel  );
+
+	loadAnimPanelLibrary;
+	teSetupPrefs;
+	
+	timeEditorPanel
+		-unParent
+		-mainListConnection cteEditorList
+		-menu "teMainMenus"
+		-autoFit `optionVar -query cteEditorAutoFit`
+		-displayInfinities false
+		$cteEd;
+
+	timeEditorPanel -edit -snapToFrame `optionVar -query cteEditorSnapToFrame` $cteEd;
+	timeEditorPanel -edit -snapToClip `optionVar -query cteEditorSnapToClip` $cteEd;
+	timeEditorPanel -edit -snapTolerance `optionVar -query cteEditorSnapTolerance` $cteEd;
+	
+	registerEditor $cteEd cteEditorList;
+}
+
+global proc addTimeEditor (string $whichPanel)
+{
+	string $cteEd   = tePanelName( $whichPanel  );
+
+	// Make sure that there is no template active
+	setUITemplate -pushTemplate NONE;
+
+	// Define the standard animation editing panel
+	//
+	string $widgetList[] = `definePanelElements $whichPanel`;
+
+	// Attach tools to the tool form
+	//
+	int $iconSize = 26;
+
+	string $menuForm = $widgetList[2];
+	string $toolbarForm = $widgetList[4];
+	string $toolbarFlowLayout = $widgetList[5];
+	string $editorLayout = $widgetList[6];
+
+	// Add support for the Context Sensitive Help Menu.
+	//
+	addContextHelpProc $whichPanel "teBuildEdHelpMenuItem";
+
+	// Create the Time Editor Toolbar
+	teCreateToolBar( $toolbarFlowLayout, $iconSize );
+
+	setParent $toolbarForm;
+
+		iconTextButton
+			-i1 "teGraphEditor.png"
+			-width $iconSize -height $iconSize
+			-command ( 
+				"$left = `timeEditorPanel -q -viewLeft " + $cteEd + "`; " + 
+				"$right = `timeEditorPanel -q -viewRight " + $cteEd + "`;" +
+				"replaceEditor graphEditor1 GraphEditor;" +
+				"animCurveEditor -e -viewLeft $left -viewRight $right graphEditor1GraphEd;")
+			-annotation (uiRes("m_teEditorPanel.kGetGraphEditorIconAnnot"))
+			-version "2017"
+			getGraphEditorButton;
+	
+		string $cmd = "TimeEditorOpenContentBrowser";
+		iconTextButton
+			-i1 "teContentBrowser.png"
+			-width $iconSize -height $iconSize
+			-command($cmd)
+			-annotation (getRunTimeCommandAnnotation($cmd))
+			getContentBrowserButton;
+
+	int $margin = 1 ;
+
+	// Add the game exporter button if the plugin is loaded
+	if(`pluginInfo -q -loaded gameFbxExporter`)
+	{
+		iconTextButton
+			-i1 "teGameExporter.png"
+			-width $iconSize -height $iconSize
+			-command("gameFbxExporter;")
+			-annotation (uiRes("m_teEditorPanel.kCTEGameExporterAnnot"))
+			getGameExporterButton;
+
+		formLayout -edit
+			-attachForm $toolbarFlowLayout "left" 6 
+			-attachForm $toolbarFlowLayout "top" $margin
+			-attachForm $toolbarFlowLayout "bottom" $margin
+			-attachControl $toolbarFlowLayout "right" 0 getGraphEditorButton
+
+			-attachNone getGraphEditorButton "left"
+			-attachForm getGraphEditorButton "top" $margin
+			-attachForm getGraphEditorButton "bottom" $margin
+			-attachControl getGraphEditorButton "right" 0 getContentBrowserButton
+			
+			-attachNone getContentBrowserButton "left"
+			-attachForm getContentBrowserButton "top" $margin
+			-attachForm getContentBrowserButton "bottom" $margin
+			-attachControl getContentBrowserButton "right" 0 getGameExporterButton
+			
+			-attachNone getGameExporterButton "left"
+			-attachForm getGameExporterButton "top" $margin
+			-attachForm getGameExporterButton "bottom" $margin
+			-attachForm getGameExporterButton "right" 6
+		$toolbarForm;
+	}
+	else
+	{
+		formLayout -edit
+			-attachForm $toolbarFlowLayout "left" 6 
+			-attachForm $toolbarFlowLayout "top" $margin
+			-attachForm $toolbarFlowLayout "bottom" $margin
+			-attachControl $toolbarFlowLayout "right" 0 getGraphEditorButton
+
+			-attachNone getGraphEditorButton "left"
+			-attachForm getGraphEditorButton "top" $margin
+			-attachForm getGraphEditorButton "bottom" $margin
+			-attachControl getGraphEditorButton "right" 0 getContentBrowserButton
+			
+			-attachNone getContentBrowserButton "left"
+			-attachForm getContentBrowserButton "top" $margin
+			-attachForm getContentBrowserButton "bottom" $margin
+			-attachForm getContentBrowserButton "right" 6
+		$toolbarForm;
+	}
+
+	setParent $menuForm;
+
+	// Parent the editors to the editor layout
+	timeEditorPanel -edit -parent $editorLayout $cteEd;
+
+	setParent -top;
+
+	setUITemplate -popTemplate;
+
+	// register event listeners
+	scriptJob -compressUndo true -permanent -parent $cteEd -event teMuteChanged ("onTEMutedChanged()");
+	
+	scriptJob -parent $cteEd -event NewSceneOpened ("onTEMutedChanged()"); // refresh mute status
+	scriptJob -parent $cteEd -event SceneOpened ("onTEMutedChanged()"); // refresh mute status
+	
+	scriptJob -parent $cteEd -event NewSceneOpened ("teClipEditModeChanged()"); // refresh clip edit status
+	scriptJob -parent $cteEd -event SceneOpened ("teClipEditModeChanged()"); // refresh clip edit status
+
+	scriptJob -parent $cteEd -event NewSceneOpened ("teClearGlobalVariables()");
+	scriptJob -parent $cteEd -event SceneOpened ("teClearGlobalVariables()");
+	
+	scriptJob -parent $cteEd -event teEditorPrefsChanged("onTESnapToClipChanged()");
+}
+
+global proc removeTimeEditor (string $whichPanel)
+{
+	string $cteEd = tePanelName( $whichPanel  );
+	
+	if (`timeEditorPanel -exists $cteEd`) {
+		// save editor prefs before removing
+		teSavePrefs $cteEd;
+		
+		timeEditorPanel -edit -unParent $cteEd;
+	}
+}
+
+global proc deleteTimeEditor (string $whichPanel)
+{
+	string $cteEd = tePanelName( $whichPanel  );
+	
+	if (`timeEditorPanel -exists $cteEd`) {
+		// save editor prefs before delete
+		teSavePrefs $cteEd;
+		
+		deleteUI -editor $cteEd;
+	}
+}
+
+global proc string saveStateTimeEditor (string $whichPanel)
+{
+	return "";
+}

@@ -1,0 +1,33 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//  Description:
+//
+//  Input Arguments:
+//      None.
+//
+//  Return Value:
+//      None.
+//
+
+global proc rollValues(string $toolName)
+{
+	string $icon = "roll.png";
+	string $helpTag = "RollTool";
+	toolPropertySetCommon $toolName $icon $helpTag;
+
+	string $parent = (`toolPropertyWindow -q -location` + "|roll");
+	setParent $parent;
+
+	floatSliderGrp -e
+		-cc ("rollCtx -e -rs #1 "+$toolName)
+		-v `rollCtx -q -rs $toolName`
+		rollScale;
+
+	toolPropertySelect roll;
+}

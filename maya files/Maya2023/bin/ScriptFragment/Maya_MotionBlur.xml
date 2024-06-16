@@ -1,0 +1,56 @@
+<!--
+Copyright 2016 Autodesk, Inc. All rights reserved. 
+
+Use of this software is subject to the terms of the Autodesk 
+license agreement provided at the time of installation or download, 
+or which otherwise accompanies this software in either electronic 
+or hard copy form.
+-->
+<fragment_graph  name="Maya_MotionBlur" ref="Maya_MotionBlur" class="FragmentGraph" version="1.0" feature_level="0" >
+    <fragments>
+        <fragment_ref name="Maya_MotionMaxVelocity" ref="Maya_MotionMaxVelocity" />
+        <fragment_ref name="maya_MotionVectorPassV1" ref="maya_MotionVectorPassV1" />
+        <fragment_ref name="MotionBlurTargetSizeFragment" ref="MotionBlurTargetSizeFragment" />
+        <fragment_ref name="EnableMB" ref="EnableMB" />
+        <fragment_ref name="maya_MotionBlurPass" ref="maya_MotionBlurPass" />
+    </fragments>
+    <connections>
+        <connect from="maya_MotionVectorPassV1.output" to="Maya_MotionMaxVelocity.input" name="input" />
+        <connect from="MotionBlurTargetSizeFragment.output" to="Maya_MotionMaxVelocity.filterTargetSize" name="filterTargetSize" />
+        <connect from="maya_MotionBlurPass.output" to="EnableMB.a" name="a" />
+        <connect from="Maya_MotionMaxVelocity.output" to="maya_MotionBlurPass.currentVelocity" name="currentVelocity" />
+        <connect from="maya_MotionVectorPassV1.output" to="maya_MotionBlurPass.sourceVelocity" name="sourceVelocity" />
+    </connections>
+    <properties>
+        <bool  name="mbEnabled" ref="EnableMB.value" />
+        <target  name="maya_MotionBlurEffectV1_final" ref="maya_MotionBlurPass.final" />
+        <target  name="finalDesc" ref="maya_MotionBlurPass.finalDesc" />
+        <target  name="input" ref="maya_MotionBlurPass.input" />
+        <countedObject  name="postEffectList" ref="maya_MotionVectorPassV1.postEffectList" />
+        <camera  name="camera" ref="maya_MotionVectorPassV1.camera" />
+        <float4  name="viewport" ref="maya_MotionVectorPassV1.viewport" />
+        <float  name="shutterOpenFraction" ref="maya_MotionVectorPassV1.shutterOpenFraction" />
+        <bool  name="useQuadraticMotionBlur" ref="maya_MotionBlurPass.useQuadraticMotionBlur" />
+        <float  name="zThreshold" ref="maya_MotionBlurPass.zThreshold" />
+        <int  name="blurStepCount" ref="maya_MotionBlurPass.blurStepCount" />
+        <float  name="motionFadeAmt" ref="maya_MotionBlurPass.motionFadeAmt" />
+        <float  name="motionFadeEmphasis" ref="maya_MotionBlurPass.motionFadeEmphasis" />
+        <float4  name="motionFadeTint" ref="maya_MotionBlurPass.motionFadeTint" />
+        <bool  name="motionBlurDebugOn" ref="maya_MotionBlurPass.motionBlurDebugOn" />
+        <bool  name="evaluateAll" ref="EnableMB.evaluateAll" />
+    </properties>
+    <values>
+        <float4 name="viewport" value="0.000000,0.000000,1.000000,1.000000"  />
+        <float name="shutterOpenFraction" value="0.200000"  />
+        <bool name="useQuadraticMotionBlur" value="false"  />
+        <float name="zThreshold" value="0.080000"  />
+        <int name="blurStepCount" value="15"  />
+        <float name="motionFadeAmt" value="0.000000"  />
+        <float name="motionFadeEmphasis" value="0.000000"  />
+        <float4 name="motionFadeTint" value="1.000000,1.000000,1.000000,1.000000"  />
+        <bool name="motionBlurDebugOn" value="false"  />
+    </values>
+    <outputs>
+        <target  name="res" ref="EnableMB.res" />
+    </outputs>
+</fragment_graph>

@@ -1,0 +1,64 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  March 11, 2003
+//
+//<doc>
+//<name plugAttr>
+//
+//<synopsis>
+//      string plugAttr(string $plug)
+//
+//<returns>
+//      string : Attribute name portion of the specified plug
+//
+//<description>
+//      This procedure returns the attribute name portion of the specified
+//      plug. Note that some attribute names may contain multiple, 
+//		"."-separated tokens. For example, the attribute name portion of the 
+//		plug "ramp1.colorEntryList[0].color" would be "colorEntryList[0].color".
+//
+//<flags>
+//      string $plug The plug name from which to extract the attribute name
+//      portion.
+//
+//<examples>
+//  	// Find the attribute name portion of checker1.color1
+//		plugAttr "checker1.color1";
+//		// Result: color1 //
+//
+//</doc>
+
+
+global proc string plugAttr(string $plug)
+{
+	//
+	// Description:
+	//	This procedure returns the attribute name portion of the specified
+	//	plug.
+	//	Note that some attribute names may still have multiple, "."-separated
+	//	tokens. For example, the attribute name portion of the plug
+	//	"ramp1.colorEntryList[0].color" would be "colorEntryList[0].color".
+	//
+
+	string $buffer[];
+	tokenize($plug, ".", $buffer);
+
+	string $attr;
+	int $i;
+
+	$attr = $buffer[1];
+
+	for ($i = 2; $i < size($buffer); $i++)
+	{
+		$attr += ("." + $buffer[$i]);
+	}
+
+	return $attr;
+}

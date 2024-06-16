@@ -1,0 +1,18 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc doCreateAssignNewMaterialTreeLister(string $item)
+//
+//	Creates the treeLister window to be used to create and
+//	assign a new shader.
+//
+//	$item = object to act on, or null string if selection list should be used
+//
+{
+	source "buildShaderMenus.mel";
+	createAssignNewMaterialTreeLister($item);
+}

@@ -1,0 +1,317 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+
+global proc MASHcheckOffsetType ( string $nodeName )
+{
+        if ( `objExists $nodeName` == 0 )
+            return;
+
+        string $nodeAttr = $nodeName + ".offsetType";
+        int $value = `getAttr $nodeAttr`;
+
+        $nodeAttr = $nodeName + ".enablePosition";
+        int $enablePos = `getAttr $nodeAttr`;
+        $nodeAttr = $nodeName + ".enableRotation";
+        int $enableRotation = `getAttr $nodeAttr`;
+        $nodeAttr = $nodeName + ".enableScale";
+        int $enableScale = `getAttr $nodeAttr`;
+        $nodeAttr = $nodeName + ".enableId";
+        int $enableId = `getAttr $nodeAttr`;
+
+
+
+        //rotate all points
+        if ($value == 3) {
+            editorTemplate  -dimControl $nodeName "centreOfRotation" false;
+        } else {
+            editorTemplate  -dimControl $nodeName "centreOfRotation" true;
+        }
+
+        //multiply by time
+        if ($value == 6) {
+            editorTemplate  -dimControl $nodeName "startFrame" false;
+        } else {
+            editorTemplate  -dimControl $nodeName "startFrame" true;
+        }
+
+        //closest point on curve
+        if ($value == 5) {
+            attrFieldGrp -e -en false  mashOffsetPosGrp;
+            attrFieldGrp -e -en false  mashOffsetRotGrp;
+            attrFieldGrp -e -en false  mashRandomOffsetScaleGrp;
+        } else {
+            attrFieldGrp -e -en true  mashOffsetPosGrp;
+            attrFieldGrp -e -en true  mashOffsetRotGrp;
+            attrFieldGrp -e -en true  mashRandomOffsetScaleGrp;
+        }
+
+        //are we using the modern connection style? Enable this attr if so.
+        string $conns[] = `listConnections -d on -s off ($nodeName+".outputPoints")`;
+        int $numConns = size($conns);
+
+        if ($numConns) {
+            editorTemplate  -dimControl $nodeName "transformationSpace" false;
+        } else {
+            editorTemplate  -dimControl $nodeName "transformationSpace" true;
+        }
+
+        attrFieldGrp -e -en $enablePos mashOffsetPosGrp;
+        attrFieldGrp -e -en $enableRotation mashOffsetRotGrp;
+        attrFieldGrp -e -en $enableScale mashRandomOffsetScaleGrp;
+        attrFieldSliderGrp -e -en $enableId mashRandomOffsetIdGrp;
+}
+
+global proc AEMASH_OffsetTemplate( string $nodeName )
+{
+
+    editorTemplate -beginScrollLayout;
+    python("import MASH.nodeHeaders; MASH.nodeHeaders.addHeader('" + $nodeName + "', 'Offset')")
+    editorTemplate -endLayout;
+
+    editorTemplate  -label (getPluginResource("MASH", "kMode")) -addControl "offsetType" "MASHcheckOffsetType";
+    editorTemplate  -label (getPluginResource("MASH", "kTransformationSpace")) -addControl "transformationSpace";
+
+    editorTemplate -callCustom "AEOffsetLegacyCheck" "AEOffsetLegacyCheckEdit" "";
+
+    editorTemplate -beginLayout (getPluginResource("MASH", "kClamps")) -collapse 1;
+    editorTemplate  -label (getPluginResource("MASH", "kClampLow")) -addControl "enableLC";
+    editorTemplate  -label (getPluginResource("MASH", "kClampHigh")) -addControl "enableHC";
+    editorTemplate  -label (getPluginResource("MASH", "kClampLow")) -addControl "lowClamp";
+    editorTemplate  -label (getPluginResource("MASH", "kClampHigh")) -addControl "highClamp";
+    editorTemplate -endLayout;
+
+    editorTemplate -beginLayout (getPluginResource("MASH", "kMultByTime")) -collapse 1;
+    editorTemplate  -label (getPluginResource("MASH", "kStartFrame")) -addControl "startFrame";
+    editorTemplate -endLayout;
+
+    editorTemplate -beginLayout (getPluginResource("MASH", "kCloseMeshPoint")) -collapse 1;
+    editorTemplate -callCustom "MASHoffsetSingleInputBuildQt" "MASHoffsetSingleInputUpdateQt" "";
+    editorTemplate  -label (getPluginResource("MASH", "kClosestPointMode")) -addControl "closestPointMode";
+    editorTemplate  -label (getPluginResource("MASH", "kRayDirection")) -addControl "rayDirection";
+    editorTemplate  -label (getPluginResource("MASH", "kHideOnRayMiss")) -addControl "hideOnRayMiss";
+    editorTemplate -endLayout;
+
+    editorTemplate -beginLayout (getPluginResource("MASH", "kReorderPoints")) -collapse 1;
+    editorTemplate  -label (getPluginResource("MASH", "kMode")) -addControl "reorderPoints";
+    editorTemplate  -label (getPluginResource("MASH", "kReverse")) -addControl "reversePointOrder";
+    editorTemplate  -label (getPluginResource("MASH", "kRandSeed")) -addControl "randomSeed";
+    editorTemplate -callCustom "MASHoffsetTargetSingleInputBuildQt" "MASHoffsetTargetSingleInputUpdateQt" "";
+    editorTemplate -callCustom "MASHoffsetReorderMeshSingleInputBuildQt" "MASHoffsetReorderMeshSingleInputUpdateQt" "";
+    editorTemplate -endLayout;
+
+    editorTemplate -beginLayout (getPluginResource("MASH", "kStrength")) -collapse 0;
+    editorTemplate  -label (getPluginResource("MASH", "kStrength")) -addControl "Envelope";
+    editorTemplate  -label (getPluginResource("MASH", "kRandStrength")) -addControl "randEnvelope";
+    editorTemplate  -label (getPluginResource("MASH", "kStepStrength")) -addControl "StepEnvelope";
+    editorTemplate -addSeparator;
+    editorTemplate  -label (getPluginResource("MASH", "kFilterOnSplit")) -addControl "stringOn";
+    editorTemplate  -label (getPluginResource("MASH", "kFilterOffSplit")) -addControl "stringOff";
+    editorTemplate -addSeparator;
+    editorTemplate  -label (getPluginResource("MASH", "kStrengthMap")) -addControl "mColour";
+    editorTemplate  -label (getPluginResource("MASH", "kMapProjAxis")) -addControl "mapDirection";
+    editorTemplate -callCustom "MASHmapHelperButton" "MASHmapHelperButtonEdit" "";
+    editorTemplate -beginLayout (getPluginResource("MASH", "kPerPointAdjust")) -collapse 1;
+    editorTemplate - bn;
+    editorTemplate  -label (getPluginResource("MASH", "kMapOffsetAdjust")) -ann (getPluginResource("MASH", "kMapOffsetAdjustAnn")) -addControl "strengthAffectsOffsets";
+    editorTemplate -en;
+    editorTemplate -endLayout;
+    editorTemplate -endLayout; //strength
+    editorTemplate -en;
+
+    editorTemplate -beginLayout (getPluginResource("MASH", "kFalloffObject")) -collapse 1;
+    editorTemplate -callCustom "MASHfalloffButtons" "MASHfalloffButtonsEdit" "";
+    editorTemplate -endLayout;
+
+    AEdependNodeTemplate $nodeName;
+    editorTemplate -addExtraControls;
+    editorTemplate -endScrollLayout;
+
+    editorTemplate -suppress "inIterations";
+}
+
+//
+//  Check for legacy controls and disable the new controls accordingly
+//
+global proc AEOffsetLegacyCheck ( string $attr )
+{
+    string $nodeName[];
+    tokenize($attr, ".", $nodeName);
+
+    //are we using the modern connection style? This determines what attributes are shown.
+    string $conns[] = `listConnections -d on -s off ($nodeName[0]+".outputArray")`;
+    int $numConns = size($conns);
+    int $newMode = 1;
+    if ($numConns) {
+        $newMode = 0; //bool needed for later inversion
+    }
+
+    AEAddMashCheckboxControl ( ($nodeName[0]+".enablePosition"), "mashOffsetEnablePosGrp", $newMode, (getPluginResource("MASH", "kEnablePos")) );
+    AEAddMashCheckboxControl ( ($nodeName[0]+".enableRotation"), "mashOffsetEnableRotGrp", $newMode, (getPluginResource("MASH", "kEnableRot")) );
+    AEAddMashCheckboxControl ( ($nodeName[0]+".enableScale"), "mashOffsetEnableScaleGrp", $newMode, (getPluginResource("MASH", "kEnableScale")) );
+    AEAddMashCheckboxControl ( ($nodeName[0]+".enableId"), "mashOffsetEnableIdGrp", $newMode, (getPluginResource("MASH", "kEnableId")) );
+
+    checkBox -e -cc ("MASHcheckOffsetType(\""+$nodeName[0]+"\")") mashOffsetEnablePosGrp;
+    checkBox -e -cc ("MASHcheckOffsetType(\""+$nodeName[0]+"\")") mashOffsetEnableRotGrp;
+    checkBox -e -cc ("MASHcheckOffsetType(\""+$nodeName[0]+"\")") mashOffsetEnableScaleGrp;
+    checkBox -e -cc ("MASHcheckOffsetType(\""+$nodeName[0]+"\")") mashOffsetEnableIdGrp;
+
+    attrFieldGrp -vis $newMode -label (getPluginResource("MASH", "kOffsetPos")) -at ($nodeName[0]+".positionOffset") mashOffsetPosGrp;
+    attrFieldGrp -vis $newMode -label (getPluginResource("MASH", "kOffsetRotatation")) -at ($nodeName[0]+".rotationOffset") mashOffsetRotGrp;
+    attrFieldGrp -vis $newMode -label (getPluginResource("MASH", "kOffsetScale")) -at ($nodeName[0]+".scaleOffset") mashRandomOffsetScaleGrp;
+    attrFieldSliderGrp -vis $newMode -label (getPluginResource("MASH", "kOffsetId")) -at ($nodeName[0]+".idOffset") mashRandomOffsetIdGrp;
+
+    attrFieldGrp -vis (!$newMode) -label (getPluginResource("MASH", "kOffsets")) -at ($nodeName[0]+".offsets") mashOffsetsGrp;
+
+}
+
+global proc AEOffsetLegacyCheckEdit ( string $attr )
+{
+    string $nodeName[];
+    tokenize($attr, ".", $nodeName);
+
+    //are we using the modern connection style? This determines what attributes are shown.
+    string $conns[] = `listConnections -d on -s off ($nodeName[0]+".outputArray")`;
+    int $numConns = size($conns);
+    int $newMode = 1;
+    if ($numConns) {
+        $newMode = 0; //bool needed for later inversion
+    }
+
+    AEAddMashCheckboxControlEdit ( ($nodeName[0]+".enablePosition"), "mashOffsetEnablePosGrp", $newMode );
+    AEAddMashCheckboxControlEdit ( ($nodeName[0]+".enableRotation"), "mashOffsetEnableRotGrp", $newMode );
+    AEAddMashCheckboxControlEdit ( ($nodeName[0]+".enableScale"), "mashOffsetEnableScaleGrp", $newMode );
+    AEAddMashCheckboxControlEdit ( ($nodeName[0]+".enableId"), "mashOffsetEnableIdGrp", $newMode );
+
+    checkBox -e -cc ("MASHcheckOffsetType(\""+$nodeName[0]+"\")") mashOffsetEnablePosGrp;
+    checkBox -e -cc ("MASHcheckOffsetType(\""+$nodeName[0]+"\")") mashOffsetEnableRotGrp;
+    checkBox -e -cc ("MASHcheckOffsetType(\""+$nodeName[0]+"\")") mashOffsetEnableScaleGrp;
+    checkBox -e -cc ("MASHcheckOffsetType(\""+$nodeName[0]+"\")") mashOffsetEnableIdGrp;
+
+    attrFieldGrp -e -vis $newMode -at ($nodeName[0]+".positionOffset") mashOffsetPosGrp;
+    attrFieldGrp -e -vis $newMode -at ($nodeName[0]+".rotationOffset") mashOffsetRotGrp;
+    attrFieldGrp -e -vis $newMode -at ($nodeName[0]+".scaleOffset") mashRandomOffsetScaleGrp;
+    attrFieldSliderGrp -vis $newMode -e -at ($nodeName[0]+".idOffset") mashRandomOffsetIdGrp;
+
+    attrFieldGrp -e -vis (!$newMode) -at ($nodeName[0]+".offsets") mashOffsetsGrp;
+
+}
+
+global proc MASHoffsetSingleInputBuildQt(string $nodeName)
+{
+    string $buffer[];
+    tokenize($nodeName, ".", $buffer);
+    $nodeName = $buffer[0];
+
+    python("import MASHsingleInputQtWidget");
+    rowLayout -numberOfColumns 2 -columnWidth2 139 250 offsetClosestMesh;
+    text -w 105 -h 20 -vis 1
+    -label (getPluginResource("MASH", "kInputMesh"))
+    -align "right" -font "plainLabelFont" ;
+    //get python to create the widget, include the desired nodeType as an arguement
+    python("MASHsingleInputQtWidget.build_qt_widget('offsetClosestMesh', '" + $nodeName + "', 'mesh', 'inputMesh', 'worldMesh', 'OffsetSwitchToClosestPointMode')");
+    setParent..;
+
+}
+
+global proc MASHoffsetSingleInputUpdateQt(string $nodeName )
+{
+    string $buffer[];
+    tokenize($nodeName, ".", $buffer);
+    $nodeName = $buffer[0];
+    python("import MASHsingleInputQtWidget");
+    python("MASHsingleInputQtWidget.update_qt_widget('offsetClosestMesh', '" + $nodeName + "', 'mesh', 'inputMesh', 'worldMesh', 'OffsetSwitchToClosestPointMode')");
+}
+
+
+global proc AEoffsetButton ( string $attr )
+{
+    string $nodeName[];
+    tokenize($attr, ".", $nodeName);
+
+    button -label (getPluginResource("MASH", "kAddPosLocator"))  -c ("offsetButtonCMDS " + $nodeName[0] + " 1")
+    setOffsetMASHButton;
+
+
+    separator -w 100 -h 5 -hr 1 -st "none";
+}
+
+global proc AEoffsetButtonEdit ( string $attr )
+{
+    string $nodeName[];
+    tokenize($attr, ".", $nodeName);
+
+    button -e -c ("offsetButtonCMDS " + $nodeName[0] + " 1")
+    setOffsetMASHButton;
+
+}
+
+global proc offsetButtonCMDS (string $nodeName, int $whichCMD) {
+    if ($whichCMD == 1)
+    {
+
+        string $toAttr = ($nodeName + ".offsets");
+
+        string $obj[] = `spaceLocator -n "Offset Locator"`;
+        setAttr ($obj[0]+".overrideColor") 9;
+        setAttr ($obj[0]+".overrideEnabled") 1;
+        connectAttr ($obj[0]+".translate") $toAttr;
+
+    }
+}
+
+global proc MASHoffsetTargetSingleInputBuildQt(string $nodeName)
+{
+    string $buffer[];
+    tokenize($nodeName, ".", $buffer);
+    $nodeName = $buffer[0];
+
+    python("import MASHsingleInputQtWidget");
+    rowLayout -numberOfColumns 2 -columnWidth2 139 250 offsetDistancePoint;
+    text -w 105 -h 20 -vis 1
+    -label (getPluginResource("MASH", "kDistancePoint"))
+    -align "right" -font "plainLabelFont" ;
+    //get python to create the widget, include the desired nodeType as an arguement
+    python("MASHsingleInputQtWidget.build_qt_widget('offsetDistancePoint', '" + $nodeName + "', 'transform', 'reorderDistancePoint', 'translate', 'OffsetSwitchToReorderByDistance')");
+    setParent..;
+
+}
+
+global proc MASHoffsetTargetSingleInputUpdateQt(string $nodeName )
+{
+    string $buffer[];
+    tokenize($nodeName, ".", $buffer);
+    $nodeName = $buffer[0];
+
+    python("MASHsingleInputQtWidget.update_qt_widget('offsetDistancePoint', '" + $nodeName + "', 'transform', 'reorderDistancePoint', 'translate', 'OffsetSwitchToReorderByDistance')");
+}
+
+global proc MASHoffsetReorderMeshSingleInputBuildQt(string $nodeName)
+{
+    string $buffer[];
+    tokenize($nodeName, ".", $buffer);
+    $nodeName = $buffer[0];
+
+    python("import MASHsingleInputQtWidget");
+    rowLayout -numberOfColumns 2 -columnWidth2 139 250 offsetReorderMesh;
+    text -w 105 -h 20 -vis 1
+    -label (getPluginResource("MASH", "kDistanceMesh"))
+    -align "right" -font "plainLabelFont" ;
+    //get python to create the widget, include the desired nodeType as an arguement
+    python("MASHsingleInputQtWidget.build_qt_widget('offsetReorderMesh', '" + $nodeName + "', 'mesh', 'reorderInputMesh', 'worldMesh', 'OffsetSwitchToReorderByMesh')");
+    setParent..;
+
+}
+
+global proc MASHoffsetReorderMeshSingleInputUpdateQt(string $nodeName )
+{
+    string $buffer[];
+    tokenize($nodeName, ".", $buffer);
+    $nodeName = $buffer[0];
+
+    python("MASHsingleInputQtWidget.update_qt_widget('offsetReorderMesh', '" + $nodeName + "', 'mesh', 'reorderInputMesh', 'worldMesh', 'OffsetSwitchToReorderByMesh')");
+}

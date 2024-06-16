@@ -1,0 +1,283 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc xgmToggleNoiseInvertFrozenEffect()
+{
+	int $newInvertFrozenValue = !`xgmNoiseBrushContext -q -freezeMode xgmNoiseBrushTool`;
+	xgmNoiseBrushContext -e -freezeMode $newInvertFrozenValue xgmNoiseBrushTool;
+}
+
+global proc xgmToggleNoiseFalloffColor()
+{
+	int $newFalloffColorValue = !`xgmNoiseBrushContext -q -fc xgmNoiseBrushTool`;
+	xgmNoiseBrushContext -e -fc $newFalloffColorValue xgmNoiseBrushTool;
+}
+
+global proc xgmToggleNoisePreselectionHighlight()
+{
+	int $newPreselectionHighlight = !`xgmNoiseBrushContext -q -ps xgmNoiseBrushTool`;
+	xgmNoiseBrushContext -e -ps $newPreselectionHighlight xgmNoiseBrushTool;
+}
+
+global proc xgmToggleNoiseShowFrozen()
+{
+	int $newShowFrozen = !`xgmNoiseBrushContext -q -sf xgmNoiseBrushTool`;
+	xgmNoiseBrushContext -e -sf $newShowFrozen xgmNoiseBrushTool;
+}
+
+global proc xgmToggleNoiseLockLength()
+{
+	int $newLockLength = !`xgmNoiseBrushContext -q -preserveLength xgmNoiseBrushTool`;
+	xgmNoiseBrushContext -e -preserveLength $newLockLength xgmNoiseBrushTool;
+}
+
+global proc xgmToggleNoiseEnableCollide()
+{
+	int $newEnableCollide = !`xgmNoiseBrushContext -q -ec xgmNoiseBrushTool`;
+	xgmNoiseBrushContext -e -ec $newEnableCollide xgmNoiseBrushTool;
+}
+
+global proc xgmToggleNoiseEnableRootToTipFalloff()
+{
+	int $newEnableRootToTip = !`xgmNoiseBrushContext -q -ert xgmNoiseBrushTool`;
+	xgmNoiseBrushContext -e -ert $newEnableRootToTip xgmNoiseBrushTool;
+}
+
+global proc xgmToggleNoiseFilterBackfaces()
+{
+	int $newFilterBackfaces = !`xgmNoiseBrushContext -q -fb xgmNoiseBrushTool`;
+	xgmNoiseBrushContext -e -fb $newFilterBackfaces xgmNoiseBrushTool;
+}
+
+global proc xgmSwitchNoiseFallOffType(string $falloffType) 
+{
+	xgmNoiseBrushContext -e -brushFalloffType $falloffType xgmNoiseBrushTool;
+}
+
+global proc xgmSwitchNoiseBrushMode(int $newBrushMode)
+{
+	xgmNoiseBrushContext -e -globalSelection $newBrushMode xgmNoiseBrushTool;
+}
+
+global proc contextXGenNoiseToolMM()
+{
+	int $currentInvertFrozen = !`xgmNoiseBrushContext -q -freezeMode xgmNoiseBrushTool`;
+	menuItem
+		-label (uiRes("m_contextXGenNoiseToolMM.kInvertFrozenEffect"))
+		-command xgmToggleNoiseInvertFrozenEffect
+		-checkBox $currentInvertFrozen
+		-radialPosition "N" 
+		-enableCommandRepeat 1
+		;
+
+	int $currentFalloffColor = `xgmNoiseBrushContext -q -fc xgmNoiseBrushTool`;
+	menuItem
+		-label (uiRes("m_contextXGenNoiseToolMM.kBrushFalloffColor"))
+		-command xgmToggleNoiseFalloffColor
+		-checkBox $currentFalloffColor
+		-radialPosition "NE" 
+		-enableCommandRepeat 1
+		;
+
+	int $currentPreselectionHighlight = `xgmNoiseBrushContext -q -ps xgmNoiseBrushTool`;
+	menuItem
+		-label (uiRes("m_contextXGenNoiseToolMM.kPreselectionHighlight"))
+		-command xgmToggleNoisePreselectionHighlight 
+		-checkBox $currentPreselectionHighlight
+		-radialPosition "E"
+		-enableCommandRepeat 1
+		;
+
+	int $currentShowFrozen = `xgmNoiseBrushContext -q -sf xgmNoiseBrushTool`;
+	menuItem
+		-label (uiRes("m_contextXGenNoiseToolMM.kShowFrozen"))
+		-command xgmToggleNoiseShowFrozen 
+		-checkBox $currentShowFrozen
+		-radialPosition "SE" 
+		-enableCommandRepeat 1
+		;
+
+	int $currentPreserveLength = `xgmNoiseBrushContext -q -preserveLength xgmNoiseBrushTool`;
+	menuItem
+		-label (uiRes("m_contextXGenNoiseToolMM.kPreserveLength"))
+		-command xgmToggleNoiseLockLength 
+		-checkBox $currentPreserveLength
+		-radialPosition "S" 
+		-enableCommandRepeat 1
+		;
+
+	int $currentEnableCollide = `xgmNoiseBrushContext -q -ec xgmNoiseBrushTool`;
+	menuItem
+		-label (uiRes("m_contextXGenNoiseToolMM.kCollideWithMeshes"))
+		-command xgmToggleNoiseEnableCollide 
+		-checkBox $currentEnableCollide
+		-radialPosition "SW" 
+		-enableCommandRepeat 1
+		;
+
+	int $currentRootToTipFalloff = `xgmNoiseBrushContext -q -ert xgmNoiseBrushTool`;
+	menuItem
+		-label (uiRes("m_contextXGenNoiseToolMM.kRootToTipFalloff"))
+		-command xgmToggleNoiseEnableRootToTipFalloff
+		-checkBox $currentRootToTipFalloff
+		-radialPosition "W" 
+		-enableCommandRepeat 1
+		;
+
+	int $currentFilterBackFaces = `xgmNoiseBrushContext -q -fb xgmNoiseBrushTool`;
+	menuItem
+		-label (uiRes("m_contextXGenNoiseToolMM.kFilterBackFaces"))
+		-command xgmToggleNoiseFilterBackfaces
+		-checkBox $currentFilterBackFaces
+		-radialPosition "NW" 
+		-enableCommandRepeat 1
+		;
+	
+	int $currentBrushMode = `xgmNoiseBrushContext -q -globalSelection xgmNoiseBrushTool`;
+	menuItem
+		-label (uiRes("m_contextXGenNoiseToolMM.kFalloffType"))
+		-subMenu 1
+		-enableCommandRepeat 1
+		;
+		
+		radioMenuItemCollection;
+		string $currentFallOffType = `xgmNoiseBrushContext -q -bft xgmNoiseBrushTool`;
+		menuItem
+			-label (uiRes("m_contextXGenNoiseToolMM.kScreen"))
+			-command "xgmSwitchNoiseFallOffType(\"screen\")"
+			-radioButton ($currentFallOffType == "screen")
+			-enableCommandRepeat 1
+			;
+			
+		menuItem
+			-label (uiRes("m_contextXGenNoiseToolMM.kVolume"))
+			-command "xgmSwitchNoiseFallOffType(\"volume\")"
+			-radioButton ($currentFallOffType == "volume")
+			-enableCommandRepeat 1
+			;
+			
+		menuItem
+			-label (uiRes("m_contextXGenNoiseToolMM.kSurface"))
+			-command "xgmSwitchNoiseFallOffType(\"surface\")"
+			-radioButton ($currentFallOffType == "surface")
+			-enable $currentBrushMode
+			-enableCommandRepeat 1
+			;
+
+		setParent -m ..;
+
+	string $brushCmd = "xgmNoiseBrushContext";
+	string $tool = "xgmNoiseBrushTool";
+	string $flag = "-brushFalloffCurve";
+	string $defaultValFlag = "-defaultBrushFalloffCurve";
+	string $param = $brushCmd + "\", \"" + $tool + "\", \"" + $flag + "\", \"" + $defaultValFlag;
+	menuItem
+		-label (uiRes("m_contextXGenNoiseToolMM.kAdjustBrushFalloffCurve"))
+		-command ("xgmMarkingMenuAdjustFalloffCurve( \"" + $param + "\" )")
+		-enableCommandRepeat 1
+		;
+
+	$flag = "-rootToTipCurve";
+	$defaultValFlag = "-defaultRootToTipCurve";
+	$param = $brushCmd + "\", \"" + $tool + "\", \"" + $flag + "\", \"" + $defaultValFlag;
+	menuItem
+		-label (uiRes("m_contextXGenNoiseToolMM.kAdjustRootToTipFalloffCurve"))
+		-command ("xgmMarkingMenuAdjustFalloffCurve( \"" + $param + "\" )")
+		-enableCommandRepeat 1
+		;
+
+	menuItem
+		-label (uiRes("m_contextXGenNoiseToolMM.kNoiseBrushMode"))
+		-subMenu 1
+		-enableCommandRepeat 1
+		;
+		
+		radioMenuItemCollection;
+		menuItem
+			-label (uiRes("m_contextXGenNoiseToolMM.kNoiseGlobal"))
+			-command "xgmSwitchNoiseBrushMode(1)"
+			-radioButton ($currentBrushMode == 1)
+			-enableCommandRepeat 1
+			;
+			
+		menuItem
+			-label (uiRes("m_contextXGenNoiseToolMM.kNoiseLocal"))
+			-command "xgmSwitchNoiseBrushMode(0)"
+			-radioButton ($currentBrushMode == 0)
+			-enableCommandRepeat 1
+			;
+			
+		setParent -m ..;
+
+	menuItem
+		-label (uiRes("m_contextXGenNoiseToolMM.kFlood"))
+		-command "xgmNoiseBrushContext -e -flood xgmNoiseBrushTool"
+		-enableCommandRepeat 1
+		;
+
+	
+	menuItem
+		-label (uiRes("m_contextXGenNoiseToolMM.kSymmetry"))
+		-subMenu 1
+		-enableCommandRepeat 1
+		;
+		
+		radioMenuItemCollection;
+		string $currentSymmetryType = `xgmNoiseBrushContext -q -brushSymmetryType xgmNoiseBrushTool`;
+		menuItem
+			-label (uiRes("m_contextXGenNoiseToolMM.kOff"))
+			-command "xgmSwitchSymmetryType(\"xgmNoiseBrushContext\", \"xgmNoiseBrushTool\", 0)"
+			-radioButton ($currentSymmetryType == 0)
+			-enableCommandRepeat 1
+			;
+			
+		menuItem
+			-label (uiRes("m_contextXGenNoiseToolMM.kObjectX"))
+			-command "xgmSwitchSymmetryType(\"xgmNoiseBrushContext\", \"xgmNoiseBrushTool\", 1)"
+			-radioButton ($currentSymmetryType == 1)
+			-enableCommandRepeat 1
+			;
+
+		menuItem
+			-label (uiRes("m_contextXGenNoiseToolMM.kObjectY"))
+			-command "xgmSwitchSymmetryType(\"xgmNoiseBrushContext\", \"xgmNoiseBrushTool\", 2)"
+			-radioButton ($currentSymmetryType == 2)
+			-enableCommandRepeat 1
+			;
+			
+		menuItem
+			-label (uiRes("m_contextXGenNoiseToolMM.kObjectZ"))
+			-command "xgmSwitchSymmetryType(\"xgmNoiseBrushContext\", \"xgmNoiseBrushTool\", 3)"
+			-radioButton ($currentSymmetryType == 3)
+			-enableCommandRepeat 1
+			;
+			
+		menuItem
+			-label (uiRes("m_contextXGenNoiseToolMM.kWorldX"))
+			-command "xgmSwitchSymmetryType(\"xgmNoiseBrushContext\", \"xgmNoiseBrushTool\", 4)"
+			-radioButton ($currentSymmetryType == 4)
+			-enableCommandRepeat 1
+			;
+
+		menuItem
+			-label (uiRes("m_contextXGenNoiseToolMM.kWorldY"))
+			-command "xgmSwitchSymmetryType(\"xgmNoiseBrushContext\", \"xgmNoiseBrushTool\", 5)"
+			-radioButton ($currentSymmetryType == 5)
+			-enableCommandRepeat 1
+			;
+			
+		menuItem
+			-label (uiRes("m_contextXGenNoiseToolMM.kWorldZ"))
+			-command "xgmSwitchSymmetryType(\"xgmNoiseBrushContext\", \"xgmNoiseBrushTool\", 6)"
+			-radioButton ($currentSymmetryType == 6)
+			-enableCommandRepeat 1
+			;
+
+	setParent -m ..;
+	
+	setParent -menu ..;
+}

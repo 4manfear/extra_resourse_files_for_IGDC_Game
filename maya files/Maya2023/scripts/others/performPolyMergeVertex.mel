@@ -1,0 +1,141 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  17 Sept 97
+//
+//  Procedure Name:
+//      performPolyMergeVertex
+//
+//  Description:
+//        Merge the selected polygon vertices
+//         
+//  Input Arguments:
+//        $option : Whether to set the options to default values.
+//  Return Value:
+//        command string iff $option==2
+//
+
+proc setOptionVars (int $forceFactorySettings)
+{			   
+	optionVar -init $forceFactorySettings -category "Modeling.Edit Mesh.Merge Vertices"
+		-fv polyMergeVertexDistance 0.0100
+		-iv polyMergeVertexAlwaysMergeTwoVertices 1
+		;
+}
+
+global proc performPolyMergeVertexSetup (string $parent, int $forceFactorySettings)
+{
+	setOptionVars($forceFactorySettings);
+	setParent $parent;
+	
+	float $fval = `optionVar -query polyMergeVertexDistance`;
+	floatSliderGrp -edit -value $fval polyMergeVertexDistance;
+
+	int $ival = `optionVar -query polyMergeVertexAlwaysMergeTwoVertices`;
+	checkBoxGrp -edit -value1 $ival polyMergeVertexAlwaysMergeTwoVertices;
+
+	//int $ival = `optionVar -query polyMergeVertexMergeUV`;
+	//checkBoxGrp -edit -value1 $ival polyMergeVertexMergeUV;
+}
+
+global proc performPolyMergeVertexCallback (string $parent, int $doIt)
+{
+	setParent $parent;
+	
+	optionVar -floatValue polyMergeVertexDistance
+		`floatSliderGrp -query -value polyMergeVertexDistance`;
+
+	optionVar -intValue polyMergeVertexAlwaysMergeTwoVertices
+		`checkBoxGrp -query -value1 polyMergeVertexAlwaysMergeTwoVertices`;
+
+	//optionVar -intValue polyMergeVertexMergeUV
+	//	`checkBoxGrp -query -value1 polyMergeVertexMergeUV`;
+
+	if ($doIt) {
+		performPolyMergeVertex 0;
+		addToRecentCommandQueue "performPolyMergeVertex 0" "PolyMergeVertex";
+	}
+}
+
+proc polyMergeVertexOptions ()
+{
+	string $commandName = "performPolyMergeVertex";
+	string $callback = ($commandName + "Callback");
+	string $setup = ($commandName + "Setup");
+	   
+	string $layout = getOptionBox();
+	setParent $layout;
+	setUITemplate -pushTemplate DefaultTemplate;
+	waitCursor -state 1;
+	
+	string $parent = `columnLayout -adjustableColumn 1`;
+
+	frameLayout -label (uiRes("m_performPolyMergeVertex.kTolerance"))
+		-cl false -cll false;
+		columnLayout;
+			//checkBoxGrp -label1 _L10N(kMergeUVs,"Merge UVs also") polyMergeVertexMergeUV;
+			floatSliderGrp -label (uiRes("m_performPolyMergeVertex.kDistance")) -min 0 -max 10 -fmx 10000000 polyMergeVertexDistance;
+			checkBoxGrp -label1 (uiRes("m_performPolyMergeVertex.kAlwaysMerge")) polyMergeVertexAlwaysMergeTwoVertices;
+
+	setParent $parent;
+
+	waitCursor -state 0;
+	setUITemplate -popTemplate;
+	   
+	string $applyBtn = getOptionBoxApplyBtn();
+	button -edit -label (uiRes("m_performPolyMergeVertex.kMergeVertex"))
+	       -command ($callback + " " + $parent + " " + 1)
+		$applyBtn;
+	string $saveBtn = getOptionBoxSaveBtn();
+	button -edit 
+		-command ($callback + " " + $parent + " " + 0 + "; hideOptionBox")
+		$saveBtn;
+	string $resetBtn = getOptionBoxResetBtn();
+	button -edit 
+		-command ($setup + " " + $parent + " " + 1)
+		$resetBtn;
+		
+	setOptionBoxTitle( (uiRes("m_performPolyMergeVertex.kOptions")) );
+
+	setOptionBoxHelpTag( "MergeVertices" );
+
+	eval (($setup + " " + $parent + " " + 0));      
+	showOptionBox();
+}
+
+global proc string performPolyMergeVertex (int $option)
+{
+	string $cmd="";
+	string $sel[];
+	float $fval;
+	int $ival;
+	switch ($option) {
+	case 0:
+		setOptionVars(false);
+		$fval = `optionVar -query polyMergeVertexDistance`;
+		$ival = `optionVar -query polyMergeVertexAlwaysMergeTwoVertices`;
+		//float $ival = `optionVar -query polyMergeVertexMergeUV`;
+		//$cmd =("polyMergeVertex  -d " + $fval + " -tx " + $ival);
+		$cmd =("polyMergeVertex  -d " + $fval + " -am " + $ival);
+		polyPerformAction $cmd v 0;
+		break;
+	case 1: polyMergeVertexOptions; break;
+	default:
+		setOptionVars(false);
+		$fval = `optionVar -query polyMergeVertexDistance`;
+		$ival = `optionVar -query polyMergeVertexAlwaysMergeTwoVertices`;
+		//float $ival = `optionVar -query polyMergeVertexMergeUV`;
+		//$cmd =("polyMergeVertex -d " + $fval + " -tx " + $ival);
+
+		$cmd =("polyMergeVertex  -d " + $fval + " -am " + $ival);
+	
+		$cmd = ("polyPerformAction \"" + $cmd + "\" v 0");
+	}
+	return $cmd;
+}

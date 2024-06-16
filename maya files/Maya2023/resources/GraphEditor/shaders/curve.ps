@@ -1,0 +1,148 @@
+#version 330 core
+#define ALLOW_STIPPLE_RANGE 1
+
+const uint  kStipplePattern = 0x99999999u; 
+const uint  kMutedCurveStipplePattern = 0xF0F0F0F0u; 
+const float kStippleFactor  = 1.0f;
+
+const vec4 kMutedColorOpacity      = vec4(1.0000f, 1.0000f, 1.0000f, 0.3f);
+
+layout(std140) uniform GlobalSettings
+{
+    vec4 lockedKeyColor;
+    vec4 lockedCurveColor;
+    vec4 defaultKeyColor;
+    vec4 bufferCurveColor;
+    vec4 breakDownKeyColor;
+    vec4 keyOnBufferCurveColor;
+	vec4 preSelectHighlightColor;
+	vec4 primarySelectionColor;
+	vec4 secondarySelectionColor;
+	vec4 graphEditorBackgroundColor;
+    bool displayKeysOnSelection;
+    bool displayTangentsAlways;
+    bool displayTangentsOnSelection;
+    bool simpleKeyView;
+    float keyScale;
+    float keyMinScale;
+    float timeMultiplier;
+    bool highlightAffectedCurves;
+    //uint padding[4];
+}globalSettings;
+
+
+
+layout(std140) uniform PerFrame
+{
+    layout(column_major) mat4 projection;                               // transform world space into NDC space [-1,1].
+    layout(column_major) mat4 projectionWithoutHorizontalTranslation;   
+    layout(column_major) mat4 viewportInv;                              // transform viewport space(pixel) into NDC space [-1,1].
+    layout(column_major) mat4 viewport;                                 // transform NDC [-1,1] into viewport space(pixel).
+    int   projectionOffsetXSec;
+    int   projectionOffsetXFrac;
+    uint displayPoint;
+    float viewRegionMinX;
+    float viewRegionMaxX;
+    float viewRegionMinY;
+    float viewRegionMaxY;  
+    float viewRegionWidth;
+    float keysDensity;
+}perFrame; 
+
+layout(std140) uniform PerCurve
+{
+    layout(column_major) mat4  transformMatrix;
+    vec4 color;
+    int   startTimeSec;
+    int   startTimeFrac;
+    float valueRange;		 	 
+    int   timeRangeSec;	
+    int   timeRangeFrac;	
+    uint  preInfinityType;      
+    uint  postInfinityType;
+    bool  isWeighted;
+	uint  preHighlightCurvePart; 
+	uint  preHighlightKeyIndex;
+    bool  isBuffered;
+	bool  isQuaternion;
+	bool  useQuaternionKeyShape;
+	bool  isPlotted;
+	bool  isLocked;
+	bool  isReferenced;
+	bool  hasCustomTangent;
+	bool  useFullStipplePattern;
+}perCurve;
+
+
+
+in GS_OUT
+{
+    flat vec4 color;    
+    float time;  
+    float stippleLineCoord;
+    flat uint  useStipplePattern;
+    flat uint  isInSelectionRange;
+}ps_input;
+
+
+// Texture buffer that containt stipple range
+uniform samplerBuffer textureBuffer;
+
+out vec4 color;
+
+
+bool isInsideStippleRange(float pTime)
+{     
+    // the whole curve use stipple pattern
+    if(perCurve.useFullStipplePattern)
+        return true;
+    
+#if ALLOW_STIPPLE_RANGE
+    int nbRange = int( texelFetch( textureBuffer, 0).x );
+    if(nbRange == 0)
+        return false;
+        
+    bool isInside = false;
+    int index    = 0;
+    while(!isInside && index < nbRange)
+    {
+        float stippleRangeStart  = ( perFrame.projection * texelFetch( textureBuffer, index * 2 + 1) ).x;
+        float stippleRangeEnd    = ( perFrame.projection * texelFetch( textureBuffer, index * 2 + 2) ).x;
+        
+        isInside = (pTime >= stippleRangeStart  && pTime < stippleRangeEnd); 
+        ++index;        
+    }  
+    
+    // we should inverse the boolean, this is cause by the way maya encode stipple range for mute curve.
+    return !isInside;
+#else
+    return false;
+#endif
+}
+
+
+void main()
+{
+
+    if( ps_input.useStipplePattern == 1u )
+    {
+        uint bit = uint( round( ps_input.stippleLineCoord / kStippleFactor) ) & 31U;
+        if((kStipplePattern & (1U<<bit)) == 0U)
+            discard;    
+        else
+            color = vec4( ps_input.color.x, ps_input.color.y, ps_input.color.z, ps_input.color.w );    
+    }
+    else if( isInsideStippleRange( ps_input.time) )
+    {
+        color = vec4( ps_input.color.x, ps_input.color.y, ps_input.color.z,  ps_input.color.w);
+
+        if(ps_input.isInSelectionRange == 0u && !perCurve.isReferenced)
+        {
+            color *= kMutedColorOpacity;
+        }
+    }
+    else
+    {
+        color = vec4( ps_input.color.x, ps_input.color.y, ps_input.color.z, ps_input.color.w );    
+    }
+}

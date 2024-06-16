@@ -1,0 +1,104 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+// Creation Date:  14 January 1999
+//
+//
+//
+//  Procedure Name:
+//      duplicateSurfaceToolScript
+//
+//  Description:
+//	create wrapper around the duplicateSurface command
+//
+//  Input Arguments:
+//		0 ==> do the command.
+//		1 ==> show the action option box
+//		2 ==> return the command
+//		3 ==> show tool option box
+//		4 ==> enter the tool
+//
+//  Return Value:
+//      None.
+//
+
+global proc duplicateSurfaceToolSetup( int $forceFactorySettings,
+									 string $goToTool )
+{
+	optionVar -init $forceFactorySettings -category "Modeling.Surfaces.Duplicate NURBS Patch"
+		-iv duplicateSurfaceEuc 0
+		-iv duplicateSurfaceLac 1
+		;
+
+	if( "" != $goToTool ) {
+		scriptCtx -e -euc `optionVar -q duplicateSurfaceEuc` $goToTool;
+		scriptCtx -e -lac `optionVar -q duplicateSurfaceLac` $goToTool;
+	}
+}
+
+global proc duplicateSurfaceValues ( string $toolName ) 
+{
+	performDuplicateSurface 3 $toolName;
+	scriptCtxCommonValues( $toolName );
+}
+
+global proc duplicateSurfaceProperties()
+{
+	scriptCtxCommonProperties;
+}
+
+proc createDuplicateSurfaceContext( string $tool )
+{
+	if( ! `scriptCtx -exists $tool` ) {
+		duplicateSurfaceToolSetup( 0, "" );
+		scriptCtx -i1 "duplicateSurface.png"
+		  -title (uiRes("m_duplicateSurfaceToolScript.kDuplicateSurfaceTool"))
+		  -bcn "duplicateSurface"
+
+		  -totalSelectionSets 1
+		  -expandSelectionList true
+		  -fcs ("duplicateSurfaceToolScript 0")
+
+		  -setNoSelectionPrompt ((uiRes("m_duplicateSurfaceToolScript.kSelectNurbsPatches")) )
+		  -setSelectionPrompt ((uiRes("m_duplicateSurfaceToolScript.kSelectMoreNurbsPatches")) )
+
+		  -showManipulators true
+		  -setSelectionCount 0
+		  -setAutoToggleSelection true
+
+		  -setAutoComplete `optionVar -q duplicateSurfaceLac`
+		  -exitUponCompletion `optionVar -q duplicateSurfaceEuc`
+		  -setAllowExcessCount true
+
+		  -surfaceFace true
+		$tool;
+	}
+}
+
+global proc string duplicateSurfaceToolScript( int $setToTool )
+//
+//	Description :
+//		0 ==> do the command.
+//		1 ==> show the action option box
+//		2 ==> return the command
+//		3 ==> show tool/action option box
+//		4 ==> enter the tool/do the command
+{
+	string $tool = "";
+	if( $setToTool > 2 ) {
+		if( !`optionVar -q modelWithToolDuplicateSurface` ) {
+			$setToTool = 4 - $setToTool;
+		}
+		else {
+			$tool = "duplicateSurfaceContext";
+			createDuplicateSurfaceContext $tool;
+		}
+	}
+	return scriptToolScript( "performDuplicateSurface", $setToTool, $tool );
+}

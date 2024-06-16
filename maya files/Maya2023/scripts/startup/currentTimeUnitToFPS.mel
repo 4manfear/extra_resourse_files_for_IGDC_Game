@@ -1,0 +1,114 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  Jan 2000
+//
+
+global proc float
+currentTimeUnitToFPS ()
+{
+	string $unit = `currentUnit -q -time`;
+	float  $fps = 0;
+
+	if( $unit == "game" ) {
+		$fps = 15;
+	} else if( $unit == "film" ) {
+		$fps = 24;
+	} else if( $unit == "pal" ) {
+		$fps = 25;
+	} else if( $unit == "ntsc" ) {
+		$fps = 30;
+	} else if( $unit == "show" ) {
+		$fps = 48;
+	} else if( $unit == "palf" ) {
+		$fps = 50;
+	} else if( $unit == "ntscf" ) {
+		$fps = 60;
+	} else if( $unit == "2fps" ) {
+		$fps = 2;
+	} else if( $unit == "3fps" ) {
+		$fps = 3;
+	} else if( $unit == "4fps" ) {
+		$fps = 4;
+	} else if( $unit == "5fps" ) {
+		$fps = 5;
+	} else if( $unit == "6fps" ) {
+		$fps = 6;
+	} else if( $unit == "8fps" ) {
+		$fps = 8;
+	} else if( $unit == "10fps" ) {
+		$fps = 10;
+	} else if( $unit == "12fps" ) {
+		$fps = 12;
+	} else if( $unit == "16fps" ) {
+		$fps = 16;
+	} else if( $unit == "20fps" ) {
+		$fps = 20;
+	} else if( $unit == "23.976fps" ) {
+		$fps = 24.0 * 1000.0 / 1001.0;
+	} else if( $unit == "29.97fps" ) {
+		$fps = 30.0 * 1000.0 / 1001.0;
+	} else if( $unit == "29.97df" ) {
+		$fps = 30.0 * 1000.0 / 1001.0;
+	} else if( $unit == "40fps" ) {
+		$fps = 40;
+	} else if( $unit == "47.952fps" ) {
+		$fps = 48.0 * 1000.0 / 1001.0;
+	} else if( $unit == "59.94fps" ) {
+		$fps = 60.0 * 1000.0 / 1001.0;
+	} else if( $unit == "75fps" ) {
+		$fps = 75;
+	} else if( $unit == "80fps" ) {
+		$fps = 80;
+	} else if( $unit == "90fps" ) {
+		$fps = 90;
+	} else if( $unit == "100fps" ) {
+		$fps = 100;
+	} else if( $unit == "120fps" ) {
+		$fps = 120;
+	} else if( $unit == "125fps" ) {
+		$fps = 125;
+	} else if( $unit == "150fps" ) {
+		$fps = 150;
+	} else if( $unit == "200fps" ) {
+		$fps = 200;
+	} else if( $unit == "240fps" ) {
+		$fps = 240;
+	} else if( $unit == "250fps" ) {
+		$fps = 250;
+	} else if( $unit == "300fps" ) {
+		$fps = 300;
+	} else if( $unit == "375fps" ) {
+		$fps = 375;
+	} else if( $unit == "400fps" ) {
+		$fps = 400;
+	} else if( $unit == "500fps" ) {
+		$fps = 500;
+	} else if( $unit == "600fps" ) {
+		$fps = 600;
+	} else if( $unit == "750fps" ) {
+		$fps = 750;
+	} else if( $unit == "1200fps" ) {
+		$fps = 1200;
+	} else if( $unit == "1500fps" ) {
+		$fps = 1500;
+	} else if( $unit == "2000fps" ) {
+		$fps = 2000;
+	} else if( $unit == "3000fps" ) {
+		$fps = 3000;
+	} else if( $unit == "6000fps" ) {
+		$fps = 6000;
+	} else if( $unit == "44100fps" ) {
+		$fps = 41000;
+	} else if( $unit == "48000fps" ) {
+		$fps = 48000;
+	}
+
+	return ($fps);
+}

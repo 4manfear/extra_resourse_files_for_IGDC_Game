@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<toolclips ui="ui/ToolClipUI.qml" simple="ui/SimpleTooltip.qml" locale="ja_JP">
+  <toolclip key="MASHVisibilityBtn" title="可視性" help="MASH_Visibility">
+    <text>インスタンス化されたオブジェクトの可視性を変更します。</text>
+    <expanded>
+      <default-resource index="1"/>
+      <resourcelist>
+        <video location="MASH_visibility.webm">可視性</video>
+        <link location="MASH_Visibility">可視性</link>
+      </resourcelist>
+    </expanded>
+  </toolclip>
+  <toolclip key="MASHTrailsBtn" title="軌跡" help="MASH_Trails">
+    <text>背後またはポイント間の四角形の軌跡を作成します。</text>
+    <expanded>
+      <default-resource index="1"/>
+      <resourcelist>
+        <video location="MASH_trails.webm">軌跡</video>
+        <link location="MASH_Trails">軌跡</link>
+      </resourcelist>
+    </expanded>
+  </toolclip>
+  <toolclip key="MASHTimeBtn" title="時間" help="MASH_Time">
+    <text>ジオメトリ タイプ(Geometry Type)がメッシュ(Mesh)に設定されている場合に作成されるメッシュのコンポーネント アニメーション(すなわち、変形)をオフセットするために使用されます。 </text>
+    <expanded>
+      <default-resource index="1"/>
+      <resourcelist>
+        <video location="MASH_time.webm">時間</video>
+        <link location="MASH_Time">時間</link>
+      </resourcelist>
+    </expanded>
+  </toolclip>
+  <toolclip key="MASHSpringBtn" title="スプリング" help="MASH_Spring">
+    <text>既存のアニメーションにスプリングを追加します。</text>
+    <expanded>
+      <default-resource index="1"/>
+      <resourcelist>
+        <video location="MASH_spring">スプリング</video>
+        <link location="MASH_Spring">スプリング</link>
+      </resourcelist>
+    </expanded>
+  </toolclip>
+  <toolclip key="MASHReplicateBtn" title="複製" help="MASH_Replicator">
+    <text>MASH ネットワークを複製すると、レプリカントで変換が行えます。</text>
+    <expanded>
+      <default-resource index="1"/>
+      <resourcelist>
+        <video location="MASH_replicate.webm">UV をピンチ</video>
+        <link location="MASH_Replicate">複製</link>
+      </resourcelist>
+    </expanded>
+  </toolclip>
+  <toolclip key="MASHOrientBtn" title="方向" help="MASH_Orient">
+    <text>特定の方向のポイントに向けることができます。</text>
+    <expanded>
+      <default-resource index="1"/>
+      <resourcelist>
+        <video location="MASH_orient.webm">方向</video>
+        <link location="MASH_Orient">方向</link>
+      </resourcelist>
+    </expanded>
+  </toolclip>
+  <toolclip key="MASHSignalBtn" title="信号" help="MASH_Signal">
+    <text>4D パーリン ノイズまたは三角関数を使用してネットワーク内のポイントをアニメートします。</text>
+    <expanded>
+      <default-resource index="1"/>
+      <resourcelist>
+        <video location="MASH_Signal.webm">信号</video>
+        <link location="MASH_Signal">信号</link>
+      </resourcelist>
+    </expanded>
+  </toolclip>
+  <toolclip key="MASHStrengthBtn" title="強さ" help="MASH_Strength">
+    <text>アタッチされたノードの強さをコントロールします。</text>
+    <expanded>
+      <default-resource index="1"/>
+      <resourcelist>
+        <video location="MASH_strength.webm">強さ</video>
+        <link location="MASH_Strength">強さ</link>
+      </resourcelist>
+    </expanded>
+  </toolclip>
+  <toolclip key="MASHSymmetryBtn" title="シンメトリ" help="MASH_Symmetry">
+    <text>一方を他方に合わせて移動、回転、またはスケールすることにより、選択したエッジの 2 つの UV シェルを結合します。</text>
+    <expanded>
+      <default-resource index="1"/>
+      <resourcelist>
+        <video location="MASH_symmetry.webm">シンメトリ</video>
+        <link location="MASH_Symmetry">シンメトリ</link>
+      </resourcelist>
+    </expanded>
+  </toolclip>
+  <toolclip key="MASHInfluenceBtn" title="インフルエンス" help="MASH_Influence">
+    <text>接続されたインフルエンス ロケータのスケールおよび回転に従って、オブジェクトのインスタンスのスケールおよび回転に影響を与えます。</text>
+    <expanded>
+      <default-resource index="1"/>
+      <resourcelist>
+        <video location="MASH_influence.webm">インフルエンス</video>
+        <link location="MASH_Influence">インフルエンス</link>
+      </resourcelist>
+    </expanded>
+  </toolclip>
+  <toolclip key="MASHExplodeBtn" title="分解" help="MASH_Explode">
+    <text>メッシュのフェースを抽出し、既存の MASH ポイントに従ってそれらをトランスフォームします。</text>
+    <expanded>
+      <default-resource index="1"/>
+      <resourcelist>
+        <video location="MASH_explode.webm">分解</video>
+        <link location="MASH_Explode">分解</link>
+      </resourcelist>
+    </expanded>
+  </toolclip>
+  <toolclip key="MASHFlightBtn" title="フライト" help="MASH_Flight">
+    <text>オブジェクトを複数の点にアタッチすることにより、群集および群飛の動作を近似化するマルチスレッドのシミュレーション ノードです。</text>
+    <expanded>
+      <default-resource index="1"/>
+      <resourcelist>
+        <video location="MASH_flight.webm">フライト</video>
+        <link location="MASH_Flight">フライト</link>
+      </resourcelist>
+    </expanded>
+  </toolclip>
+  <toolclip key="MASHDelayBtn" title="遅延" help="MASH_Delay">
+    <text>オブジェクトのアニメーションを継承し、それを時間でオフセットできます。</text>
+    <expanded>
+      <default-resource index="1"/>
+      <resourcelist>
+        <video location="MASH_delay.webm">遅延</video>
+        <link location="MASH_Delay">遅延</link>
+      </resourcelist>
+    </expanded>
+  </toolclip>
+  <toolclip key="MASHCurveBtn" title="カーブ" help="MASH_Curve">
+    <text>入力カーブに沿って MASH ポイントを配分し、アニメートします。</text>
+    <expanded>
+      <default-resource index="1"/>
+      <resourcelist>
+        <video location="MASH_curve.webm">カーブ</video>
+        <link location="MASH_Curve">カーブ</link>
+      </resourcelist>
+    </expanded>
+  </toolclip>
+  <toolclip key="MASHColorBtn" title="カラー" help="MASH_Color">
+    <text>ジオメトリ タイプ(Geometry Type)がメッシュ(Mesh)に設定されている場合に作成されるメッシュのワークスペース内で、MASH ネットワークの CPV データをカスタマイズします。</text>
+    <expanded>
+      <default-resource index="1"/>
+      <resourcelist>
+        <video location="MASH_color.webm">カラー</video>
+        <link location="MASH_Color">カラー</link>
+      </resourcelist>
+    </expanded>
+  </toolclip>
+  <toolclip key="MASHAudioBtn" title="オーディオ" help="MASH_Audio">
+    <text>ポイントのアニメーションにオーディオ ファイルを供給します。</text>
+    <expanded>
+      <default-resource index="1"/>
+      <resourcelist>
+        <video location="MASH_audio.webm">オーディオ</video>
+        <link location="MASH_Audio">オーディオ</link>
+      </resourcelist>
+    </expanded>
+  </toolclip>
+  <toolclip key="MASHPlacerBtn" title="プレーサ" help="MASH_Placer"> 
+    <text>ペイントにより、MASH ポイントを配置します。</text>
+    <expanded>
+      <default-resource index="1"/>
+      <resourcelist>
+        <video location="MASH_Placer.webm">プレーサ</video>
+        <link location="MASH_Placer">プレーサ</link>
+      </resourcelist>
+    </expanded>
+  </toolclip>
+  <toolclip key="MASHDynamicsBtn" title="ダイナミクス" help="MASH_Dynamics"> 
+    <text>Maya Bullet を使用して MASH ポイントをダイナミックに作成します。</text>
+    <expanded>
+      <default-resource index="1"/>
+      <resourcelist>
+        <video location="MASH_Dynamics.webm">ダイナミクス</video>
+        <link location="MASH_Dynamics">ダイナミクス</link>
+        <link location="MASH_BulletSolver">BulletSolver</link>
+	<link location="MASH_Constraint">コンストレイント</link>
+      </resourcelist>
+    </expanded>
+  </toolclip>
+ 
+  
+  
+</toolclips>

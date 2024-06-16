@@ -1,0 +1,20 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  Aug 15 1996
+//
+//  Description:
+//      This script initializes the Feedback line.  Initialization
+//		involves determining the initial Feedback line preferences, 
+//		creating the UI and setting the initial visibility.
+//
+{
+	warning (uiRes("m_initFeedbackLine.kTheFileInitFeedbackLineIsObsolete"));
+}
+

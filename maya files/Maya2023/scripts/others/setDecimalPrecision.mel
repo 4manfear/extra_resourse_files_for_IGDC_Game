@@ -1,0 +1,18 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc float setDecimalPrecision( float $value, int $places )
+//
+//	Description:
+//		Sets the number of decimal places to use for a float.
+//		Rounds the last decimal place.
+//
+{
+	float $power = `pow 10 $places`;
+	float $result = `floor( $value * $power + 0.5 )` / $power;
+	return $result;
+}

@@ -1,0 +1,170 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//
+//  Creation Date:  17 Sept 97
+//
+//
+//  Procedure Name:
+//      performPolyMergeUV
+//
+//  Description:
+//        Merge the selected polygon vertices
+//         
+//  Input Arguments:
+//        $option : Whether to set the options to default values.
+//  Return Value:
+//        command string iff $option==2
+//
+
+proc setOptionVars (int $forceFactorySettings)
+{			   
+	optionVar -init $forceFactorySettings -category "UV Editor.Merge UVs"
+		-fv polyMergeUVDistance 0.01
+		;
+}
+
+global proc performPolyMergeUVSetup (string $parent, int $forceFactorySettings)
+{
+	setOptionVars($forceFactorySettings);
+	setParent $parent;
+	
+	int $ival = 1;
+//	int $ival = `optionVar -query polyMergeUVUseDistance`;
+//	checkBoxGrp -edit -value1 $ival polyMergeUVUseDistance;
+
+	float $fval = `optionVar -query polyMergeUVDistance`;
+	floatSliderGrp -edit -en $ival -value $fval polyMergeUVDistance;
+}
+
+global proc performPolyMergeUVCallback (string $parent, int $doIt)
+{
+	setParent $parent;
+	
+	optionVar -floatValue polyMergeUVDistance
+		`floatSliderGrp -query -value polyMergeUVDistance`;
+//	optionVar -intValue polyMergeUVUseDistance
+//		`checkBoxGrp -query -value1 polyMergeUVUseDistance`;
+
+	if ($doIt) {
+		performPolyMergeUV 0;
+		addToRecentCommandQueue "performPolyMergeUV 0" "PolyMergeUV";
+	}
+}
+
+proc polyMergeUVOptions ()
+{
+	// Global template variables for form spacing
+	global int $gOptionBoxTemplateFrameSpacing;
+	
+	string $commandName = "performPolyMergeUV";
+	string $callback = ($commandName + "Callback");
+	string $setup = ($commandName + "Setup");
+
+	string $layout = getOptionBox();
+	setParent $layout;
+	setUITemplate -pushTemplate OptionBoxTemplate;
+	waitCursor -state 1;
+	
+	// Form layout
+	string $parent = `formLayout polyMergeUVOptions`;
+
+		// Settings frame
+		string $settingsFrame = 
+		`frameLayout -label (uiRes("m_performPolyMergeUV.kSettingsFrame"))`;
+	
+			columnLayout;
+
+//	string $grayCmd = 
+//		"{ int $tmp = `checkBoxGrp -q -v1 polyMergeUVUseDistance`;" +
+//		"  floatSliderGrp -e -en $tmp polyMergeUVDistance;}";
+
+//    checkBoxGrp -label1 "Use Distance Tolerance" -cc $grayCmd polyMergeUVUseDistance;
+	
+				floatSliderGrp -label (uiRes("m_performPolyMergeUV.kPolyMergeUVsThreshold")) -min 0 -max 1 -fmx 10000000 polyMergeUVDistance;
+	
+			setParent ..; // columnLayout
+				
+		setParent $parent; // frameLayout	
+		
+	setParent ..; // formLayout
+
+	// Attach Settings frame to form layout
+	formLayout -e
+		-af $settingsFrame "top" $gOptionBoxTemplateFrameSpacing
+		-af $settingsFrame "left" $gOptionBoxTemplateFrameSpacing
+		-af $settingsFrame "right" $gOptionBoxTemplateFrameSpacing
+		-an $settingsFrame "bottom"
+	$parent;
+	
+	waitCursor -state 0;
+	setUITemplate -popTemplate;
+	   
+	string $applyBtn = getOptionBoxApplyBtn();
+	button -edit -label (uiRes("m_performPolyMergeUV.kMergeUVs"))
+	       -command ($callback + " " + $parent + " " + 1)
+		$applyBtn;
+	string $saveBtn = getOptionBoxSaveBtn();
+	button -edit 
+		-command ($callback + " " + $parent + " " + 0 + "; hideOptionBox")
+		$saveBtn;
+	string $resetBtn = getOptionBoxResetBtn();
+	button -edit 
+		-command ($setup + " " + $parent + " " + 1)
+		$resetBtn;
+
+	setOptionBoxTitle (uiRes("m_performPolyMergeUV.kMergeUVsOptions"));
+
+	setOptionBoxHelpTag( "MergeUVs" );
+
+	eval (($setup + " " + $parent + " " + 0));      
+	showOptionBox();
+}
+
+global proc string performPolyMergeUV (int $option)
+{
+	source setComponentMask.mel;
+
+	string $cmd="";
+	string $sel[];
+	switch ($option) 
+	{
+		case 0:
+		string $selection[] = `ls -sl`;
+		string $compSelType = `getComponentMask`;
+
+		if ($compSelType == "polymeshUV")
+			$selection = `polyListComponentConversion -tvf`;
+
+		setOptionVars(false);
+		int $ival = 1;
+//		int $ival = `optionVar -query polyMergeUVUseDistance`;
+		$cmd = "polyMergeUV";
+		if ($ival)
+		{
+			float $fval = `optionVar -query polyMergeUVDistance`;
+			$cmd =($cmd + " -d " + $fval);
+		}
+		evalEcho ("polyPerformAction \""+$cmd+"\" v 0");
+
+		if ($compSelType != "polymeshUV")
+			//select the original selection
+			select -replace $selection;
+		else
+		{
+			$sel = `polyListComponentConversion -tuv $selection`;
+			select -r $sel;
+		}
+
+		break;
+
+		case 1: polyMergeUVOptions; break;
+		case 2: $cmd = "performPolyMergeUV 0"; break;
+	}
+	return $cmd;
+}

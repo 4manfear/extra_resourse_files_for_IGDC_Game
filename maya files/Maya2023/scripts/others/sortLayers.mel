@@ -1,0 +1,54 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc string[] sortLayers(string $layerArray[])
+//
+//	Description:
+//		Sort the layers in the argument array according to their
+//		display order attribute.
+//
+//	Arguments:
+//		$layerArray[] - A string array of layer names.
+//
+//	Returns:
+//		A string array containing the sorted list of layers.
+//
+{
+	string $result[];
+	int    $count, $index, $position, $positionArray[];
+	
+	//	Construct an array consisting of each layer's display order
+	//	attribute value.
+	//
+	$count = size($layerArray);
+	for ($index = 0; $index < $count; $index++) {
+		$position = `getAttr ($layerArray[$index] + ".displayOrder")`;
+		$positionArray[$index] = $position;
+	}
+
+	//	Now sort the display order array.
+	//
+	$positionArray = sort($positionArray);
+
+	//	Construct the result array by matching the layer with it's
+	//	corresponding display order value.
+	//
+	for ($index = 0; $index < $count; $index++) {
+		for ($layerIndex = 0; $layerIndex < $count; $layerIndex++) {
+			if ("" != $layerArray[$layerIndex]) {
+				$position = `getAttr ($layerArray[$layerIndex] + ".displayOrder")`;
+				if ($positionArray[$index] == $position) {
+					$result[$index] = $layerArray[$layerIndex];
+					$layerArray[$layerIndex] = "";
+					break;
+				}
+			}
+		}
+	}
+
+	return $result;
+}

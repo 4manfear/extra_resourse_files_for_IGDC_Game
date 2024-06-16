@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8"?>
+<toolclips ui="ui/ToolClipUI.qml" simple="ui/SimpleTooltip.qml" locale="en_US">
+
+  <toolclip key="xgmInteractiveGroomEditorBtn" title="Interactive Groom Editor" help="TC-Grooming-Interactive-Grooming-Editor">
+    <text>Opens the Interactive Groom Editor, which is the main tool for creating, editing, and managing modifiers and sculpting layers for interactive grooming hair.</text>
+    <expanded>
+      <resourcelist>
+        <link location="TC-Grooming-Work-With-Sculpt-Layers">Work with sculpt layers</link>
+		<link location="TC-Grooming-Work-With-Modifiers">Work with interactive grooming modifiers</link>
+       </resourcelist>
+    </expanded>
+  </toolclip>
+  <toolclip key="xgmCreateInteractiveGroomSplineBtn" title="Create hair and fur" help="TC-Grooming-Create-Interactive-Groom-Splines">
+    <text>Create hair and fur using interactive grooming splines.</text>
+	<expanded>
+      <resourcelist>
+        <link location="TC-Grooming-Interactive-Grooming-Overview">XGen interactive grooming</link>
+		<link location="TC-Grooming-Get-Started">Get started with XGen interactive grooming</link>
+		<link location="TC-Grooming-Create-Hair">Create hair and fur using interactive grooming splines</link>
+       </resourcelist>
+	</expanded>
+  </toolclip> 
+  <toolclip key="xgmDensityBrushBtn" title="Density Tool" help="TC-Grooming-Density-Tool">
+    <text>Adds or removes hairs.</text>
+    <expanded>
+      <resourcelist>
+	    <video location="Grooming_DensityTool.webm">Add or remove hair</video>
+        <link location="TC-Grooming-ControlDensity">Control the density of the hairs</link>
+       </resourcelist>
+    </expanded>
+  </toolclip>
+  <toolclip key="xgmPlaceBrushBtn" title="Place Tool" help="TC-Grooming-Density-Tool">
+    <text>Adds single hair strands. Use this tool when you need to precisely position individual hairs.</text>
+	<expanded>
+      <resourcelist>
+	    <video location="Grooming_PlaceTool.webm">Add single hairs</video>
+        <link location="TC-Grooming-ControlDensity">Control the density of the hairs</link>
+       </resourcelist>
+    </expanded>
+  </toolclip>
+  <toolclip key="xgmLengthBrushBtn" title="Length Tool" help="TC-Grooming-Length-Tool">
+    <text>Lengthens or shortens hairs uniformly without modifying their shape.</text>
+	<expanded>
+      <resourcelist>
+	    <video location="Grooming_LengthTool.webm">Lengthen or shorten hair</video>
+	  </resourcelist>
+	</expanded>  
+  </toolclip>
+  <toolclip key="xgmCutBrushBtn" title="Cut Tool" help="TC-Grooming-Cut-Tool">
+    <text>Trims hairs that intersect with the brush radius.</text>
+	<expanded>
+      <resourcelist>
+		<video location="Grooming_CutTool.webm">Trim hair</video>
+       </resourcelist>
+    </expanded>
+  </toolclip>
+  <toolclip key="xgmWidthBrushBtn" title="Width Tool" help="TC-Grooming-Length-Tool">
+    <text>Scales the width of hairs without modifying their shape.</text>
+	<expanded>
+      <resourcelist>
+		<video location="Grooming_WidthTool.webm">Scale hair width</video>
+       </resourcelist>
+    </expanded>
+  </toolclip>
+  <toolclip key="xgmTwistBrushBtn" title="Twist Tool" help="TC-Grooming-Twist-Tool">
+    <text>Rotates CVs along the length of splines and guides without affecting the overall curvature or shape. This tool is designed for workflows that convert final grooms to Maya geometry.</text>
+	<expanded>
+      <resourcelist>
+        <link location="TC-Grooming-Align-Splines-And-Guides">Align interactive grooming splines and guides</link>
+		<link location="TC-Grooming-Convert-To-Polygons">Convert XGen hair and fur to Maya geometry</link>
+	  </resourcelist>
+	 </expanded>
+  </toolclip>
+  <toolclip key="xgmCombBrushBtn" title="Comb Tool" help="TC-Grooming-Comb-Tool">
+    <text>Changes the orientation and bend of hairs in the direction of the brush stroke.</text>
+	<expanded>
+      <resourcelist>
+		<video location="Grooming_CombTool.webm">Comb hair</video>
+       </resourcelist>
+    </expanded>
+  </toolclip>
+  <toolclip key="xgmGrabBrushBtn" title="Grab Tool" help="TC-Grooming-Comb-Tool">
+	<text>Selects and moves hairs based on the direction and distance you drag.</text>
+	<expanded>
+      <resourcelist>
+		<video location="Grooming_GrabTool.webm">Pull or push hairs</video>
+       </resourcelist>
+    </expanded>
+  </toolclip>
+  <toolclip key="xgmSmoothBrushBtn" title="Smooth Tool" help="TC-Grooming-Smooth-Tool">
+    <text>Straightens hairs and smooths transitions between hairs of different size and shape.</text>
+	<expanded>
+      <resourcelist>
+		<video location="Grooming_SmoothTool.webm">Straighten and smooth hair</video>
+       </resourcelist>
+    </expanded>
+  </toolclip>
+  <toolclip key="xgmNoiseBrushBtn" title="Noise Tool" help="TC-Grooming-Noise-Tool">
+    <text>Paints 3D noise to vary hair orientation making hair appear more natural.</text>
+	<expanded>
+      <resourcelist>
+		<video location="Grooming_NoiseTool.webm">Add noise to hair</video>
+       </resourcelist>
+    </expanded>
+  </toolclip>
+  <toolclip key="xgmClumpBrushBtn" title="Clump Tool" help="TC-Grooming-Clump-Tool">
+    <text>Pulls hairs together to form clumps.</text>
+	<expanded>
+      <resourcelist>
+		<video location="Grooming_ClumpTool.webm">Create hair clumps</video>
+       </resourcelist>
+    </expanded>
+  </toolclip>
+  <toolclip key="xgmPartBrushBtn" title="Part Tool" help="TC-Grooming-Comb-Tool">
+    <text>Pushes hairs away from each other either.</text>
+	<expanded>
+      <resourcelist>
+		<video location="Grooming_PartTool.webm">Part hair</video>
+       </resourcelist>
+    </expanded>
+  </toolclip>
+  <toolclip key="xgmFreezeBrushBtn" title="Freeze Tool" help="TC-Grooming-Freeze-Tool">
+    <text>Locks hair strands so they cannot be modified.</text>
+	<expanded>
+      <resourcelist>
+		<video location="Grooming_FreezeTool.webm">Lock hair strands</video>
+       </resourcelist>
+    </expanded>
+  </toolclip>
+  <toolclip key="xgmSelectBrushBtn" title="Select Tool" help="TC-Grooming-Select-Tool">
+    <text>Selects hair strands by painting.</text>
+	<expanded>
+      <resourcelist>
+		<video location="Grooming_SelectionTool.webm">Select hairs</video>
+       </resourcelist>
+    </expanded>
+  </toolclip>
+</toolclips>

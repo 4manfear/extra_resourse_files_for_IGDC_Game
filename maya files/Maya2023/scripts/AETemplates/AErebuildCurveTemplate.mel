@@ -1,0 +1,163 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+//
+//	Procedure Name:
+//	AErebuildCurveTemplate
+//
+//	Description Name;
+//	Creates the attribute editor controls for the rebuildCurve node
+//
+//	Input Value:
+//	nodeName
+//
+//	Output Value:
+//	None
+//
+
+global proc AErebuildCurveTemplate( string $nodeName )
+{
+	string $inputCurve = (uiRes("m_AErebuildCurveTemplate.kInputCurve"));
+	string $matchCurve = (uiRes("m_AErebuildCurveTemplate.kMatchCurve"));
+	editorTemplate -beginScrollLayout;
+	
+	editorTemplate -beginLayout (uiRes("m_AErebuildCurveTemplate.kRebuildCurveHistory")) -collapse false;
+		editorTemplate -callCustom ("AEinputNew \""+$inputCurve+"\"")
+					("AEinputReplace \""+$inputCurve+"\"")
+					"inputCurve";
+		editorTemplate -callCustom ("AEinputNew \""+$matchCurve+"\"")
+					("AEinputReplace \""+$matchCurve+"\"")
+					"matchCurve";
+		editorTemplate -addControl "rebuildType" "rebuildCurveTypeControls";
+		editorTemplate -addControl "spans";
+		editorTemplate -addControl "degree";
+		editorTemplate -addControl "tolerance";
+		editorTemplate -addControl "smooth";
+		editorTemplate -addControl "endKnots";
+		editorTemplate -addControl "keepRange";
+		editorTemplate -beginNoOptimize;
+		editorTemplate -addControl "keepControlPoints" "rebuildCurveKeepCVControls";
+		editorTemplate -addControl "keepEndPoints";
+		editorTemplate -addControl "keepTangents";
+		editorTemplate -endNoOptimize;
+	editorTemplate -endLayout;
+
+	// include/call base class/node attributes
+	// AEabstractBaseCreateTemplate $nodeName;
+    editorTemplate -beginLayout (uiRes("m_AErebuildCurveTemplate.kNodeBehavior"));
+        editorTemplate -addControl "caching";
+        editorTemplate -addControl "frozen";
+        editorTemplate -addControl "nodeState";
+		editorTemplate -addControl "fitRebuild";
+    editorTemplate -endLayout;
+
+
+	editorTemplate -addExtraControls;
+
+	editorTemplate -endScrollLayout;
+}
+
+global proc rebuildCurveTypeControls( string $nodeName )
+{
+	string	$rebuildTypeAttrName = $nodeName + ".rebuildType";
+	int	$rebuildTypeValue = `getAttr $rebuildTypeAttrName`;
+
+	if ( $rebuildTypeValue == 0 )
+	{
+		// uniform type
+		editorTemplate -dimControl $nodeName "degree" false;
+		editorTemplate -dimControl $nodeName "tolerance" true;
+		editorTemplate -dimControl $nodeName "smooth" false;
+		editorTemplate -dimControl $nodeName "endKnots" false;
+		editorTemplate -dimControl $nodeName "keepControlPoints" false;
+		editorTemplate -dimControl $nodeName "keepEndPoints" false;
+		editorTemplate -dimControl $nodeName "keepTangents" false;
+
+		rebuildCurveKeepCVControls( $nodeName );
+	}
+	else if ( $rebuildTypeValue == 1 )
+	{
+		// reduce spans type
+		editorTemplate -dimControl $nodeName "spans" true;
+		editorTemplate -dimControl $nodeName "degree" true;
+		editorTemplate -dimControl $nodeName "tolerance" false;
+		editorTemplate -dimControl $nodeName "smooth" true;
+		editorTemplate -dimControl $nodeName "endKnots" false;
+		editorTemplate -dimControl $nodeName "keepControlPoints" true;
+		editorTemplate -dimControl $nodeName "keepEndPoints" true;
+		editorTemplate -dimControl $nodeName "keepTangents" true;
+	}
+	else if ( $rebuildTypeValue == 2 )
+	{
+		// match knots type
+		editorTemplate -dimControl $nodeName "spans" true;
+		editorTemplate -dimControl $nodeName "degree" true;
+		editorTemplate -dimControl $nodeName "tolerance" true;
+		editorTemplate -dimControl $nodeName "smooth" true;
+		editorTemplate -dimControl $nodeName "endKnots" false;
+		editorTemplate -dimControl $nodeName "keepControlPoints" false;
+		editorTemplate -dimControl $nodeName "keepEndPoints" false;
+		editorTemplate -dimControl $nodeName "keepTangents" false;
+	}
+	else if ( $rebuildTypeValue == 3 )
+	{
+		// no multiple knots type
+		editorTemplate -dimControl $nodeName "spans" true;
+		editorTemplate -dimControl $nodeName "degree" true;
+		editorTemplate -dimControl $nodeName "tolerance" true;
+		editorTemplate -dimControl $nodeName "smooth" true;
+		editorTemplate -dimControl $nodeName "endKnots" false;
+		editorTemplate -dimControl $nodeName "keepControlPoints" true;
+		editorTemplate -dimControl $nodeName "keepEndPoints" true;
+		editorTemplate -dimControl $nodeName "keepTangents" true;
+	}
+	else if ( $rebuildTypeValue == 4 )
+	{
+		// curvature type
+		editorTemplate -dimControl $nodeName "spans" true;
+		editorTemplate -dimControl $nodeName "degree" true;
+		editorTemplate -dimControl $nodeName "tolerance" false;
+		editorTemplate -dimControl $nodeName "smooth" true;
+		editorTemplate -dimControl $nodeName "endKnots" false;
+		editorTemplate -dimControl $nodeName "keepControlPoints" true;
+		editorTemplate -dimControl $nodeName "keepEndPoints" true;
+		editorTemplate -dimControl $nodeName "keepTangents" true;
+	}
+	else if ( $rebuildTypeValue == 5 )
+	{
+		// curvature type
+		editorTemplate -dimControl $nodeName "spans" true;
+		editorTemplate -dimControl $nodeName "degree" true;
+		editorTemplate -dimControl $nodeName "tolerance" true;
+		editorTemplate -dimControl $nodeName "smooth" true;
+		editorTemplate -dimControl $nodeName "endKnots" false;
+		editorTemplate -dimControl $nodeName "keepControlPoints" true;
+		editorTemplate -dimControl $nodeName "keepEndPoints" true;
+		editorTemplate -dimControl $nodeName "keepTangents" true;
+	}
+}
+
+global proc rebuildCurveKeepCVControls( string $nodeName )
+{
+	string	$rebuildTypeAttrName = $nodeName + ".rebuildType";
+	int	$rebuildTypeValue = `getAttr $rebuildTypeAttrName`;
+	string	$keepCVAttrName = $nodeName + ".keepControlPoints";
+	int	$keepCVValue = `getAttr $keepCVAttrName`;
+
+	// only need to do this for uniform type
+	if ( $rebuildTypeValue == 0 )
+	{
+		if ( $keepCVValue == 0 )
+		{
+			editorTemplate -dimControl $nodeName "spans" false;
+		}
+		else
+		{
+			editorTemplate -dimControl $nodeName "spans" true;
+		}
+	}
+}

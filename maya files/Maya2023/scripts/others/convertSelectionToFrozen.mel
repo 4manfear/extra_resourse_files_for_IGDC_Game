@@ -1,0 +1,45 @@
+// ===========================================================================
+// Copyright 2022 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+global proc convertSelectionToFrozen()
+{
+    string $selection[] = `ls -long -selection`;
+
+    if (0 == size( $selection ))
+    {
+        error (uiRes("m_convertSelectionToFrozen.kNoActiveSelection"));
+        return;
+    }
+
+    string $tool = "sculptMeshCacheContext";
+    if( `currentCtx` == $tool ) 
+        return;
+
+    ConvertSelectionToVertices;
+
+    string $selectedVertices[] = `ls -selection`;
+
+    // Previously, we were initializing the sculpt tool and it would get set to
+    // Clone brush, then we froze the selected vertices, and finally activate the
+    // Freeze brush. The problem with that is the frozen vertices would not be
+    // retained between sculpt brush invocations.
+    //
+    // The solution is to switch to the Freeze brush at the start and then freeze
+    // the selection.
+    //
+    setMeshSculptTool( "Freeze" );
+
+    select $selectedVertices;
+
+    sculptMeshCacheCtx -edit -freezeSelection $tool;
+
+    // Select the objects to get brush tool into proper display mode.
+    //
+    string $temp[] = `ls -selection -objectsOnly`;
+    string $objects[] = `listRelatives -parent $temp`;
+    select -replace $objects;
+}
