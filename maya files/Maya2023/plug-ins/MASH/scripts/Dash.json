@@ -1,6 +1,0 @@
-[
-{"MayaExec": "import DashCommand", "MayaEval": "DashCommand.dashEase", "DashCommand": "ease", "ShortDashCommand": "e", "Description": "Auto ease keyframes"},
-{"MayaExec": "import DashCommand", "MayaEval": "DashCommand.dashRandom", "DashCommand": "rand", "ShortDashCommand": "r", "Description": "Quick redirect to Python's random.Uniform()"},
-{"MayaExec": "import DashCommand", "MayaEval": "DashCommand.dashTimeStep", "DashCommand": "timeStep", "ShortDashCommand": "ts", "Description": "Stagger the animation of multiple objects."},
-{"MayaExec": "import DashCommand", "MayaEval": "DashCommand.dashLinear", "DashCommand": "linear", "ShortDashCommand": "l", "Description": "Linear distribution"}
-]
